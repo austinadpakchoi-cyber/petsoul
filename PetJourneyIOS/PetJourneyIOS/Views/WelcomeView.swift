@@ -1036,6 +1036,10 @@ private struct WorldEventDetailCard: View {
 }
 
 private struct WorldLiveStoryTicker: View {
+    @EnvironmentObject private var session: AppSessionStore
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var remoteEvents: [WorldLifeEvent] = []
+
     private let storyInterval: TimeInterval = 4.2
 
     var body: some View {
@@ -1090,13 +1094,19 @@ private struct WorldLiveStoryTicker: View {
                     .stroke(DesignTokens.surfaceStroke.opacity(0.72), lineWidth: 1)
             }
             .id(event.id)
-            .transition(.opacity.combined(with: .move(edge: .bottom)))
-            .animation(.easeInOut(duration: 0.35), value: event.id)
+            .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: event.id)
         }
+        .task { await loadRemoteStories() }
+    }
+
+    private var storyPool: [WorldLifeEvent] {
+        remoteEvents.isEmpty ? WorldLifeEvent.samples : remoteEvents
     }
 
     private func currentEvent(at date: Date) -> WorldLifeEvent {
-        guard !WorldLifeEvent.samples.isEmpty else {
+        let pool = storyPool
+        guard !pool.isEmpty else {
             return WorldLifeEvent(
                 id: "world-empty",
                 city: "世界",
@@ -1112,54 +1122,43 @@ private struct WorldLiveStoryTicker: View {
             )
         }
 
-        let index = Int(date.timeIntervalSinceReferenceDate / storyInterval) % WorldLifeEvent.samples.count
-        return WorldLifeEvent.samples[index]
+        let index = Int(date.timeIntervalSinceReferenceDate / storyInterval) % pool.count
+        return pool[index]
     }
-}
 
-private struct WorldSignalRibbon: View {
-    var body: some View {
-        HStack(spacing: 8) {
-            WorldSignalMetric(title: "活跃信号", value: "128", tint: DesignTokens.sea, systemImage: "dot.radiowaves.left.and.right")
-            WorldSignalMetric(title: "正在停留", value: "42", tint: DesignTokens.sage, systemImage: "mappin.and.ellipse")
-            WorldSignalMetric(title: "新明信片", value: "7", tint: DesignTokens.clay, systemImage: "mail.stack")
+    /// 拉取世界故事条：成功则替换本地样本；失败时本地生成器继续兜底，界面无感。
+    private func loadRemoteStories() async {
+        guard session.serviceMode == .remote,
+              let base = URL(string: session.baseURLString) else { return }
+        struct TickerItem: Decodable {
+            let id: String
+            let text: String
+            let city: String
         }
-    }
-}
-
-private struct WorldSignalMetric: View {
-    var title: String
-    var value: String
-    var tint: Color
-    var systemImage: String
-
-    var body: some View {
-        HStack(spacing: 7) {
-            ZStack {
-                SignalPulseRings(tint: tint, size: 36, lineWidth: 1.1, ringCount: 2)
-                    .opacity(0.72)
-                Image(systemName: systemImage)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(tint)
-            }
-            .frame(width: 30, height: 30)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(value)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(DesignTokens.ink)
-                Text(title)
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(DesignTokens.secondaryInk)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-            }
+        struct TickerResponse: Decodable {
+            let items: [TickerItem]
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 8)
-        .padding(.horizontal, 8)
-        .background(DesignTokens.surface.opacity(0.62))
-        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+        let url = base.appendingPathComponent("api/v1/world/story_ticker")
+        guard let (data, response) = try? await URLSession.shared.data(from: url),
+              let http = response as? HTTPURLResponse,
+              http.statusCode == 200,
+              let payload = try? JSONDecoder().decode(TickerResponse.self, from: data),
+              !payload.items.isEmpty else { return }
+        remoteEvents = payload.items.map { item in
+            WorldLifeEvent(
+                id: item.id,
+                city: item.city,
+                place: item.city,
+                petName: "平行世界",
+                petType: .cat,
+                activity: item.text,
+                detail: item.text,
+                latitude: 0,
+                longitude: 0,
+                tintHex: 0xD6AA63,
+                sceneIcon: "sparkles"
+            )
+        }
     }
 }
 
