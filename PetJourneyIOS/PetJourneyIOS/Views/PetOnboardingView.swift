@@ -106,7 +106,7 @@ struct PetOnboardingView: View {
                     .foregroundStyle(DesignTokens.ink)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(.white.opacity(0.82))
+                    .background(DesignTokens.surface.opacity(0.82))
                     .clipShape(RoundedRectangle(cornerRadius: DesignTokens.controlRadius, style: .continuous))
                     .overlay {
                         RoundedRectangle(cornerRadius: DesignTokens.controlRadius, style: .continuous)
@@ -414,7 +414,7 @@ private struct PhotoRecognitionCard: View {
             }
             .overlay {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(.white.opacity(0.82), lineWidth: 1)
+                    .stroke(DesignTokens.surfaceStroke.opacity(0.82), lineWidth: 1)
             }
 
             HStack(spacing: 10) {
@@ -490,7 +490,7 @@ private struct PhotoRecognitionCard: View {
                         .fill((index.isMultiple(of: 2) ? DesignTokens.pollen : DesignTokens.sea).opacity(0.86))
                         .frame(width: 7, height: 7)
                         .overlay {
-                            Circle().stroke(.white.opacity(0.92), lineWidth: 1.2)
+                            Circle().stroke(DesignTokens.surfaceStroke.opacity(0.92), lineWidth: 1.2)
                         }
                         .position(x: proxy.size.width * xFactor, y: proxy.size.height * yFactor)
                 }
@@ -509,7 +509,7 @@ private struct RecognitionBadge: View {
             .foregroundStyle(isActive ? DesignTokens.sage : DesignTokens.secondaryInk)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 9)
-            .background(.white.opacity(0.72))
+            .background(DesignTokens.surface.opacity(0.72))
             .clipShape(Capsule())
     }
 }
@@ -638,7 +638,7 @@ private struct SuggestionStrip: View {
                     .foregroundStyle(DesignTokens.secondaryInk)
                     .padding(.vertical, 8)
                     .padding(.horizontal, 10)
-                    .background(.white.opacity(0.78))
+                    .background(DesignTokens.surface.opacity(0.78))
                     .clipShape(Capsule())
                 }
             }
@@ -668,7 +668,7 @@ private struct SuggestionColumn: View {
                         Spacer()
                     }
                     .padding(10)
-                    .background(.white.opacity(0.68))
+                    .background(DesignTokens.surface.opacity(0.68))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .buttonStyle(.plain)

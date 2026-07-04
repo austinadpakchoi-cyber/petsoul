@@ -163,7 +163,7 @@ class PetJourneyApiTests(unittest.TestCase):
         self.assertEqual(illustrated_payload["city"], "厦门")
         self.assertGreaterEqual(len(illustrated_payload["stops"]), 3)
         self.assertLessEqual(len(illustrated_payload["stops"]), 5)
-        self.assertIn("Stops in this exact order", illustrated_payload["image_prompt"])
+        self.assertIn("Use exactly these stops", illustrated_payload["image_prompt"])
         self.assertNotIn("provider", illustrated_payload["theme"].lower())
 
         world_snapshot = self.client.get(f"/api/v1/pets/{pet_id}/world_snapshot")

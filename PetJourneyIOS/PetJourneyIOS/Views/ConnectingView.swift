@@ -71,7 +71,7 @@ struct ConnectingView: View {
                         .foregroundStyle(DesignTokens.secondaryInk)
                         .padding(.vertical, 9)
                         .padding(.horizontal, 14)
-                        .background(.white.opacity(0.72))
+                        .background(DesignTokens.surface.opacity(0.72))
                         .clipShape(Capsule())
                 }
 
@@ -115,7 +115,7 @@ struct ConnectingView: View {
                 .foregroundStyle(isActive || isFinished ? DesignTokens.ink : DesignTokens.secondaryInk)
                 .padding(.vertical, 8)
                 .padding(.horizontal, 10)
-                .background((isActive ? DesignTokens.pollen.opacity(0.24) : .white.opacity(0.62)))
+                .background((isActive ? DesignTokens.pollen.opacity(0.24) : DesignTokens.surface.opacity(0.62)))
                 .clipShape(Capsule())
                 .overlay {
                     Capsule()
@@ -266,9 +266,9 @@ private struct SoulSearchDial: View {
                 .font(.system(size: 19, weight: .semibold))
                 .foregroundStyle(stageTint)
                 .frame(width: 42, height: 42)
-                .background(.white.opacity(0.92))
+                .background(DesignTokens.surface.opacity(0.92))
                 .clipShape(Circle())
-                .shadow(color: DesignTokens.ink.opacity(0.1), radius: 14, x: 0, y: 7)
+                .shadow(color: DesignTokens.deepInk.opacity(0.1), radius: 14, x: 0, y: 7)
                 .offset(x: 72, y: 72)
 
             if isConnected {
@@ -276,7 +276,7 @@ private struct SoulSearchDial: View {
                     .font(.system(size: 34, weight: .semibold))
                     .foregroundStyle(DesignTokens.sage)
                     .frame(width: 56, height: 56)
-                    .background(.white.opacity(0.94))
+                    .background(DesignTokens.surface.opacity(0.94))
                     .clipShape(Circle())
                     .shadow(color: DesignTokens.sage.opacity(0.25), radius: 18, x: 0, y: 8)
                     .offset(x: 74, y: -70)
@@ -290,9 +290,9 @@ private struct SoulSearchDial: View {
     private var centerPortrait: some View {
         ZStack {
             Circle()
-                .fill(.white.opacity(0.88))
+                .fill(DesignTokens.surface.opacity(0.88))
                 .frame(width: 146, height: 146)
-                .shadow(color: DesignTokens.ink.opacity(0.12), radius: 30, x: 0, y: 16)
+                .shadow(color: DesignTokens.deepInk.opacity(0.12), radius: 30, x: 0, y: 16)
 
             Circle()
                 .fill(stageTint.opacity(0.13))
@@ -305,7 +305,7 @@ private struct SoulSearchDial: View {
                     .frame(width: 108, height: 108)
                     .clipShape(Circle())
                     .overlay {
-                        Circle().stroke(.white.opacity(0.92), lineWidth: 3)
+                        Circle().stroke(DesignTokens.surfaceStroke.opacity(0.92), lineWidth: 3)
                     }
             } else {
                 Image(systemName: draft.petType.symbolName)

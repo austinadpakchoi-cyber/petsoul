@@ -11,9 +11,9 @@ struct ToastView: View {
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
-            .background(DesignTokens.ink.opacity(0.92))
+            .background(DesignTokens.deepInk.opacity(0.92))
             .clipShape(RoundedRectangle(cornerRadius: DesignTokens.controlRadius, style: .continuous))
             .padding(.horizontal, DesignTokens.pagePadding)
-            .shadow(color: DesignTokens.ink.opacity(0.18), radius: 18, x: 0, y: 10)
+            .shadow(color: DesignTokens.deepInk.opacity(0.18), radius: 18, x: 0, y: 10)
     }
 }

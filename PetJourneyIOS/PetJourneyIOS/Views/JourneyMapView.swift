@@ -19,6 +19,7 @@ struct JourneyMapView: View {
     @State private var showWorldCupStadiums = false
     @State private var selectedWorldCupHost: WorldCupHostCity?
     @State private var introFlightState = IntroFlightState.pending
+    @State private var showDayRecap = false
 
     var onReset: () -> Void
 
@@ -163,6 +164,23 @@ struct JourneyMapView: View {
                 .presentationDetents(sheet.presentationDetents)
                 .presentationDragIndicator(.visible)
             }
+            .fullScreenCover(isPresented: $showDayRecap) {
+                if let status = viewModel.status {
+                    DayRecapView(
+                        status: status,
+                        chapters: DayRecapBuilder.chapters(
+                            events: JourneyMapEvent.events(
+                                around: viewModel.coordinate,
+                                status: status,
+                                dayPlan: viewModel.dayPlan,
+                                remoteRoutePlan: viewModel.remoteRoutePlan
+                            ),
+                            routePlan: JourneyRoutePlan.backendPlan(from: viewModel.journeyPlan) ?? plannedRoute,
+                            postcards: status.postcards
+                        )
+                    )
+                }
+            }
             .onAppear {
                 viewModel.start()
             }
@@ -239,6 +257,7 @@ struct JourneyMapView: View {
                 anchor: viewModel.coordinate
             ) ?? fallbackActivity
             let liveCoordinate = activity.liveCoordinate
+            let displayCoordinate = wanderAdjustedCoordinate(for: activity, petID: status.petID, date: timeline.date)
             let liveEvent = activity.relatedEvent ?? JourneyMotion.nearestEvent(to: liveCoordinate, events: mapEvents, maxDistanceMeters: 180)
             let selectedDisplayEvent = selectedMapEvent.flatMap { selected in
                 mapEvents.first(where: { $0.id == selected.id }) ?? selected
@@ -252,7 +271,8 @@ struct JourneyMapView: View {
                 LivingJourneyMap(
                     status: status,
                     homeCoordinate: viewModel.coordinate,
-                    petCoordinate: liveCoordinate,
+                    petCoordinate: displayCoordinate,
+                    now: timeline.date,
                     events: mapEvents,
                     companions: companions,
                     routePlan: routePlan,
@@ -281,6 +301,7 @@ struct JourneyMapView: View {
                             centerOnJourney(liveCoordinate, routePlan: routePlan, events: mapEvents, activity: activity)
                         },
                         onShowDayPlan: showDayPlan,
+                        onShowRecap: { showDayRecap = true },
                         onShowPostcards: showPostcards,
                         onShowTravelKit: showTravelKit,
                         onShowSouvenirs: showSouvenirs,
@@ -552,6 +573,21 @@ struct JourneyMapView: View {
         cameraPosition(around: coordinate, routePlan: .empty, events: [], perspective: perspective)
     }
 
+    private func wanderAdjustedCoordinate(
+        for activity: JourneyActivitySnapshot,
+        petID: String,
+        date: Date
+    ) -> CLLocationCoordinate2D {
+        guard activity.kind == .staying || activity.kind == .checkingIn else {
+            return activity.liveCoordinate
+        }
+        return JourneyMotion.wanderedCoordinate(
+            around: activity.liveCoordinate,
+            date: date,
+            seed: JourneyMotion.seed(petID)
+        )
+    }
+
     private static func introCameraPosition(above coordinate: CLLocationCoordinate2D) -> MapCameraPosition {
         .camera(MapCamera(centerCoordinate: coordinate, distance: 1_600_000, heading: 0, pitch: 0))
     }
@@ -676,14 +712,14 @@ private struct JourneyLoadingView: View {
                 RoundedRectangle(cornerRadius: 25, style: .continuous)
                     .fill(.ultraThinMaterial)
                 RoundedRectangle(cornerRadius: 25, style: .continuous)
-                    .fill(.white.opacity(0.72))
+                    .fill(DesignTokens.surface.opacity(0.72))
             }
             .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 25, style: .continuous)
-                    .stroke(.white.opacity(0.78), lineWidth: 1)
+                    .stroke(DesignTokens.surfaceStroke.opacity(0.78), lineWidth: 1)
             }
-            .shadow(color: DesignTokens.ink.opacity(0.12), radius: 26, x: 0, y: 14)
+            .shadow(color: DesignTokens.deepInk.opacity(0.12), radius: 26, x: 0, y: 14)
             .accessibilityElement(children: .combine)
             .accessibilityLabel("正在接收 TA 的旅程，地图会先出现，细节随后同步")
         }
@@ -764,7 +800,7 @@ private struct JourneySignalErrorCard: View {
                 .frame(width: 58, height: 58)
                 .overlay {
                     Circle()
-                        .stroke(.white.opacity(0.92), lineWidth: 1)
+                        .stroke(DesignTokens.surfaceStroke.opacity(0.92), lineWidth: 1)
                 }
                 .shadow(color: DesignTokens.sage.opacity(0.16), radius: 14, x: 0, y: 8)
 
@@ -826,9 +862,9 @@ private struct LoadingCommunicatorGlyph: View {
                 .frame(width: 78, height: 78)
                 .overlay {
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(.white.opacity(0.9), lineWidth: 1)
+                        .stroke(DesignTokens.surfaceStroke.opacity(0.9), lineWidth: 1)
                 }
-                .shadow(color: DesignTokens.ink.opacity(0.10), radius: 16, x: 0, y: 8)
+                .shadow(color: DesignTokens.deepInk.opacity(0.10), radius: 16, x: 0, y: 8)
 
             VStack(spacing: 5) {
                 Image(systemName: "dot.radiowaves.left.and.right")
@@ -880,7 +916,7 @@ private struct LoadingRoutePath: View {
             for (index, stop) in stops.enumerated() {
                 let active = progress >= Double(index) / Double(max(stops.count - 1, 1))
                 let rect = CGRect(x: stop.x - 7, y: stop.y - 7, width: 14, height: 14)
-                context.fill(Path(ellipseIn: rect), with: .color(.white.opacity(0.96)))
+                context.fill(Path(ellipseIn: rect), with: .color(DesignTokens.surface.opacity(0.96)))
                 context.fill(Path(ellipseIn: rect.insetBy(dx: 3, dy: 3)), with: .color((active ? tint : DesignTokens.softLine).opacity(0.95)))
             }
         }
@@ -1145,6 +1181,7 @@ private struct LivingJourneyMap: View {
     var status: AgentStatus
     var homeCoordinate: CLLocationCoordinate2D
     var petCoordinate: CLLocationCoordinate2D
+    var now: Date
     var events: [JourneyMapEvent]
     var companions: [DemoCompanionPet]
     var routePlan: JourneyRoutePlan
@@ -1157,6 +1194,28 @@ private struct LivingJourneyMap: View {
     @Binding var selectedCompanion: DemoCompanionPet?
     @Binding var selectedWorldCupHost: WorldCupHostCity?
     var onSelectWorldCupHost: (WorldCupHostCity) -> Void
+
+    @State private var smoothedLatitude: Double?
+    @State private var smoothedLongitude: Double?
+
+    private var displayedPetCoordinate: CLLocationCoordinate2D {
+        guard let smoothedLatitude, let smoothedLongitude else { return petCoordinate }
+        return CLLocationCoordinate2D(latitude: smoothedLatitude, longitude: smoothedLongitude)
+    }
+
+    private var petHeadingDegrees: Double? {
+        guard activity.kind == .walking || activity.kind == .transporting else { return nil }
+        let route = routeCoordinates
+        guard route.count > 1 else { return nil }
+        let petLocation = CLLocation(latitude: petCoordinate.latitude, longitude: petCoordinate.longitude)
+        let nearestIndex = route.indices.min { left, right in
+            CLLocation(latitude: route[left].latitude, longitude: route[left].longitude).distance(from: petLocation)
+                < CLLocation(latitude: route[right].latitude, longitude: route[right].longitude).distance(from: petLocation)
+        } ?? route.startIndex
+        let nextIndex = min(nearestIndex + 1, route.index(before: route.endIndex))
+        guard nextIndex > nearestIndex else { return nil }
+        return JourneyMotion.bearingDegrees(from: route[nearestIndex], to: route[nextIndex])
+    }
 
     private var routeCoordinates: [CLLocationCoordinate2D] {
         JourneyRouteVisual.visibleCoordinates(
@@ -1186,7 +1245,7 @@ private struct LivingJourneyMap: View {
                     .stroke(activity.tint.opacity(0.08), style: StrokeStyle(lineWidth: 12, lineCap: .round, lineJoin: .round))
 
                 MapPolyline(coordinates: routeCoordinates)
-                    .stroke(.white.opacity(0.66), style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round))
+                    .stroke(DesignTokens.surfaceStroke.opacity(0.66), style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round))
 
                 MapPolyline(coordinates: routeCoordinates)
                     .stroke(activity.tint.opacity(0.74), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
@@ -1261,7 +1320,7 @@ private struct LivingJourneyMap: View {
                 }
             }
 
-            Annotation("", coordinate: petCoordinate, anchor: .center) {
+            Annotation("", coordinate: displayedPetCoordinate, anchor: .center) {
                 LivePetMarkerView(
                     petID: status.petID,
                     petType: status.petType ?? .dog,
@@ -1270,7 +1329,8 @@ private struct LivingJourneyMap: View {
                     systemImage: activity.markerSystemImage,
                     activityKind: activity.kind,
                     animationHint: activity.animationHint,
-                    tint: activity.tint
+                    tint: activity.tint,
+                    headingDegrees: petHeadingDegrees
                 )
             }
         }
@@ -1278,6 +1338,32 @@ private struct LivingJourneyMap: View {
         .mapControls {
             MapUserLocationButton()
             MapCompass()
+        }
+        .onChange(of: now) { _, _ in
+            advanceSmoothedPet()
+        }
+        .onAppear {
+            smoothedLatitude = petCoordinate.latitude
+            smoothedLongitude = petCoordinate.longitude
+        }
+    }
+
+    /// 软纠偏:只平滑行走中的小幅服务端纠偏(45~260 米);更大的跳变是换场景/初次定位,直接贴上。
+    private func advanceSmoothedPet() {
+        guard let latitude = smoothedLatitude, let longitude = smoothedLongitude else {
+            smoothedLatitude = petCoordinate.latitude
+            smoothedLongitude = petCoordinate.longitude
+            return
+        }
+        let current = CLLocation(latitude: latitude, longitude: longitude)
+        let target = CLLocation(latitude: petCoordinate.latitude, longitude: petCoordinate.longitude)
+        let distance = current.distance(from: target)
+        if distance >= 45, distance <= 260 {
+            smoothedLatitude = latitude + (petCoordinate.latitude - latitude) * 0.5
+            smoothedLongitude = longitude + (petCoordinate.longitude - longitude) * 0.5
+        } else {
+            smoothedLatitude = petCoordinate.latitude
+            smoothedLongitude = petCoordinate.longitude
         }
     }
 }
@@ -1353,12 +1439,12 @@ private struct NavigationModeStrip: View {
         .foregroundStyle(DesignTokens.secondaryInk)
         .padding(.vertical, 8)
         .padding(.horizontal, 11)
-        .background(.white.opacity(0.88))
+        .background(DesignTokens.surface.opacity(0.88))
         .clipShape(Capsule())
         .overlay {
-            Capsule().stroke(.white.opacity(0.78), lineWidth: 1)
+            Capsule().stroke(DesignTokens.surfaceStroke.opacity(0.78), lineWidth: 1)
         }
-        .shadow(color: DesignTokens.ink.opacity(0.08), radius: 12, x: 0, y: 7)
+        .shadow(color: DesignTokens.deepInk.opacity(0.08), radius: 12, x: 0, y: 7)
     }
 
     private var perspectiveTitle: String {
@@ -1521,6 +1607,7 @@ private struct JourneyTopBar: View {
     var hasUnreadPostcard: Bool
     var onCenter: () -> Void
     var onShowDayPlan: () -> Void
+    var onShowRecap: () -> Void
     var onShowPostcards: () -> Void
     var onShowTravelKit: () -> Void
     var onShowSouvenirs: () -> Void
@@ -1554,10 +1641,10 @@ private struct JourneyTopBar: View {
             }
             .padding(.vertical, 9)
             .padding(.horizontal, 10)
-            .background(.white.opacity(0.9))
+            .background(DesignTokens.surface.opacity(0.9))
             .clipShape(Capsule())
             .overlay {
-                Capsule().stroke(.white.opacity(0.75), lineWidth: 1)
+                Capsule().stroke(DesignTokens.surfaceStroke.opacity(0.75), lineWidth: 1)
             }
 
             Spacer(minLength: 0)
@@ -1567,6 +1654,9 @@ private struct JourneyTopBar: View {
             Menu {
                 Button(action: onShowDayPlan) {
                     Label("今日路线", systemImage: "map.fill")
+                }
+                Button(action: onShowRecap) {
+                    Label("TA 的一天", systemImage: "play.rectangle.fill")
                 }
                 Button(action: onShowPostcards) {
                     Label(hasUnreadPostcard ? "查看新明信片" : "查看明信片", systemImage: "mail.stack")
@@ -1590,7 +1680,7 @@ private struct JourneyTopBar: View {
                         .font(.headline.weight(.bold))
                         .foregroundStyle(DesignTokens.secondaryInk)
                         .frame(width: 44, height: 44)
-                        .background(.white.opacity(0.9))
+                        .background(DesignTokens.surface.opacity(0.9))
                         .clipShape(Circle())
                     if hasUnreadPostcard {
                         Circle()
@@ -1602,7 +1692,7 @@ private struct JourneyTopBar: View {
             }
             .accessibilityLabel("更多")
         }
-        .shadow(color: DesignTokens.ink.opacity(0.09), radius: 16, x: 0, y: 8)
+        .shadow(color: DesignTokens.deepInk.opacity(0.09), radius: 16, x: 0, y: 8)
     }
 }
 
@@ -1617,7 +1707,7 @@ private struct TopCircleButton: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(DesignTokens.sage)
                 .frame(width: 44, height: 44)
-                .background(.white.opacity(0.9))
+                .background(DesignTokens.surface.opacity(0.9))
                 .clipShape(Circle())
         }
         .buttonStyle(.plain)
@@ -1637,7 +1727,7 @@ private struct WorldCupInvitationTeaserCard: View {
                         .opacity(0.68)
                     PetSoulAssetIcon(asset: .worldCupPawPass, fallbackTint: DesignTokens.clay, size: 32)
                         .frame(width: 38, height: 38)
-                        .background(.white.opacity(0.84))
+                        .background(DesignTokens.surface.opacity(0.84))
                         .clipShape(Circle())
                 }
                 .frame(width: 50, height: 50)
@@ -1661,13 +1751,13 @@ private struct WorldCupInvitationTeaserCard: View {
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 13)
-            .background(.white.opacity(0.88))
+            .background(DesignTokens.surface.opacity(0.88))
             .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous)
-                    .stroke(.white.opacity(0.76), lineWidth: 1)
+                    .stroke(DesignTokens.surfaceStroke.opacity(0.76), lineWidth: 1)
             }
-            .shadow(color: DesignTokens.ink.opacity(0.11), radius: 18, x: 0, y: 9)
+            .shadow(color: DesignTokens.deepInk.opacity(0.11), radius: 18, x: 0, y: 9)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("打开远方球场邀请")
@@ -1722,7 +1812,7 @@ private struct WorldCupMapStatusCard: View {
                         .font(.caption.weight(.bold))
                         .foregroundStyle(DesignTokens.secondaryInk)
                         .frame(width: 28, height: 28)
-                        .background(.white.opacity(0.68))
+                        .background(DesignTokens.surface.opacity(0.68))
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -1744,13 +1834,13 @@ private struct WorldCupMapStatusCard: View {
             }
         }
         .padding(13)
-        .background(.white.opacity(0.9))
+        .background(DesignTokens.surface.opacity(0.9))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous)
-                .stroke(.white.opacity(0.78), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.78), lineWidth: 1)
         }
-        .shadow(color: DesignTokens.ink.opacity(0.12), radius: 20, x: 0, y: 10)
+        .shadow(color: DesignTokens.deepInk.opacity(0.12), radius: 20, x: 0, y: 10)
     }
 }
 
@@ -1775,13 +1865,13 @@ private struct WorldCupStadiumMarker: View {
                     size: isSelected ? 28 : 22
                 )
                     .frame(width: isSelected ? 34 : 28, height: isSelected ? 34 : 28)
-                    .background(.white.opacity(0.9))
+                    .background(DesignTokens.surface.opacity(0.9))
                     .clipShape(Circle())
                     .overlay {
                         Circle()
-                            .stroke((isSelected ? DesignTokens.clay : .white).opacity(0.9), lineWidth: isSelected ? 2 : 1)
+                            .stroke((isSelected ? DesignTokens.clay : DesignTokens.surfaceStroke).opacity(0.9), lineWidth: isSelected ? 2 : 1)
                     }
-                    .shadow(color: DesignTokens.ink.opacity(0.15), radius: 9, x: 0, y: 4)
+                    .shadow(color: DesignTokens.deepInk.opacity(0.15), radius: 9, x: 0, y: 4)
             }
             .frame(width: 56, height: 48)
 
@@ -1792,7 +1882,7 @@ private struct WorldCupStadiumMarker: View {
                     .lineLimit(1)
                     .padding(.vertical, 4)
                     .padding(.horizontal, 7)
-                    .background(.white.opacity(0.9))
+                    .background(DesignTokens.surface.opacity(0.9))
                     .clipShape(Capsule())
             }
         }
@@ -1878,7 +1968,7 @@ private struct WorldCupQuestSheetView: View {
             .quietActionStyle()
         }
         .padding(16)
-        .background(.white.opacity(0.78))
+        .background(DesignTokens.surface.opacity(0.78))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous)
@@ -1927,7 +2017,7 @@ private struct WorldCupQuestSheetView: View {
             }
         }
         .padding(14)
-        .background(.white.opacity(0.76))
+        .background(DesignTokens.surface.opacity(0.76))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous)
@@ -1946,7 +2036,7 @@ private struct WorldCupQuestSheetView: View {
                 .font(.body)
                 .textFieldStyle(.plain)
                 .padding(12)
-                .background(.white.opacity(0.78))
+                .background(DesignTokens.surface.opacity(0.78))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .padding(14)
@@ -2023,7 +2113,7 @@ private struct WorldCupHostTile: View {
         }
         .padding(11)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(isSelected ? DesignTokens.petal.opacity(0.72) : .white.opacity(0.78))
+        .background(isSelected ? DesignTokens.petal.opacity(0.72) : DesignTokens.surface.opacity(0.78))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous)
@@ -2077,7 +2167,7 @@ private struct WorldCupBagItemTile: View {
                 .foregroundStyle(isSelected ? DesignTokens.clay : DesignTokens.softLine)
         }
         .padding(10)
-        .background(isSelected ? DesignTokens.petal.opacity(0.58) : .white.opacity(0.72))
+        .background(isSelected ? DesignTokens.petal.opacity(0.58) : DesignTokens.surface.opacity(0.72))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous)
@@ -2115,7 +2205,7 @@ private struct PawPassPreviewCard: View {
             }
         }
         .padding(14)
-        .background(.white.opacity(0.78))
+        .background(DesignTokens.surface.opacity(0.78))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous)
@@ -2345,9 +2435,9 @@ private struct LiveSignalPanel: View {
         .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 25, style: .continuous)
-                .stroke(.white.opacity(0.72), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.72), lineWidth: 1)
         }
-        .shadow(color: DesignTokens.ink.opacity(0.16), radius: 26, x: 0, y: 13)
+        .shadow(color: DesignTokens.deepInk.opacity(0.16), radius: 26, x: 0, y: 13)
         .animation(.spring(response: 0.34, dampingFraction: 0.86), value: isExpanded)
     }
 
@@ -2414,7 +2504,7 @@ private struct LiveSignalPanel: View {
                     .font(.caption.weight(.bold))
                     .foregroundStyle(DesignTokens.secondaryInk)
                     .frame(width: 24, height: 24)
-                    .background(.white.opacity(0.62))
+                    .background(DesignTokens.surface.opacity(0.62))
                     .clipShape(Circle())
             }
         }
@@ -2546,7 +2636,7 @@ private struct LiveSignalPanel: View {
             RoundedRectangle(cornerRadius: 25, style: .continuous)
                 .fill(.ultraThinMaterial)
             RoundedRectangle(cornerRadius: 25, style: .continuous)
-                .fill(.white.opacity(isSleepMode ? 0.68 : (isExpanded ? 0.72 : 0.58)))
+                .fill(DesignTokens.surface.opacity(isSleepMode ? 0.68 : (isExpanded ? 0.72 : 0.58)))
             LinearGradient(
                 colors: [
                     signalTint.opacity(isSleepMode ? 0.20 : 0.12),
@@ -2875,7 +2965,7 @@ private struct SleepRestStatusCard: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(DesignTokens.sky.opacity(0.30))
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.white.opacity(0.38))
+                .fill(DesignTokens.surface.opacity(0.38))
         }
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
@@ -2910,7 +3000,7 @@ private struct SleepInfoPill: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 9)
-        .background(.white.opacity(0.62))
+        .background(DesignTokens.surface.opacity(0.62))
         .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
     }
 }
@@ -2978,7 +3068,7 @@ private struct NavigationTelemetryStrip: View {
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(.white.opacity(0.58))
+                        .fill(DesignTokens.surface.opacity(0.58))
                     Capsule()
                         .fill(activity.tint.opacity(0.76))
                         .frame(width: max(12, proxy.size.width * activity.progress))
@@ -3040,7 +3130,7 @@ private struct NavigationTelemetryStrip: View {
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 9)
-                    .background(.white.opacity(0.58))
+                    .background(DesignTokens.surface.opacity(0.58))
                     .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
                 }
                 .buttonStyle(.plain)
@@ -3344,7 +3434,7 @@ private struct PetCurrentActivityCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(.white.opacity(0.62), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.62), lineWidth: 1)
         }
     }
 }
@@ -3363,7 +3453,7 @@ private struct ActivityStatusChip: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 7)
             .padding(.horizontal, 7)
-            .background(.white.opacity(0.62))
+            .background(DesignTokens.surface.opacity(0.62))
             .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 11, style: .continuous)
@@ -3396,7 +3486,7 @@ private struct SoftSignalChip: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8)
         .padding(.horizontal, 9)
-        .background(.white.opacity(0.66))
+        .background(DesignTokens.surface.opacity(0.66))
         .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
     }
 }
@@ -3448,7 +3538,7 @@ private struct MapEventCard: View {
                     .font(.caption.weight(.bold))
                     .foregroundStyle(DesignTokens.secondaryInk)
                     .frame(width: 26, height: 26)
-                    .background(.white.opacity(0.62))
+                    .background(DesignTokens.surface.opacity(0.62))
                     .clipShape(Circle())
                     .onTapGesture {
                         withAnimation(.spring(response: 0.32, dampingFraction: 0.88)) {
@@ -3461,7 +3551,7 @@ private struct MapEventCard: View {
                         .font(.caption.weight(.bold))
                         .foregroundStyle(DesignTokens.secondaryInk)
                         .frame(width: 26, height: 26)
-                        .background(.white.opacity(0.62))
+                        .background(DesignTokens.surface.opacity(0.62))
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -3489,14 +3579,14 @@ private struct MapEventCard: View {
             RoundedRectangle(cornerRadius: isExpanded ? 20 : 18, style: .continuous)
                 .fill(.ultraThinMaterial)
             RoundedRectangle(cornerRadius: isExpanded ? 20 : 18, style: .continuous)
-                .fill(.white.opacity(isExpanded ? 0.76 : 0.62))
+                .fill(DesignTokens.surface.opacity(isExpanded ? 0.76 : 0.62))
         }
         .clipShape(RoundedRectangle(cornerRadius: isExpanded ? 20 : 18, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: isExpanded ? 20 : 18, style: .continuous)
-                .stroke(.white.opacity(0.75), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.75), lineWidth: 1)
         }
-        .shadow(color: DesignTokens.ink.opacity(0.12), radius: 20, x: 0, y: 10)
+        .shadow(color: DesignTokens.deepInk.opacity(0.12), radius: 20, x: 0, y: 10)
         .animation(.spring(response: 0.32, dampingFraction: 0.88), value: isExpanded)
     }
 }
@@ -3553,7 +3643,7 @@ private struct CompanionPetPeekCard: View {
                     .font(.caption.weight(.bold))
                     .foregroundStyle(DesignTokens.secondaryInk)
                     .frame(width: 28, height: 28)
-                    .background(.white.opacity(0.64))
+                    .background(DesignTokens.surface.opacity(0.64))
                     .clipShape(Circle())
             }
             .buttonStyle(.plain)
@@ -3564,14 +3654,14 @@ private struct CompanionPetPeekCard: View {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(.ultraThinMaterial)
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.white.opacity(0.72))
+                .fill(DesignTokens.surface.opacity(0.72))
         }
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(.white.opacity(0.76), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.76), lineWidth: 1)
         }
-        .shadow(color: DesignTokens.ink.opacity(0.12), radius: 20, x: 0, y: 10)
+        .shadow(color: DesignTokens.deepInk.opacity(0.12), radius: 20, x: 0, y: 10)
     }
 }
 
@@ -3588,11 +3678,11 @@ private struct JourneyEventMarker: View {
                     .frame(width: isSelected ? 48 : 40, height: isSelected ? 48 : 40)
                     .overlay {
                         Circle()
-                            .stroke(.white.opacity(0.92), lineWidth: isSelected ? 4 : 3)
+                            .stroke(DesignTokens.surfaceStroke.opacity(0.92), lineWidth: isSelected ? 4 : 3)
                     }
                     .shadow(color: event.tint.opacity(0.23), radius: 13, x: 0, y: 7)
                 Circle()
-                    .fill(.white.opacity(0.16))
+                    .fill(DesignTokens.surface.opacity(0.16))
                     .frame(width: isSelected ? 34 : 28, height: isSelected ? 34 : 28)
                 if let asset = PetSoulAsset.from(systemImage: event.systemImage) {
                     PetSoulAssetIcon(
@@ -3617,7 +3707,7 @@ private struct JourneyEventMarker: View {
                     .lineLimit(1)
                     .padding(.vertical, 4)
                     .padding(.horizontal, 7)
-                    .background(.white.opacity(0.9))
+                    .background(DesignTokens.surface.opacity(0.9))
                     .clipShape(Capsule())
                     .transition(.opacity.combined(with: .scale))
             }
@@ -3639,11 +3729,11 @@ private struct RouteStopMarker: View {
                 .fill(tint.opacity((isActive ? 0.9 : 0.68) * phase.opacity))
                 .frame(width: isActive || phase == .current ? 22 : 14, height: isActive || phase == .current ? 22 : 14)
                 .overlay {
-                    Circle().stroke(.white.opacity(0.95), lineWidth: isActive || phase == .current ? 3 : 2)
+                    Circle().stroke(DesignTokens.surfaceStroke.opacity(0.95), lineWidth: isActive || phase == .current ? 3 : 2)
                 }
         }
         .opacity(phase == .past && !isActive ? 0.72 : 1)
-        .shadow(color: DesignTokens.ink.opacity(isActive ? 0.12 : 0.06), radius: isActive ? 8 : 4, x: 0, y: 4)
+        .shadow(color: DesignTokens.deepInk.opacity(isActive ? 0.12 : 0.06), radius: isActive ? 8 : 4, x: 0, y: 4)
     }
 }
 
@@ -3656,9 +3746,16 @@ private struct LivePetMarkerView: View {
     var activityKind: JourneyActivitySnapshot.Kind
     var animationHint: String
     var tint: Color
+    var headingDegrees: Double? = nil
 
     private var isSleepMode: Bool {
         activityKind == .resting || animationHint == "sleep"
+    }
+
+    /// 朝东走向右倾、朝西走向左倾,南北向不倾,最多 6°——只是一点身体语言。
+    private var leanAngle: Double {
+        guard let headingDegrees else { return 0 }
+        return sin(headingDegrees * .pi / 180) * 6
     }
 
     var body: some View {
@@ -3674,9 +3771,9 @@ private struct LivePetMarkerView: View {
                     .stroke(tint.opacity(isSleepMode ? 0.28 : 0.42), lineWidth: activityKind == .transporting ? 1.4 : 1)
                     .frame(width: activityKind == .transporting ? 56 : 50, height: activityKind == .transporting ? 56 : 50)
                 Circle()
-                    .fill(.white.opacity(isSleepMode ? 0.90 : 0.96))
+                    .fill(DesignTokens.surface.opacity(isSleepMode ? 0.90 : 0.96))
                     .frame(width: 42, height: 42)
-                    .shadow(color: DesignTokens.ink.opacity(0.14), radius: 14, x: 0, y: 7)
+                    .shadow(color: DesignTokens.deepInk.opacity(0.14), radius: 14, x: 0, y: 7)
                 if let avatar = PetAvatarStore.image(for: petID) {
                     Image(uiImage: avatar)
                         .resizable()
@@ -3713,6 +3810,8 @@ private struct LivePetMarkerView: View {
                         .offset(x: isSleepMode ? 19 : 22, y: isSleepMode ? -17 : -18)
                 }
             }
+            .rotationEffect(.degrees(leanAngle))
+            .animation(.easeInOut(duration: 0.8), value: leanAngle)
 
             VStack(spacing: 1) {
                 Text(name)
@@ -3724,7 +3823,7 @@ private struct LivePetMarkerView: View {
             .foregroundStyle(DesignTokens.ink)
             .padding(.vertical, 5)
             .padding(.horizontal, 9)
-            .background(.white.opacity(0.92))
+            .background(DesignTokens.surface.opacity(0.92))
             .clipShape(Capsule())
         }
     }
@@ -3837,9 +3936,9 @@ private struct CompanionPetMarkerView: View {
                 }
 
                 Circle()
-                    .fill(.white.opacity(0.95))
+                    .fill(DesignTokens.surface.opacity(0.95))
                     .frame(width: isSelected ? 44 : 40, height: isSelected ? 44 : 40)
-                    .shadow(color: DesignTokens.ink.opacity(0.14), radius: 12, x: 0, y: 7)
+                    .shadow(color: DesignTokens.deepInk.opacity(0.14), radius: 12, x: 0, y: 7)
 
                 Circle()
                     .fill(companion.tint.opacity(isSelected ? 0.18 : 0.13))
@@ -3870,9 +3969,9 @@ private struct CompanionPetMarkerView: View {
                     .frame(maxWidth: 86)
                     .padding(.vertical, 4)
                     .padding(.horizontal, 7)
-                    .background(.white.opacity(isSelected ? 0.96 : 0.9))
+                    .background(DesignTokens.surface.opacity(isSelected ? 0.96 : 0.9))
                     .clipShape(Capsule())
-                    .shadow(color: DesignTokens.ink.opacity(isSelected ? 0.10 : 0.04), radius: 8, x: 0, y: 4)
+                    .shadow(color: DesignTokens.deepInk.opacity(isSelected ? 0.10 : 0.04), radius: 8, x: 0, y: 4)
                     .transition(.opacity.combined(with: .scale))
             }
         }
@@ -3898,7 +3997,7 @@ private struct FeedbackButton: View {
                 .minimumScaleFactor(0.78)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(.white.opacity(0.78))
+                .background(DesignTokens.surface.opacity(0.78))
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.controlRadius, style: .continuous))
                 .overlay {
                     RoundedRectangle(cornerRadius: DesignTokens.controlRadius, style: .continuous)
@@ -4167,13 +4266,20 @@ private struct DemoCompanionPet: Identifiable {
     var showsLabel: Bool
 
     static func samples(around events: [JourneyMapEvent], fallback coordinate: CLLocationCoordinate2D) -> [DemoCompanionPet] {
-        let samples: [(String, PetType, String, CoordinateOffset, Color, Bool, String, String)] = [
-            ("Momo", .cat, "晒太阳", CoordinateOffset(latitude: 0.00084, longitude: 0.00074), DesignTokens.clay, true, "它选了一块安静的台阶，闭着眼睛听街边的声音。", "等阳光变软一点再继续走"),
-            ("Lucky", .dog, "等面包", CoordinateOffset(latitude: -0.00092, longitude: 0.00078), DesignTokens.amber, false, "它在小店门口闻到刚烤好的香气，正耐心排队。", "可能会带走一小份路上的点心"),
-            ("Nana", .parrot, "看橱窗", CoordinateOffset(latitude: 0.00072, longitude: -0.00096), DesignTokens.sage, true, "它停在玻璃窗前，像在研究里面一排亮亮的小物件。", "看完橱窗就飞去更安静的树边"),
-            ("豆豆", .rabbit, "听风铃", CoordinateOffset(latitude: -0.00086, longitude: -0.00088), DesignTokens.dusk, false, "它躲在人少的角落，耳朵跟着风铃轻轻动。", "再听一会儿就回到草地旁"),
-            ("米粒", .hamster, "找补给", CoordinateOffset(latitude: 0.00104, longitude: -0.00066), DesignTokens.pollen, false, "它绕进灯光稳定的小店，挑了一个适合路上带着的小东西。", "可能会把这个小东西放进背包")
+        // 常驻 NPC 阵容——与后端 communicator/npc_society.py 是同一批身份,改动需两边同步。
+        // 朋友圈里点赞的邻居和地图上遇到的同伴必须是同一批,世界才是同一个。
+        let cast: [(String, PetType, String, CoordinateOffset, Color, Bool, String, String)] = [
+            ("Nana", .cat, "看橱窗", CoordinateOffset(latitude: 0.00072, longitude: -0.00096), DesignTokens.clay, true, "它蹲在玻璃窗前，像在研究里面一排亮亮的小物件。", "看完橱窗就去晒下一段太阳"),
+            ("团子", .dog, "等面包", CoordinateOffset(latitude: -0.00092, longitude: 0.00078), DesignTokens.amber, true, "它在小店门口闻到刚烤好的香气，正耐心排队。", "可能会带走一小份路上的点心"),
+            ("啾啾", .parrot, "学人说话", CoordinateOffset(latitude: 0.00084, longitude: 0.00074), DesignTokens.sage, false, "它停在树梢上，把刚听到的一句话小声学了一遍。", "学会了就飞去更安静的树边"),
+            ("Momo", .rabbit, "听风铃", CoordinateOffset(latitude: -0.00086, longitude: -0.00088), DesignTokens.dusk, false, "它躲在人少的角落，耳朵跟着风铃轻轻动。", "再听一会儿就把这里记进小地图"),
+            ("米粒", .hamster, "找补给", CoordinateOffset(latitude: 0.00104, longitude: -0.00066), DesignTokens.pollen, false, "它绕进灯光稳定的小店，挑了一个适合路上带着的小东西。", "可能会把这个小东西放进背包"),
+            ("Lucky", .dog, "追光斑", CoordinateOffset(latitude: 0.00058, longitude: 0.00102), DesignTokens.amber, false, "它追着一块移动的光斑跑了半条街，尾巴摇个不停。", "追到光就去下一条街巡逻")
         ]
+
+        // 每天轮换出场 5 位,街上的邻居有自己的生活,而不是永远同一张合影
+        let dayIndex = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
+        let samples = (0..<5).map { cast[(dayIndex + $0) % cast.count] }
 
         var occupied = events.map(\.coordinate)
         var companions: [DemoCompanionPet] = []
@@ -4985,7 +5091,14 @@ private extension ScheduledTransportLeg {
     }
 
     func liveCoordinate(at date: Date) -> CLLocationCoordinate2D {
-        let progress = timelineProgress(at: date)
+        let total = max(1, scheduledArrival.timeIntervalSince(scheduledDeparture))
+        let elapsed = date.timeIntervalSince(scheduledDeparture)
+        let progress = JourneyMotion.pacedProgress(
+            elapsed: elapsed,
+            duration: total,
+            mode: mode,
+            seed: JourneyMotion.seed(id)
+        )
         return JourneyMotion.coordinate(on: routeCoordinates, progress: progress) ?? originCoordinate
     }
 
@@ -5051,5 +5164,611 @@ private extension String {
         text = text.replacingOccurrences(of: #"\s+([。；;，,])"#, with: "$1", options: .regularExpression)
         text = text.replacingOccurrences(of: #"([，,。；;])\1+"#, with: "$1", options: .regularExpression)
         return text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "·,，;；。")))
+    }
+}
+
+// MARK: - TA 的一天(走马灯回顾)
+
+private struct DayRecapChapter: Identifiable, Equatable {
+    enum Kind {
+        case move
+        case stay
+    }
+
+    let id: Int
+    var kind: Kind
+    var title: String
+    var subtitle: String
+    var route: [CLLocationCoordinate2D]
+    var coordinate: CLLocationCoordinate2D
+    var tint: Color
+    var systemImage: String
+    var imageURL: URL?
+    var duration: TimeInterval
+
+    static func == (lhs: DayRecapChapter, rhs: DayRecapChapter) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+private enum DayRecapBuilder {
+    static func chapters(
+        events: [JourneyMapEvent],
+        routePlan: JourneyRoutePlan,
+        postcards: [Postcard]
+    ) -> [DayRecapChapter] {
+        guard !events.isEmpty else { return [] }
+        let todayPhotos = postcards.filter { Calendar.current.isDateInToday($0.timestamp) && $0.imageURL != nil }
+        let photoPool = todayPhotos.isEmpty ? postcards.filter { $0.imageURL != nil } : todayPhotos
+
+        let hasRealRoute = routePlan.source == .backendPolyline || routePlan.source == .mapKitWalking
+
+        var chapters: [DayRecapChapter] = []
+        var stayCount = 0
+        for (index, stop) in events.enumerated() {
+            if index > 0 {
+                let slice = routeSlice(
+                    route: hasRealRoute ? routePlan.coordinates : [],
+                    from: events[index - 1].coordinate,
+                    to: stop.coordinate
+                )
+                let meters = JourneyMotion.totalDistance(of: slice)
+                chapters.append(
+                    DayRecapChapter(
+                        id: chapters.count,
+                        kind: .move,
+                        title: "去\(stop.shortPlaceName)",
+                        subtitle: stop.timeLabel,
+                        route: slice,
+                        coordinate: stop.coordinate,
+                        tint: stop.tint,
+                        systemImage: "pawprint.fill",
+                        imageURL: nil,
+                        duration: min(6, max(3.2, meters / 900))
+                    )
+                )
+            }
+            let photoURL = stayCount < photoPool.count ? photoPool[stayCount].imageURL : nil
+            chapters.append(
+                DayRecapChapter(
+                    id: chapters.count,
+                    kind: .stay,
+                    title: stop.title,
+                    subtitle: "\(stop.timeLabel) · \(stop.shortPlaceName)",
+                    route: [],
+                    coordinate: stop.coordinate,
+                    tint: stop.tint,
+                    systemImage: stop.systemImage,
+                    imageURL: photoURL,
+                    duration: photoURL != nil ? 4.4 : 3.2
+                )
+            )
+            stayCount += 1
+        }
+        return chapters
+    }
+
+    private static func routeSlice(
+        route: [CLLocationCoordinate2D],
+        from start: CLLocationCoordinate2D,
+        to end: CLLocationCoordinate2D
+    ) -> [CLLocationCoordinate2D] {
+        guard route.count > 1 else { return arcRoute(from: start, to: end) }
+        let startIndex = nearestIndex(in: route, to: start)
+        let endIndex = nearestIndex(in: route, to: end)
+        var slice: [CLLocationCoordinate2D]
+        if startIndex < endIndex {
+            slice = Array(route[startIndex...endIndex])
+        } else if endIndex < startIndex {
+            slice = Array(route[endIndex...startIndex].reversed())
+        } else {
+            return arcRoute(from: start, to: end)
+        }
+        // 端点对齐到站点坐标,章节衔接时宠物不会跳一下
+        if let first = slice.first, meters(from: first, to: start) > 4 {
+            slice.insert(start, at: 0)
+        }
+        if let last = slice.last, meters(from: last, to: end) > 4 {
+            slice.append(end)
+        }
+        return slice
+    }
+
+    /// 没有真实路网数据时,用一条柔和的二次贝塞尔弧线代替直角折线。
+    private static func arcRoute(from start: CLLocationCoordinate2D, to end: CLLocationCoordinate2D) -> [CLLocationCoordinate2D] {
+        let midLatitude = (start.latitude + end.latitude) / 2
+        let midLongitude = (start.longitude + end.longitude) / 2
+        let deltaLatitude = end.latitude - start.latitude
+        let deltaLongitude = end.longitude - start.longitude
+        let control = CLLocationCoordinate2D(
+            latitude: midLatitude - deltaLongitude * 0.18,
+            longitude: midLongitude + deltaLatitude * 0.18
+        )
+        let sampleCount = 26
+        return (0...sampleCount).map { step in
+            let t = Double(step) / Double(sampleCount)
+            let a = (1 - t) * (1 - t)
+            let b = 2 * t * (1 - t)
+            let c = t * t
+            return CLLocationCoordinate2D(
+                latitude: a * start.latitude + b * control.latitude + c * end.latitude,
+                longitude: a * start.longitude + b * control.longitude + c * end.longitude
+            )
+        }
+    }
+
+    private static func meters(from lhs: CLLocationCoordinate2D, to rhs: CLLocationCoordinate2D) -> CLLocationDistance {
+        CLLocation(latitude: lhs.latitude, longitude: lhs.longitude)
+            .distance(from: CLLocation(latitude: rhs.latitude, longitude: rhs.longitude))
+    }
+
+    private static func nearestIndex(in route: [CLLocationCoordinate2D], to coordinate: CLLocationCoordinate2D) -> Int {
+        let target = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        return route.indices.min { left, right in
+            CLLocation(latitude: route[left].latitude, longitude: route[left].longitude).distance(from: target)
+                < CLLocation(latitude: route[right].latitude, longitude: route[right].longitude).distance(from: target)
+        } ?? 0
+    }
+}
+
+private struct DayRecapView: View {
+    var status: AgentStatus
+    var chapters: [DayRecapChapter]
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var cameraPosition: MapCameraPosition
+    @State private var replayTime: Double = 0
+    @State private var isPaused = false
+    @State private var isFinished = false
+    @State private var cameraGlideTask: Task<Void, Never>?
+
+    init(status: AgentStatus, chapters: [DayRecapChapter]) {
+        self.status = status
+        self.chapters = chapters
+        let start = chapters.first?.coordinate ?? CityPosition.xiamen.coordinate
+        _cameraPosition = State(initialValue: .camera(
+            MapCamera(centerCoordinate: start, distance: 220_000, heading: 0, pitch: 0)
+        ))
+    }
+
+    private var totalDuration: Double {
+        chapters.reduce(0) { $0 + $1.duration }
+    }
+
+    private var currentIndex: Int {
+        var cursor = 0.0
+        for (index, chapter) in chapters.enumerated() {
+            if replayTime < cursor + chapter.duration { return index }
+            cursor += chapter.duration
+        }
+        return max(0, chapters.count - 1)
+    }
+
+    private var currentChapter: DayRecapChapter? {
+        chapters.indices.contains(currentIndex) ? chapters[currentIndex] : nil
+    }
+
+    private var localProgress: Double {
+        guard let chapter = currentChapter, chapter.duration > 0 else { return 0 }
+        return min(1, max(0, (replayTime - chapterStart(currentIndex)) / chapter.duration))
+    }
+
+    private var petPosition: CLLocationCoordinate2D {
+        guard let chapter = currentChapter else {
+            return chapters.first?.coordinate ?? CityPosition.xiamen.coordinate
+        }
+        switch chapter.kind {
+        case .stay:
+            return chapter.coordinate
+        case .move:
+            let eased = localProgress * localProgress * (3 - 2 * localProgress)
+            return JourneyMotion.coordinate(on: chapter.route, progress: eased) ?? chapter.coordinate
+        }
+    }
+
+    private var traveledCoordinates: [CLLocationCoordinate2D] {
+        var coordinates: [CLLocationCoordinate2D] = []
+        for chapter in chapters.prefix(currentIndex) where chapter.kind == .move {
+            coordinates.append(contentsOf: chapter.route)
+        }
+        if let chapter = currentChapter, chapter.kind == .move {
+            coordinates.append(contentsOf: partialRoute(chapter.route, progress: localProgress))
+        }
+        return coordinates
+    }
+
+    private var visitedStops: [DayRecapChapter] {
+        chapters.prefix(currentIndex + 1).filter { $0.kind == .stay }
+    }
+
+    var body: some View {
+        ZStack {
+            if chapters.isEmpty {
+                emptyState
+            } else {
+                Map(position: $cameraPosition, interactionModes: []) {
+                    if traveledCoordinates.count > 1 {
+                        MapPolyline(coordinates: traveledCoordinates)
+                            .stroke(DesignTokens.surfaceStroke.opacity(0.66), style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round))
+                        MapPolyline(coordinates: traveledCoordinates)
+                            .stroke(DesignTokens.amber.opacity(0.85), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+                    }
+
+                    ForEach(visitedStops) { stop in
+                        Annotation("", coordinate: stop.coordinate, anchor: .center) {
+                            Image(systemName: stop.systemImage)
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 24, height: 24)
+                                .background(stop.tint)
+                                .clipShape(Circle())
+                                .overlay {
+                                    Circle().stroke(DesignTokens.surfaceStroke.opacity(0.9), lineWidth: 1.5)
+                                }
+                                .shadow(color: .black.opacity(0.18), radius: 6, x: 0, y: 3)
+                        }
+                    }
+
+                    Annotation("", coordinate: petPosition, anchor: .center) {
+                        RecapPetMarker(petID: status.petID, petType: status.petType ?? .dog)
+                    }
+                }
+                .mapStyle(.standard(elevation: .realistic, pointsOfInterest: .excludingAll, showsTraffic: false))
+                .ignoresSafeArea()
+
+                JourneyMapAtmosphere(tint: currentChapter?.tint ?? DesignTokens.sage)
+
+                overlayControls
+
+                if isFinished {
+                    endCard
+                }
+            }
+        }
+        .task { await runClock() }
+        .onChange(of: currentIndex) { _, newValue in
+            frameCamera(for: newValue)
+        }
+        .onDisappear {
+            cameraGlideTask?.cancel()
+        }
+    }
+
+    private var overlayControls: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("\(status.name) 的一天")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.white)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 14)
+                    .background(.black.opacity(0.32))
+                    .clipShape(Capsule())
+
+                Spacer()
+
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 36, height: 36)
+                        .background(.black.opacity(0.32))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, DesignTokens.pagePadding)
+            .padding(.top, 14)
+
+            Spacer()
+
+            VStack(spacing: 12) {
+                if let chapter = currentChapter {
+                    RecapChapterCard(chapter: chapter)
+                        .id(chapter.id)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+
+                HStack(spacing: 6) {
+                    ForEach(chapters) { chapter in
+                        Capsule()
+                            .fill(chapter.id <= currentIndex ? DesignTokens.amber : DesignTokens.softLine.opacity(0.9))
+                            .frame(width: chapter.id == currentIndex ? 18 : 7, height: 5)
+                    }
+                }
+                .animation(.easeInOut(duration: 0.3), value: currentIndex)
+
+                HStack(spacing: 14) {
+                    RecapControlButton(systemImage: "backward.end.fill") {
+                        jump(to: currentIndex - 1)
+                    }
+                    RecapControlButton(systemImage: isPaused ? "play.fill" : "pause.fill", size: 52) {
+                        isPaused.toggle()
+                        if isPaused {
+                            cameraGlideTask?.cancel()
+                        } else if let chapter = currentChapter, chapter.kind == .move {
+                            startCameraGlide(for: chapter, fromProgress: localProgress)
+                        }
+                    }
+                    RecapControlButton(systemImage: "forward.end.fill") {
+                        jump(to: currentIndex + 1)
+                    }
+                }
+            }
+            .padding(.horizontal, DesignTokens.pagePadding)
+            .padding(.bottom, 26)
+            .animation(.easeInOut(duration: 0.35), value: currentIndex)
+        }
+    }
+
+    private var endCard: some View {
+        ZStack {
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+
+            VStack(spacing: 14) {
+                RecapPetMarker(petID: status.petID, petType: status.petType ?? .dog, size: 74)
+
+                Text("今天也认真生活过啦")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(DesignTokens.ink)
+                Text("\(status.name) 走过 \(visitedStops.count) 个地方,把喜欢的都记下来了。")
+                    .font(.subheadline)
+                    .foregroundStyle(DesignTokens.secondaryInk)
+                    .multilineTextAlignment(.center)
+
+                HStack(spacing: 10) {
+                    Button {
+                        replayTime = 0
+                        isFinished = false
+                        isPaused = false
+                        frameCamera(for: 0)
+                    } label: {
+                        Label("再看一遍", systemImage: "arrow.counterclockwise")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(DesignTokens.mist.opacity(0.7))
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        dismiss()
+                    } label: {
+                        Label("晚安", systemImage: "moon.stars.fill")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(DesignTokens.dusk)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(22)
+            .frame(maxWidth: 330)
+            .background(DesignTokens.surface.opacity(0.97))
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .shadow(color: .black.opacity(0.2), radius: 30, x: 0, y: 14)
+        }
+        .transition(.opacity)
+    }
+
+    private var emptyState: some View {
+        ZStack {
+            AppBackground()
+            VStack(spacing: 10) {
+                Image(systemName: "sun.horizon.fill")
+                    .font(.system(size: 38))
+                    .foregroundStyle(DesignTokens.amber)
+                Text("今天的故事还没展开")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(DesignTokens.ink)
+                Text("等 TA 出门走过几个地方,晚上再来看这一天。")
+                    .font(.subheadline)
+                    .foregroundStyle(DesignTokens.secondaryInk)
+                Button("好") { dismiss() }
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.top, 6)
+            }
+        }
+    }
+
+    private func chapterStart(_ index: Int) -> Double {
+        chapters.prefix(index).reduce(0) { $0 + $1.duration }
+    }
+
+    private func jump(to index: Int) {
+        guard chapters.indices.contains(index) else { return }
+        replayTime = chapterStart(index)
+        isFinished = false
+    }
+
+    private func runClock() async {
+        try? await Task.sleep(for: .milliseconds(750))
+        frameCamera(for: 0)
+        var last = Date()
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .milliseconds(40))
+            let now = Date()
+            let delta = now.timeIntervalSince(last)
+            last = now
+            guard !isPaused, !isFinished, !chapters.isEmpty else { continue }
+            replayTime += delta
+            if replayTime >= totalDuration {
+                replayTime = totalDuration
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    isFinished = true
+                }
+            }
+        }
+    }
+
+    private func frameCamera(for index: Int) {
+        guard chapters.indices.contains(index) else { return }
+        let chapter = chapters[index]
+        switch chapter.kind {
+        case .stay:
+            cameraGlideTask?.cancel()
+            withAnimation(.easeInOut(duration: 0.9)) {
+                cameraPosition = .camera(
+                    MapCamera(centerCoordinate: chapter.coordinate, distance: 1_500, heading: 24, pitch: 58)
+                )
+            }
+        case .move:
+            startCameraGlide(for: chapter, fromProgress: 0)
+        }
+    }
+
+    /// 移动章节的滑轨跟拍:先快速切到起点机位,再让镜头以线性速度滑向终点,与沿路线移动的宠物同行。
+    private func startCameraGlide(for chapter: DayRecapChapter, fromProgress: Double) {
+        cameraGlideTask?.cancel()
+        cameraGlideTask = Task { @MainActor in
+            guard let start = chapter.route.first, let end = chapter.route.last else { return }
+            let meters = max(600, JourneyMotion.totalDistance(of: chapter.route))
+            let distance = min(max(meters * 2.2, 1_600), 2_400_000)
+            let heading = JourneyMotion.bearingDegrees(from: start, to: end)
+            let pitch: Double = meters > 80_000 ? 18 : 52
+            let anchor = JourneyMotion.coordinate(on: chapter.route, progress: fromProgress) ?? start
+            withAnimation(.easeInOut(duration: 0.45)) {
+                cameraPosition = .camera(MapCamera(centerCoordinate: anchor, distance: distance, heading: heading, pitch: pitch))
+            }
+            try? await Task.sleep(for: .milliseconds(480))
+            guard !Task.isCancelled else { return }
+            let remaining = max(0.6, chapter.duration * (1 - fromProgress) - 0.5)
+            withAnimation(.linear(duration: remaining)) {
+                cameraPosition = .camera(MapCamera(centerCoordinate: end, distance: distance, heading: heading, pitch: pitch))
+            }
+        }
+    }
+
+    private func partialRoute(_ route: [CLLocationCoordinate2D], progress: Double) -> [CLLocationCoordinate2D] {
+        guard route.count > 1, progress > 0 else { return [] }
+        let total = JourneyMotion.totalDistance(of: route)
+        guard total > 0 else { return [] }
+        let target = total * min(1, progress)
+        var walked = 0.0
+        var result: [CLLocationCoordinate2D] = [route[0]]
+        for index in 0..<(route.count - 1) {
+            let start = route[index]
+            let end = route[index + 1]
+            let segment = CLLocation(latitude: start.latitude, longitude: start.longitude)
+                .distance(from: CLLocation(latitude: end.latitude, longitude: end.longitude))
+            if walked + segment >= target {
+                let local = segment == 0 ? 0 : (target - walked) / segment
+                result.append(
+                    CLLocationCoordinate2D(
+                        latitude: start.latitude + (end.latitude - start.latitude) * local,
+                        longitude: start.longitude + (end.longitude - start.longitude) * local
+                    )
+                )
+                return result
+            }
+            walked += segment
+            result.append(end)
+        }
+        return result
+    }
+}
+
+private struct RecapControlButton: View {
+    var systemImage: String
+    var size: CGFloat = 42
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: size * 0.34, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: size, height: size)
+                .background(.black.opacity(0.34))
+                .clipShape(Circle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct RecapPetMarker: View {
+    var petID: String
+    var petType: PetType
+    var size: CGFloat = 46
+
+    var body: some View {
+        Group {
+            if let image = PetAvatarStore.image(for: petID) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                ZStack {
+                    DesignTokens.petal
+                    Image(systemName: petType.symbolName)
+                        .font(.system(size: size * 0.44, weight: .semibold))
+                        .foregroundStyle(DesignTokens.clay)
+                }
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .overlay {
+            Circle().stroke(.white, lineWidth: 2)
+        }
+        .shadow(color: .black.opacity(0.22), radius: 10, x: 0, y: 5)
+    }
+}
+
+private struct RecapChapterCard: View {
+    var chapter: DayRecapChapter
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let imageURL = chapter.imageURL {
+                AsyncImage(url: imageURL) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    default:
+                        DesignTokens.mist
+                    }
+                }
+                .frame(height: 128)
+                .frame(maxWidth: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+
+            HStack(spacing: 10) {
+                Image(systemName: chapter.systemImage)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(chapter.tint)
+                    .frame(width: 32, height: 32)
+                    .background(chapter.tint.opacity(0.13))
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(chapter.title)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(DesignTokens.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    Text(chapter.subtitle)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(DesignTokens.secondaryInk)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 0)
+            }
+        }
+        .padding(12)
+        .background(DesignTokens.surface.opacity(0.94))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .shadow(color: .black.opacity(0.14), radius: 16, x: 0, y: 8)
     }
 }

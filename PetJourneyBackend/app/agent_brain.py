@@ -23,6 +23,9 @@ class AgentTurnContext:
     owner_visible_note: str | None = None
 
 
+CONTENT_INTENTS = ("none", "moment", "postcard")
+
+
 @dataclass(frozen=True, slots=True)
 class AgentUtterance:
     animal_text: str
@@ -30,6 +33,7 @@ class AgentUtterance:
     tone: str
     language_style: str
     model: str
+    content_intent: str = "none"
 
 
 class PetAgentBrain(Protocol):
@@ -56,7 +60,20 @@ class MockPetAgentBrain:
             tone=tone,
             language_style=self._language_style(context.pet.pet_type),
             model=self.settings.agent_model,
+            content_intent=self._proposed_intent(context),
         )
+
+    def _proposed_intent(self, context: AgentTurnContext) -> str:
+        """事件显著性启发式:大事提议明信片,小确幸提议朋友圈,普通时刻多数保持沉默。"""
+        text = f"{context.trigger} {context.scene}"
+        postcard_markers = ("到了", "抵达", "第一次", "出发", "登机", "启程", "纪念", "世界杯", "arrival", "departed")
+        moment_markers = ("咖啡", "公园", "海", "夕阳", "晒太阳", "好吃", "遇到", "风", "花", "安静", "sunset", "cafe")
+        if any(marker in text for marker in postcard_markers):
+            return "postcard"
+        if any(marker in text for marker in moment_markers):
+            return "moment"
+        seed = sum(ord(ch) for ch in text)
+        return "moment" if seed % 5 == 0 else "none"
 
     def config_snapshot(self) -> dict[str, str | bool | float]:
         return {
@@ -117,6 +134,7 @@ class OpenAIPetAgentBrain:
                 tone=str(data.get("tone") or context.trigger).strip(),
                 language_style=self._normalized_language_style(data.get("language_style"), context),
                 model=str(response.get("model") or self.settings.agent_model),
+                content_intent=self._normalized_intent(data.get("content_intent")),
             )
         except (KeyError, TypeError, ValueError) as exc:
             self.last_remote_call_succeeded = False
@@ -156,12 +174,13 @@ class OpenAIPetAgentBrain:
                     "schema": {
                         "type": "object",
                         "additionalProperties": False,
-                        "required": ["animal_text", "translation", "tone", "language_style"],
+                        "required": ["animal_text", "translation", "tone", "language_style", "content_intent"],
                         "properties": {
                             "animal_text": {"type": "string"},
                             "translation": {"type": "string"},
                             "tone": {"type": "string"},
                             "language_style": {"type": "string"},
+                            "content_intent": {"type": "string", "enum": list(CONTENT_INTENTS)},
                         },
                     },
                 },
@@ -258,6 +277,11 @@ class OpenAIPetAgentBrain:
             return message.replace(self.settings.openai_api_key, "[REDACTED]")
         return message
 
+    def _normalized_intent(self, value: object) -> str:
+        if isinstance(value, str) and value.strip() in CONTENT_INTENTS:
+            return value.strip()
+        return "none"
+
     def _normalized_language_style(self, value: object, context: AgentTurnContext) -> str:
         fallback_style = self.fallback._language_style(context.pet.pet_type)
         if not isinstance(value, str):
@@ -282,7 +306,11 @@ class OpenAIPetAgentBrain:
             "tiny repeated words for parrots, or gentle nonverbal signals for quiet animals such as rabbits. "
             "Put the readable Chinese meaning in translation. language_style must match the pet type from the context. "
             "Keep it emotionally warm, restrained, and autonomous. "
-            "Never imply the owner controls the pet's feelings or route choices."
+            "Never imply the owner controls the pet's feelings or route choices. "
+            "Also decide content_intent: whether this moment is worth sharing. "
+            "Use 'postcard' only for genuinely memorable milestones (first arrival in a new city, departures, big events). "
+            "Use 'moment' for small warm everyday scenes worth a casual friends-circle post. "
+            "Use 'none' for ordinary moments — most moments should be 'none'; a real pet does not share everything."
         )
 
     def _context_payload(self, context: AgentTurnContext) -> dict[str, object]:
