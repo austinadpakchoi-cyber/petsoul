@@ -35,6 +35,16 @@ final class PetJourneyAppDelegate: NSObject, UIApplicationDelegate, UNUserNotifi
     ) async -> UNNotificationPresentationOptions {
         [.banner, .sound, .badge]
     }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse
+    ) async {
+        let userInfo = response.notification.request.content.userInfo
+        await MainActor.run {
+            PushDeepLinkRouter.shared.handle(userInfo: userInfo)
+        }
+    }
 }
 
 @MainActor

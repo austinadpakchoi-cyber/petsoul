@@ -75,9 +75,11 @@ class BackgroundAgentScheduler:
             try:
                 before_thought_id = self._latest_state_key(pet.pet_id, "thought")
                 before_postcard_id = self._latest_state_key(pet.pet_id, "postcard")
+                before_message_id = self._latest_state_key(pet.pet_id, "message")
                 status = self.engine.advance_status(pet.pet_id)
                 latest_thought = status.agent_state.latest_thought
                 latest_postcard = status.postcards[0] if status.postcards else None
+                latest_pet_message = self._latest_pet_message(pet.pet_id)
 
                 if latest_postcard and latest_postcard.id != before_postcard_id:
                     agent_turns += 1
@@ -102,10 +104,27 @@ class BackgroundAgentScheduler:
                     notifications_sent += self._sent_count(deliveries)
                     self._remember_thought(pet.pet_id, pet.name, latest_thought)
 
+                # 通讯器延迟回复（pending_resolver 在 advance_status 里兑现）到货时单独提醒。
+                if (
+                    latest_pet_message
+                    and latest_pet_message.id != before_message_id
+                    and before_message_id is not None
+                ):
+                    deliveries = self.notification_dispatcher.send_to_pet(
+                        pet.pet_id,
+                        title=f"{pet.name} 回信了",
+                        body=self._preview(latest_pet_message.text),
+                        category="message",
+                        data={"message_id": latest_pet_message.id},
+                    )
+                    notifications_sent += self._sent_count(deliveries)
+
                 if latest_thought:
                     self._set_latest_state_key(pet.pet_id, "thought", latest_thought.id)
                 if latest_postcard:
                     self._set_latest_state_key(pet.pet_id, "postcard", latest_postcard.id)
+                if latest_pet_message:
+                    self._set_latest_state_key(pet.pet_id, "message", latest_pet_message.id)
             except Exception as exc:
                 errors.append(f"{pet.pet_id}: {exc}")
 
@@ -133,6 +152,18 @@ class BackgroundAgentScheduler:
 
     def _latest_state_key(self, pet_id: str, kind: str) -> str | None:
         return self.storage.get_scheduler_state(f"pet:{pet_id}:latest_{kind}_id")
+
+    def _latest_pet_message(self, pet_id: str):
+        communicator = getattr(self.engine, "communicator_engine", None)
+        message_store = getattr(communicator, "message_store", None)
+        if message_store is None:
+            return None
+        with suppress(Exception):
+            messages = message_store.list_messages(pet_id, limit=10)
+            for message in reversed(messages):
+                if message.sender.value == "pet":
+                    return message
+        return None
 
     def _set_latest_state_key(self, pet_id: str, kind: str, value: str) -> None:
         self.storage.set_scheduler_state(f"pet:{pet_id}:latest_{kind}_id", value)
