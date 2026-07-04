@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 from .moment_store import CommunicatorMomentStore, new_moment_id
+from .npc_society import npc_reactors
 from .schemas import (
     AttachmentState,
     AttachmentType,
@@ -254,30 +255,13 @@ class CommunicatorMomentGenerator:
         mood: str,
         now: datetime,
     ) -> list[MomentSocialReactor]:
-        pool = [
-            ("nana-cat", "Nana", "cat", "🐱", MomentReaction.like, "在附近看见了这条动态"),
-            ("tuanzi-dog", "团子", "dog", "🐶", MomentReaction.like, "也觉得这里很适合慢慢待着"),
-            ("jiujiu-parrot", "啾啾", "parrot", "🦜", MomentReaction.hug, "从公共频道轻轻回应了一下"),
-            ("momo-rabbit", "Momo", "rabbit", "🐰", MomentReaction.like, "把这一刻收藏进小地图"),
-        ]
-        seed = sum(ord(ch) for ch in f"{world.city}-{world.scene_hash}-{source_type.value}-{mood}")
-        count = 1 + seed % 3
-        start = seed % len(pool)
-        reactors: list[MomentSocialReactor] = []
-        for offset in range(count):
-            reactor_id, name, species, avatar, reaction, note = pool[(start + offset) % len(pool)]
-            reactors.append(
-                MomentSocialReactor(
-                    id=reactor_id,
-                    name=name,
-                    species=species,
-                    avatar_emoji=avatar,
-                    reaction=reaction,
-                    note=note,
-                    created_at=now + timedelta(seconds=18 + offset * 31),
-                )
-            )
-        return reactors
+        return npc_reactors(
+            city=world.city,
+            scene_hash=world.scene_hash,
+            source_type=source_type.value,
+            mood=mood,
+            now=now,
+        )
 
     def _reaction_counts(self, reactors: list[MomentSocialReactor]) -> dict[str, int]:
         counts = {

@@ -298,15 +298,40 @@ class PetCommunicatorEngine:
         return self.message_store.list_messages(pet_id, limit=limit)
 
     def list_moments(self, *, pet_id: str, limit: int = 50) -> list[CommunicatorMoment]:
-        self._pet(pet_id)
-        moments = self.moment_store.list_moments(pet_id, limit=limit)
-        if moments:
-            return moments
-
         pet = self._pet(pet_id)
-        world = self._world(pet_id)
-        self.moment_generator.ensure_seed_moments(pet_id=pet_id, pet_name=pet.name, world=world, now=utcnow())
+        if not self.moment_store.list_moments(pet_id, limit=1):
+            world = self._world(pet_id)
+            self.moment_generator.ensure_seed_moments(pet_id=pet_id, pet_name=pet.name, world=world, now=utcnow())
+        # 意图消费必须在种子动态之后:否则首次打开朋友圈时,大脑提议的一条动态会让种子流程误以为已有内容
+        self._consume_agent_content_intent(pet_id=pet_id, now=utcnow())
         return self.moment_store.list_moments(pet_id, limit=limit)
+
+    def _consume_agent_content_intent(self, *, pet_id: str, now: datetime) -> None:
+        """大脑在 agent turn 里提议"这一刻值得分享";这里做终审:频控、场景冷却、精力门槛全部照旧生效。"""
+        consume = getattr(self.journey_engine, "consume_content_intent", None)
+        if not callable(consume):
+            return
+        payload = consume(pet_id)
+        if not payload:
+            return
+        intent = str(payload.get("intent") or "")
+        text = str(payload.get("translation") or payload.get("scene") or "").strip()
+        if intent == "postcard":
+            source_type = MomentSourceType.postcard_candidate
+            text = text or "今天有一个地方，很适合写成一张慢慢寄出的明信片。"
+        elif intent == "moment":
+            source_type = MomentSourceType.journey_event
+            text = text or "刚刚有个瞬间，想放进朋友圈里。"
+        else:
+            return
+        world = self._world(pet_id)
+        self.moment_generator.maybe_create_moment(
+            pet_id=pet_id,
+            source_type=source_type,
+            text=text,
+            world=world,
+            now=now,
+        )
 
     def react_to_moment(
         self,

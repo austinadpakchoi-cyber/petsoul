@@ -252,6 +252,113 @@ struct JourneyMotion {
         return distance(from: coordinate, to: nearest.coordinate) <= maxDistanceMeters ? nearest : nil
     }
 
+    // MARK: - 自然运动
+
+    /// 把线性时间进度重映射为带节奏的位移进度。
+    /// 步行有确定性的"走-停-走"节奏,车船机有起步/到站缓动;同一 seed 在任何设备、任何时刻回放结果一致。
+    static func pacedProgress(
+        elapsed: TimeInterval,
+        duration: TimeInterval,
+        mode: TravelMode?,
+        seed: UInt64
+    ) -> Double {
+        guard duration > 0 else { return 1 }
+        let t = min(max(elapsed / duration, 0), 1)
+        switch mode {
+        case .walk, nil:
+            return walkCadence(t, duration: duration, seed: seed)
+        case .drive, .transit:
+            return trapezoidEase(t, ramp: 0.16)
+        case .flight, .train, .ferry:
+            return trapezoidEase(t, ramp: 0.08)
+        case .stay, .checkIn:
+            return t
+        }
+    }
+
+    /// 停留时的小范围踱步:两组不可通约频率的正弦叠加,慢速、不重复、确定性。
+    static func wanderedCoordinate(
+        around coordinate: CLLocationCoordinate2D,
+        date: Date,
+        seed: UInt64,
+        radiusMeters: Double = 13
+    ) -> CLLocationCoordinate2D {
+        let time = date.timeIntervalSinceReferenceDate
+        let phase = Double(seed % 977) * 0.618
+        let east = sin(time / 19 + phase) * 0.62 + sin(time / 47 + phase * 2.3) * 0.38
+        let north = sin(time / 23 + phase * 1.7) * 0.58 + sin(time / 41 + phase * 3.1) * 0.42
+        let latDelta = (north * radiusMeters) / 111_320
+        let metersPerLonDegree = 111_320 * cos(coordinate.latitude * .pi / 180)
+        let lonDelta = metersPerLonDegree > 1 ? (east * radiusMeters) / metersPerLonDegree : 0
+        return CLLocationCoordinate2D(
+            latitude: coordinate.latitude + latDelta,
+            longitude: coordinate.longitude + lonDelta
+        )
+    }
+
+    static func bearingDegrees(from start: CLLocationCoordinate2D, to end: CLLocationCoordinate2D) -> Double {
+        let lat1 = start.latitude * .pi / 180
+        let lat2 = end.latitude * .pi / 180
+        let deltaLongitude = (end.longitude - start.longitude) * .pi / 180
+        let y = sin(deltaLongitude) * cos(lat2)
+        let x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLongitude)
+        let bearing = atan2(y, x) * 180 / .pi
+        return (bearing + 360).truncatingRemainder(dividingBy: 360)
+    }
+
+    static func seed(_ text: String) -> UInt64 {
+        text.utf8.reduce(0xCBF2_9CE4_8422_2325 as UInt64) { ($0 ^ UInt64($1)) &* 0x0000_0100_0000_01B3 }
+    }
+
+    /// 梯形速度曲线:头尾 ramp 段匀加/减速,中段匀速,总位移归一。
+    private static func trapezoidEase(_ t: Double, ramp: Double) -> Double {
+        let e = min(max(ramp, 0.01), 0.5)
+        let peak = 1 / (1 - e)
+        if t < e {
+            return peak * t * t / (2 * e)
+        }
+        if t > 1 - e {
+            let remaining = 1 - t
+            return 1 - peak * remaining * remaining / (2 * e)
+        }
+        return peak * (e / 2 + (t - e))
+    }
+
+    private static func walkCadence(_ t: Double, duration: TimeInterval, seed: UInt64) -> Double {
+        guard duration > 90 else { return trapezoidEase(t, ramp: 0.2) }
+        let cycleCount = max(2, min(14, Int(duration / 50)))
+        var generator = SplitMix64(seed: seed)
+        var moveWeights: [Double] = []
+        var pauseWeights: [Double] = []
+        for _ in 0..<cycleCount {
+            moveWeights.append(0.7 + generator.nextUnit() * 0.9)
+            pauseWeights.append(0.12 + generator.nextUnit() * 0.3)
+        }
+        pauseWeights[cycleCount - 1] = 0
+
+        let totalTime = zip(moveWeights, pauseWeights).reduce(0.0) { $0 + $1.0 + $1.1 }
+        let totalMove = moveWeights.reduce(0, +)
+        let target = min(max(t, 0), 1) * totalTime
+
+        var timeCursor = 0.0
+        var moveCursor = 0.0
+        for index in 0..<cycleCount {
+            let move = moveWeights[index]
+            let pause = pauseWeights[index]
+            if target < timeCursor + move {
+                let local = (target - timeCursor) / move
+                return (moveCursor + move * trapezoidEase(local, ramp: 0.3)) / totalMove
+            }
+            timeCursor += move
+            moveCursor += move
+            if target < timeCursor + pause {
+                return moveCursor / totalMove
+            }
+            timeCursor += pause
+        }
+        return 1
+    }
+
     private static func interpolate(
         from start: CLLocationCoordinate2D,
         to end: CLLocationCoordinate2D,
@@ -344,6 +451,26 @@ enum RoutePolylineDecoder {
 struct CoordinateOffset {
     var latitude: Double
     var longitude: Double
+}
+
+struct SplitMix64 {
+    private var state: UInt64
+
+    init(seed: UInt64) {
+        state = seed &+ 0x9E37_79B9_7F4A_7C15
+    }
+
+    mutating func next() -> UInt64 {
+        state &+= 0x9E37_79B9_7F4A_7C15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
+        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
+        return z ^ (z >> 31)
+    }
+
+    mutating func nextUnit() -> Double {
+        Double(next() >> 11) * (1.0 / 9_007_199_254_740_992.0)
+    }
 }
 
 extension MKPolyline {

@@ -1,23 +1,39 @@
 import SwiftUI
+import UIKit
 
 enum DesignTokens {
-    static let cardRadius: CGFloat = 8
-    static let controlRadius: CGFloat = 16
+    static let cardRadius: CGFloat = 18
+    static let controlRadius: CGFloat = 14
     static let pagePadding: CGFloat = 18
 
-    static let ink = Color(hex: 0x1F2B2B)
-    static let secondaryInk = Color(hex: 0x687774)
-    static let softLine = Color(hex: 0xD8E1DE)
-    static let porcelain = Color(hex: 0xF7F8F4)
-    static let mist = Color(hex: 0xEEF5F2)
-    static let sky = Color(hex: 0xE9F1F8)
-    static let petal = Color(hex: 0xF7ECEF)
-    static let sage = Color(hex: 0x5F8E81)
-    static let dusk = Color(hex: 0x5D738F)
-    static let clay = Color(hex: 0xB66F5E)
-    static let amber = Color(hex: 0xC8A25E)
-    static let sea = Color(hex: 0x78B7C5)
-    static let pollen = Color(hex: 0xE7C77B)
+    // 自适应色板：日间瓷白，夜间是灯下的暖夜色，不是纯黑。
+    static let ink = Color(light: 0x1F2B2B, dark: 0xE9EEEA)
+    static let secondaryInk = Color(light: 0x687774, dark: 0x9AA8A2)
+    static let softLine = Color(light: 0xD8E1DE, dark: 0x37423E)
+    static let porcelain = Color(light: 0xF7F8F4, dark: 0x131917)
+    static let mist = Color(light: 0xEEF5F2, dark: 0x1A2320)
+    static let sky = Color(light: 0xE9F1F8, dark: 0x16202B)
+    static let petal = Color(light: 0xF7ECEF, dark: 0x261B21)
+    static let sage = Color(light: 0x5F8E81, dark: 0x7FB5A5)
+    static let dusk = Color(light: 0x5D738F, dark: 0x93A9C6)
+    static let clay = Color(light: 0xB66F5E, dark: 0xCF8B78)
+    static let amber = Color(light: 0xC8A25E, dark: 0xD9B678)
+    static let sea = Color(light: 0x78B7C5, dark: 0x8AC5D2)
+    static let pollen = Color(light: 0xE7C77B, dark: 0xE2C88F)
+
+    // 语义表面：卡片、玻璃层与描边高光。
+    static let surface = Color(light: 0xFFFFFF, dark: 0x1F2825)
+    static let surfaceStroke = Color(light: 0xFFFFFF, dark: 0x3D4945)
+
+    // 承载白色文字的实心填充与阴影：两种模式下都保持深色。
+    static let deepInk = Color(light: 0x1F2B2B, dark: 0x0B100F)
+
+    // 纸质纪念物（明信片等）是实物，夜里也保持暖纸配深墨。
+    static let paper = Color(hex: 0xFAF0D6)
+    static let paperShade = Color(hex: 0xF1E4C4)
+    static let paperInk = Color(hex: 0x30352C)
+    static let paperSecondaryInk = Color(hex: 0x77715C)
+    static let paperAccent = Color(hex: 0x5D738F)
 }
 
 extension Color {
@@ -29,6 +45,18 @@ extension Color {
             blue: Double(hex & 0xFF) / 255,
             opacity: opacity
         )
+    }
+
+    init(light: UInt, dark: UInt) {
+        self.init(UIColor { traits in
+            let hex = traits.userInterfaceStyle == .dark ? dark : light
+            return UIColor(
+                red: CGFloat((hex >> 16) & 0xFF) / 255,
+                green: CGFloat((hex >> 8) & 0xFF) / 255,
+                blue: CGFloat(hex & 0xFF) / 255,
+                alpha: 1
+            )
+        })
     }
 }
 
@@ -63,10 +91,12 @@ struct AmbientSignalField: View {
     var density: Int = 18
     var drift: Double = 1
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { timeline in
             Canvas { context, size in
-                let time = timeline.date.timeIntervalSinceReferenceDate * drift
+                let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * drift
                 drawCurrentLines(in: &context, size: size, time: time)
                 drawSignalMotes(in: &context, size: size, time: time)
             }
@@ -132,9 +162,11 @@ struct SignalPulseRings: View {
     var lineWidth: CGFloat = 1.6
     var ringCount: Int = 3
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
-        TimelineView(.animation) { timeline in
-            let time = timeline.date.timeIntervalSinceReferenceDate
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
 
             ZStack {
                 ForEach(0..<ringCount, id: \.self) { index in
@@ -157,13 +189,15 @@ struct SignalBars: View {
     var tint: Color = DesignTokens.sage
     var isActive = true
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { timeline in
             let time = timeline.date.timeIntervalSinceReferenceDate
 
             HStack(alignment: .center, spacing: 3) {
                 ForEach(0..<5, id: \.self) { index in
-                    let height = isActive ? 8 + CGFloat((sin(time * 2.4 + Double(index) * 0.72) + 1) * 5) : 6
+                    let height = barHeight(index: index, time: time)
                     Capsule()
                         .fill(tint.opacity(isActive ? 0.82 : 0.28))
                         .frame(width: 3, height: height)
@@ -172,6 +206,14 @@ struct SignalBars: View {
         }
         .frame(width: 28, height: 22)
         .accessibilityHidden(true)
+    }
+
+    private func barHeight(index: Int, time: TimeInterval) -> CGFloat {
+        guard isActive else { return 6 }
+        if reduceMotion {
+            return [9, 13, 17, 12, 8][index]
+        }
+        return 8 + CGFloat((sin(time * 2.4 + Double(index) * 0.72) + 1) * 5)
     }
 }
 
@@ -195,7 +237,7 @@ struct PrimaryActionButtonStyle: ButtonStyle {
             .background(
                 LinearGradient(
                     colors: [
-                        DesignTokens.ink.opacity(configuration.isPressed ? 0.86 : 0.96),
+                        DesignTokens.deepInk.opacity(configuration.isPressed ? 0.86 : 0.96),
                         DesignTokens.sage.opacity(configuration.isPressed ? 0.86 : 0.96)
                     ],
                     startPoint: .topLeading,
@@ -203,8 +245,9 @@ struct PrimaryActionButtonStyle: ButtonStyle {
                 )
             )
             .clipShape(RoundedRectangle(cornerRadius: DesignTokens.controlRadius, style: .continuous))
-            .shadow(color: DesignTokens.ink.opacity(configuration.isPressed ? 0.08 : 0.18), radius: 16, x: 0, y: 8)
-            .scaleEffect(configuration.isPressed ? 0.985 : 1)
+            .shadow(color: DesignTokens.deepInk.opacity(configuration.isPressed ? 0.08 : 0.18), radius: 16, x: 0, y: 8)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.spring(response: 0.28, dampingFraction: 0.72), value: configuration.isPressed)
     }
 }
 
@@ -215,11 +258,13 @@ struct QuietActionButtonStyle: ButtonStyle {
             .foregroundStyle(DesignTokens.ink)
             .padding(.vertical, 11)
             .padding(.horizontal, 14)
-            .background(.white.opacity(configuration.isPressed ? 0.62 : 0.82))
+            .background(DesignTokens.surface.opacity(configuration.isPressed ? 0.62 : 0.82))
             .clipShape(RoundedRectangle(cornerRadius: DesignTokens.controlRadius, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: DesignTokens.controlRadius, style: .continuous)
                     .stroke(DesignTokens.softLine.opacity(0.8), lineWidth: 1)
             }
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.spring(response: 0.28, dampingFraction: 0.72), value: configuration.isPressed)
     }
 }

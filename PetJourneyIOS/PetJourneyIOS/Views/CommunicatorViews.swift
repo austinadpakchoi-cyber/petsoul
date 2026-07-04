@@ -16,7 +16,7 @@ struct JourneyHomeTabs: View {
 
             CommunicatorHomeView(petID: petID, service: service)
                 .tabItem {
-                    Label("手机", systemImage: "bubble.left.and.text.bubble.right.fill")
+                    Label("通讯器", systemImage: "antenna.radiowaves.left.and.right")
                 }
 
             MemoryHubView(petID: petID, service: service)
@@ -533,7 +533,7 @@ private struct CommunicatorPreviewPanel: View {
             Spacer(minLength: 0)
         }
         .padding(12)
-        .background(.white.opacity(0.66))
+        .background(DesignTokens.surface.opacity(0.66))
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -617,7 +617,7 @@ struct PetChatView: View {
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(DesignTokens.ink)
                         .frame(width: 34, height: 34)
-                        .background(.white.opacity(0.7))
+                        .background(DesignTokens.surface.opacity(0.7))
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -655,7 +655,7 @@ struct PetChatView: View {
                                 .foregroundStyle(DesignTokens.ink)
                                 .padding(.vertical, 7)
                                 .padding(.horizontal, 11)
-                                .background(.white.opacity(0.82))
+                                .background(DesignTokens.surface.opacity(0.82))
                                 .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
@@ -670,7 +670,7 @@ struct PetChatView: View {
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(DesignTokens.ink)
                         .frame(width: 36, height: 36)
-                        .background(.white.opacity(0.82))
+                        .background(DesignTokens.surface.opacity(0.82))
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -681,7 +681,7 @@ struct PetChatView: View {
                     .lineLimit(1...3)
                     .padding(.vertical, 10)
                     .padding(.horizontal, 12)
-                    .background(.white.opacity(0.86))
+                    .background(DesignTokens.surface.opacity(0.86))
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
                 Button {
@@ -736,11 +736,11 @@ private struct ChatStatusStrip: View {
             Spacer(minLength: 0)
         }
         .padding(10)
-        .background(.white.opacity(0.68))
+        .background(DesignTokens.surface.opacity(0.68))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(.white.opacity(0.72), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.72), lineWidth: 1)
         }
     }
 }
@@ -754,7 +754,7 @@ private struct ChatTimeSeparator: View {
             .foregroundStyle(DesignTokens.secondaryInk)
             .padding(.vertical, 4)
             .padding(.horizontal, 8)
-            .background(.white.opacity(0.52))
+            .background(DesignTokens.surface.opacity(0.52))
             .clipShape(Capsule())
             .padding(.bottom, 2)
     }
@@ -784,7 +784,7 @@ private struct PetChatAvatar: View {
         .clipShape(Circle())
         .overlay {
             Circle()
-                .stroke(.white.opacity(0.9), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.9), lineWidth: 1)
         }
         .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
@@ -819,7 +819,7 @@ private struct CommunicatorMessageRow: View {
     private var bubbleColor: Color {
         switch message.sender {
         case .owner: DesignTokens.sage.opacity(0.86)
-        case .pet: .white.opacity(0.9)
+        case .pet: DesignTokens.surface.opacity(0.9)
         case .system: DesignTokens.mist.opacity(0.76)
         }
     }
@@ -979,7 +979,7 @@ private struct CommunicatorAttachmentView: View {
                 .font(.title3)
                 .padding(.vertical, 8)
                 .padding(.horizontal, 11)
-                .background(.white.opacity(0.62))
+                .background(DesignTokens.surface.opacity(0.62))
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         } else if attachment.type == .photo || attachment.type == .photoPlaceholder || attachment.type == .ownerPhoto {
             CommunicatorPhotoAttachmentView(attachment: attachment)
@@ -1001,7 +1001,7 @@ private struct CommunicatorAttachmentView: View {
             }
         }
         .padding(10)
-        .background(.white.opacity(0.72))
+        .background(DesignTokens.surface.opacity(0.72))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
     }
@@ -1059,7 +1059,7 @@ private struct CommunicatorPhotoAttachmentView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .overlay {
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(.white.opacity(0.72), lineWidth: 1)
+                        .stroke(DesignTokens.surfaceStroke.opacity(0.72), lineWidth: 1)
                 }
         } else {
         VStack(alignment: .leading, spacing: 9) {
@@ -1069,7 +1069,7 @@ private struct CommunicatorPhotoAttachmentView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(.white.opacity(0.72), lineWidth: 1)
+                        .stroke(DesignTokens.surfaceStroke.opacity(0.72), lineWidth: 1)
                 )
 
             HStack(spacing: 7) {
@@ -1097,7 +1097,7 @@ private struct CommunicatorPhotoAttachmentView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(10)
-        .background(.white.opacity(0.74))
+        .background(DesignTokens.surface.opacity(0.74))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
     }
@@ -1341,9 +1341,9 @@ private struct MomentSocialReactorRow: View {
                 Text(reactor.avatarEmoji)
                     .font(.caption)
                     .frame(width: 26, height: 26)
-                    .background(.white.opacity(0.86))
+                    .background(DesignTokens.surface.opacity(0.86))
                     .clipShape(Circle())
-                    .overlay(Circle().stroke(.white, lineWidth: 1))
+                    .overlay(Circle().stroke(DesignTokens.surfaceStroke, lineWidth: 1))
                     .offset(x: CGFloat(index) * 17)
             }
         }
@@ -3644,7 +3644,7 @@ private struct CredentialPhotoArchivePreview: View {
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(.white.opacity(0.7), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.7), lineWidth: 1)
         }
         .shadow(color: credential.kind.tint.opacity(0.14), radius: 18, x: 0, y: 8)
     }
@@ -3782,7 +3782,7 @@ private struct PetCredentialPortraitViewer: View {
                             .font(.headline.weight(.bold))
                             .foregroundStyle(.white)
                             .frame(width: 38, height: 38)
-                            .background(.white.opacity(0.14))
+                            .background(DesignTokens.surface.opacity(0.14))
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
@@ -3798,7 +3798,7 @@ private struct PetCredentialPortraitViewer: View {
                     .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                     .overlay {
                         RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .stroke(.white.opacity(0.16), lineWidth: 1)
+                            .stroke(DesignTokens.surfaceStroke.opacity(0.16), lineWidth: 1)
                     }
                     .shadow(color: .black.opacity(0.38), radius: 28, x: 0, y: 16)
                     .padding(.horizontal, DesignTokens.pagePadding)
@@ -3895,7 +3895,7 @@ private struct CredentialWalletTile: View {
         }
         .padding(10)
         .frame(minHeight: 54)
-        .background(isSelected ? credential.kind.tint : .white.opacity(0.74))
+        .background(isSelected ? credential.kind.tint : DesignTokens.surface.opacity(0.74))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous)
@@ -3942,7 +3942,7 @@ private struct CredentialComingSoonTile: View {
                 .clipShape(Capsule())
         }
         .padding(11)
-        .background(.white.opacity(0.68))
+        .background(DesignTokens.surface.opacity(0.68))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous)
@@ -3984,7 +3984,7 @@ private struct PetCredentialCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(.white.opacity(0.38), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.38), lineWidth: 1)
         }
         .overlay(alignment: .top) {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -4158,11 +4158,11 @@ private struct CredentialPortraitGlyph: View {
                 .background(.black.opacity(0.32))
         }
         .frame(width: width, height: height)
-        .background(.white.opacity(0.15))
+        .background(DesignTokens.surface.opacity(0.15))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(.white.opacity(0.25), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.25), lineWidth: 1)
         }
     }
 }
@@ -4191,9 +4191,9 @@ private struct CredentialSeal: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(.white.opacity(0.56), lineWidth: 1.2)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.56), lineWidth: 1.2)
             Circle()
-                .stroke(.white.opacity(0.28), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.28), lineWidth: 1)
                 .padding(5)
             Text(text.uppercased())
                 .font(.system(size: 9, weight: .heavy, design: .rounded))

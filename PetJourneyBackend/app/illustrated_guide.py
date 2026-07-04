@@ -370,30 +370,45 @@ class IllustratedGuideEngine:
             f"{stop.index}. {stop.time or ''} {stop.name}｜{stop.label}".strip()
             for stop in stops[:5]
         )
+        extra_direction = self._short_generation_direction(extra, page_type=page_type)
         return f"""
-Create ONE finished illustrated travel-guide page for PetSoul.
-This must be a real hand-drawn guide image, not an app UI mockup, not a placeholder card, not a wireframe.
+Create ONE finished PetSoul illustrated travel-guide page.
+Make it a real hand-drawn image, not app UI, not a wireframe, not a placeholder.
+Canvas: vertical 9:16, 1024x1536. Language: simplified Chinese, short hand-lettered text only.
 
-Format: vertical mobile illustration, 9:16, 1024x1536.
-Language: simplified Chinese. Keep Chinese text short, readable, and hand-lettered.
+Pet {pet_name} in {city}.
+Title: {title}
+Theme: {theme}
+Pet note: {pet_thought}
 
-Pet: {pet_name}
-City: {city}
-Main title: {title}
-Small theme line: {theme}
-Pet thought bubble: {pet_thought}
-
-Stops in this exact order:
+Use exactly these stops:
 {stop_lines}
 
-Page layout: {self._concise_page_layout(page_type=page_type, template_id=template_id)}
-Visual style: {style.name_zh}. {style.prompt}
-Extra direction: {extra}
+Layout: {self._concise_page_layout(page_type=page_type, template_id=template_id)}
+Style: {style.name_zh}. {style.prompt}
+Direction: {extra_direction}
 
-Draw like a warm travel sketchbook page: cream paper, spiral binding, watercolor mini-scenes, paw prints, washi tape, soft route marks, cute pet mascot, gentle notebook texture.
-Do not include backend fields, API names, coordinates, scores, QR codes, watermarks, real map UI, navigation UI, system buttons, or unfinished placeholder blocks.
-Do not add extra destinations beyond the five stops.
+Warm travel sketchbook feeling: cream paper, watercolor mini-scenes, paw prints, washi tape, soft route marks, cute pet mascot.
+No backend/debug text, coordinates, scores, QR codes, watermark, real map UI, navigation UI, or extra destinations.
 """.strip()
+
+    def _short_generation_direction(self, extra: str, *, page_type: str) -> str:
+        if page_type == "route_map":
+            return (
+                "Draw one simple winding dotted route through markers 1-5. Use tiny watercolor scenes, "
+                "short place names, small time tags, and paw-print route marks. Keep text sparse and readable."
+            )
+        if page_type == "timeline":
+            return (
+                "Draw a quiet vertical timeline from morning to evening. Each stop has one small sketch, "
+                "time, place name, and one short first-person note."
+            )
+        if page_type == "cover":
+            return (
+                "Draw a notebook cover page with large title, pet portrait, taped city snapshot, five-stop strip, "
+                "keyword doodles, and one soft thought bubble."
+            )
+        return self._short_text(extra, limit=180)
 
     def _concise_page_layout(self, *, page_type: str, template_id: str) -> str:
         if page_type == "cover":

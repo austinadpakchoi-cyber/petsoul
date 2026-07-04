@@ -122,10 +122,10 @@ struct PublicWorldView: View {
             }
             .padding(.vertical, 9)
             .padding(.horizontal, 10)
-            .background(.white.opacity(0.88))
+            .background(DesignTokens.surface.opacity(0.88))
             .clipShape(Capsule())
             .overlay {
-                Capsule().stroke(.white.opacity(0.72), lineWidth: 1)
+                Capsule().stroke(DesignTokens.surfaceStroke.opacity(0.72), lineWidth: 1)
             }
 
             Spacer()
@@ -135,16 +135,16 @@ struct PublicWorldView: View {
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(Color(hex: 0x9E7866))
                     .frame(width: 52, height: 52)
-                    .background(.white.opacity(0.88))
+                    .background(DesignTokens.surface.opacity(0.88))
                     .clipShape(Circle())
                     .overlay {
-                        Circle().stroke(.white.opacity(0.72), lineWidth: 1)
+                        Circle().stroke(DesignTokens.surfaceStroke.opacity(0.72), lineWidth: 1)
                     }
             }
             .buttonStyle(.plain)
             .accessibilityLabel("回到地球视角")
         }
-        .shadow(color: DesignTokens.ink.opacity(0.08), radius: 16, x: 0, y: 8)
+        .shadow(color: DesignTokens.deepInk.opacity(0.08), radius: 16, x: 0, y: 8)
     }
 
     private var bottomPanel: some View {
@@ -182,7 +182,7 @@ struct PublicWorldView: View {
                         .font(.caption.weight(.bold))
                         .foregroundStyle(Color(hex: 0x8C7166))
                         .frame(width: 30, height: 30)
-                        .background(.white.opacity(0.76))
+                        .background(DesignTokens.surface.opacity(0.76))
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -203,11 +203,11 @@ struct PublicWorldView: View {
             .primaryActionStyle()
         }
         .padding(14)
-        .background(.white.opacity(0.93))
+        .background(DesignTokens.surface.opacity(0.93))
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(.white.opacity(0.76), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.76), lineWidth: 1)
         }
         .shadow(color: Color(hex: 0x7D5F54).opacity(0.14), radius: 24, x: 0, y: 12)
     }
@@ -1003,7 +1003,7 @@ private struct WorldEventDetailCard: View {
                         .font(.caption.weight(.bold))
                         .foregroundStyle(DesignTokens.secondaryInk)
                         .frame(width: 28, height: 28)
-                        .background(.white.opacity(0.78))
+                        .background(DesignTokens.surface.opacity(0.78))
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -1025,11 +1025,11 @@ private struct WorldEventDetailCard: View {
             }
         }
         .padding(16)
-        .background(.white.opacity(0.94))
+        .background(DesignTokens.surface.opacity(0.94))
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(.white.opacity(0.76), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.76), lineWidth: 1)
         }
         .shadow(color: Color(hex: 0x7D5F54).opacity(0.13), radius: 24, x: 0, y: 12)
     }
@@ -1087,7 +1087,7 @@ private struct WorldLiveStoryTicker: View {
             .clipShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 17, style: .continuous)
-                    .stroke(.white.opacity(0.72), lineWidth: 1)
+                    .stroke(DesignTokens.surfaceStroke.opacity(0.72), lineWidth: 1)
             }
             .id(event.id)
             .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -1158,7 +1158,7 @@ private struct WorldSignalMetric: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8)
         .padding(.horizontal, 8)
-        .background(.white.opacity(0.62))
+        .background(DesignTokens.surface.opacity(0.62))
         .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
     }
 }
@@ -1552,7 +1552,7 @@ private struct WorldNoteCard: View {
                 .lineSpacing(4)
         }
         .padding(16)
-        .background(.white.opacity(0.94))
+        .background(DesignTokens.surface.opacity(0.94))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.controlRadius, style: .continuous))
         .shadow(color: Color(hex: 0x7D5F54).opacity(0.1), radius: 18, x: 0, y: 9)
     }

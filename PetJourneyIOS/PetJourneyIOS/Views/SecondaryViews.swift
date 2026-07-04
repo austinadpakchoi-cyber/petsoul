@@ -483,11 +483,11 @@ private struct IllustratedGuidePageCard: View {
             }
         }
         .padding(10)
-        .background(.white.opacity(0.42))
+        .background(DesignTokens.surface.opacity(0.42))
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(.white.opacity(0.74), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.74), lineWidth: 1)
         )
     }
 }
@@ -575,7 +575,7 @@ private struct IllustratedGuideImagePlaceholder: View {
         }
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(.white.opacity(0.72), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.72), lineWidth: 1)
         )
     }
 
@@ -602,7 +602,7 @@ private struct IllustratedGuideTurnButton: View {
                 .font(.caption.weight(.black))
                 .foregroundStyle(isEnabled ? DesignTokens.ink : DesignTokens.secondaryInk.opacity(0.35))
                 .frame(width: 32, height: 32)
-                .background(.white.opacity(isEnabled ? 0.86 : 0.46))
+                .background(DesignTokens.surface.opacity(isEnabled ? 0.86 : 0.46))
                 .clipShape(Circle())
                 .overlay(
                     Circle()
@@ -726,7 +726,7 @@ private struct IllustratedGuidePreviewCanvas: View {
                     .lineSpacing(2)
             }
             .padding(10)
-            .background(.white.opacity(0.58))
+            .background(DesignTokens.surface.opacity(0.58))
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
             Text("今日路线")
@@ -846,7 +846,7 @@ private struct IllustratedGuidePreviewCanvas: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(10)
-        .background(.white.opacity(0.58))
+        .background(DesignTokens.surface.opacity(0.58))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -872,7 +872,7 @@ private struct IllustratedGuidePreviewCanvas: View {
         }
         .padding(7)
         .frame(width: 190, alignment: .leading)
-        .background(.white.opacity(0.66))
+        .background(DesignTokens.surface.opacity(0.66))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
@@ -1005,7 +1005,7 @@ private struct IllustratedGuidePreviewStopRow: View {
             VStack(spacing: 4) {
                 ZStack {
                     Circle()
-                        .fill(.white.opacity(0.74))
+                        .fill(DesignTokens.surface.opacity(0.74))
                         .frame(width: 30, height: 30)
                     Text("\(stop.index)")
                         .font(.caption.weight(.black))
@@ -1127,7 +1127,7 @@ private struct JourneyDateChip: View {
         .padding(.vertical, 9)
         .padding(.horizontal, 12)
         .frame(minWidth: 112, alignment: .leading)
-        .background(day.isActive ? DesignTokens.mist.opacity(0.78) : .white.opacity(0.56))
+        .background(day.isActive ? DesignTokens.mist.opacity(0.78) : DesignTokens.surface.opacity(0.56))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -1630,7 +1630,7 @@ private struct JourneyChapterHeroCard: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(12)
-                    .background(.white.opacity(0.64))
+                    .background(DesignTokens.surface.opacity(0.64))
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .overlay {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -1701,7 +1701,7 @@ private struct ChapterActionButton: View {
                 .foregroundStyle(isActive ? .white : DesignTokens.ink)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 11)
-                .background(isActive ? DesignTokens.sage : .white.opacity(0.72))
+                .background(isActive ? DesignTokens.sage : DesignTokens.surface.opacity(0.72))
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .overlay {
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -1868,7 +1868,7 @@ private struct JourneyCoreStopRow: View {
                                 .foregroundStyle(DesignTokens.secondaryInk)
                                 .padding(.vertical, 4)
                                 .padding(.horizontal, 7)
-                                .background(.white.opacity(0.66))
+                                .background(DesignTokens.surface.opacity(0.66))
                                 .clipShape(Capsule())
                         }
                     }
@@ -1921,7 +1921,7 @@ private struct JourneyMomentRow: View {
             }
         }
         .padding(10)
-        .background(.white.opacity(0.58))
+        .background(DesignTokens.surface.opacity(0.58))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
@@ -2164,7 +2164,7 @@ private struct GuideDigestMetricChip: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 9)
-        .background(.white.opacity(0.58))
+        .background(DesignTokens.surface.opacity(0.58))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
@@ -2413,7 +2413,7 @@ private struct RouteSegmentRow: View {
         }
         .padding(.vertical, 7)
         .padding(.horizontal, 9)
-        .background(.white.opacity(0.56))
+        .background(DesignTokens.surface.opacity(0.56))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
@@ -2488,8 +2488,15 @@ struct PostcardsView: View {
                                 .foregroundStyle(DesignTokens.secondaryInk)
                         }
 
-                        ForEach(visiblePostcards) { postcard in
+                        ForEach(Array(visiblePostcards.enumerated()), id: \.element.id) { index, postcard in
                             PostcardCard(postcard: postcard)
+                                .rotationEffect(.degrees(index.isMultiple(of: 2) ? 0.5 : -0.5))
+                                .scrollTransition(.animated(.spring(response: 0.5, dampingFraction: 0.85))) { content, phase in
+                                    content
+                                        .opacity(phase.isIdentity ? 1 : 0.55)
+                                        .scaleEffect(phase.isIdentity ? 1 : 0.965)
+                                        .offset(y: phase == .bottomTrailing ? 14 : 0)
+                                }
                         }
                     }
                     .padding(DesignTokens.pagePadding)
@@ -2590,7 +2597,7 @@ struct TravelKitSheetView: View {
                     }
                     .buttonStyle(.plain)
                     .padding(14)
-                    .background(.white.opacity(0.78))
+                    .background(DesignTokens.surface.opacity(0.78))
                     .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous))
                     .overlay {
                         RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous)
@@ -2748,7 +2755,7 @@ private struct TravelWishComposer: View {
                 .font(.body)
                 .textFieldStyle(.plain)
                 .padding(12)
-                .background(.white.opacity(0.76))
+                .background(DesignTokens.surface.opacity(0.76))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
             Button(action: onSubmit) {
@@ -3010,7 +3017,7 @@ private struct TravelQuestGuidePill: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
             .padding(.horizontal, 9)
-            .background(.white.opacity(0.58))
+            .background(DesignTokens.surface.opacity(0.58))
             .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
     }
 }
@@ -3037,7 +3044,7 @@ private struct TravelQuestStopRow: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 10)
-        .background(.white.opacity(0.56))
+        .background(DesignTokens.surface.opacity(0.56))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
@@ -3077,7 +3084,7 @@ private struct TravelBagCard: View {
                 .font(.subheadline)
                 .textFieldStyle(.plain)
                 .padding(12)
-                .background(.white.opacity(0.72))
+                .background(DesignTokens.surface.opacity(0.72))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 142), spacing: 8)], spacing: 8) {
@@ -3126,7 +3133,7 @@ private struct TravelBagItemChip: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 9)
-        .background(.white.opacity(0.62))
+        .background(DesignTokens.surface.opacity(0.62))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
@@ -3695,7 +3702,7 @@ private struct PetGuideSummaryCard: View {
                 }
                 .padding(.vertical, 8)
                 .padding(.horizontal, 10)
-                .background(.white.opacity(0.52))
+                .background(DesignTokens.surface.opacity(0.52))
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
         }
@@ -3726,7 +3733,7 @@ private struct GuideInfoChip: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8)
         .padding(.horizontal, 9)
-        .background(.white.opacity(0.66))
+        .background(DesignTokens.surface.opacity(0.66))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
@@ -3979,11 +3986,11 @@ private struct PostcardCard: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(postcard.location)
                             .font(.caption.weight(.bold))
-                            .foregroundStyle(DesignTokens.secondaryInk)
+                            .foregroundStyle(DesignTokens.paperSecondaryInk)
                             .lineLimit(2)
                         Text(postcard.timestamp.formatted(date: .abbreviated, time: .shortened))
                             .font(.caption2.weight(.semibold))
-                            .foregroundStyle(DesignTokens.secondaryInk.opacity(0.82))
+                            .foregroundStyle(DesignTokens.paperSecondaryInk.opacity(0.82))
                     }
 
                     Spacer(minLength: 0)
@@ -3994,12 +4001,16 @@ private struct PostcardCard: View {
                         Text(postcard.weather)
                             .font(.caption2.weight(.semibold))
                     }
-                    .foregroundStyle(DesignTokens.dusk)
+                    .foregroundStyle(DesignTokens.paperAccent)
                     .padding(.vertical, 8)
                     .padding(.horizontal, 10)
                     .overlay {
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .stroke(DesignTokens.dusk.opacity(0.35), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                            .stroke(DesignTokens.paperAccent.opacity(0.35), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    }
+                    .overlay(alignment: .bottomLeading) {
+                        postmark
+                            .offset(x: -22, y: 10)
                     }
                 }
 
@@ -4011,7 +4022,6 @@ private struct PostcardCard: View {
                     Text(postcard.text.petSoulPetVoiceText)
                         .font(.system(size: 20, weight: .regular, design: .serif))
                         .italic()
-                        .foregroundStyle(DesignTokens.ink)
                         .lineSpacing(5)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -4020,7 +4030,7 @@ private struct PostcardCard: View {
                         .italic()
                         .frame(maxWidth: .infinity, alignment: .trailing)
                 }
-                .foregroundStyle(DesignTokens.ink)
+                .foregroundStyle(DesignTokens.paperInk)
                 .padding(.top, 2)
             }
             .padding(18)
@@ -4032,7 +4042,7 @@ private struct PostcardCard: View {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .stroke(DesignTokens.pollen.opacity(0.32), lineWidth: 1)
         }
-        .shadow(color: DesignTokens.ink.opacity(0.08), radius: 18, x: 0, y: 10)
+        .shadow(color: DesignTokens.deepInk.opacity(0.08), radius: 18, x: 0, y: 10)
     }
 
     private var greetingPlace: String {
@@ -4043,21 +4053,43 @@ private struct PostcardCard: View {
         return pieces.first ?? postcard.location
     }
 
-    private var postcardPaper: Color {
-        Color(red: 0.98, green: 0.94, blue: 0.84)
+    // 邮戳：盖在邮票框左下角，用固定纸面色，与暖纸一起构成"实物"。
+    private var postmark: some View {
+        ZStack {
+            Circle()
+                .stroke(DesignTokens.paperAccent.opacity(0.4), lineWidth: 1.2)
+                .frame(width: 34, height: 34)
+            VStack(spacing: 2.5) {
+                ForEach(0..<3, id: \.self) { _ in
+                    Capsule()
+                        .fill(DesignTokens.paperAccent.opacity(0.34))
+                        .frame(width: 15, height: 1.2)
+                }
+            }
+        }
+        .rotationEffect(.degrees(-12))
+        .allowsHitTesting(false)
+    }
+
+    private var postcardPaper: some ShapeStyle {
+        LinearGradient(
+            colors: [DesignTokens.paper, DesignTokens.paperShade],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 
     private var postcardImagePlaceholder: some View {
         ZStack {
             RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous)
-                .fill(DesignTokens.mist)
+                .fill(DesignTokens.paperShade)
             VStack(spacing: 8) {
                 Image(systemName: "photo")
                     .font(.system(size: 26, weight: .semibold))
                 Text("照片还在路上")
                     .font(.footnote.weight(.semibold))
             }
-            .foregroundStyle(DesignTokens.secondaryInk)
+            .foregroundStyle(DesignTokens.paperSecondaryInk)
         }
         .frame(height: 250)
     }
@@ -4097,7 +4129,7 @@ private struct PostcardImageView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: DesignTokens.cardRadius, style: .continuous)
-                .stroke(.white.opacity(0.58), lineWidth: 1)
+                .stroke(DesignTokens.surfaceStroke.opacity(0.58), lineWidth: 1)
         )
         .clipped()
     }

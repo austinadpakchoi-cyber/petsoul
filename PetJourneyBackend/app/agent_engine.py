@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from math import sin, pi
 from typing import Any
 import uuid
@@ -121,6 +121,7 @@ class JourneyEngine:
         self.economy_engine = economy_engine
         self.owner_intent_brain = owner_intent_brain
         self._journey_plan_cache: dict[tuple[str, str, str, bool], JourneyPlan] = {}
+        self._pending_content_intents: dict[str, dict[str, object]] = {}
         self.communicator_engine: Any | None = None
 
     def attach_communicator_engine(self, communicator_engine: Any) -> None:
@@ -1102,6 +1103,25 @@ class JourneyEngine:
             language_style=speech.language_style,
             model=speech.model,
         )
+        if speech.content_intent in {"moment", "postcard"}:
+            self._pending_content_intents[pet.pet_id] = {
+                "intent": speech.content_intent,
+                "scene": scene,
+                "translation": speech.translation,
+                "created_at": (timestamp or datetime.now(tz=timezone.utc)).isoformat(),
+            }
+
+    def consume_content_intent(self, pet_id: str) -> dict[str, object] | None:
+        """大脑的分享提议只保留两小时;发布与否仍由 communicator 的频控规则终审。"""
+        payload = self._pending_content_intents.pop(pet_id, None)
+        if not payload:
+            return None
+        try:
+            created = datetime.fromisoformat(str(payload.get("created_at")))
+            age = (datetime.now(tz=timezone.utc) - created).total_seconds()
+        except (TypeError, ValueError):
+            return payload
+        return payload if age <= 7_200 else None
 
     def _life_snapshot(
         self,

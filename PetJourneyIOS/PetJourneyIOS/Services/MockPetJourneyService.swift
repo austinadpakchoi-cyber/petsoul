@@ -2711,11 +2711,14 @@ final class MockPetJourneyService: PetJourneyService {
     }
 
     private func mockSocialReactors(seed: String, createdAt: Date) -> [MomentSocialReactor] {
+        // 与后端 communicator/npc_society.py 的常驻 NPC 保持同一批身份
         let pool: [(String, String, String, String, MomentReaction, String)] = [
-            ("nana-cat", "Nana", "cat", "🐱", .like, "在附近看见了这一刻"),
-            ("tuanzi-dog", "团子", "dog", "🐶", .like, "也觉得这里适合慢慢待着"),
-            ("jiujiu-parrot", "啾啾", "parrot", "🦜", .hug, "从公共频道轻轻回应了一下"),
-            ("momo-rabbit", "Momo", "rabbit", "🐰", .like, "把这一刻收藏进小地图")
+            ("npc-nana-cat", "Nana", "cat", "🐱", .like, "在附近的窗台看见了这一刻"),
+            ("npc-tuanzi-dog", "团子", "dog", "🐶", .like, "也觉得这里适合慢慢待着"),
+            ("npc-jiujiu-parrot", "啾啾", "parrot", "🦜", .hug, "从公共频道轻轻回应了一下"),
+            ("npc-momo-rabbit", "Momo", "rabbit", "🐰", .like, "把这一刻收藏进小地图"),
+            ("npc-mili-hamster", "米粒", "hamster", "🐹", .hug, "偷偷把这一刻塞进了腮帮子"),
+            ("npc-lucky-dog", "Lucky", "dog", "🐶", .like, "在街角朝这边汪了一声")
         ]
         let value = seed.unicodeScalars.reduce(0) { $0 + Int($1.value) }
         let count = 1 + value % 3

@@ -8,9 +8,9 @@ struct PetMarkerView: View {
         VStack(spacing: 4) {
             ZStack {
                 Circle()
-                    .fill(.white)
+                    .fill(DesignTokens.surface)
                     .frame(width: 48, height: 48)
-                    .shadow(color: DesignTokens.ink.opacity(0.14), radius: 14, x: 0, y: 7)
+                    .shadow(color: DesignTokens.deepInk.opacity(0.14), radius: 14, x: 0, y: 7)
                 Circle()
                     .fill(DesignTokens.petal)
                     .frame(width: 38, height: 38)
@@ -24,7 +24,7 @@ struct PetMarkerView: View {
                 .foregroundStyle(DesignTokens.ink)
                 .padding(.vertical, 4)
                 .padding(.horizontal, 8)
-                .background(.white.opacity(0.92))
+                .background(DesignTokens.surface.opacity(0.92))
                 .clipShape(Capsule())
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
