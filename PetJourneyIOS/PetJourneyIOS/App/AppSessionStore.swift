@@ -125,6 +125,11 @@ final class AppSessionStore: ObservableObject {
     }
 
     func resetJourney() {
+        if let petID {
+            JourneyCacheRepository.purge(petID: petID)
+            OutboundMessageQueue.purge(petID: petID)
+            MediaCache.purge(petID: petID)
+        }
         petID = nil
         onboardingCompleted = false
     }

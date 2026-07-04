@@ -54,21 +54,32 @@ final class JourneyViewModel: ObservableObject {
     @Published private(set) var receivedPhotoMissionIDs: Set<String>
     @Published private(set) var ownerMessageReceipts: [OwnerMessageReceipt] = []
     @Published private(set) var loadState: LoadState = .loading
+    @Published private(set) var dataFreshness: DataFreshness = .fresh
     @Published var toastMessage: String?
     @Published var hasUnreadPostcard = false
 
     private let petID: String
     private let service: any PetJourneyService
+    private let cache: JourneyCacheRepository
+    private let outbox: OutboundMessageQueue
     private let receivedPhotoMissionStorageKey: String
     private var refreshTask: Task<Void, Never>?
     private var hydrationTask: Task<Void, Never>?
     private var translationCache: [String: ThoughtTranslation] = [:]
     private var lastPostcardCount = 0
+    private var lastRefreshSucceededAt: Date?
     private var illustratedGuideGenerationIDs: Set<String> = []
 
-    init(petID: String, service: any PetJourneyService) {
+    init(
+        petID: String,
+        service: any PetJourneyService,
+        cache: JourneyCacheRepository? = nil,
+        outbox: OutboundMessageQueue? = nil
+    ) {
         self.petID = petID
         self.service = service
+        self.cache = cache ?? JourneyCacheRepository(petID: petID)
+        self.outbox = outbox ?? OutboundMessageQueue(petID: petID)
         receivedPhotoMissionStorageKey = "petsoul.receivedPhotoMissions.\(petID)"
         receivedPhotoMissionIDs = Set(UserDefaults.standard.stringArray(forKey: receivedPhotoMissionStorageKey) ?? [])
     }
@@ -125,16 +136,34 @@ final class JourneyViewModel: ObservableObject {
             async let status = service.fetchAgentStatus(petID: petID)
             async let cityPosition = service.fetchCityPosition(petID: petID)
 
-            self.status = try await status
-            self.cityPosition = try? await cityPosition
-            lastPostcardCount = self.status?.postcards.count ?? 0
-            loadState = self.status == nil ? .empty : .loaded
+            let nextStatus = try await status
+            self.status = nextStatus
+            cache.store(nextStatus, kind: .agentStatus)
+            if let nextPosition = try? await cityPosition {
+                self.cityPosition = nextPosition
+                cache.store(nextPosition, kind: .cityPosition)
+            } else if let cached = cache.load(CityPosition.self, kind: .cityPosition) {
+                self.cityPosition = cached.value
+            }
+            lastPostcardCount = nextStatus.postcards.count
+            markRefreshSucceeded()
+            loadState = .loaded
             hydrationTask = Task { [weak self] in
                 await self?.hydrateInitialDetails()
             }
         } catch {
             if Task.isCancelled { return }
-            loadState = .failed(error.localizedDescription)
+            // 离线冷启动：有缓存就先让 TA 的世界亮起来，标记 stale 待信号恢复。
+            if let cachedStatus = cache.load(AgentStatus.self, kind: .agentStatus) {
+                status = cachedStatus.value
+                cityPosition = cache.load(CityPosition.self, kind: .cityPosition)?.value
+                lastPostcardCount = cachedStatus.value.postcards.count
+                dataFreshness = .stale(cachedStatus.updatedAt)
+                loadState = .loaded
+                hydrateDetailsFromCache()
+            } else {
+                loadState = .failed(error.localizedDescription)
+            }
         }
     }
 
@@ -154,11 +183,13 @@ final class JourneyViewModel: ObservableObject {
             let nextPosition = try? await positionTask
             if let nextPosition {
                 cityPosition = nextPosition
+                cache.store(nextPosition, kind: .cityPosition)
             }
 
             let nextWorldSnapshot = try? await worldSnapshotTask
             if let nextWorldSnapshot {
                 worldSnapshot = nextWorldSnapshot
+                cache.store(nextWorldSnapshot, kind: .worldSnapshot)
             }
             if photoMission == nil || nextStatus.agentState.status != previousJourneyStatus {
                 await refreshPhotoMission()
@@ -167,9 +198,47 @@ final class JourneyViewModel: ObservableObject {
                 visibleThoughtTranslation = nil
             }
             lastPostcardCount = nextCount
+            cache.store(nextStatus, kind: .agentStatus)
+            markRefreshSucceeded()
+            await drainOutboxIfNeeded()
         } catch {
+            dataFreshness = .stale(lastRefreshSucceededAt)
             toastMessage = "通讯信号有点弱，稍后会再试。"
         }
+    }
+
+    private func markRefreshSucceeded() {
+        lastRefreshSucceededAt = Date()
+        dataFreshness = .fresh
+    }
+
+    /// 信号恢复后补发离线期间存下的讯息。
+    private func drainOutboxIfNeeded() async {
+        guard outbox.pendingCount > 0 else { return }
+        await outbox.drain { [service, petID] text in
+            _ = try await service.sendOwnerMessage(
+                petID: petID,
+                request: OwnerMessageRequest(message: text, intentHint: "owner_suggestion_or_companion_message")
+            )
+        }
+        if outbox.pendingCount == 0 {
+            toastMessage = "刚才没送出去的话，已经送达 TA 的世界。"
+        }
+    }
+
+    /// 离线冷启动时用缓存点亮细节面。
+    private func hydrateDetailsFromCache() {
+        if let cached = cache.load(DayPlan.self, kind: .dayPlan) { dayPlan = cached.value }
+        if let cached = cache.load(PetDNA.self, kind: .dna) { dna = cached.value }
+        if let cached = cache.load(WorldSimulationSnapshot.self, kind: .worldSnapshot) { worldSnapshot = cached.value }
+        if let cached = cache.load(JourneyPlan.self, kind: .journeyPlan) {
+            journeyPlan = cached.value
+            remoteRoutePlan = cached.value.compatibilityRoutePlan
+        }
+        if let cached = cache.load(IllustratedGuide.self, kind: .illustratedGuide) { illustratedGuide = cached.value }
+        if let cached = cache.load([TravelQuest].self, kind: .travelQuests) { travelQuests = cached.value }
+        if let cached = cache.load([SouvenirItem].self, kind: .souvenirs) { souvenirs = cached.value }
+        if let cached = cache.load(EconomyResponse.self, kind: .economy) { economy = cached.value }
     }
 
     private func hydrateInitialDetails() async {
@@ -186,36 +255,59 @@ final class JourneyViewModel: ObservableObject {
 
         if let nextDayPlan = try? await dayPlanTask {
             dayPlan = nextDayPlan
+            cache.store(nextDayPlan, kind: .dayPlan)
+        } else if dayPlan == nil, let cached = cache.load(DayPlan.self, kind: .dayPlan) {
+            dayPlan = cached.value
         }
         if let nextDNA = try? await dnaTask {
             dna = nextDNA
+            cache.store(nextDNA, kind: .dna)
+        } else if dna == nil, let cached = cache.load(PetDNA.self, kind: .dna) {
+            dna = cached.value
         }
         if let nextWorldSnapshot = try? await worldSnapshotTask {
             worldSnapshot = nextWorldSnapshot
+            cache.store(nextWorldSnapshot, kind: .worldSnapshot)
         }
         if let nextJourneyPlan = try? await journeyPlanTask {
             journeyPlan = nextJourneyPlan
             remoteRoutePlan = nextJourneyPlan.compatibilityRoutePlan
+            cache.store(nextJourneyPlan, kind: .journeyPlan)
         } else if let fallbackRoutePlan = try? await service.fetchRoutePlan(petID: petID) {
             journeyPlan = nil
             remoteRoutePlan = fallbackRoutePlan
+        } else if journeyPlan == nil, let cached = cache.load(JourneyPlan.self, kind: .journeyPlan) {
+            journeyPlan = cached.value
+            remoteRoutePlan = cached.value.compatibilityRoutePlan
         }
         if let nextIllustratedGuide = try? await illustratedGuideTask {
             illustratedGuide = nextIllustratedGuide
             pendingIllustratedGuide = nextIllustratedGuide
+            cache.store(nextIllustratedGuide, kind: .illustratedGuide)
+        } else if illustratedGuide == nil, let cached = cache.load(IllustratedGuide.self, kind: .illustratedGuide) {
+            illustratedGuide = cached.value
         }
         if let nextPhotoMission = try? await photoMissionTask {
             photoMission = nextPhotoMission
         }
         if let nextTravelQuests = try? await travelQuestTask {
             travelQuests = nextTravelQuests
+            cache.store(nextTravelQuests, kind: .travelQuests)
             await refreshTravelBag()
+        } else if travelQuests.isEmpty, let cached = cache.load([TravelQuest].self, kind: .travelQuests) {
+            travelQuests = cached.value
         }
         if let nextSouvenirs = try? await souvenirTask {
             souvenirs = nextSouvenirs
+            cache.store(nextSouvenirs, kind: .souvenirs)
+        } else if souvenirs.isEmpty, let cached = cache.load([SouvenirItem].self, kind: .souvenirs) {
+            souvenirs = cached.value
         }
         if let nextEconomy = try? await economyTask {
             economy = nextEconomy
+            cache.store(nextEconomy, kind: .economy)
+        } else if economy == nil, let cached = cache.load(EconomyResponse.self, kind: .economy) {
+            economy = cached.value
         }
         if let pendingIllustratedGuide {
             await generateIllustratedGuideIfNeeded(pendingIllustratedGuide)
@@ -413,13 +505,25 @@ final class JourneyViewModel: ObservableObject {
             }
             await refreshPhotoMission()
         } catch {
-            updateOwnerMessageReceipt(
-                id: receiptID,
-                state: .failed,
-                response: "这句话暂时没有送到，等信号好一点可以再发一次。",
-                decision: nil
-            )
-            toastMessage = "这条讯息没有送达，等信号好一点再试。"
+            // 断网时不丢话：先收进发件队列，信号恢复后由 drainOutboxIfNeeded 自动送出。
+            if case PetJourneyError.offline = error {
+                outbox.enqueue(text: clean)
+                updateOwnerMessageReceipt(
+                    id: receiptID,
+                    state: .sending,
+                    response: "信号暂时没有接通，这句话已经收好，恢复后会自动送出。",
+                    decision: nil
+                )
+                toastMessage = "这句话已经收好，信号恢复后会自动送出。"
+            } else {
+                updateOwnerMessageReceipt(
+                    id: receiptID,
+                    state: .failed,
+                    response: "这句话暂时没有送到，等信号好一点可以再发一次。",
+                    decision: nil
+                )
+                toastMessage = "这条讯息没有送达，等信号好一点再试。"
+            }
         }
     }
 
