@@ -46,6 +46,9 @@ final class MockPetJourneyService: PetJourneyService {
     private var communicatorMoments: [String: [CommunicatorMoment]] = [:]
     // 与后端一致：同一 (petID, clientMessageID) 的重发直接回放首次响应
     private var communicatorSendReplays: [String: CommunicatorSendResponse] = [:]
+    private var mockUserID: String?
+    private var mockUserDisplayName: String?
+    private var mockClaimedPetIDs: Set<String> = []
 
     private let cities: [MockCity] = [
         MockCity(
@@ -829,6 +832,48 @@ final class MockPetJourneyService: PetJourneyService {
             items: Array(items),
             sourceNotes: ["示例数据，用于离线预览"]
         )
+    }
+
+    func signInWithApple(request: AppleSignInRequest) async throws -> AuthSessionResponse {
+        let isNew = mockUserID == nil
+        let userID = mockUserID ?? "PU-MOCK0001"
+        mockUserID = userID
+        if let displayName = request.displayName, !displayName.isEmpty {
+            mockUserDisplayName = displayName
+        }
+        return AuthSessionResponse(
+            accessToken: "mock-session-token",
+            userID: userID,
+            displayName: mockUserDisplayName,
+            isNewUser: isNew,
+            pets: mockClaimedPets()
+        )
+    }
+
+    func claimPet(petID: String) async throws -> MeResponse {
+        try ensureJourneyExists(for: petID)
+        guard let userID = mockUserID else {
+            throw PetJourneyError.requestFailed("请先登录")
+        }
+        mockClaimedPetIDs.insert(petID)
+        return MeResponse(
+            userID: userID,
+            displayName: mockUserDisplayName,
+            email: nil,
+            pets: mockClaimedPets()
+        )
+    }
+
+    private func mockClaimedPets() -> [AuthPetSummary] {
+        mockClaimedPetIDs.compactMap { petID in
+            guard let journey = journeys[petID] else { return nil }
+            return AuthPetSummary(
+                petID: petID,
+                name: journey.profile.name,
+                petType: journey.profile.petType,
+                photoURL: journey.profile.photoURL
+            )
+        }
     }
 
     func fetchTravelQuests(petID: String, limit: Int) async throws -> [TravelQuest] {

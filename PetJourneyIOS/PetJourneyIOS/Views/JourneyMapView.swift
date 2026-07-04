@@ -1,3 +1,4 @@
+import AuthenticationServices
 import MapKit
 import SwiftUI
 import UIKit
@@ -20,13 +21,20 @@ struct JourneyMapView: View {
     @State private var selectedWorldCupHost: WorldCupHostCity?
     @State private var introFlightState = IntroFlightState.pending
     @State private var showDayRecap = false
+    @EnvironmentObject private var session: AppSessionStore
+    @AppStorage("account_link_prompted") private var accountLinkPrompted = false
+    @State private var showAccountSheet = false
 
     var onReset: () -> Void
+    private let petID: String
+    private let service: any PetJourneyService
 
     init(petID: String, service: any PetJourneyService, onReset: @escaping () -> Void) {
         _viewModel = StateObject(wrappedValue: JourneyViewModel(petID: petID, service: service))
         _cameraPosition = State(initialValue: Self.introCameraPosition(above: CityPosition.xiamen.coordinate))
         self.onReset = onReset
+        self.petID = petID
+        self.service = service
     }
 
     var body: some View {
@@ -218,6 +226,29 @@ struct JourneyMapView: View {
                     isSignalPanelExpanded = false
                 }
             }
+            .onChange(of: viewModel.hasUnreadPostcard) { _, newValue in
+                guard newValue, !session.isSignedIn, !accountLinkPrompted else { return }
+                accountLinkPrompted = true
+                Task {
+                    try? await Task.sleep(for: .seconds(1.4))
+                    showAccountSheet = true
+                }
+            }
+            .sheet(isPresented: $showAccountSheet) {
+                AccountLinkSheet(
+                    petName: viewModel.status?.name ?? "TA",
+                    isSignedIn: session.isSignedIn,
+                    displayName: session.userDisplayName,
+                    onAuthorized: { identityToken, fullName in
+                        await linkAccount(identityToken: identityToken, fullName: fullName)
+                    },
+                    onSignOut: {
+                        session.signOut()
+                    }
+                )
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+            }
             .onChange(of: viewModel.toastMessage) { _, newValue in
                 guard newValue != nil else { return }
                 Task {
@@ -306,6 +337,9 @@ struct JourneyMapView: View {
                         onShowTravelKit: showTravelKit,
                         onShowSouvenirs: showSouvenirs,
                         onShowDNA: showDNA,
+                        isSignedIn: session.isSignedIn,
+                        accountName: session.userDisplayName,
+                        onShowAccount: { showAccountSheet = true },
                         onReset: onReset
                     )
                     .padding(.horizontal, DesignTokens.pagePadding)
@@ -535,6 +569,25 @@ struct JourneyMapView: View {
         activeSheet = .dna
         Task {
             await viewModel.refreshDetails()
+        }
+    }
+
+    /// 登录成功后把当前宠物认领到账号；返回 nil 表示成功，否则为展示给用户的错误文案
+    private func linkAccount(identityToken: String, fullName: String?) async -> String? {
+        do {
+            let auth = try await service.signInWithApple(
+                request: AppleSignInRequest(identityToken: identityToken, displayName: fullName)
+            )
+            session.storeAuthSession(
+                token: auth.accessToken,
+                userID: auth.userID,
+                displayName: auth.displayName ?? fullName
+            )
+            _ = try? await service.claimPet(petID: petID)
+            viewModel.toastMessage = "TA 的旅程已经和你连在一起了。"
+            return nil
+        } catch {
+            return "这次没有连上，稍后可以从右上角菜单再试。"
         }
     }
 
@@ -1612,6 +1665,9 @@ private struct JourneyTopBar: View {
     var onShowTravelKit: () -> Void
     var onShowSouvenirs: () -> Void
     var onShowDNA: () -> Void
+    var isSignedIn: Bool = false
+    var accountName: String?
+    var onShowAccount: () -> Void = {}
     var onReset: () -> Void
 
     var body: some View {
@@ -1668,6 +1724,13 @@ private struct JourneyTopBar: View {
                     Label("带回的小东西", systemImage: "gift.fill")
                 }
                 Divider()
+                Button(action: onShowAccount) {
+                    if isSignedIn {
+                        Label("账号 · \(accountName ?? "已登录")", systemImage: "checkmark.icloud")
+                    } else {
+                        Label("保存旅程到账号", systemImage: "person.crop.circle.badge.plus")
+                    }
+                }
                 Button(action: onShowDNA) {
                     Label("查看记忆档案", systemImage: "slider.horizontal.3")
                 }
@@ -5770,5 +5833,126 @@ private struct RecapChapterCard: View {
         .background(DesignTokens.surface.opacity(0.94))
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .shadow(color: .black.opacity(0.14), radius: 16, x: 0, y: 8)
+    }
+}
+
+// MARK: - 账号连接（Sign in with Apple）
+
+private struct AccountLinkSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
+
+    var petName: String
+    var isSignedIn: Bool
+    var displayName: String?
+    var onAuthorized: (String, String?) async -> String?
+    var onSignOut: () -> Void
+
+    @State private var isWorking = false
+    @State private var errorMessage: String?
+    @State private var didLink = false
+
+    var body: some View {
+        VStack(spacing: 18) {
+            PetSoulAdaptiveIcon(
+                systemImage: isSignedIn || didLink ? "checkmark.icloud.fill" : "icloud.and.arrow.up",
+                tint: DesignTokens.sage,
+                size: 44
+            )
+            .padding(.top, 26)
+
+            VStack(spacing: 8) {
+                Text(isSignedIn || didLink ? "旅程已经连着你" : "把 \(petName) 的旅程保存下来")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(DesignTokens.ink)
+                    .multilineTextAlignment(.center)
+                Text(isSignedIn || didLink
+                     ? "换手机或重装 App 时，\(petName) 的路线、照片和回忆都会回到你身边。"
+                     : "用 Apple 账号一键保存。以后换手机、重装 App，TA 都还在。")
+                    .font(.subheadline)
+                    .foregroundStyle(DesignTokens.secondaryInk)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+            }
+            .padding(.horizontal, 30)
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.footnote)
+                    .foregroundStyle(DesignTokens.clay)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 26)
+            }
+
+            Spacer(minLength: 0)
+
+            if isSignedIn || didLink {
+                VStack(spacing: 10) {
+                    if let displayName, !displayName.isEmpty {
+                        Text("已登录 · \(displayName)")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(DesignTokens.secondaryInk)
+                    }
+                    Button("好") { dismiss() }
+                        .primaryActionStyle()
+                        .padding(.horizontal, DesignTokens.pagePadding)
+                    Button("退出登录") {
+                        onSignOut()
+                        dismiss()
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(DesignTokens.secondaryInk)
+                }
+                .padding(.bottom, 22)
+            } else {
+                VStack(spacing: 12) {
+                    SignInWithAppleButton(.continue) { request in
+                        request.requestedScopes = [.fullName]
+                    } onCompletion: { result in
+                        handleAuthorization(result)
+                    }
+                    .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
+                    .frame(height: 50)
+                    .padding(.horizontal, DesignTokens.pagePadding)
+                    .disabled(isWorking)
+                    .opacity(isWorking ? 0.55 : 1)
+
+                    Button("先不用，继续旅程") { dismiss() }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(DesignTokens.secondaryInk)
+                }
+                .padding(.bottom, 22)
+            }
+        }
+        .background(AppBackground())
+    }
+
+    private func handleAuthorization(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authorization):
+            guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let tokenData = credential.identityToken,
+                  let identityToken = String(data: tokenData, encoding: .utf8) else {
+                errorMessage = "没有拿到 Apple 的登录凭证，可以再试一次。"
+                return
+            }
+            let fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
+                .compactMap { $0 }
+                .joined(separator: " ")
+            isWorking = true
+            errorMessage = nil
+            Task {
+                let failure = await onAuthorized(identityToken, fullName.isEmpty ? nil : fullName)
+                isWorking = false
+                if let failure {
+                    errorMessage = failure
+                } else {
+                    withAnimation(.easeInOut(duration: 0.25)) { didLink = true }
+                }
+            }
+        case .failure:
+            // 用户主动取消不提示错误
+            break
+        }
     }
 }

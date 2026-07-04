@@ -379,9 +379,21 @@ class JourneyEngine:
         )
 
     def city_position(self, pet_id: str) -> CityPosition:
-        pet = self._pet(pet_id)
-        elapsed = (utcnow() - pet.created_at).total_seconds()
-        return self._city_for_elapsed(elapsed).position
+        # 位置必须与世界快照同源：飞行/移动中返回当前活动坐标，避免与其他模块各说各话
+        try:
+            snapshot = self.world_snapshot(pet_id)
+            activity = snapshot.current_activity
+            return CityPosition(
+                city=activity.city or snapshot.city,
+                lat=activity.lat,
+                lng=activity.lng,
+            )
+        except PetNotFoundError:
+            raise
+        except Exception:
+            pet = self._pet(pet_id)
+            elapsed = (utcnow() - pet.created_at).total_seconds()
+            return self._city_for_elapsed(elapsed).position
 
     def route_plan(self, pet_id: str) -> JourneyRoutePlan:
         pet = self._pet(pet_id)

@@ -50,7 +50,12 @@ from .weather_provider import build_weather_provider
 from .world_simulation import build_world_simulation_engine
 from .schemas import (
     AgentStatus,
+    AppleSignInRequest,
     ArchiveItemRequest,
+    AuthPetSummary,
+    AuthSessionResponse,
+    ClaimPetRequest,
+    MeResponse,
     CityPosition,
     CollectSouvenirsResponse,
     CreatePetResponse,
@@ -100,7 +105,8 @@ from .schemas import (
     TravelWishRequest,
     WorldSimulationSnapshot,
 )
-from .storage import JourneyStorage, utcnow
+from .auth import AuthError, build_auth_service
+from .storage import JourneyStorage, PetOwnershipConflict, PetRecord, utcnow
 
 
 DEMO_FRENCHIE_PROFILE_PHOTO = "demo/frenchie-profile.png"
@@ -110,6 +116,7 @@ DEMO_FRENCHIE_POSTCARD_PHOTO = "demo/frenchie-netcafe-postcard.png"
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or load_settings()
     storage = JourneyStorage(settings.database_path)
+    auth_service = build_auth_service(settings)
     google_client = build_google_maps_service(settings)
     map_provider = build_map_provider(settings, google_client=google_client)
     amap_client = build_amap_web_service(settings)
@@ -674,6 +681,76 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except EconomyConflictError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
 
+    def _auth_pet_summary(pet: PetRecord) -> AuthPetSummary:
+        return AuthPetSummary(
+            pet_id=pet.pet_id,
+            name=pet.name,
+            pet_type=pet.pet_type,
+            photo_url=public_photo_url(settings, pet.photo_path),
+        )
+
+    def _require_user_id(authorization: str | None) -> str:
+        if not auth_service.configured:
+            raise HTTPException(status_code=503, detail="auth is not configured")
+        if not authorization or not authorization.lower().startswith("bearer "):
+            raise HTTPException(status_code=401, detail="missing bearer token")
+        token = authorization.split(" ", 1)[1].strip()
+        try:
+            return auth_service.decode_session_token(token)
+        except AuthError as exc:
+            raise HTTPException(status_code=401, detail="invalid session token") from exc
+
+    def _me_response(user_id: str) -> MeResponse:
+        user = storage.get_user(user_id)
+        if user is None:
+            raise HTTPException(status_code=401, detail="unknown user")
+        pets = [_auth_pet_summary(pet) for pet in storage.list_pets_for_user(user_id)]
+        return MeResponse(
+            user_id=user.user_id,
+            display_name=user.display_name,
+            email=user.email,
+            pets=pets,
+        )
+
+    @app.post("/api/v1/auth/apple", response_model=AuthSessionResponse)
+    def sign_in_with_apple(request: AppleSignInRequest) -> AuthSessionResponse:
+        if not auth_service.configured:
+            raise HTTPException(status_code=503, detail="auth is not configured")
+        try:
+            identity = auth_service.verify_apple_identity_token(request.identity_token)
+        except AuthError as exc:
+            raise HTTPException(status_code=401, detail=str(exc)) from exc
+        user, is_new = storage.upsert_user_by_apple_sub(
+            identity.apple_sub, identity.email, request.display_name
+        )
+        token = auth_service.issue_session_token(user.user_id)
+        pets = [_auth_pet_summary(pet) for pet in storage.list_pets_for_user(user.user_id)]
+        return AuthSessionResponse(
+            access_token=token,
+            user_id=user.user_id,
+            display_name=user.display_name,
+            is_new_user=is_new,
+            pets=pets,
+        )
+
+    @app.get("/api/v1/me", response_model=MeResponse)
+    def current_user(authorization: str | None = Header(default=None)) -> MeResponse:
+        return _me_response(_require_user_id(authorization))
+
+    @app.post("/api/v1/me/claim_pet", response_model=MeResponse)
+    def claim_pet_for_user(
+        request: ClaimPetRequest,
+        authorization: str | None = Header(default=None),
+    ) -> MeResponse:
+        user_id = _require_user_id(authorization)
+        try:
+            storage.claim_pet(request.pet_id, user_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="Pet not found") from exc
+        except PetOwnershipConflict as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return _me_response(user_id)
+
     @app.get("/api/v1/pets/{pet_id}/world_snapshot", response_model=WorldSimulationSnapshot)
     def world_snapshot(pet_id: str) -> WorldSimulationSnapshot:
         return with_not_found(lambda: engine.world_snapshot(pet_id))
@@ -804,17 +881,22 @@ async def save_upload(upload_dir: Path, upload: UploadFile | None, subdir: str =
 
 
 def ensure_demo_media(upload_dir: Path) -> None:
-    source_dir = Path(__file__).resolve().parents[1] / "data" / "uploads" / "demo"
+    # 版本化的 demo 素材（随代码/镜像分发）优先；data/uploads/demo 兼容旧部署
+    candidate_dirs = (
+        Path(__file__).resolve().parent / "assets" / "demo",
+        Path(__file__).resolve().parents[1] / "data" / "uploads" / "demo",
+    )
     target_dir = upload_dir / "demo"
-    if not source_dir.exists():
-        return
-
-    target_dir.mkdir(parents=True, exist_ok=True)
     for filename in (DEMO_FRENCHIE_PROFILE_PHOTO, DEMO_FRENCHIE_POSTCARD_PHOTO):
-        source = source_dir / Path(filename).name
         target = target_dir / Path(filename).name
-        if source.exists() and not target.exists():
-            shutil.copyfile(source, target)
+        if target.exists():
+            continue
+        for source_dir in candidate_dirs:
+            source = source_dir / Path(filename).name
+            if source.exists():
+                target_dir.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(source, target)
+                break
 
 
 def sanitize_filename(filename: str) -> str:

@@ -5,6 +5,9 @@ final class RemotePetJourneyService: PetJourneyService {
     private let client: APIClient
     private var encoder: JSONEncoder { client.encoder }
 
+    /// 会话令牌由 AppSessionStore 提供；有值时所有请求自动带 Authorization 头
+    var authTokenProvider: (() -> String?)?
+
     init(baseURL: URL, session: URLSession = .shared) {
         client = APIClient(baseURL: baseURL, session: session)
     }
@@ -279,6 +282,14 @@ final class RemotePetJourneyService: PetJourneyService {
         return try await get(StreetRankResponse.self, path: "/api/v1/pets/\(petID)/street_rank?theme=\(encodedTheme)")
     }
 
+    func signInWithApple(request: AppleSignInRequest) async throws -> AuthSessionResponse {
+        try await postJSON(AuthSessionResponse.self, path: "/api/v1/auth/apple", body: request)
+    }
+
+    func claimPet(petID: String) async throws -> MeResponse {
+        try await postJSON(MeResponse.self, path: "/api/v1/me/claim_pet", body: ClaimPetRequest(petID: petID))
+    }
+
     private func get<T: Decodable>(_ type: T.Type, path: String) async throws -> T {
         var request = URLRequest(url: endpoint(path))
         request.httpMethod = "GET"
@@ -309,6 +320,10 @@ final class RemotePetJourneyService: PetJourneyService {
 
     /// 传输与重试交给 APIClient；APIError 在此边界归一成 PetJourneyError，调用点无感。
     private func decode<T: Decodable>(_ type: T.Type, from request: URLRequest, retry: RetryPolicy = .none) async throws -> T {
+        var request = request
+        if let token = authTokenProvider?(), !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         do {
             return try await client.send(type, request: request, retry: retry)
         } catch let error as APIError {

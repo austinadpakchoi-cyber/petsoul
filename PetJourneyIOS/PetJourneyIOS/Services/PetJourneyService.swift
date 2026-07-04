@@ -71,4 +71,6 @@ protocol PetJourneyService: AnyObject {
     func generateSelfie(petID: String) async throws -> Postcard
     func fetchCredentialPrompts(petID: String) async throws -> [PetCredentialPrompt]
     func fetchStreetRank(petID: String, theme: String) async throws -> StreetRankResponse
+    func signInWithApple(request: AppleSignInRequest) async throws -> AuthSessionResponse
+    func claimPet(petID: String) async throws -> MeResponse
 }

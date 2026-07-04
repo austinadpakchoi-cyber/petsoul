@@ -65,6 +65,10 @@ class Settings:
     apns_bundle_id: str | None = None
     apns_private_key_path: Path | None = None
 
+    auth_secret: str | None = None
+    apple_auth_mode: str = "live"
+    apple_bundle_id: str | None = None
+
     memory_provider: str = "sqlite"
     postgres_dsn: str | None = None
     memory_embedding_dimensions: int = 64
@@ -75,6 +79,8 @@ class Settings:
 
 def load_settings() -> Settings:
     load_env_file(BASE_DIR / ".env")
+    # 特性开关文件：.env 中已存在的键优先，此文件只补充缺省项
+    load_env_file(BASE_DIR / ".env.features")
     cors_raw = os.getenv("PETJOURNEY_CORS_ORIGINS", "*")
     cors_origins = tuple(item.strip() for item in cors_raw.split(",") if item.strip()) or ("*",)
 
@@ -142,6 +148,9 @@ def load_settings() -> Settings:
         apns_key_id=os.getenv("PETJOURNEY_APNS_KEY_ID"),
         apns_bundle_id=os.getenv("PETJOURNEY_APNS_BUNDLE_ID"),
         apns_private_key_path=_optional_path(os.getenv("PETJOURNEY_APNS_PRIVATE_KEY_PATH")),
+        auth_secret=os.getenv("PETJOURNEY_AUTH_SECRET"),
+        apple_auth_mode=os.getenv("PETJOURNEY_APPLE_AUTH_MODE", "live"),
+        apple_bundle_id=os.getenv("PETJOURNEY_APPLE_BUNDLE_ID"),
         memory_provider=os.getenv("PETJOURNEY_MEMORY_PROVIDER", "sqlite"),
         postgres_dsn=os.getenv("PETJOURNEY_POSTGRES_DSN"),
         memory_embedding_dimensions=int(os.getenv("PETJOURNEY_MEMORY_EMBEDDING_DIMENSIONS", "64")),
@@ -169,7 +178,11 @@ def load_env_file(path: Path) -> None:
         key = key.strip()
         if not key or key in os.environ:
             continue
-        os.environ[key] = _clean_env_value(value)
+        cleaned = _clean_env_value(value)
+        if not cleaned:
+            # 空值视为未配置，不占位，让后续文件（如 .env.features）仍可补充
+            continue
+        os.environ[key] = cleaned
 
 
 def _clean_env_value(value: str) -> str:
