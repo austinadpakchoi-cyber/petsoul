@@ -614,15 +614,21 @@ class PetJourneyApiTests(unittest.TestCase):
             {"immediate", "delayed", "queued_until_photoable_scene", "queued_until_landed", "queued_until_morning"},
         )
         self.assertTrue(visual_payload["owner_message"]["scene_hash"])
-        attachment_types = {
-            attachment["type"]
-            for message in visual_payload["messages"]
-            for attachment in message["attachments"]
-        }
-        self.assertTrue(
-            attachment_types
-            & {"photo_placeholder", "photo_status_card", "pending_photo_request", "location_card"}
-        )
+        for message in visual_payload["messages"]:
+            for attachment in message["attachments"]:
+                # 位置卡只在 location_check 时出现；与正文同文的附件卡不再生成
+                self.assertNotEqual(attachment["type"], "location_card")
+                self.assertNotEqual(
+                    "".join(attachment["text"].split()),
+                    "".join(message["text"].split()),
+                )
+        if visual_payload["reply_policy"]["mode"] == "immediate":
+            attachment_types = {
+                attachment["type"]
+                for message in visual_payload["messages"]
+                for attachment in message["attachments"]
+            }
+            self.assertTrue(attachment_types & {"photo_placeholder", "photo_status_card"})
 
         ack = self.client.post(
             f"/api/v1/pets/{pet_id}/communicator/messages",
@@ -651,7 +657,9 @@ class PetJourneyApiTests(unittest.TestCase):
         self.assertEqual(repeated_payload["intent"], "PHOTO_REQUEST")
         self.assertEqual(repeated_payload["reply_policy"]["mode"], "no_reply_needed")
         self.assertTrue(repeated_payload["reply_policy"]["cooldown_applied"])
-        self.assertEqual(repeated_payload["messages"][0]["attachments"][0]["type"], "photo_status_card")
+        # 正文已经说明"刚刚才拍过"，不再挂同义附件卡
+        self.assertIn("拍过", repeated_payload["messages"][0]["text"])
+        self.assertEqual(repeated_payload["messages"][0]["attachments"], [])
 
         messages = self.client.get(f"/api/v1/pets/{pet_id}/communicator/messages")
         self.assertEqual(messages.status_code, 200)
@@ -762,6 +770,82 @@ class PetJourneyApiTests(unittest.TestCase):
         memories = self.client.get(f"/api/v1/pets/{pet_id}/memories")
         self.assertEqual(memories.status_code, 200)
         self.assertTrue(any(item["kind"] == "owner_photo_share" for item in memories.json()))
+
+    def test_communicator_send_replays_response_for_duplicate_client_message_id(self) -> None:
+        pet_id = self.create_pet()
+        body = {"text": "今天风大吗？", "client_message_id": "cli-dup-001"}
+        first = self.client.post(f"/api/v1/pets/{pet_id}/communicator/messages", json=body)
+        self.assertEqual(first.status_code, 200)
+        before = self.client.get(f"/api/v1/pets/{pet_id}/communicator/messages").json()
+
+        second = self.client.post(f"/api/v1/pets/{pet_id}/communicator/messages", json=body)
+        self.assertEqual(second.status_code, 200)
+        first_payload = first.json()
+        second_payload = second.json()
+        self.assertEqual(second_payload["owner_message"]["id"], first_payload["owner_message"]["id"])
+        self.assertEqual(
+            [item["id"] for item in second_payload["messages"]],
+            [item["id"] for item in first_payload["messages"]],
+        )
+        after = self.client.get(f"/api/v1/pets/{pet_id}/communicator/messages").json()
+        self.assertEqual(len(after), len(before))
+
+        third = self.client.post(
+            f"/api/v1/pets/{pet_id}/communicator/messages",
+            json={"text": "今天风大吗？", "client_message_id": "cli-dup-002"},
+        )
+        self.assertEqual(third.status_code, 200)
+        self.assertNotEqual(third.json()["owner_message"]["id"], first_payload["owner_message"]["id"])
+
+    def test_communicator_photo_send_replays_for_duplicate_client_message_id(self) -> None:
+        pet_id = self.create_pet()
+
+        def post_photo():
+            return self.client.post(
+                f"/api/v1/pets/{pet_id}/communicator/messages/photo",
+                data={"text": "给你看一下今天的光", "client_message_id": "cli-photo-001"},
+                files={"image": ("owner-photo.jpg", b"fake-jpeg-bytes", "image/jpeg")},
+            )
+
+        first = post_photo()
+        self.assertEqual(first.status_code, 200)
+        second = post_photo()
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(second.json()["owner_message"]["id"], first.json()["owner_message"]["id"])
+
+        messages = self.client.get(f"/api/v1/pets/{pet_id}/communicator/messages").json()
+        owner_photo_messages = [
+            item for item in messages if item["sender"] == "owner" and item["intent"] == "OWNER_PHOTO_SHARE"
+        ]
+        self.assertEqual(len(owner_photo_messages), 1)
+
+    def test_communicator_location_card_only_for_location_check(self) -> None:
+        pet_id = self.create_pet()
+        location = self.client.post(
+            f"/api/v1/pets/{pet_id}/communicator/messages",
+            json={"text": "你在哪？"},
+        )
+        self.assertEqual(location.status_code, 200)
+        location_payload = location.json()
+        self.assertEqual(location_payload["intent"], "LOCATION_CHECK")
+        location_types = {
+            attachment["type"]
+            for message in location_payload["messages"]
+            for attachment in message["attachments"]
+        }
+        self.assertIn("location_card", location_types)
+
+        chat = self.client.post(
+            f"/api/v1/pets/{pet_id}/communicator/messages",
+            json={"text": "拍给我看看现在的样子"},
+        )
+        self.assertEqual(chat.status_code, 200)
+        chat_types = {
+            attachment["type"]
+            for message in chat.json()["messages"]
+            for attachment in message["attachments"]
+        }
+        self.assertNotIn("location_card", chat_types)
 
     def test_non_dog_cat_pet_uses_species_signal_and_photo_subject(self) -> None:
         dna = {

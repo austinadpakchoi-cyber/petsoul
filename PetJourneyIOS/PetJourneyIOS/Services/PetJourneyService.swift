@@ -57,7 +57,7 @@ protocol PetJourneyService: AnyObject {
     func sendOwnerMessage(petID: String, request: OwnerMessageRequest) async throws -> OwnerMessageResponse
     func fetchCommunicatorMessages(petID: String, limit: Int) async throws -> [CommunicatorMessage]
     func sendCommunicatorMessage(petID: String, request: CommunicatorSendRequest) async throws -> CommunicatorSendResponse
-    func sendCommunicatorPhoto(petID: String, imageData: Data, caption: String?) async throws -> CommunicatorSendResponse
+    func sendCommunicatorPhoto(petID: String, imageData: Data, caption: String?, clientMessageID: String?) async throws -> CommunicatorSendResponse
     func fetchMoments(petID: String, limit: Int) async throws -> [CommunicatorMoment]
     func reactToMoment(petID: String, momentID: String, request: MomentReactionRequest) async throws -> MomentReactionResponse
     func registerPushDevice(_ request: DeviceRegistrationRequest) async throws -> DeviceRegistrationResponse

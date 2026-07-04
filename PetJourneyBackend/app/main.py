@@ -718,6 +718,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def send_communicator_photo(
         pet_id: str,
         text: str = Form(default=""),
+        client_message_id: str = Form(default=""),
         image: UploadFile = File(...),
     ) -> CommunicatorSendResponse:
         media_path = await save_upload(settings.upload_dir, image, subdir="communicator_photos")
@@ -732,6 +733,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 image_url=image_url,
                 media_path=media_path,
                 caption=text,
+                client_message_id=client_message_id,
             )
         )
 

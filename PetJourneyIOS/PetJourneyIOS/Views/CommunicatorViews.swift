@@ -128,9 +128,11 @@ final class CommunicatorViewModel: ObservableObject {
         }
     }
 
-    func send(_ text: String) async {
+    func send(_ text: String, clientMessageID: String? = nil) async {
         let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty, !isSending else { return }
+        // 重发复用同一 ID：服务端若已收到首次请求（客户端超时误判失败），会按此 ID 去重
+        let clientID = clientMessageID ?? "cli-\(UUID().uuidString)"
         let local = CommunicatorMessage(
             id: "local-\(UUID().uuidString)",
             petID: petID,
@@ -141,6 +143,7 @@ final class CommunicatorViewModel: ObservableObject {
             replyPolicy: nil,
             attachments: [],
             relatedMessageID: nil,
+            clientMessageID: clientID,
             createdAt: Date(),
             updatedAt: nil
         )
@@ -150,11 +153,9 @@ final class CommunicatorViewModel: ObservableObject {
         do {
             let response = try await service.sendCommunicatorMessage(
                 petID: petID,
-                request: CommunicatorSendRequest(text: clean)
+                request: CommunicatorSendRequest(text: clean, clientMessageID: clientID)
             )
-            messages.removeAll { $0.id == local.id }
-            messages.append(response.ownerMessage)
-            messages.append(contentsOf: response.messages)
+            appendServerMessages([response.ownerMessage] + response.messages, replacingLocalID: local.id)
             PetPushRegistrationCoordinator.shared.requestAuthorizationForUserMoment()
             async let refreshedStatus = service.fetchAgentStatus(petID: petID)
             async let refreshedMoments = service.fetchMoments(petID: petID, limit: 40)
@@ -175,13 +176,13 @@ final class CommunicatorViewModel: ObservableObject {
         if let attachment = message.attachments.first(where: { $0.type == .ownerPhoto }),
            let url = attachment.photoURL,
            let data = try? Data(contentsOf: url) {
-            await sendPhoto(data, caption: message.text.isEmpty ? nil : message.text)
+            await sendPhoto(data, caption: message.text.isEmpty ? nil : message.text, clientMessageID: message.clientMessageID)
         } else {
-            await send(message.text)
+            await send(message.text, clientMessageID: message.clientMessageID)
         }
     }
 
-    func sendPhoto(_ imageData: Data, caption: String? = nil) async {
+    func sendPhoto(_ imageData: Data, caption: String? = nil, clientMessageID: String? = nil) async {
         guard !isSending else { return }
         let clean = caption?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let uploadData = Self.normalizedImageData(imageData)
@@ -199,6 +200,7 @@ final class CommunicatorViewModel: ObservableObject {
             photoMissionID: nil,
             availableAfter: nil
         )
+        let clientID = clientMessageID ?? "cli-photo-\(UUID().uuidString)"
         let local = CommunicatorMessage(
             id: "local-photo-\(UUID().uuidString)",
             petID: petID,
@@ -209,6 +211,7 @@ final class CommunicatorViewModel: ObservableObject {
             replyPolicy: nil,
             attachments: [localAttachment],
             relatedMessageID: nil,
+            clientMessageID: clientID,
             createdAt: Date(),
             updatedAt: nil
         )
@@ -219,11 +222,10 @@ final class CommunicatorViewModel: ObservableObject {
             let response = try await service.sendCommunicatorPhoto(
                 petID: petID,
                 imageData: uploadData,
-                caption: clean.isEmpty ? nil : clean
+                caption: clean.isEmpty ? nil : clean,
+                clientMessageID: clientID
             )
-            messages.removeAll { $0.id == local.id }
-            messages.append(response.ownerMessage)
-            messages.append(contentsOf: response.messages)
+            appendServerMessages([response.ownerMessage] + response.messages, replacingLocalID: local.id)
             PetPushRegistrationCoordinator.shared.requestAuthorizationForUserMoment()
             async let refreshedStatus = service.fetchAgentStatus(petID: petID)
             async let refreshedMoments = service.fetchMoments(petID: petID, limit: 40)
@@ -236,6 +238,13 @@ final class CommunicatorViewModel: ObservableObject {
             }
             toastMessage = "这张照片暂时没有送到。"
         }
+    }
+
+    /// 服务端可能回放首次响应（重发去重），按 id 合并避免同一条消息在列表里出现两遍
+    private func appendServerMessages(_ incoming: [CommunicatorMessage], replacingLocalID localID: String) {
+        let incomingIDs = Set(incoming.map(\.id))
+        messages.removeAll { $0.id == localID || incomingIDs.contains($0.id) }
+        messages.append(contentsOf: incoming)
     }
 
     func react(to moment: CommunicatorMoment, reaction: MomentReaction) async {

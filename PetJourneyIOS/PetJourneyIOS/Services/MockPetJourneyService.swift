@@ -44,6 +44,8 @@ final class MockPetJourneyService: PetJourneyService {
     private var economyTransactions: [String: [EconomyTransaction]] = [:]
     private var communicatorMessages: [String: [CommunicatorMessage]] = [:]
     private var communicatorMoments: [String: [CommunicatorMoment]] = [:]
+    // 与后端一致：同一 (petID, clientMessageID) 的重发直接回放首次响应
+    private var communicatorSendReplays: [String: CommunicatorSendResponse] = [:]
 
     private let cities: [MockCity] = [
         MockCity(
@@ -1398,6 +1400,10 @@ final class MockPetJourneyService: PetJourneyService {
         guard let journey = journeys[petID] else { throw PetJourneyError.noPetSession }
         let clean = request.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { throw PetJourneyError.requestFailed("讯息不能为空") }
+        if let clientID = request.clientMessageID, !clientID.isEmpty,
+           let replay = communicatorSendReplays["\(petID)|\(clientID)"] {
+            return replay
+        }
         let city = cityFor(journey: journey)
         let now = Date()
         let intent = mockIntent(for: clean)
@@ -1412,6 +1418,7 @@ final class MockPetJourneyService: PetJourneyService {
             replyPolicy: policy,
             attachments: [],
             relatedMessageID: nil,
+            clientMessageID: request.clientMessageID,
             createdAt: now,
             updatedAt: nil
         )
@@ -1447,7 +1454,7 @@ final class MockPetJourneyService: PetJourneyService {
             insertMockMomentIfNeeded(petID: petID, petName: journey.profile.name, city: city, attachments: attachments)
         }
 
-        return CommunicatorSendResponse(
+        let response = CommunicatorSendResponse(
             success: true,
             intent: intent,
             replyPolicy: policy,
@@ -1455,11 +1462,19 @@ final class MockPetJourneyService: PetJourneyService {
             messages: [reply],
             pendingRequest: nil
         )
+        if let clientID = request.clientMessageID, !clientID.isEmpty {
+            communicatorSendReplays["\(petID)|\(clientID)"] = response
+        }
+        return response
     }
 
-    func sendCommunicatorPhoto(petID: String, imageData: Data, caption: String?) async throws -> CommunicatorSendResponse {
+    func sendCommunicatorPhoto(petID: String, imageData: Data, caption: String?, clientMessageID: String?) async throws -> CommunicatorSendResponse {
         try ensureJourneyExists(for: petID)
         guard let journey = journeys[petID] else { throw PetJourneyError.noPetSession }
+        if let clientID = clientMessageID, !clientID.isEmpty,
+           let replay = communicatorSendReplays["\(petID)|\(clientID)"] {
+            return replay
+        }
         let city = cityFor(journey: journey)
         let now = Date()
         let clean = caption?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
@@ -1494,6 +1509,7 @@ final class MockPetJourneyService: PetJourneyService {
             replyPolicy: policy,
             attachments: [ownerAttachment],
             relatedMessageID: nil,
+            clientMessageID: clientMessageID,
             createdAt: now,
             updatedAt: nil
         )
@@ -1521,7 +1537,7 @@ final class MockPetJourneyService: PetJourneyService {
         updatedJourney.lastThoughtText = thought.text
         journeys[petID] = updatedJourney
 
-        return CommunicatorSendResponse(
+        let response = CommunicatorSendResponse(
             success: true,
             intent: intent,
             replyPolicy: policy,
@@ -1529,6 +1545,10 @@ final class MockPetJourneyService: PetJourneyService {
             messages: [reply],
             pendingRequest: nil
         )
+        if let clientID = clientMessageID, !clientID.isEmpty {
+            communicatorSendReplays["\(petID)|\(clientID)"] = response
+        }
+        return response
     }
 
     func fetchMoments(petID: String, limit: Int) async throws -> [CommunicatorMoment] {
@@ -2574,9 +2594,10 @@ final class MockPetJourneyService: PetJourneyService {
             ]
         }
         if intent == .currentStatusVisualRequest || intent == .photoRequest || intent == .confirmPendingPhoto {
+            // 与后端一致：位置卡只在 locationCheck 出现；排队/延迟时正文已说明"晚点拍"，不再挂同义卡
+            guard policy.mode == "immediate" else { return [] }
             return [
-                CommunicatorAttachment(type: .photoPlaceholder, title: "正在拍给你", text: "TA 现在在\(city.name) · \(location.placeName ?? "旅途中")，画面准备好后会发来。", state: "placeholder", photoURL: nil, location: location, photoMissionID: "mock-photo-\(UUID().uuidString)", availableAfter: Date().addingTimeInterval(25)),
-                CommunicatorAttachment(type: .locationCard, title: "TA 现在在这里", text: "\(city.name) · \(location.placeName ?? "旅途中")。\(city.weather)", state: "ready", photoURL: nil, location: location, photoMissionID: nil, availableAfter: nil)
+                CommunicatorAttachment(type: .photoPlaceholder, title: "正在拍给你", text: "TA 现在在\(city.name) · \(location.placeName ?? "旅途中")，画面准备好后会发来。", state: "placeholder", photoURL: nil, location: location, photoMissionID: "mock-photo-\(UUID().uuidString)", availableAfter: Date().addingTimeInterval(25))
             ]
         }
         if intent == .postcardRequest {

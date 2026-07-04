@@ -27,9 +27,9 @@ class CommunicatorMessageStore:
                 """
                 INSERT INTO communicator_messages (
                     id, pet_id, sender, intent, message_state, text,
-                    related_message_id, payload_json, created_at, updated_at
+                    related_message_id, client_message_id, payload_json, created_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     message.id,
@@ -39,6 +39,7 @@ class CommunicatorMessageStore:
                     str(message.message_state.value),
                     message.text,
                     message.related_message_id,
+                    message.client_message_id,
                     json.dumps(payload, ensure_ascii=False),
                     iso(message.created_at),
                     iso(message.updated_at) if message.updated_at else None,
@@ -78,6 +79,42 @@ class CommunicatorMessageStore:
                 (pet_id, max(1, min(200, limit))),
             ).fetchall()
         return [CommunicatorMessage.model_validate(json.loads(row["payload_json"])) for row in reversed(rows)]
+
+    def find_by_client_message_id(self, pet_id: str, client_message_id: str) -> CommunicatorMessage | None:
+        with self.storage.connect() as conn:
+            row = conn.execute(
+                """
+                SELECT payload_json FROM communicator_messages
+                WHERE pet_id = ? AND client_message_id = ?
+                LIMIT 1
+                """,
+                (pet_id, client_message_id),
+            ).fetchone()
+        return CommunicatorMessage.model_validate(json.loads(row["payload_json"])) if row else None
+
+    def list_replies(self, pet_id: str, related_message_id: str) -> list[CommunicatorMessage]:
+        with self.storage.connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT payload_json FROM communicator_messages
+                WHERE pet_id = ? AND related_message_id = ?
+                ORDER BY created_at ASC
+                """,
+                (pet_id, related_message_id),
+            ).fetchall()
+        return [CommunicatorMessage.model_validate(json.loads(row["payload_json"])) for row in rows]
+
+    def find_pending_by_source(self, pet_id: str, source_message_id: str) -> PendingPhotoRequest | None:
+        with self.storage.connect() as conn:
+            row = conn.execute(
+                """
+                SELECT payload_json FROM communicator_pending_requests
+                WHERE pet_id = ? AND source_message_id = ?
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                (pet_id, source_message_id),
+            ).fetchone()
+        return PendingPhotoRequest.model_validate(json.loads(row["payload_json"])) if row else None
 
     def add_pending(self, pending: PendingPhotoRequest) -> PendingPhotoRequest:
         payload = pending.model_dump(mode="json")

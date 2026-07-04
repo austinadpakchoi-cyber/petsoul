@@ -264,6 +264,7 @@ class JourneyStorage:
                     message_state TEXT NOT NULL,
                     text TEXT NOT NULL,
                     related_message_id TEXT,
+                    client_message_id TEXT,
                     payload_json TEXT NOT NULL,
                     created_at TEXT NOT NULL,
                     updated_at TEXT
@@ -348,7 +349,12 @@ class JourneyStorage:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_souvenirs_pet_value ON souvenirs (pet_id, market_value DESC)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_economy_transactions_pet_created ON economy_transactions (pet_id, created_at DESC)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_economy_transactions_pet_type ON economy_transactions (pet_id, type, created_at DESC)")
+            self._ensure_column(conn, "communicator_messages", "client_message_id", "TEXT")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_communicator_messages_pet_created ON communicator_messages (pet_id, created_at)")
+            conn.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_communicator_messages_client_dedup "
+                "ON communicator_messages (pet_id, client_message_id) WHERE client_message_id IS NOT NULL"
+            )
             conn.execute("CREATE INDEX IF NOT EXISTS idx_communicator_pending_pet_status ON communicator_pending_requests (pet_id, status, available_after)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_communicator_moments_pet_created ON communicator_moments (pet_id, created_at)")
 

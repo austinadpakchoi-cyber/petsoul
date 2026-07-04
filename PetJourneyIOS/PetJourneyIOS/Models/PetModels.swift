@@ -592,6 +592,7 @@ struct CommunicatorMessage: Codable, Identifiable, Equatable, Sendable {
     var replyPolicy: CommunicatorReplyPolicy?
     var attachments: [CommunicatorAttachment]
     var relatedMessageID: String?
+    var clientMessageID: String?
     var createdAt: Date
     var updatedAt: Date?
 
@@ -605,6 +606,7 @@ struct CommunicatorMessage: Codable, Identifiable, Equatable, Sendable {
         case replyPolicy = "reply_policy"
         case attachments
         case relatedMessageID = "related_message_id"
+        case clientMessageID = "client_message_id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -612,6 +614,12 @@ struct CommunicatorMessage: Codable, Identifiable, Equatable, Sendable {
 
 struct CommunicatorSendRequest: Codable, Equatable, Sendable {
     var text: String
+    var clientMessageID: String?
+
+    enum CodingKeys: String, CodingKey {
+        case text
+        case clientMessageID = "client_message_id"
+    }
 }
 
 struct PendingPhotoRequest: Codable, Identifiable, Equatable, Sendable {

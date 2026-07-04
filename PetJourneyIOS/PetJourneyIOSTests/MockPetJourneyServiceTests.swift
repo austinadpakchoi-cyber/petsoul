@@ -103,13 +103,91 @@ final class MockPetJourneyServiceTests: XCTestCase {
         let reply = try await service.sendCommunicatorPhoto(
             petID: response.petID,
             imageData: Data([0xFF, 0xD8, 0xFF, 0xD9]),
-            caption: "给你看一下今天的光"
+            caption: "给你看一下今天的光",
+            clientMessageID: nil
         )
 
         XCTAssertEqual(reply.intent, .ownerPhotoShare)
         XCTAssertEqual(reply.ownerMessage.sender, .owner)
         XCTAssertTrue(reply.ownerMessage.attachments.contains { $0.type == .ownerPhoto && $0.photoURL != nil })
         XCTAssertTrue(reply.messages.map(\.text).joined(separator: " ").contains("我看到啦"))
+    }
+
+    func testCommunicatorResendWithSameClientMessageIDReplaysFirstResponse() async throws {
+        let service = MockPetJourneyService()
+        let response = try await service.createPet(request: CreatePetRequest(
+            name: "小福",
+            petType: .dog,
+            photoData: nil,
+            photoFilename: nil,
+            dna: .fallback
+        ))
+
+        let request = CommunicatorSendRequest(text: "今天风大吗", clientMessageID: "cli-mock-001")
+        let first = try await service.sendCommunicatorMessage(petID: response.petID, request: request)
+        let countAfterFirst = try await service.fetchCommunicatorMessages(petID: response.petID, limit: 80).count
+
+        let second = try await service.sendCommunicatorMessage(petID: response.petID, request: request)
+        let countAfterSecond = try await service.fetchCommunicatorMessages(petID: response.petID, limit: 80).count
+
+        XCTAssertEqual(second.ownerMessage.id, first.ownerMessage.id)
+        XCTAssertEqual(second.messages.map(\.id), first.messages.map(\.id))
+        XCTAssertEqual(countAfterFirst, countAfterSecond, "重发不应产生重复消息")
+    }
+
+    func testCommunicatorPhotoResendWithSameClientMessageIDReplaysFirstResponse() async throws {
+        let service = MockPetJourneyService()
+        let response = try await service.createPet(request: CreatePetRequest(
+            name: "小福",
+            petType: .dog,
+            photoData: nil,
+            photoFilename: nil,
+            dna: .fallback
+        ))
+
+        let first = try await service.sendCommunicatorPhoto(
+            petID: response.petID,
+            imageData: Data([0xFF, 0xD8, 0xFF, 0xD9]),
+            caption: "给你看一下",
+            clientMessageID: "cli-mock-photo-001"
+        )
+        let second = try await service.sendCommunicatorPhoto(
+            petID: response.petID,
+            imageData: Data([0xFF, 0xD8, 0xFF, 0xD9]),
+            caption: "给你看一下",
+            clientMessageID: "cli-mock-photo-001"
+        )
+
+        XCTAssertEqual(second.ownerMessage.id, first.ownerMessage.id)
+        let messages = try await service.fetchCommunicatorMessages(petID: response.petID, limit: 80)
+        XCTAssertEqual(messages.filter { $0.sender == .owner && $0.intent == .ownerPhotoShare }.count, 1)
+    }
+
+    func testCommunicatorLocationCardOnlyForLocationCheck() async throws {
+        let service = MockPetJourneyService()
+        let response = try await service.createPet(request: CreatePetRequest(
+            name: "小福",
+            petType: .dog,
+            photoData: nil,
+            photoFilename: nil,
+            dna: .fallback
+        ))
+
+        let location = try await service.sendCommunicatorMessage(
+            petID: response.petID,
+            request: CommunicatorSendRequest(text: "你在哪")
+        )
+        XCTAssertEqual(location.intent, .locationCheck)
+        XCTAssertTrue(location.messages.flatMap(\.attachments).contains { $0.type == .locationCard })
+
+        let visual = try await service.sendCommunicatorMessage(
+            petID: response.petID,
+            request: CommunicatorSendRequest(text: "你现在干嘛")
+        )
+        XCTAssertFalse(
+            visual.messages.flatMap(\.attachments).contains { $0.type == .locationCard },
+            "位置卡只在用户明确问位置时出现"
+        )
     }
 
     func testMockTranslationAndRoutePlanAreAvailable() async throws {

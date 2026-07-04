@@ -195,7 +195,7 @@ final class RemotePetJourneyService: PetJourneyService {
         try await postJSON(CommunicatorSendResponse.self, path: "/api/v1/pets/\(petID)/communicator/messages", body: request)
     }
 
-    func sendCommunicatorPhoto(petID: String, imageData: Data, caption: String?) async throws -> CommunicatorSendResponse {
+    func sendCommunicatorPhoto(petID: String, imageData: Data, caption: String?, clientMessageID: String?) async throws -> CommunicatorSendResponse {
         var urlRequest = URLRequest(url: endpoint("/api/v1/pets/\(petID)/communicator/messages/photo"))
         urlRequest.httpMethod = "POST"
         let boundary = "Boundary-\(UUID().uuidString)"
@@ -203,6 +203,9 @@ final class RemotePetJourneyService: PetJourneyService {
         var fields: [String: String] = [:]
         if let caption, !caption.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             fields["text"] = caption
+        }
+        if let clientMessageID, !clientMessageID.isEmpty {
+            fields["client_message_id"] = clientMessageID
         }
         urlRequest.httpBody = makeMultipartBody(
             boundary: boundary,

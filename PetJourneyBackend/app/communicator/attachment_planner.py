@@ -55,23 +55,11 @@ class CommunicatorAttachmentPlanner:
             )
             return attachments
 
-        if intent == CommunicatorIntent.confirm_pending_photo:
-            attachments.append(self._location_card(world))
-            return attachments
-
         if intent in PHOTO_INTENTS:
             if policy.cooldown_applied:
-                attachments.append(
-                    CommunicatorAttachment(
-                        type=AttachmentType.photo_status_card,
-                        title="刚刚才拍过",
-                        text="TA 还在同一个地方，等走到新的地方再拍给你。",
-                        state=AttachmentState.planned,
-                        location=world.location,
-                        metadata={"scene_hash": world.scene_hash},
-                    )
-                )
-            elif policy.mode == ReplyMode.immediate and world.can_generate_photo:
+                # 正文（visible_status）已经说了"刚刚才拍过"，不再挂同义卡
+                return attachments
+            if policy.mode == ReplyMode.immediate and world.can_generate_photo:
                 attachments.append(
                     CommunicatorAttachment(
                         type=AttachmentType.photo_placeholder,
@@ -112,7 +100,7 @@ class CommunicatorAttachmentPlanner:
                         metadata={"scene_hash": world.scene_hash},
                     )
                 )
-            attachments.append(self._location_card(world))
+            # 位置卡只在用户明确问位置（location_check）时出现
             return attachments
 
         sticker = self.sticker_library.select(intent=intent, energy=world.energy)
@@ -128,6 +116,15 @@ class CommunicatorAttachmentPlanner:
                 )
             )
         return attachments
+
+    @staticmethod
+    def drop_attachments_echoing_text(
+        attachments: list[CommunicatorAttachment],
+        body_text: str,
+    ) -> list[CommunicatorAttachment]:
+        """正文已表达的内容不再挂同义附件卡。"""
+        compact_body = "".join(body_text.split())
+        return [item for item in attachments if "".join(item.text.split()) != compact_body]
 
     def _location_card(self, world: CommunicatorWorldSnapshot) -> CommunicatorAttachment:
         place = f"{world.city}{' · ' + world.place_name if world.place_name else ''}"
