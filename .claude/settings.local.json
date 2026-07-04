@@ -69,7 +69,13 @@
       "Bash(grep -v \"^#\\\\|^$\")",
       "Bash(grep -v \"^$\")",
       "Bash(awk -F= '/^[A-Za-z_]+=/{k=$1; if \\(k ~ /KEY|TOKEN|SECRET|DSN/\\) print k\"=<set-hidden>\"; else print $0}' .env)",
-      "Bash(awk -F= '/^[A-Za-z_]+=/{k=$1; if \\(k ~ /KEY|TOKEN|SECRET|DSN/\\) print k\"=<set-hidden>\"; else print $0}' /Users/austin/Desktop/petsoul/PetJourneyBackend/.env)"
+      "Bash(awk -F= '/^[A-Za-z_]+=/{k=$1; if \\(k ~ /KEY|TOKEN|SECRET|DSN/\\) print k\"=<set-hidden>\"; else print $0}' /Users/austin/Desktop/petsoul/PetJourneyBackend/.env)",
+      "Bash(ps -p 99644 -o stat=,etime=)",
+      "Bash(lsof -nP -iTCP:8000 -sTCP:LISTEN)",
+      "Bash(curl -s -m 3 http://127.0.0.1:8000/docs -o /dev/null -w \"%{http_code}\\\\n\")",
+      "Bash(curl -s -m 3 http://127.0.0.1:8000/openapi.json)",
+      "Bash(python3 -c \"import json,sys;d=json.load\\(sys.stdin\\);print\\('\\\\n'.join\\(sorted\\(d['paths']\\)\\)\\)\")",
+      "Bash(ps -p 29520,79422 -o pid,lstart,command)"
     ]
   }
 }
