@@ -69,4 +69,6 @@ protocol PetJourneyService: AnyObject {
     func deleteMemory(petID: String, memoryID: String) async throws
     func searchMemories(petID: String, request: MemorySearchRequest) async throws -> MemorySearchResponse
     func generateSelfie(petID: String) async throws -> Postcard
+    func fetchCredentialPrompts(petID: String) async throws -> [PetCredentialPrompt]
+    func fetchStreetRank(petID: String, theme: String) async throws -> StreetRankResponse
 }
