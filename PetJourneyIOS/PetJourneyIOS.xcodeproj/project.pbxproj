@@ -40,6 +40,12 @@
 		A00000000000000000000231 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000131 /* NetworkMonitor.swift */; };
 		A00000000000000000000232 /* AuthProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000132 /* AuthProviding.swift */; };
 		A00000000000000000000233 /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000133 /* APIClientTests.swift */; };
+		A00000000000000000000234 /* CachedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000134 /* CachedModels.swift */; };
+		A00000000000000000000235 /* PetSoulModelContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000135 /* PetSoulModelContainer.swift */; };
+		A00000000000000000000236 /* JourneyCacheRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000136 /* JourneyCacheRepository.swift */; };
+		A00000000000000000000237 /* OutboundMessageQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000137 /* OutboundMessageQueue.swift */; };
+		A00000000000000000000238 /* MediaCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000138 /* MediaCache.swift */; };
+		A00000000000000000000239 /* PersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000139 /* PersistenceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -88,6 +94,12 @@
 		A00000000000000000000131 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		A00000000000000000000132 /* AuthProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthProviding.swift; sourceTree = "<group>"; };
 		A00000000000000000000133 /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
+		A00000000000000000000134 /* CachedModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedModels.swift; sourceTree = "<group>"; };
+		A00000000000000000000135 /* PetSoulModelContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetSoulModelContainer.swift; sourceTree = "<group>"; };
+		A00000000000000000000136 /* JourneyCacheRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyCacheRepository.swift; sourceTree = "<group>"; };
+		A00000000000000000000137 /* OutboundMessageQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutboundMessageQueue.swift; sourceTree = "<group>"; };
+		A00000000000000000000138 /* MediaCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaCache.swift; sourceTree = "<group>"; };
+		A00000000000000000000139 /* PersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -145,8 +157,21 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000040 /* Networking */,
+				A00000000000000000000041 /* Persistence */,
 			);
 			path = Core;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000041 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000134 /* CachedModels.swift */,
+				A00000000000000000000135 /* PetSoulModelContainer.swift */,
+				A00000000000000000000136 /* JourneyCacheRepository.swift */,
+				A00000000000000000000137 /* OutboundMessageQueue.swift */,
+				A00000000000000000000138 /* MediaCache.swift */,
+			);
+			path = Persistence;
 			sourceTree = "<group>";
 		};
 		A00000000000000000000040 /* Networking */ = {
@@ -167,6 +192,7 @@
 				A00000000000000000000119 /* MockPetJourneyServiceTests.swift */,
 				A00000000000000000000120 /* AppSessionStoreTests.swift */,
 				A00000000000000000000133 /* APIClientTests.swift */,
+				A00000000000000000000139 /* PersistenceTests.swift */,
 			);
 			path = PetJourneyIOSTests;
 			sourceTree = "<group>";
@@ -370,6 +396,11 @@
 				A00000000000000000000230 /* RetryPolicy.swift in Sources */,
 				A00000000000000000000231 /* NetworkMonitor.swift in Sources */,
 				A00000000000000000000232 /* AuthProviding.swift in Sources */,
+				A00000000000000000000234 /* CachedModels.swift in Sources */,
+				A00000000000000000000235 /* PetSoulModelContainer.swift in Sources */,
+				A00000000000000000000236 /* JourneyCacheRepository.swift in Sources */,
+				A00000000000000000000237 /* OutboundMessageQueue.swift in Sources */,
+				A00000000000000000000238 /* MediaCache.swift in Sources */,
 				A00000000000000000000203 /* DesignTokens.swift in Sources */,
 				A00000000000000000000204 /* PetModels.swift in Sources */,
 				A00000000000000000000205 /* PetJourneyService.swift in Sources */,
@@ -399,6 +430,7 @@
 				A00000000000000000000219 /* MockPetJourneyServiceTests.swift in Sources */,
 				A00000000000000000000220 /* AppSessionStoreTests.swift in Sources */,
 				A00000000000000000000233 /* APIClientTests.swift in Sources */,
+				A00000000000000000000239 /* PersistenceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
