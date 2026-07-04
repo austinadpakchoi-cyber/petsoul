@@ -151,8 +151,10 @@ final class AppSessionStore: ObservableObject {
 @MainActor
 final class ServiceContainer: ObservableObject {
     let journeyService: any PetJourneyService
+    let networkMonitor: NetworkMonitor
 
-    init(session: AppSessionStore) {
+    init(session: AppSessionStore, networkMonitor: NetworkMonitor? = nil) {
+        self.networkMonitor = networkMonitor ?? NetworkMonitor()
         if session.serviceMode == .remote, let baseURL = URL(string: session.baseURLString) {
             journeyService = RemotePetJourneyService(baseURL: baseURL)
         } else {

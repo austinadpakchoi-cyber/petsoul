@@ -2,20 +2,11 @@ import Foundation
 
 @MainActor
 final class RemotePetJourneyService: PetJourneyService {
-    private let baseURL: URL
-    private let session: URLSession
-    private let decoder: JSONDecoder
-    private let encoder: JSONEncoder
+    private let client: APIClient
+    private var encoder: JSONEncoder { client.encoder }
 
     init(baseURL: URL, session: URLSession = .shared) {
-        self.baseURL = baseURL
-        self.session = session
-        decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom { decoder in
-            try RemoteDateDecoding.decodeFlexibleISO8601Date(from: decoder)
-        }
-        encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
+        client = APIClient(baseURL: baseURL, session: session)
     }
 
     func createPet(request: CreatePetRequest) async throws -> CreatePetResponse {
@@ -279,7 +270,7 @@ final class RemotePetJourneyService: PetJourneyService {
     private func get<T: Decodable>(_ type: T.Type, path: String) async throws -> T {
         var request = URLRequest(url: endpoint(path))
         request.httpMethod = "GET"
-        return try await decode(T.self, from: request)
+        return try await decode(T.self, from: request, retry: .idempotent)
     }
 
     private func postJSON<T: Decodable, Body: Encodable>(_ type: T.Type, path: String, body: Body) async throws -> T {
@@ -304,22 +295,17 @@ final class RemotePetJourneyService: PetJourneyService {
         return try await decode(type, from: request)
     }
 
-    private func decode<T: Decodable>(_ type: T.Type, from request: URLRequest) async throws -> T {
-        let (data, response) = try await session.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse, (200..<300).contains(httpResponse.statusCode) else {
-            let message = String(data: data, encoding: .utf8) ?? "请求失败"
-            throw PetJourneyError.requestFailed(message)
-        }
+    /// 传输与重试交给 APIClient；APIError 在此边界归一成 PetJourneyError，调用点无感。
+    private func decode<T: Decodable>(_ type: T.Type, from request: URLRequest, retry: RetryPolicy = .none) async throws -> T {
         do {
-            return try decoder.decode(T.self, from: data)
-        } catch {
-            throw PetJourneyError.invalidResponse
+            return try await client.send(type, request: request, retry: retry)
+        } catch let error as APIError {
+            throw error.asPetJourneyError
         }
     }
 
     private func endpoint(_ path: String) -> URL {
-        let base = baseURL.absoluteString.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        return URL(string: base + path)!
+        client.endpoint(path)
     }
 
     private struct MultipartFile {
@@ -357,29 +343,5 @@ final class RemotePetJourneyService: PetJourneyService {
 private extension Data {
     mutating func appendString(_ string: String) {
         append(Data(string.utf8))
-    }
-}
-
-private enum RemoteDateDecoding {
-    static func decodeFlexibleISO8601Date(from decoder: Decoder) throws -> Date {
-        let container = try decoder.singleValueContainer()
-        let value = try container.decode(String.self)
-
-        let fractionalFormatter = ISO8601DateFormatter()
-        fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = fractionalFormatter.date(from: value) {
-            return date
-        }
-
-        let plainFormatter = ISO8601DateFormatter()
-        plainFormatter.formatOptions = [.withInternetDateTime]
-        if let date = plainFormatter.date(from: value) {
-            return date
-        }
-
-        throw DecodingError.dataCorruptedError(
-            in: container,
-            debugDescription: "Invalid ISO8601 date: \(value)"
-        )
     }
 }
