@@ -34,6 +34,12 @@
 		A00000000000000000000225 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000125 /* Assets.xcassets */; };
 		A00000000000000000000226 /* PetSoulAssetIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000126 /* PetSoulAssetIcon.swift */; };
 		A00000000000000000000227 /* CommunicatorViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000127 /* CommunicatorViews.swift */; };
+		A00000000000000000000228 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000128 /* APIClient.swift */; };
+		A00000000000000000000229 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000129 /* APIError.swift */; };
+		A00000000000000000000230 /* RetryPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000130 /* RetryPolicy.swift */; };
+		A00000000000000000000231 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000131 /* NetworkMonitor.swift */; };
+		A00000000000000000000232 /* AuthProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000132 /* AuthProviding.swift */; };
+		A00000000000000000000233 /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000133 /* APIClientTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -76,6 +82,12 @@
 		A00000000000000000000125 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A00000000000000000000126 /* PetSoulAssetIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetSoulAssetIcon.swift; sourceTree = "<group>"; };
 		A00000000000000000000127 /* CommunicatorViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicatorViews.swift; sourceTree = "<group>"; };
+		A00000000000000000000128 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		A00000000000000000000129 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
+		A00000000000000000000130 /* RetryPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryPolicy.swift; sourceTree = "<group>"; };
+		A00000000000000000000131 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		A00000000000000000000132 /* AuthProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthProviding.swift; sourceTree = "<group>"; };
+		A00000000000000000000133 /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +130,7 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000030 /* App */,
+				A00000000000000000000039 /* Core */,
 				A00000000000000000000031 /* Design */,
 				A00000000000000000000032 /* Models */,
 				A00000000000000000000033 /* Services */,
@@ -128,11 +141,32 @@
 			path = PetJourneyIOS;
 			sourceTree = "<group>";
 		};
+		A00000000000000000000039 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000040 /* Networking */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000040 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000128 /* APIClient.swift */,
+				A00000000000000000000129 /* APIError.swift */,
+				A00000000000000000000130 /* RetryPolicy.swift */,
+				A00000000000000000000131 /* NetworkMonitor.swift */,
+				A00000000000000000000132 /* AuthProviding.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
 		A00000000000000000000005 /* PetJourneyIOSTests */ = {
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000119 /* MockPetJourneyServiceTests.swift */,
 				A00000000000000000000120 /* AppSessionStoreTests.swift */,
+				A00000000000000000000133 /* APIClientTests.swift */,
 			);
 			path = PetJourneyIOSTests;
 			sourceTree = "<group>";
@@ -331,6 +365,11 @@
 				A00000000000000000000201 /* AppSessionStore.swift in Sources */,
 				A00000000000000000000202 /* PetJourneyIOSApp.swift in Sources */,
 				A00000000000000000000224 /* PetPushNotifications.swift in Sources */,
+				A00000000000000000000228 /* APIClient.swift in Sources */,
+				A00000000000000000000229 /* APIError.swift in Sources */,
+				A00000000000000000000230 /* RetryPolicy.swift in Sources */,
+				A00000000000000000000231 /* NetworkMonitor.swift in Sources */,
+				A00000000000000000000232 /* AuthProviding.swift in Sources */,
 				A00000000000000000000203 /* DesignTokens.swift in Sources */,
 				A00000000000000000000204 /* PetModels.swift in Sources */,
 				A00000000000000000000205 /* PetJourneyService.swift in Sources */,
@@ -359,6 +398,7 @@
 			files = (
 				A00000000000000000000219 /* MockPetJourneyServiceTests.swift in Sources */,
 				A00000000000000000000220 /* AppSessionStoreTests.swift in Sources */,
+				A00000000000000000000233 /* APIClientTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
