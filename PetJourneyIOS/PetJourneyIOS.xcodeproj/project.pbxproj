@@ -48,6 +48,9 @@
 		A00000000000000000000239 /* PersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000139 /* PersistenceTests.swift */; };
 		A00000000000000000000240 /* PushDeepLinkRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000140 /* PushDeepLinkRouter.swift */; };
 		A00000000000000000000241 /* PushDeepLinkRouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000141 /* PushDeepLinkRouterTests.swift */; };
+		A00000000000000000000242 /* MemorySearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000142 /* MemorySearchView.swift */; };
+		A00000000000000000000243 /* CredentialPromptsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000143 /* CredentialPromptsView.swift */; };
+		A00000000000000000000244 /* StreetRankSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000144 /* StreetRankSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -104,6 +107,9 @@
 		A00000000000000000000139 /* PersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceTests.swift; sourceTree = "<group>"; };
 		A00000000000000000000140 /* PushDeepLinkRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushDeepLinkRouter.swift; sourceTree = "<group>"; };
 		A00000000000000000000141 /* PushDeepLinkRouterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushDeepLinkRouterTests.swift; sourceTree = "<group>"; };
+		A00000000000000000000142 /* MemorySearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorySearchView.swift; sourceTree = "<group>"; };
+		A00000000000000000000143 /* CredentialPromptsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialPromptsView.swift; sourceTree = "<group>"; };
+		A00000000000000000000144 /* StreetRankSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreetRankSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -260,6 +266,9 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000036 /* Components */,
+				A00000000000000000000043 /* Memories */,
+				A00000000000000000000044 /* Credentials */,
+				A00000000000000000000045 /* Map */,
 				A00000000000000000000114 /* WelcomeView.swift */,
 				A00000000000000000000115 /* PetOnboardingView.swift */,
 				A00000000000000000000116 /* ConnectingView.swift */,
@@ -269,6 +278,30 @@
 				A00000000000000000000118 /* SecondaryViews.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000043 /* Memories */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000142 /* MemorySearchView.swift */,
+			);
+			path = Memories;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000044 /* Credentials */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000143 /* CredentialPromptsView.swift */,
+			);
+			path = Credentials;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000045 /* Map */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000144 /* StreetRankSheet.swift */,
+			);
+			path = Map;
 			sourceTree = "<group>";
 		};
 		A00000000000000000000036 /* Components */ = {
@@ -416,6 +449,9 @@
 				A00000000000000000000237 /* OutboundMessageQueue.swift in Sources */,
 				A00000000000000000000238 /* MediaCache.swift in Sources */,
 				A00000000000000000000240 /* PushDeepLinkRouter.swift in Sources */,
+				A00000000000000000000242 /* MemorySearchView.swift in Sources */,
+				A00000000000000000000243 /* CredentialPromptsView.swift in Sources */,
+				A00000000000000000000244 /* StreetRankSheet.swift in Sources */,
 				A00000000000000000000203 /* DesignTokens.swift in Sources */,
 				A00000000000000000000204 /* PetModels.swift in Sources */,
 				A00000000000000000000205 /* PetJourneyService.swift in Sources */,

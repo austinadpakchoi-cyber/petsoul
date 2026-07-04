@@ -772,6 +772,63 @@ final class MockPetJourneyService: PetJourneyService {
         )
     }
 
+    func fetchCredentialPrompts(petID: String) async throws -> [PetCredentialPrompt] {
+        try ensureJourneyExists(for: petID)
+        guard let journey = journeys[petID] else { throw PetJourneyError.noPetSession }
+        let name = journey.profile.name
+        let serialSeed = String(petID.replacingOccurrences(of: "-", with: "").prefix(6)).uppercased()
+        return [
+            PetCredentialPrompt(
+                kind: .identity,
+                title: "PetSoul 居民证",
+                subtitle: "\(name) 在平行世界的身份",
+                serial: "PS-\(serialSeed)-ID",
+                imagePrompt: "PetSoul parallel-world resident card for \(name), warm paper texture, no readable logos",
+                size: "1536x1024",
+                referenceRoles: ["pet_photo"],
+                safetyNotes: ["Preserve pet identity"],
+                fields: ["姓名": name, "身份": "平行世界旅行者"]
+            ),
+            PetCredentialPrompt(
+                kind: .healthRecord,
+                title: "健康小手册",
+                subtitle: "TA 在旅途中的元气记录",
+                serial: "PS-\(serialSeed)-HR",
+                imagePrompt: "PetSoul travel health booklet for \(name), soft illustration, no readable logos",
+                size: "1536x1024",
+                referenceRoles: ["pet_photo"],
+                safetyNotes: ["Preserve pet identity"],
+                fields: ["元气": "很好", "最近一次休息": "昨晚睡得很沉"]
+            )
+        ]
+    }
+
+    func fetchStreetRank(petID: String, theme: String) async throws -> StreetRankResponse {
+        try ensureJourneyExists(for: petID)
+        let plan = try await fetchJourneyPlan(petID: petID)
+        let items = plan.places.prefix(3).enumerated().map { index, place in
+            StreetRankItem(
+                rank: index + 1,
+                place: place,
+                rankScore: 96 - Double(index) * 7,
+                reason: "这条街上，TA 现在最想先去的位置。",
+                petAction: "打算先在门口闻一闻，再决定进不进去。",
+                ownerTip: "TA 逛到这里时，多半会想把见闻讲给你听。",
+                weatherNote: "现在的天气正适合慢慢逛。"
+            )
+        }
+        return StreetRankResponse(
+            petID: petID,
+            city: plan.city,
+            theme: theme,
+            generatedAt: Date(),
+            provider: "mock-ios-street-rank",
+            weather: "晴",
+            items: Array(items),
+            sourceNotes: ["示例数据，用于离线预览"]
+        )
+    }
+
     func fetchTravelQuests(petID: String, limit: Int) async throws -> [TravelQuest] {
         try ensureJourneyExists(for: petID)
         return Array((travelQuests[petID] ?? []).prefix(max(1, limit)))
