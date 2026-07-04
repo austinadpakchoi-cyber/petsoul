@@ -1,0 +1,7 @@
+[
+  {
+    "id": "importance_recency_emotion_priority",
+    "query": "今天我很想你，找一个安静地方",
+    "assertions": ["high_importance_ranked_first", "recent_memory_boosted", "relationship_type_prioritized"]
+  }
+]

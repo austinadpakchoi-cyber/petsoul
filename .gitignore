@@ -1,0 +1,29 @@
+# macOS
+.DS_Store
+
+# Secrets / local config
+.env
+.env.local
+.env.*.local
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate
+
+# Next.js
+petjourney-mvp/.next/
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Backend runtime data (sqlite DB, user uploads)
+PetJourneyBackend/data/
+petjourney-mvp/
+
+# Editor swap files
+*.swp

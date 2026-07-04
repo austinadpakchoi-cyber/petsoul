@@ -1,0 +1,7 @@
+[
+  {
+    "id": "provided_places_only",
+    "provided_places": ["海边小路", "安静咖啡店", "老城街角"],
+    "assertions": ["selected_place_in_provided_places", "crowd_penalty_applied", "fallback_safe_local_walk"]
+  }
+]

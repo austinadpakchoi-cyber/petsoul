@@ -1,0 +1,566 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A00000000000000000000201 /* AppSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000101 /* AppSessionStore.swift */; };
+		A00000000000000000000202 /* PetJourneyIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000102 /* PetJourneyIOSApp.swift */; };
+		A00000000000000000000203 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000103 /* DesignTokens.swift */; };
+		A00000000000000000000204 /* PetModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000104 /* PetModels.swift */; };
+		A00000000000000000000205 /* PetJourneyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000105 /* PetJourneyService.swift */; };
+		A00000000000000000000206 /* MockPetJourneyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000106 /* MockPetJourneyService.swift */; };
+		A00000000000000000000207 /* RemotePetJourneyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000107 /* RemotePetJourneyService.swift */; };
+		A00000000000000000000208 /* OnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000108 /* OnboardingViewModel.swift */; };
+		A00000000000000000000209 /* JourneyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000109 /* JourneyViewModel.swift */; };
+		A00000000000000000000210 /* SoftCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000110 /* SoftCard.swift */; };
+		A00000000000000000000211 /* EnergyRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000111 /* EnergyRing.swift */; };
+		A00000000000000000000212 /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000112 /* ToastView.swift */; };
+		A00000000000000000000213 /* PetMarkerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000113 /* PetMarkerView.swift */; };
+		A00000000000000000000214 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000114 /* WelcomeView.swift */; };
+		A00000000000000000000215 /* PetOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000115 /* PetOnboardingView.swift */; };
+		A00000000000000000000216 /* ConnectingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000116 /* ConnectingView.swift */; };
+		A00000000000000000000217 /* JourneyMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000117 /* JourneyMapView.swift */; };
+		A00000000000000000000218 /* SecondaryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000118 /* SecondaryViews.swift */; };
+		A00000000000000000000219 /* MockPetJourneyServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000119 /* MockPetJourneyServiceTests.swift */; };
+		A00000000000000000000220 /* AppSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000120 /* AppSessionStoreTests.swift */; };
+		A00000000000000000000221 /* frenchie-profile.png in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000121 /* frenchie-profile.png */; };
+		A00000000000000000000222 /* frenchie-netcafe-postcard.png in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000122 /* frenchie-netcafe-postcard.png */; };
+		A00000000000000000000223 /* JourneyRouteSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000123 /* JourneyRouteSupport.swift */; };
+		A00000000000000000000224 /* PetPushNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000124 /* PetPushNotifications.swift */; };
+		A00000000000000000000225 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000125 /* Assets.xcassets */; };
+		A00000000000000000000226 /* PetSoulAssetIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000126 /* PetSoulAssetIcon.swift */; };
+		A00000000000000000000227 /* CommunicatorViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000127 /* CommunicatorViews.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A00000000000000000000017 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A00000000000000000000006;
+			remoteInfo = PetJourneyIOS;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		A00000000000000000000008 /* PetJourneyIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PetJourneyIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000000000000000000009 /* PetJourneyIOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PetJourneyIOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000000000000000000101 /* AppSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionStore.swift; sourceTree = "<group>"; };
+		A00000000000000000000102 /* PetJourneyIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetJourneyIOSApp.swift; sourceTree = "<group>"; };
+		A00000000000000000000103 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
+		A00000000000000000000104 /* PetModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetModels.swift; sourceTree = "<group>"; };
+		A00000000000000000000105 /* PetJourneyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetJourneyService.swift; sourceTree = "<group>"; };
+		A00000000000000000000106 /* MockPetJourneyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService.swift; sourceTree = "<group>"; };
+		A00000000000000000000107 /* RemotePetJourneyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePetJourneyService.swift; sourceTree = "<group>"; };
+		A00000000000000000000108 /* OnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewModel.swift; sourceTree = "<group>"; };
+		A00000000000000000000109 /* JourneyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyViewModel.swift; sourceTree = "<group>"; };
+		A00000000000000000000110 /* SoftCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoftCard.swift; sourceTree = "<group>"; };
+		A00000000000000000000111 /* EnergyRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnergyRing.swift; sourceTree = "<group>"; };
+		A00000000000000000000112 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
+		A00000000000000000000113 /* PetMarkerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetMarkerView.swift; sourceTree = "<group>"; };
+		A00000000000000000000114 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
+		A00000000000000000000115 /* PetOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetOnboardingView.swift; sourceTree = "<group>"; };
+		A00000000000000000000116 /* ConnectingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectingView.swift; sourceTree = "<group>"; };
+		A00000000000000000000117 /* JourneyMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyMapView.swift; sourceTree = "<group>"; };
+		A00000000000000000000118 /* SecondaryViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryViews.swift; sourceTree = "<group>"; };
+		A00000000000000000000119 /* MockPetJourneyServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyServiceTests.swift; sourceTree = "<group>"; };
+		A00000000000000000000120 /* AppSessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionStoreTests.swift; sourceTree = "<group>"; };
+		A00000000000000000000121 /* frenchie-profile.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "frenchie-profile.png"; sourceTree = "<group>"; };
+		A00000000000000000000122 /* frenchie-netcafe-postcard.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "frenchie-netcafe-postcard.png"; sourceTree = "<group>"; };
+		A00000000000000000000123 /* JourneyRouteSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyRouteSupport.swift; sourceTree = "<group>"; };
+		A00000000000000000000124 /* PetPushNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPushNotifications.swift; sourceTree = "<group>"; };
+		A00000000000000000000125 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A00000000000000000000126 /* PetSoulAssetIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetSoulAssetIcon.swift; sourceTree = "<group>"; };
+		A00000000000000000000127 /* CommunicatorViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicatorViews.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A00000000000000000000011 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000014 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A00000000000000000000002 = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000004 /* PetJourneyIOS */,
+				A00000000000000000000005 /* PetJourneyIOSTests */,
+				A00000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A00000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000008 /* PetJourneyIOS.app */,
+				A00000000000000000000009 /* PetJourneyIOSTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000004 /* PetJourneyIOS */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000030 /* App */,
+				A00000000000000000000031 /* Design */,
+				A00000000000000000000032 /* Models */,
+				A00000000000000000000033 /* Services */,
+				A00000000000000000000034 /* ViewModels */,
+				A00000000000000000000035 /* Views */,
+				A00000000000000000000037 /* Resources */,
+			);
+			path = PetJourneyIOS;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000005 /* PetJourneyIOSTests */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000119 /* MockPetJourneyServiceTests.swift */,
+				A00000000000000000000120 /* AppSessionStoreTests.swift */,
+			);
+			path = PetJourneyIOSTests;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000030 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000101 /* AppSessionStore.swift */,
+				A00000000000000000000102 /* PetJourneyIOSApp.swift */,
+				A00000000000000000000124 /* PetPushNotifications.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000031 /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000103 /* DesignTokens.swift */,
+			);
+			path = Design;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000032 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000104 /* PetModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000033 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000105 /* PetJourneyService.swift */,
+				A00000000000000000000106 /* MockPetJourneyService.swift */,
+				A00000000000000000000107 /* RemotePetJourneyService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000034 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000108 /* OnboardingViewModel.swift */,
+				A00000000000000000000109 /* JourneyViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000035 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000036 /* Components */,
+				A00000000000000000000114 /* WelcomeView.swift */,
+				A00000000000000000000115 /* PetOnboardingView.swift */,
+				A00000000000000000000116 /* ConnectingView.swift */,
+				A00000000000000000000117 /* JourneyMapView.swift */,
+				A00000000000000000000123 /* JourneyRouteSupport.swift */,
+				A00000000000000000000127 /* CommunicatorViews.swift */,
+				A00000000000000000000118 /* SecondaryViews.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000036 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000110 /* SoftCard.swift */,
+				A00000000000000000000111 /* EnergyRing.swift */,
+				A00000000000000000000112 /* ToastView.swift */,
+				A00000000000000000000113 /* PetMarkerView.swift */,
+				A00000000000000000000126 /* PetSoulAssetIcon.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000037 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000125 /* Assets.xcassets */,
+				A00000000000000000000038 /* DemoMedia */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000038 /* DemoMedia */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000121 /* frenchie-profile.png */,
+				A00000000000000000000122 /* frenchie-netcafe-postcard.png */,
+			);
+			path = DemoMedia;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A00000000000000000000006 /* PetJourneyIOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000021 /* Build configuration list for PBXNativeTarget "PetJourneyIOS" */;
+			buildPhases = (
+				A00000000000000000000010 /* Sources */,
+				A00000000000000000000011 /* Frameworks */,
+				A00000000000000000000012 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PetJourneyIOS;
+			productName = PetJourneyIOS;
+			productReference = A00000000000000000000008 /* PetJourneyIOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A00000000000000000000007 /* PetJourneyIOSTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000024 /* Build configuration list for PBXNativeTarget "PetJourneyIOSTests" */;
+			buildPhases = (
+				A00000000000000000000013 /* Sources */,
+				A00000000000000000000014 /* Frameworks */,
+				A00000000000000000000015 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A00000000000000000000016 /* PBXTargetDependency */,
+			);
+			name = PetJourneyIOSTests;
+			productName = PetJourneyIOSTests;
+			productReference = A00000000000000000000009 /* PetJourneyIOSTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A00000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					A00000000000000000000006 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					A00000000000000000000007 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = A00000000000000000000006;
+					};
+				};
+			};
+			buildConfigurationList = A00000000000000000000018 /* Build configuration list for PBXProject "PetJourneyIOS" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A00000000000000000000002;
+			productRefGroup = A00000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A00000000000000000000006 /* PetJourneyIOS */,
+				A00000000000000000000007 /* PetJourneyIOSTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A00000000000000000000012 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000225 /* Assets.xcassets in Resources */,
+				A00000000000000000000221 /* frenchie-profile.png in Resources */,
+				A00000000000000000000222 /* frenchie-netcafe-postcard.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000015 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A00000000000000000000010 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000201 /* AppSessionStore.swift in Sources */,
+				A00000000000000000000202 /* PetJourneyIOSApp.swift in Sources */,
+				A00000000000000000000224 /* PetPushNotifications.swift in Sources */,
+				A00000000000000000000203 /* DesignTokens.swift in Sources */,
+				A00000000000000000000204 /* PetModels.swift in Sources */,
+				A00000000000000000000205 /* PetJourneyService.swift in Sources */,
+				A00000000000000000000206 /* MockPetJourneyService.swift in Sources */,
+				A00000000000000000000207 /* RemotePetJourneyService.swift in Sources */,
+				A00000000000000000000208 /* OnboardingViewModel.swift in Sources */,
+				A00000000000000000000209 /* JourneyViewModel.swift in Sources */,
+				A00000000000000000000210 /* SoftCard.swift in Sources */,
+				A00000000000000000000211 /* EnergyRing.swift in Sources */,
+				A00000000000000000000212 /* ToastView.swift in Sources */,
+				A00000000000000000000213 /* PetMarkerView.swift in Sources */,
+				A00000000000000000000226 /* PetSoulAssetIcon.swift in Sources */,
+				A00000000000000000000214 /* WelcomeView.swift in Sources */,
+				A00000000000000000000215 /* PetOnboardingView.swift in Sources */,
+				A00000000000000000000216 /* ConnectingView.swift in Sources */,
+				A00000000000000000000217 /* JourneyMapView.swift in Sources */,
+				A00000000000000000000223 /* JourneyRouteSupport.swift in Sources */,
+				A00000000000000000000227 /* CommunicatorViews.swift in Sources */,
+				A00000000000000000000218 /* SecondaryViews.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000013 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000219 /* MockPetJourneyServiceTests.swift in Sources */,
+				A00000000000000000000220 /* AppSessionStoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A00000000000000000000016 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A00000000000000000000006 /* PetJourneyIOS */;
+			targetProxy = A00000000000000000000017 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A00000000000000000000019 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A00000000000000000000020 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A00000000000000000000022 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APS_ENVIRONMENT = development;
+				CODE_SIGN_ENTITLEMENTS = PetJourneyIOS/PetJourneyIOS.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = 5QMGUYF684;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PetJourneyIOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.petsoul.petjourney;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A00000000000000000000023 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APS_ENVIRONMENT = production;
+				CODE_SIGN_ENTITLEMENTS = PetJourneyIOS/PetJourneyIOS.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = 5QMGUYF684;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PetJourneyIOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.petsoul.petjourney;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A00000000000000000000025 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5QMGUYF684;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.petsoul.petjourney.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PetJourneyIOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PetJourneyIOS";
+			};
+			name = Debug;
+		};
+		A00000000000000000000026 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5QMGUYF684;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.petsoul.petjourney.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PetJourneyIOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PetJourneyIOS";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A00000000000000000000018 /* Build configuration list for PBXProject "PetJourneyIOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000019 /* Debug */,
+				A00000000000000000000020 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A00000000000000000000021 /* Build configuration list for PBXNativeTarget "PetJourneyIOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000022 /* Debug */,
+				A00000000000000000000023 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A00000000000000000000024 /* Build configuration list for PBXNativeTarget "PetJourneyIOSTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000025 /* Debug */,
+				A00000000000000000000026 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A00000000000000000000001 /* Project object */;
+}

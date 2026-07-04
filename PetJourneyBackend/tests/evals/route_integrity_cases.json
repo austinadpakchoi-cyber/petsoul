@@ -1,0 +1,6 @@
+[
+  {
+    "id": "no_teleport_world_snapshot",
+    "assertions": ["activity_coordinate_from_poi_or_route", "transport_leg_progress_monotonic", "no_llm_written_world_state"]
+  }
+]

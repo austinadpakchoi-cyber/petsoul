@@ -1,0 +1,7 @@
+[
+  {
+    "id": "selfie_prompt_contract",
+    "place": "厦门海边",
+    "assertions": ["pet_identity", "place_anchor", "first_person_selfie", "safety_negatives", "max_one_retry"]
+  }
+]

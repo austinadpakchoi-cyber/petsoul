@@ -1,0 +1,2 @@
+"""PetJourney backend package."""
+

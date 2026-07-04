@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcodebuild -project PetJourneyIOS.xcodeproj -scheme PetJourneyIOS -destination 'generic/platform=iOS Simulator' build)",
+      "Bash(xcrun simctl *)",
+      "Bash(xcodebuild -project PetJourneyIOS.xcodeproj -scheme PetJourneyIOS -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test)",
+      "Bash(ls -td /Users/austin/Library/Developer/Xcode/DerivedData/PetJourneyIOS-*/Logs/Test/*.xcresult 2>/dev/null | head -2)",
+      "Bash(xcrun xcresulttool *)",
+      "Bash(python3 -c ' *)",
+      "Bash(xcodebuild -project /Users/austin/Desktop/petsoul/PetJourneyIOS/PetJourneyIOS.xcodeproj -scheme PetJourneyIOS -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test)",
+      "Bash(xcodebuild -project PetJourneyIOS/PetJourneyIOS.xcodeproj -scheme PetJourneyIOS -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build)",
+      "Bash(python3 -m py_compile /Users/austin/Desktop/petsoul/PetJourneyBackend/app/agent_engine.py /Users/austin/Desktop/petsoul/PetJourneyBackend/app/event_generator.py /Users/austin/Desktop/petsoul/PetJourneyBackend/app/config.py /Users/austin/Desktop/petsoul/PetJourneyBackend/app/schemas.py)",
+      "Bash(./.venv/bin/python -m pytest tests -q)",
+      "Bash(python3 -m venv /private/tmp/claude-501/-Users-austin-Desktop-petsoul/9a6a8b26-0fd1-491d-b930-c0c128231474/scratchpad/venv)",
+      "Bash(/private/tmp/claude-501/-Users-austin-Desktop-petsoul/9a6a8b26-0fd1-491d-b930-c0c128231474/scratchpad/venv/bin/pip install *)",
+      "Bash(/private/tmp/claude-501/-Users-austin-Desktop-petsoul/9a6a8b26-0fd1-491d-b930-c0c128231474/scratchpad/venv/bin/python -m pytest tests -q)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}

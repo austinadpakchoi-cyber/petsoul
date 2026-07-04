@@ -1,0 +1,7 @@
+[
+  {
+    "id": "animal_voice_hidden_translation",
+    "input": {"trigger": "owner_message_comfort", "scene": "主人说想你"},
+    "assertions": ["animal_text_present", "hidden_translation_present", "no_supernatural_claim"]
+  }
+]

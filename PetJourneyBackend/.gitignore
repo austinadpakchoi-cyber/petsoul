@@ -1,0 +1,6 @@
+.env
+data/*.sqlite3
+data/uploads/pet_photos/
+__pycache__/
+app/__pycache__/
+tests/__pycache__/
