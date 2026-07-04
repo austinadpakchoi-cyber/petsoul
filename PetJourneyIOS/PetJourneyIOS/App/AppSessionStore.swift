@@ -65,9 +65,17 @@ final class AppSessionStore: ObservableObject {
         static let onboardingCompleted = "onboarding_completed"
         static let serviceMode = "service_mode"
         static let baseURL = "base_url"
+        static let authToken = "auth_token"
+        static let userID = "auth_user_id"
+        static let userDisplayName = "auth_user_display_name"
     }
 
-    private static let debugBackendBaseURLString = "http://192.168.31.237:8000"
+    private static let debugBackendBaseURLString = "https://api.petsoul.games"
+    /// 旧的本地开发地址：后端已迁移到云端，启动时自动替换存量配置
+    private static let legacyBaseURLStrings: Set<String> = [
+        "http://192.168.31.237:8000",
+        "http://127.0.0.1:8000"
+    ]
 
     private let defaults: UserDefaults
 
@@ -95,12 +103,56 @@ final class AppSessionStore: ObservableObject {
         }
     }
 
+    @Published private(set) var authToken: String? {
+        didSet {
+            defaults.set(authToken, forKey: Key.authToken)
+        }
+    }
+
+    @Published private(set) var userID: String? {
+        didSet {
+            defaults.set(userID, forKey: Key.userID)
+        }
+    }
+
+    @Published private(set) var userDisplayName: String? {
+        didSet {
+            defaults.set(userDisplayName, forKey: Key.userDisplayName)
+        }
+    }
+
     init(userDefaults: UserDefaults = .standard) {
         defaults = userDefaults
         petID = userDefaults.string(forKey: Key.petID)
         onboardingCompleted = userDefaults.bool(forKey: Key.onboardingCompleted)
         serviceMode = ServiceMode(rawValue: userDefaults.string(forKey: Key.serviceMode) ?? "") ?? Self.defaultServiceMode(for: userDefaults)
-        baseURLString = userDefaults.string(forKey: Key.baseURL) ?? Self.defaultBaseURLString(for: userDefaults)
+        let storedBaseURL = userDefaults.string(forKey: Key.baseURL)
+        if let storedBaseURL, !Self.legacyBaseURLStrings.contains(storedBaseURL) {
+            baseURLString = storedBaseURL
+        } else {
+            baseURLString = Self.defaultBaseURLString(for: userDefaults)
+        }
+        authToken = userDefaults.string(forKey: Key.authToken)
+        userID = userDefaults.string(forKey: Key.userID)
+        userDisplayName = userDefaults.string(forKey: Key.userDisplayName)
+    }
+
+    var isSignedIn: Bool {
+        authToken != nil && userID != nil
+    }
+
+    func storeAuthSession(token: String, userID: String, displayName: String?) {
+        authToken = token
+        self.userID = userID
+        if let displayName, !displayName.isEmpty {
+            userDisplayName = displayName
+        }
+    }
+
+    func signOut() {
+        authToken = nil
+        userID = nil
+        userDisplayName = nil
     }
 
     var useMockData: Bool {
@@ -161,7 +213,9 @@ final class ServiceContainer: ObservableObject {
     init(session: AppSessionStore, networkMonitor: NetworkMonitor? = nil) {
         self.networkMonitor = networkMonitor ?? NetworkMonitor()
         if session.serviceMode == .remote, let baseURL = URL(string: session.baseURLString) {
-            journeyService = RemotePetJourneyService(baseURL: baseURL)
+            let remote = RemotePetJourneyService(baseURL: baseURL)
+            remote.authTokenProvider = { [weak session] in session?.authToken }
+            journeyService = remote
         } else {
             journeyService = MockPetJourneyService()
         }

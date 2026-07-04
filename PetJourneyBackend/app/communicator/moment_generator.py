@@ -32,6 +32,9 @@ class CommunicatorMomentGenerator:
         existing = self.store.list_moments(pet_id, limit=3)
         if existing:
             return self._enrich_existing_moments(existing=existing, world=world, now=now)
+        # 飞行/长途途中不 seed“到达/停留”动态——TA 还没到，等落地后自然产生
+        if world.is_flying:
+            return []
         moments = [
             self._moment(
                 pet_id=pet_id,

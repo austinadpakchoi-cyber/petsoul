@@ -1,0 +1,29 @@
+services:
+  backend:
+    build: ../PetJourneyBackend
+    restart: unless-stopped
+    env_file:
+      - ./backend.env        # 服务器上的正式配置（不进 git）
+    volumes:
+      - petjourney-data:/srv/petjourney/data
+      - ./secrets:/srv/petjourney/secrets:ro   # APNs .p8 等密钥
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - backend
+
+volumes:
+  petjourney-data:
+  caddy-data:
+  caddy-config:

@@ -92,7 +92,9 @@ class JourneyEventGenerator:
         ):
             append_agent_thought(pet, city, "daily", next_thought, status, None)
 
-        if elapsed >= 35 and self.storage.count_postcards(pet.pet_id) == 0:
+        # 长途交通中（飞行/移动）不产生地点类明信片——TA 不可能同时在飞机上和咖啡馆里
+        in_transit = status in {JourneyStatus.flying, JourneyStatus.traveling}
+        if elapsed >= 35 and not in_transit and self.storage.count_postcards(pet.pet_id) == 0:
             postcard = self._create_postcard(pet=pet, city=city, elapsed=elapsed, now=now)
             places = self.map_provider.places_for_city(city)
             place = self._postcard_place(places, now=now)

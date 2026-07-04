@@ -612,7 +612,18 @@ struct PetChatView: View {
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button {} label: {
+                Menu {
+                    Button {
+                        Task { await viewModel.load() }
+                    } label: {
+                        Label("刷新对话", systemImage: "arrow.clockwise")
+                    }
+                    Button {
+                        Task { await viewModel.send("看看你现在") }
+                    } label: {
+                        Label("请 TA 拍一张此刻", systemImage: "camera")
+                    }
+                } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(DesignTokens.ink)
@@ -620,7 +631,7 @@ struct PetChatView: View {
                         .background(DesignTokens.surface.opacity(0.7))
                         .clipShape(Circle())
                 }
-                .buttonStyle(.plain)
+                .accessibilityLabel("更多操作")
             }
         }
         .toolbar(.hidden, for: .tabBar)
@@ -855,9 +866,9 @@ private struct CommunicatorMessageRow: View {
                         .lineSpacing(2)
                         .padding(.vertical, 10)
                         .padding(.horizontal, 13)
-                        .frame(maxWidth: min(UIScreen.main.bounds.width * 0.72, 310), alignment: .trailing)
                         .background(bubbleColor)
                         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .frame(maxWidth: min(UIScreen.main.bounds.width * 0.72, 310), alignment: .trailing)
                 }
 
                 if message.messageState == "failed", let onRetry {
@@ -887,9 +898,9 @@ private struct CommunicatorMessageRow: View {
                     .lineSpacing(2)
                     .padding(.vertical, 10)
                     .padding(.horizontal, 13)
-                    .frame(maxWidth: min(UIScreen.main.bounds.width * 0.72, 310), alignment: .leading)
                     .background(bubbleColor)
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .frame(maxWidth: min(UIScreen.main.bounds.width * 0.72, 310), alignment: .leading)
 
                 ForEach(visibleAttachments) { attachment in
                     CommunicatorAttachmentView(attachment: attachment)
@@ -2108,13 +2119,10 @@ private struct EditableMemoryCard: View {
                 }
 
                 HStack(spacing: 7) {
-                    MemoryChip(text: memory.memoryType ?? memory.kind, tint: tint)
-                    MemoryChip(text: memory.kind, tint: DesignTokens.dusk)
-                    MemoryChip(text: "重要 \(Int((memory.importance ?? memory.salience) * 100))", tint: DesignTokens.amber)
+                    MemoryChip(text: friendlyKindLabel, tint: tint)
                 }
 
                 HStack(spacing: 8) {
-                    Label(memory.source, systemImage: "tray.and.arrow.down.fill")
                     Spacer(minLength: 0)
                     Text(memory.lastSeenAt, style: .date)
                 }
@@ -2154,6 +2162,19 @@ private struct EditableMemoryCard: View {
 
     private func normalizedValence(_ value: Double) -> Double {
         min(max((value + 1) / 2, 0), 1)
+    }
+
+    /// 数据层的 kind/memoryType 是内部字段，展示层统一翻成 TA 世界里的说法
+    private var friendlyKindLabel: String {
+        let raw = "\(memory.kind) \(memory.memoryType ?? "")".lowercased()
+        if raw.contains("postcard") { return "明信片" }
+        if raw.contains("souvenir") { return "纪念品" }
+        if raw.contains("message") || raw.contains("agent_turn") || raw.contains("thought") { return "来信" }
+        if raw.contains("relationship") { return "你们的约定" }
+        if raw.contains("preference") { return "TA 的喜好" }
+        if raw.contains("place") { return "去过的地方" }
+        if raw.contains("identity") { return "TA 是谁" }
+        return "小片段"
     }
 }
 
