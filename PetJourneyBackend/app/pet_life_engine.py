@@ -5,6 +5,7 @@ from math import cos, pi, sqrt
 from uuid import uuid4
 
 from .config import Settings
+from .meal_rules import is_place_plausible_at
 from .memory_store import MemoryStore
 from .pet_energy import NearbyNeedResolver, NearbyNeedSuggestion, PetEnergyModel
 from .providers import JourneyCity
@@ -87,7 +88,7 @@ class PetLifeSimulationEngine:
             need_state=need_state,
             nearby_need=nearby_need,
         )
-        decision = self._resolve_action(action=action, activity=activity, plan=plan)
+        decision = self._resolve_action(action=action, activity=activity, plan=plan, now=now)
         if decision.adjusted:
             action = self._adjusted_action(action=action, activity=activity)
         summary = self._owner_visible_summary(pet=pet, action=action, decision=decision, activity=activity)
@@ -197,7 +198,9 @@ class PetLifeSimulationEngine:
                 suggested_place_name=activity.place_name,
                 owner_signal=owner_signal,
             )
-        if need_state.hunger >= 78 or self._has_any(activity, ("咖啡", "便利店", "餐", "饭", "茶", "小吃", "cafe")):
+        wants_snack = need_state.hunger >= 78 or self._has_any(activity, ("咖啡", "便利店", "餐", "饭", "茶", "小吃", "cafe"))
+        snack_plausible = is_place_plausible_at(observation.local_time, activity.place_name or "")
+        if wants_snack and snack_plausible:
             return PetIntent(
                 id=f"intent-{uuid4().hex[:10]}",
                 kind="snack_or_coffee",
@@ -277,6 +280,7 @@ class PetLifeSimulationEngine:
         action: WorldAction,
         activity: WorldActivity,
         plan: JourneyPlan,
+        now: datetime | None = None,
     ) -> GameMasterDecision:
         blocked: list[str] = []
         if not self._valid_coordinate(action.lat, action.lng):
@@ -287,6 +291,13 @@ class PetLifeSimulationEngine:
             blocked.append("action_not_attached_to_route_or_place")
         if action.action_type == "capture_memory" and not action.photo_opportunity:
             blocked.append("photo_without_scene_anchor")
+        if (
+            now is not None
+            and action.action_type in {"snack_or_coffee", "eat_nearby"}
+            and action.place_name
+            and not is_place_plausible_at(now, action.place_name)
+        ):
+            blocked.append("meal_time_implausible")
 
         if blocked:
             return GameMasterDecision(

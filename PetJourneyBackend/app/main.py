@@ -42,6 +42,7 @@ from .photo_mission_brain import build_photo_mission_brain
 from .providers import build_content_provider, build_map_provider
 from .route_planner import build_route_planner
 from .scheduler import BackgroundAgentScheduler
+from .story_ticker import StoryTickerResponse, build_story_ticker
 from .street_rank import PetStreetRankEngine
 from .transport_reality import build_transport_reality_provider
 from .travel_quest_engine import build_pet_travel_quest_engine
@@ -684,6 +685,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/v1/pets/{pet_id}/street_rank", response_model=StreetRankResponse)
     def street_rank(pet_id: str, theme: str = "street") -> StreetRankResponse:
         return with_not_found(lambda: engine.street_rank(pet_id, theme))
+
+    @app.get("/api/v1/world/story_ticker", response_model=StoryTickerResponse)
+    def world_story_ticker(limit: int = 8) -> StoryTickerResponse:
+        return build_story_ticker(limit=limit)
 
     @app.get("/api/v1/pets/{pet_id}/static_map", response_model=StaticMapAsset)
     def static_map(pet_id: str, zoom: int = 14) -> StaticMapAsset:
