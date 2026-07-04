@@ -7,6 +7,7 @@ from .amap_services import AMapWebServiceClient
 from .config import Settings
 from .google_maps_services import GoogleMapsServiceClient
 from .meal_rules import is_heavy_meal_place, is_morning, is_morning_appropriate_place
+from .place_display import display_name
 from .providers import JourneyCity, MapProvider, is_china_city
 from .schemas import (
     ItineraryStop,
@@ -32,6 +33,45 @@ class TravelRoutePlanner(Protocol):
         ...
 
 
+# 各交通方式的最快巡航速度（米/秒）与最短时长（秒）：任何腿的时长都不得快于
+# 距离/速度推出的下限，杜绝"瞬移"。
+_MODE_SPEED_FLOORS: dict[TravelMode, tuple[float, int]] = {
+    TravelMode.walk: (1.6, 60),
+    TravelMode.drive: (22.0, 120),
+    TravelMode.transit: (16.0, 180),
+    TravelMode.train: (60.0, 300),
+    TravelMode.flight: (260.0, 1800),
+}
+
+
+def enforce_transport_reality(plan: JourneyPlan) -> JourneyPlan:
+    """展示前的世界规则校验：地名走展示规则，交通腿时长不得低于物理下限。"""
+    segments: list[RouteSegment] = []
+    for segment in plan.route_segments:
+        updated: dict = {}
+        floor = _MODE_SPEED_FLOORS.get(segment.mode)
+        if floor and segment.distance_meters:
+            speed, minimum = floor
+            min_duration = max(int(segment.distance_meters / speed), minimum)
+            if (segment.duration_seconds or 0) < min_duration:
+                updated["duration_seconds"] = min_duration
+        segments.append(segment.model_copy(update=updated) if updated else segment)
+
+    stops = [
+        stop.model_copy(update={"name": display_name(stop.name)})
+        if display_name(stop.name) != stop.name
+        else stop
+        for stop in plan.stops
+    ]
+    places = [
+        place.model_copy(update={"name": display_name(place.name)})
+        if display_name(place.name) != place.name
+        else place
+        for place in plan.places
+    ]
+    return plan.model_copy(update={"route_segments": segments, "stops": stops, "places": places})
+
+
 class MockTravelRoutePlanner:
     provider_name = "mock-multimodal-route-planner"
 
@@ -43,8 +83,8 @@ class MockTravelRoutePlanner:
     def build_journey_plan(self, pet: PetRecord, city: JourneyCity, now: datetime) -> JourneyPlan:
         places = self.map_provider.places_for_city(city)
         if self.settings.worldcup_demo_enabled:
-            return self._worldcup_plan(pet, city, now, places)
-        return self._local_life_plan(pet, city, now, places)
+            return enforce_transport_reality(self._worldcup_plan(pet, city, now, places))
+        return enforce_transport_reality(self._local_life_plan(pet, city, now, places))
 
     def build_route_plan(self, pet: PetRecord, city: JourneyCity, now: datetime) -> JourneyRoutePlan:
         journey_plan = self.build_journey_plan(pet, city, now)
@@ -508,11 +548,13 @@ class RemoteTravelRoutePlanner:
         plan = self.fallback.build_journey_plan(pet, city, now)
         if not self._has_route_provider():
             return plan
-        return plan.model_copy(
-            update={
-                "provider": self.provider_name,
-                "route_segments": self._enrich_route_segments(plan),
-            }
+        return enforce_transport_reality(
+            plan.model_copy(
+                update={
+                    "provider": self.provider_name,
+                    "route_segments": self._enrich_route_segments(plan),
+                }
+            )
         )
 
     def build_route_plan(self, pet: PetRecord, city: JourneyCity, now: datetime) -> JourneyRoutePlan:
