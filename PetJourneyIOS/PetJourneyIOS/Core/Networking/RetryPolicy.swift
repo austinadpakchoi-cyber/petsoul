@@ -23,7 +23,7 @@ struct RetryPolicy: Equatable, Sendable {
             return true
         case .server(let status, _):
             return (500...599).contains(status)
-        case .decoding:
+        case .decoding, .unauthorized:
             return false
         }
     }
