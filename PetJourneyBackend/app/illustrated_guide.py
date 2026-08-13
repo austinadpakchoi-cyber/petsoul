@@ -24,6 +24,12 @@ from .storage import PetRecord
 
 
 class IllustratedGuideEngine:
+    def _image_model_label(self) -> str:
+        """返回当前生图 provider 实际使用的模型名（而非配置里的默认 image_model）。"""
+        snapshot = self.image_provider.config_snapshot()
+        value = snapshot.get("image_model")
+        return str(value) if value else self.settings.image_model
+
     provider_name = "illustrated-guide-engine"
 
     def __init__(self, *, settings: Settings, image_provider: ImageProvider):
@@ -105,14 +111,14 @@ class IllustratedGuideEngine:
             image_url=first_ready_page.image_url if first_ready_page else None,
             thumbnail_url=first_ready_page.thumbnail_url if first_ready_page else None,
             provider=self.provider_name,
-            model=self.settings.image_model,
+            model=self._image_model_label(),
             created_at=now,
         )
         if not generate_image or all_pages_ready:
             return result
         generated_pages: list[IllustratedGuidePage] = []
         provider = self.provider_name
-        model = self.settings.image_model
+        model = self._image_model_label()
         root_image_url = result.image_url
         root_thumbnail_url = result.thumbnail_url
         root_prompt = prompt
