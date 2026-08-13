@@ -147,12 +147,6 @@ final class RemotePetJourneyService: PetJourneyService {
         return try await decode(CollectSouvenirsResponse.self, from: request)
     }
 
-    func collectTravelQuestSouvenirs(petID: String, questID: String) async throws -> [SouvenirItem] {
-        var request = URLRequest(url: endpoint("/api/v1/pets/\(petID)/travel_quests/\(questID)/souvenirs"))
-        request.httpMethod = "POST"
-        return try await decode([SouvenirItem].self, from: request)
-    }
-
     func sellItem(petID: String, itemID: String, request: SellItemRequest) async throws -> ItemMutationResponse {
         try await postJSON(ItemMutationResponse.self, path: "/api/v1/pets/\(petID)/items/\(itemID)/sell", body: request)
     }

@@ -107,10 +107,6 @@ extension MockPetJourneyService {
         )
     }
 
-    func collectTravelQuestSouvenirs(petID: String, questID: String) async throws -> [SouvenirItem] {
-        try await collectTravelQuestSouvenirsWithEconomy(petID: petID, questID: questID).items
-    }
-
     func sellItem(petID: String, itemID: String, request: SellItemRequest) async throws -> ItemMutationResponse {
         try ensureJourneyExists(for: petID)
         guard var item = souvenirs[petID]?.first(where: { $0.id == itemID }) else {

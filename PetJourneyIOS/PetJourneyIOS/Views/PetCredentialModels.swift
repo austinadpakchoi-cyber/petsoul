@@ -107,12 +107,17 @@ enum PetCredentialKind: String, CaseIterable, Identifiable {
         }
     }
 
+    // 卡面尺寸真相源（本地合成卡面）。若将来接入服务端生图（Seedream 等），
+    // 改为消费后端返回的 size 字段，而不是这里的固定值。
+    static let standardCardSize = CGSize(width: 1536, height: 1024)
+    static let passportCardSize = CGSize(width: 1448, height: 1086)
+
     var documentAspectRatio: CGFloat {
         switch self {
         case .passport:
-            1448.0 / 1086.0
+            Self.passportCardSize.width / Self.passportCardSize.height
         default:
-            1536.0 / 1024.0
+            Self.standardCardSize.width / Self.standardCardSize.height
         }
     }
 

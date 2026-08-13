@@ -52,7 +52,6 @@ protocol PetJourneyService: AnyObject {
     func fetchEconomy(petID: String) async throws -> EconomyResponse
     func fetchInventory(petID: String, status: ItemStatus?, limit: Int) async throws -> InventoryResponse
     func collectTravelQuestSouvenirsWithEconomy(petID: String, questID: String) async throws -> CollectSouvenirsResponse
-    func collectTravelQuestSouvenirs(petID: String, questID: String) async throws -> [SouvenirItem]
     func sellItem(petID: String, itemID: String, request: SellItemRequest) async throws -> ItemMutationResponse
     func archiveItem(petID: String, itemID: String, request: ArchiveItemRequest) async throws -> ItemMutationResponse
     func fetchThoughtTranslation(petID: String, thoughtID: String) async throws -> ThoughtTranslation
