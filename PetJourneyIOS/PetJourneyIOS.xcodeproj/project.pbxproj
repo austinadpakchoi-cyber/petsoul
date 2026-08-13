@@ -155,15 +155,15 @@
 		A00000000000000000000155 /* WorldCupModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldCupModels.swift; sourceTree = "<group>"; };
 		A00000000000000000000156 /* CredentialModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialModels.swift; sourceTree = "<group>"; };
 		A00000000000000000000157 /* AuthModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthModels.swift; sourceTree = "<group>"; };
-		A00000000000000000000158 /* MockPetJourneyService+Core.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Core.swift; sourceTree = "<group>"; };
-		A00000000000000000000159 /* MockPetJourneyService+Pet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Pet.swift; sourceTree = "<group>"; };
-		A0000000000000000000015A /* MockPetJourneyService+Journey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Journey.swift; sourceTree = "<group>"; };
-		A0000000000000000000015B /* MockPetJourneyService+Guide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Guide.swift; sourceTree = "<group>"; };
-		A0000000000000000000015C /* MockPetJourneyService+TravelQuest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+TravelQuest.swift; sourceTree = "<group>"; };
-		A0000000000000000000015D /* MockPetJourneyService+Economy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Economy.swift; sourceTree = "<group>"; };
-		A0000000000000000000015E /* MockPetJourneyService+TravelBag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+TravelBag.swift; sourceTree = "<group>"; };
-		A0000000000000000000015F /* MockPetJourneyService+Communicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Communicator.swift; sourceTree = "<group>"; };
-		A00000000000000000000160 /* MockPetJourneyService+Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Memory.swift; sourceTree = "<group>"; };
+		A00000000000000000000158 /* MockPetJourneyService+Core.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockPetJourneyService+Core.swift"; sourceTree = "<group>"; };
+		A00000000000000000000159 /* MockPetJourneyService+Pet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockPetJourneyService+Pet.swift"; sourceTree = "<group>"; };
+		A0000000000000000000015A /* MockPetJourneyService+Journey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockPetJourneyService+Journey.swift"; sourceTree = "<group>"; };
+		A0000000000000000000015B /* MockPetJourneyService+Guide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockPetJourneyService+Guide.swift"; sourceTree = "<group>"; };
+		A0000000000000000000015C /* MockPetJourneyService+TravelQuest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockPetJourneyService+TravelQuest.swift"; sourceTree = "<group>"; };
+		A0000000000000000000015D /* MockPetJourneyService+Economy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockPetJourneyService+Economy.swift"; sourceTree = "<group>"; };
+		A0000000000000000000015E /* MockPetJourneyService+TravelBag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockPetJourneyService+TravelBag.swift"; sourceTree = "<group>"; };
+		A0000000000000000000015F /* MockPetJourneyService+Communicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockPetJourneyService+Communicator.swift"; sourceTree = "<group>"; };
+		A00000000000000000000160 /* MockPetJourneyService+Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockPetJourneyService+Memory.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

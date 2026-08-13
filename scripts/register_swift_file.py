@@ -65,9 +65,13 @@ def _next_id(text: str, line_re: "re.Pattern") -> str:
 
 
 def _file_ref_line(ref_id: str, name: str) -> str:
+    # OpenStep plist 未加引号字符串仅允许 [A-Za-z0-9_$/:.-]；
+    # 含其他字符（如 +、空格、@）时 path 必须加双引号，否则 Xcode 报
+    # "project is damaged ... parse error"。Xcode 对含 + 号文件名正是这样写。
+    path = name if re.fullmatch(r"[A-Za-z0-9_$/:.\-]+", name) else f'"{name}"'
     return (
         f"{T*2}{ref_id} /* {name} */ = {{isa = PBXFileReference; "
-        f'lastKnownFileType = sourcecode.swift; path = {name}; sourceTree = "<group>"; }};'
+        f'lastKnownFileType = sourcecode.swift; path = {path}; sourceTree = "<group>"; }};'
     )
 
 
