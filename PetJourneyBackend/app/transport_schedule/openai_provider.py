@@ -1,66 +1,17 @@
+"""OpenAI Web Search 交通班次 Provider：用 web_search_preview 工具检索真实班次。"""
+
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime, time, timedelta, timezone
 from json import JSONDecodeError
 import json
 import re
-from typing import Protocol
 from urllib import error, request
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from .config import Settings
-from .schemas import PlaceSignal, TravelMode
-from .storage import PetRecord
-
-
-@dataclass(frozen=True, slots=True)
-class TransportScheduleRequest:
-    pet: PetRecord
-    mode: TravelMode
-    origin: PlaceSignal
-    destination: PlaceSignal
-    depart_after: datetime
-    now: datetime
-    context: str
-
-
-@dataclass(frozen=True, slots=True)
-class TransportScheduleCandidate:
-    mode: TravelMode
-    carrier: str | None
-    service_number: str
-    origin_name: str
-    destination_name: str
-    scheduled_departure: datetime
-    scheduled_arrival: datetime
-    terminal_or_platform: str | None = None
-    source_urls: tuple[str, ...] = ()
-    confidence: str = "medium"
-    search_query: str | None = None
-    notes: str | None = None
-    reality_level: str = "web_reference_schedule"
-    is_simulated: bool = True
-
-
-class TransportScheduleProvider(Protocol):
-    provider_name: str
-
-    def best_candidate(self, search: TransportScheduleRequest) -> TransportScheduleCandidate | None:
-        ...
-
-    def best_itinerary(self, search: TransportScheduleRequest) -> list[TransportScheduleCandidate]:
-        ...
-
-
-class MockTransportScheduleProvider:
-    provider_name = "mock-transport-schedule-provider"
-
-    def best_candidate(self, search: TransportScheduleRequest) -> TransportScheduleCandidate | None:
-        return None
-
-    def best_itinerary(self, search: TransportScheduleRequest) -> list[TransportScheduleCandidate]:
-        return []
+from ..config import Settings
+from ..schemas import TravelMode
+from .models import TransportScheduleCandidate, TransportScheduleRequest
 
 
 class OpenAIWebSearchTransportScheduleProvider:
@@ -456,11 +407,3 @@ class OpenAIWebSearchTransportScheduleProvider:
         if self.settings.openai_api_key:
             return message.replace(self.settings.openai_api_key, "[REDACTED]")
         return message
-
-
-def build_transport_schedule_provider(settings: Settings | None = None) -> TransportScheduleProvider:
-    if settings and (
-        settings.transport_schedule_provider == "openai" or settings.transport_web_search_enabled
-    ):
-        return OpenAIWebSearchTransportScheduleProvider(settings)
-    return MockTransportScheduleProvider()
