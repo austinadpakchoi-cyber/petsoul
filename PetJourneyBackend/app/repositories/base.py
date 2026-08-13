@@ -13,13 +13,28 @@ from pathlib import Path
 import sqlite3
 
 
+class _ClosingConnection(sqlite3.Connection):
+    """退出 `with` 块时额外 close 的 SQLite 连接。
+
+    Python 的 ``sqlite3.Connection`` 上下文管理器只 commit/rollback，不会 close；
+    在 Windows 上这会让数据库文件一直被占用（WinError 32），直到连接对象被
+    循环 GC 回收。这里在退出 `with` 时显式 close，保证文件句柄立即释放。
+    """
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            super().__exit__(exc_type, exc_val, exc_tb)
+        finally:
+            self.close()
+
+
 class StorageBaseMixin:
     """提供底层 SQLite 连接与 schema 迁移原语。"""
 
     database_path: Path
 
     def connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.database_path)
+        conn = sqlite3.connect(self.database_path, factory=_ClosingConnection)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
         return conn

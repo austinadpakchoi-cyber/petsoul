@@ -50,7 +50,7 @@ async def save_upload(upload_dir: Path, upload: UploadFile | None, subdir: str =
     target_dir.mkdir(parents=True, exist_ok=True)
     target = target_dir / f"{uuid.uuid4().hex}{suffix}"
     target.write_bytes(data)
-    return str(target.relative_to(upload_dir))
+    return target.relative_to(upload_dir).as_posix()
 
 
 def ensure_demo_media(upload_dir: Path) -> None:
