@@ -572,27 +572,29 @@ extension MockPetJourneyService {
     }
 
     func mockSocialReactors(seed: String, createdAt: Date) -> [MomentSocialReactor] {
-        // 与后端 communicator/npc_society.py 的常驻 NPC 保持同一批身份
-        let pool: [(String, String, String, String, MomentReaction, String)] = [
-            ("npc-nana-cat", "Nana", "cat", "🐱", .like, "在附近的窗台看见了这一刻"),
-            ("npc-tuanzi-dog", "团子", "dog", "🐶", .like, "也觉得这里适合慢慢待着"),
-            ("npc-jiujiu-parrot", "啾啾", "parrot", "🦜", .hug, "从公共频道轻轻回应了一下"),
-            ("npc-momo-rabbit", "Momo", "rabbit", "🐰", .like, "把这一刻收藏进小地图"),
-            ("npc-mili-hamster", "米粒", "hamster", "🐹", .hug, "偷偷把这一刻塞进了腮帮子"),
-            ("npc-lucky-dog", "Lucky", "dog", "🐶", .like, "在街角朝这边汪了一声")
+        // 身份来自 NPCSociety.cast（与后端 npc_society.py 同一批），互动元数据由 Mock 携带。
+        let presentation: [String: (String, MomentReaction, String)] = [
+            "Nana": ("🐱", .like, "在附近的窗台看见了这一刻"),
+            "团子": ("🐶", .like, "也觉得这里适合慢慢待着"),
+            "啾啾": ("🦜", .hug, "从公共频道轻轻回应了一下"),
+            "Momo": ("🐰", .like, "把这一刻收藏进小地图"),
+            "米粒": ("🐹", .hug, "偷偷把这一刻塞进了腮帮子"),
+            "Lucky": ("🐶", .like, "在街角朝这边汪了一声"),
         ]
+        let pool = NPCSociety.cast
         let value = seed.unicodeScalars.reduce(0) { $0 + Int($1.value) }
         let count = 1 + value % 3
         let start = value % pool.count
         return (0..<count).map { index in
-            let item = pool[(start + index) % pool.count]
+            let identity = pool[(start + index) % pool.count]
+            let meta = presentation[identity.name] ?? ("🐾", .like, "轻轻回应了一下")
             return MomentSocialReactor(
-                id: item.0,
-                name: item.1,
-                species: item.2,
-                avatarEmoji: item.3,
-                reaction: item.4,
-                note: item.5,
+                id: identity.id,
+                name: identity.name,
+                species: identity.typeRaw,
+                avatarEmoji: meta.0,
+                reaction: meta.1,
+                note: meta.2,
                 createdAt: createdAt.addingTimeInterval(TimeInterval(18 + index * 31))
             )
         }

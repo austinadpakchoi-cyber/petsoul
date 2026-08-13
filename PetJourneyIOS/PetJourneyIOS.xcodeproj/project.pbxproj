@@ -114,6 +114,7 @@
 		A00000000000000000000284 /* ContractDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000184 /* ContractDecodingTests.swift */; };
 		A00000000000000000000285 /* CommunicatorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000185 /* CommunicatorViewModel.swift */; };
 		A00000000000000000000286 /* MemoryHubViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000186 /* MemoryHubViewModel.swift */; };
+		A00000000000000000000287 /* NPCSociety.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000187 /* NPCSociety.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -236,6 +237,7 @@
 		A00000000000000000000184 /* ContractDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractDecodingTests.swift; sourceTree = "<group>"; };
 		A00000000000000000000185 /* CommunicatorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicatorViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000186 /* MemoryHubViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryHubViewModel.swift; sourceTree = "<group>"; };
+		A00000000000000000000187 /* NPCSociety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPCSociety.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -382,6 +384,7 @@
 				A00000000000000000000155 /* WorldCupModels.swift */,
 				A00000000000000000000156 /* CredentialModels.swift */,
 				A00000000000000000000157 /* AuthModels.swift */,
+				A00000000000000000000187 /* NPCSociety.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -722,6 +725,7 @@
 				A00000000000000000000283 /* WorldStoryViewModel.swift in Sources */,
 				A00000000000000000000285 /* CommunicatorViewModel.swift in Sources */,
 				A00000000000000000000286 /* MemoryHubViewModel.swift in Sources */,
+				A00000000000000000000287 /* NPCSociety.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
