@@ -95,6 +95,7 @@ struct PlaceSignal: Codable, Identifiable, Equatable, Sendable {
     var distanceMeters: Int? = nil
     var guideScore: Double? = nil
     var guideReason: String? = nil
+    var raw: [String: JSONValue]? = nil
 
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
@@ -117,6 +118,7 @@ struct PlaceSignal: Codable, Identifiable, Equatable, Sendable {
         case distanceMeters = "distance_meters"
         case guideScore = "guide_score"
         case guideReason = "guide_reason"
+        case raw
     }
 }
-
+

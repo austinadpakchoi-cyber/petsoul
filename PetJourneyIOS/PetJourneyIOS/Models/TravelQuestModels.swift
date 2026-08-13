@@ -217,6 +217,7 @@ struct PlaceEvidencePacket: Codable, Equatable, Sendable {
     var needsVerification: Bool?
     var verificationStatus: String?
     var evidenceNotes: [String]?
+    var providerEvidence: [String: JSONValue]?
 
     enum CodingKeys: String, CodingKey {
         case canonicalPlaceId = "canonical_place_id"
@@ -232,6 +233,7 @@ struct PlaceEvidencePacket: Codable, Equatable, Sendable {
         case needsVerification = "needs_verification"
         case verificationStatus = "verification_status"
         case evidenceNotes = "evidence_notes"
+        case providerEvidence = "provider_evidence"
     }
 }
 
@@ -346,4 +348,4 @@ struct TravelQuestDecisionRequest: Codable, Equatable, Sendable {
         case ownerMessage = "owner_message"
     }
 }
-
+

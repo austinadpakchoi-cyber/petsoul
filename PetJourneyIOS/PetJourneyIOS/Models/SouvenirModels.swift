@@ -69,6 +69,9 @@ struct SouvenirItem: Codable, Identifiable, Equatable, Sendable {
     var originWeather: String? = nil
     var originCoords: [Double]? = nil
     var updatedAt: Date? = nil
+    var memoryType: String? = nil
+    var sourcePhotoMissionID: String? = nil
+    var bagInfluenceTags: [String]? = nil
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -104,6 +107,9 @@ struct SouvenirItem: Codable, Identifiable, Equatable, Sendable {
         case originWeather = "origin_weather"
         case originCoords = "origin_coords"
         case updatedAt = "updated_at"
+        case memoryType = "memory_type"
+        case sourcePhotoMissionID = "source_photo_mission_id"
+        case bagInfluenceTags = "bag_influence_tags"
     }
 
     var effectiveStatus: ItemStatus { status ?? .owned }
@@ -167,4 +173,4 @@ struct TravelQuest: Codable, Identifiable, Equatable, Sendable {
         case updatedAt = "updated_at"
     }
 }
-
+

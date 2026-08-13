@@ -35,6 +35,30 @@ struct PlaceInteraction: Codable, Identifiable, Equatable, Sendable {
     }
 }
 
+struct PhotoQualityReport: Codable, Equatable, Sendable {
+    var petIdentityScore: Double
+    var placeRecognitionScore: Double
+    var emotionalToneScore: Double
+    var policySafety: Bool
+    var logoBrandRisk: Double
+    var uncannyRisk: Double
+    var retryReason: String?
+    var failureCategory: String?
+    var evaluator: String?
+
+    enum CodingKeys: String, CodingKey {
+        case petIdentityScore = "pet_identity_score"
+        case placeRecognitionScore = "place_recognition_score"
+        case emotionalToneScore = "emotional_tone_score"
+        case policySafety = "policy_safety"
+        case logoBrandRisk = "logo_brand_risk"
+        case uncannyRisk = "uncanny_risk"
+        case retryReason = "retry_reason"
+        case failureCategory = "failure_category"
+        case evaluator
+    }
+}
+
 struct PhotoMission: Codable, Identifiable, Equatable, Sendable {
     var id: String
     var petID: String
@@ -53,6 +77,10 @@ struct PhotoMission: Codable, Identifiable, Equatable, Sendable {
     var imagePrompt: String
     var postcardText: String
     var safetyNotes: [String]
+    var promptBlocks: [String: String]?
+    var qualityReport: PhotoQualityReport?
+    var retryCount: Int?
+    var failureCategory: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -72,6 +100,10 @@ struct PhotoMission: Codable, Identifiable, Equatable, Sendable {
         case imagePrompt = "image_prompt"
         case postcardText = "postcard_text"
         case safetyNotes = "safety_notes"
+        case promptBlocks = "prompt_blocks"
+        case qualityReport = "quality_report"
+        case retryCount = "retry_count"
+        case failureCategory = "failure_category"
     }
 }
-
+

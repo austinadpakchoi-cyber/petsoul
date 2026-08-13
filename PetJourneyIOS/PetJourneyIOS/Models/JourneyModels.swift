@@ -163,12 +163,35 @@ struct OwnerMessageRequest: Codable, Equatable, Sendable {
     }
 }
 
+struct OwnerIntentResult: Codable, Equatable, Sendable {
+    var intent: String
+    var strength: Double
+    var entities: [String: JSONValue]?
+    var shouldAffectRoute: Bool?
+    var shouldWriteMemory: Bool?
+    var responsePolicy: String?
+    var decision: String?
+    var safetyNotes: [String]?
+
+    enum CodingKeys: String, CodingKey {
+        case intent
+        case strength
+        case entities
+        case shouldAffectRoute = "should_affect_route"
+        case shouldWriteMemory = "should_write_memory"
+        case responsePolicy = "response_policy"
+        case decision
+        case safetyNotes = "safety_notes"
+    }
+}
+
 struct OwnerMessageResponse: Codable, Equatable, Sendable {
     var success: Bool
     var decision: String
     var message: String
     var thought: JourneyThought
     var updatedStatus: AgentStatus?
+    var ownerIntent: OwnerIntentResult?
 
     enum CodingKeys: String, CodingKey {
         case success
@@ -176,6 +199,7 @@ struct OwnerMessageResponse: Codable, Equatable, Sendable {
         case message
         case thought
         case updatedStatus = "updated_status"
+        case ownerIntent = "owner_intent"
     }
 }
-
+

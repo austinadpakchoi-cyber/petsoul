@@ -45,6 +45,30 @@ struct PetGuideStop: Codable, Identifiable, Equatable, Sendable {
     }
 }
 
+struct PetGuideSelectedPlace: Codable, Equatable, Sendable {
+    var placeID: String
+    var name: String
+    var category: String
+    var city: String
+    var score: [String: JSONValue]?
+    var whyPetLikesIt: String?
+    var whyOwnerMayCare: String?
+    var photoPotential: String?
+    var crowdRisk: String?
+
+    enum CodingKeys: String, CodingKey {
+        case placeID = "place_id"
+        case name
+        case category
+        case city
+        case score
+        case whyPetLikesIt = "why_pet_likes_it"
+        case whyOwnerMayCare = "why_owner_may_care"
+        case photoPotential = "photo_potential"
+        case crowdRisk = "crowd_risk"
+    }
+}
+
 struct PetAuthoredGuide: Codable, Equatable, Sendable {
     var petID: String
     var city: String
@@ -69,6 +93,13 @@ struct PetAuthoredGuide: Codable, Equatable, Sendable {
     var voiceProvider: String? = nil
     var criticProvider: String? = nil
     var factProviderPriority: [String]? = nil
+    var guideTheme: String? = nil
+    var selectedPlaces: [PetGuideSelectedPlace]? = nil
+    var whyPetLikesIt: [String]? = nil
+    var whyOwnerMayCare: [String]? = nil
+    var photoPotential: [String]? = nil
+    var crowdRisk: [String]? = nil
+    var petFirstPersonGuide: String? = nil
 
     enum CodingKeys: String, CodingKey {
         case petID = "pet_id"
@@ -94,6 +125,13 @@ struct PetAuthoredGuide: Codable, Equatable, Sendable {
         case voiceProvider = "voice_provider"
         case criticProvider = "critic_provider"
         case factProviderPriority = "fact_provider_priority"
+        case guideTheme = "guide_theme"
+        case selectedPlaces = "selected_places"
+        case whyPetLikesIt = "why_pet_likes_it"
+        case whyOwnerMayCare = "why_owner_may_care"
+        case photoPotential = "photo_potential"
+        case crowdRisk = "crowd_risk"
+        case petFirstPersonGuide = "pet_first_person_guide"
     }
 }
 
@@ -247,4 +285,4 @@ struct IllustratedGuide: Codable, Identifiable, Equatable, Sendable {
         case createdAt = "created_at"
     }
 }
-
+

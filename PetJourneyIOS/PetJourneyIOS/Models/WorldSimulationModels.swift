@@ -183,10 +183,34 @@ struct LifeVisibleThought: Codable, Equatable, Sendable {
     }
 }
 
+struct WorldObservation: Codable, Equatable, Sendable {
+    var petID: String
+    var city: String
+    var weather: String
+    var localTime: Date
+    var currentActivity: WorldActivity
+    var nearbyPlaces: [PlaceSignal]
+    var activeTransport: ScheduledTransportLeg?
+    var constraints: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case petID = "pet_id"
+        case city
+        case weather
+        case localTime = "local_time"
+        case currentActivity = "current_activity"
+        case nearbyPlaces = "nearby_places"
+        case activeTransport = "active_transport"
+        case constraints
+    }
+}
+
 struct LifeTickResult: Codable, Equatable, Sendable {
     var petID: String
     var generatedAt: Date
     var provider: String
+    var observation: WorldObservation?
+    var retrievedMemories: [MemoryRecord]?
     var needState: PetNeedState?
     var intent: LifePetIntent?
     var action: LifeWorldAction?
@@ -202,6 +226,8 @@ struct LifeTickResult: Codable, Equatable, Sendable {
         case petID = "pet_id"
         case generatedAt = "generated_at"
         case provider
+        case observation
+        case retrievedMemories = "retrieved_memories"
         case needState = "need_state"
         case intent
         case action
@@ -256,4 +282,4 @@ struct WorldSimulationSnapshot: Codable, Equatable, Sendable {
         case lifeTick = "life_tick"
     }
 }
-
+
