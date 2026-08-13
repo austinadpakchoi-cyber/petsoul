@@ -1,9 +1,8 @@
 name: Architecture Gate
 
 # 架构门禁：拦截 God File / God Object 复发。
-# 现状：仓库仍有 16 个文件超标（历史债务，见 scripts/arch_gate.py 输出）。
-#       拆分完成前本门禁为「告警不阻断」（continue-on-error），
-#       待各文件拆到阈值内后，删除下面 continue-on-error 即可升级为硬阻断。
+# 2026-08-14 完成历史债务拆分（后端 9 个超标文件全部拆入包/mixin），
+# 门禁升级为硬阻断：任何超过 800 行 / 30 类型的文件都会让 CI 失败。
 
 on:
   pull_request:
@@ -22,5 +21,3 @@ jobs:
 
       - name: Run architecture gate
         run: python scripts/arch_gate.py
-        # TODO: 拆分完成后删除本行，使门禁硬阻断
-        continue-on-error: true
