@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import json
 from pathlib import Path
 import sqlite3
@@ -25,18 +25,7 @@ from .schemas import (
     TravelQuest,
     Wallet,
 )
-
-
-def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-def iso(dt: datetime) -> str:
-    return dt.astimezone(timezone.utc).isoformat()
-
-
-def parse_dt(value: str) -> datetime:
-    return datetime.fromisoformat(value)
+from .utils import iso, parse_dt, utcnow
 
 
 @dataclass(slots=True)

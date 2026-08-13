@@ -372,6 +372,7 @@ class TravelGuideResearchEngine:
         current_city: JourneyCity,
         event_name: str | None,
         now: datetime,
+        pet_name: str,
     ) -> TravelGuideResearch:
         provider = self._provider_for(destination=destination, quest_type=quest_type)
         region = self._destination_region(destination=destination, provider=provider)
@@ -412,7 +413,7 @@ class TravelGuideResearchEngine:
         findings = (
             model_draft.findings
             if model_draft and model_draft.findings
-            else self._mock_findings(provider, destination, quest_type, event_name)
+            else self._mock_findings(provider, destination, quest_type, event_name, pet_name)
         )
         social_findings = (
             model_draft.social_findings
@@ -443,7 +444,7 @@ class TravelGuideResearchEngine:
             provider_name=self._provider_name(provider, model_draft=model_draft),
             destination_region=region,
             query=query,
-            strategy=model_draft.strategy if model_draft and model_draft.strategy else self._strategy(provider, destination),
+            strategy=model_draft.strategy if model_draft and model_draft.strategy else self._strategy(provider, destination, pet_name),
             findings=findings,
             research_brief=research_brief,
             social_findings=social_findings,
@@ -562,9 +563,9 @@ class TravelGuideResearchEngine:
             return f"{event} near {destination} route from {current_city.name} pet-friendly local guide photo spots"
         return f"{destination} local travel guide hidden food cafe park realistic route from {current_city.name}: {owner_message}"
 
-    def _strategy(self, provider: TravelGuideResearchProvider, destination: str) -> str:
+    def _strategy(self, provider: TravelGuideResearchProvider, destination: str, pet_name: str) -> str:
         if provider == TravelGuideResearchProvider.doubao_social:
-            return f"用豆包/中国社媒补足 {destination} 的真实游记、避坑、店铺体验和短视频热点，再交给小福的大脑筛选。"
+            return f"用豆包/中国社媒补足 {destination} 的真实游记、避坑、店铺体验和短视频热点，再交给{pet_name}的大脑筛选。"
         if provider == TravelGuideResearchProvider.openai_web_search:
             return f"用 GPT Web Search 查 {destination} 的英文/海外资料、赛程周边、地点介绍和官方交通信息。"
         if provider == TravelGuideResearchProvider.hybrid:
@@ -577,6 +578,7 @@ class TravelGuideResearchEngine:
         destination: str,
         quest_type: TravelQuestType,
         event_name: str | None,
+        pet_name: str,
     ) -> list[str]:
         if quest_type == TravelQuestType.worldcup:
             return [
@@ -587,11 +589,11 @@ class TravelGuideResearchEngine:
         if provider == TravelGuideResearchProvider.doubao_social:
             return [
                 f"{destination} 攻略需要优先看近期本地社媒经验，而不是只看景点榜单。",
-                "保留小吃店、咖啡店、公园、便利店等生活化停留点，让小福像真的在当地生活。",
-                "攻略要区分给主人看的旅行建议和小福自己的自主选择。",
+                f"保留小吃店、咖啡店、公园、便利店等生活化停留点，让{pet_name}像真的在当地生活。",
+                "攻略要区分给主人看的旅行建议和宠物自己的自主选择。",
             ]
         return [
-            f"{destination} 攻略先查公开网页、地图评价和交通信息，再生成适合小福停留的路线。",
+            f"{destination} 攻略先查公开网页、地图评价和交通信息，再生成适合{pet_name}停留的路线。",
             "国外目的地优先用 Google Places/Routes 补真实 POI、照片参考和本地移动时间。",
             "长途段只记录真实存在的交通方案和时间，不在产品内卖票。",
         ]

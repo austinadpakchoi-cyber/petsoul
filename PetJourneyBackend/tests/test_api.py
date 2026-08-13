@@ -1824,6 +1824,7 @@ class PetJourneyApiTests(unittest.TestCase):
             ),
             event_name=None,
             now=datetime.now(timezone.utc),
+            pet_name="小福",
         )
 
         self.assertEqual(research.provider_name, "fake-doubao-ark")
@@ -1862,6 +1863,7 @@ class PetJourneyApiTests(unittest.TestCase):
             ),
             event_name=None,
             now=datetime.now(timezone.utc),
+            pet_name="小福",
         )
 
         self.assertEqual(research.provider.value, "doubao_social")

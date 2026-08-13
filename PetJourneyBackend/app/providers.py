@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
 import json
 from urllib import error, parse, request
 from typing import Protocol
@@ -9,6 +8,7 @@ from typing import Protocol
 from .config import Settings
 from .google_maps_services import GoogleMapsServiceClient
 from .schemas import CityPosition, PlaceSignal
+from .utils import sanitize_place_id, utcnow
 
 
 @dataclass(frozen=True, slots=True)
@@ -641,14 +641,6 @@ def build_content_provider(settings: Settings) -> CompanionContentProvider:
     if settings.provider_mode == "remote":
         return RemoteCompanionContentProvider(settings)
     return MockCompanionContentProvider()
-
-
-def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-def sanitize_place_id(name: str) -> str:
-    return "".join(ch if ch.isalnum() else "-" for ch in name).strip("-") or "place"
 
 
 def is_china_city(city: JourneyCity) -> bool:

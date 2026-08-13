@@ -69,6 +69,7 @@ class PetTravelQuestEngine:
             current_city=current_city,
             event_name=event_name,
             now=now,
+            pet_name=pet.name,
         )
         guide = self._guide_for(
             pet=pet,
@@ -339,7 +340,7 @@ class PetTravelQuestEngine:
             preparation_notes=[
                 f"预计 {preferred_start_date.isoformat()} 开始准备。",
                 "先生成攻略，不立刻改变当前地图轨迹。",
-                "小福可以接受、推迟或拒绝，这保留 TA 的自主性。",
+                f"{pet.name}可以接受、推迟或拒绝，这保留 TA 的自主性。",
                 "照片任务由地点、比赛氛围、宠物参考图共同生成。",
                 "比赛结束后进入赛后整理，再决定回到出发锚点还是继续旅行。",
             ],

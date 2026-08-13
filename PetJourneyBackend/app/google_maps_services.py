@@ -7,6 +7,7 @@ from urllib import error, parse, request
 
 from .config import Settings
 from .schemas import PlaceSignal, ReverseGeocodeResult, TravelMode
+from .utils import sanitize_place_id
 
 
 @dataclass(frozen=True, slots=True)
@@ -407,7 +408,3 @@ class GoogleMapsServiceClient:
 
 def build_google_maps_service(settings: Settings) -> GoogleMapsServiceClient:
     return GoogleMapsServiceClient(settings)
-
-
-def sanitize_place_id(name: str) -> str:
-    return "".join(ch if ch.isalnum() else "-" for ch in name).strip("-") or "place"
