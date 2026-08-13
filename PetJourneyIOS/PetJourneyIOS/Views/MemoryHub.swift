@@ -10,6 +10,7 @@ struct MemoryArchiveHighlight {
     var date: Date
 }
 
+@MainActor
 final class MemoryHubViewModel: ObservableObject {
     @Published var status: AgentStatus?
     @Published var dna: PetDNA?

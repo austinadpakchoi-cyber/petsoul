@@ -42,6 +42,11 @@ TYPE_RE = re.compile(
     r"(?:struct|class|enum|protocol|extension|actor)\s+([A-Za-z_][A-Za-z0-9_]*)"
 )
 
+# 类型声明前的属性注解行（列首 @Xxx，如 @MainActor / @Observable / @available(...)）。
+# 这些属性单独一行紧贴在类型声明上方，拆分时必须随类型块一起搬走，否则丢失（如 @MainActor
+# 丢失会导致隔离域改变，出现「expression is async but not marked with await」编译错误）。
+ATTRIBUTE_RE = re.compile(r"^@[A-Za-z_]")
+
 
 def strip_private(text: str) -> str:
     """去掉三种 private 形态，统一放宽为 internal。"""
@@ -71,7 +76,11 @@ def brace_end(lines, start):
 
 
 def parse_types(lines):
-    """返回 [(key, start, end)]，key 为 name 或 name#N（同名按源顺序编号）。"""
+    """返回 [(key, start, end)]，key 为 name 或 name#N（同名按源顺序编号）。
+
+    start 会回溯包含类型声明前紧邻（无空行）的属性注解行（@MainActor 等），
+    避免拆分时把属性丢失。end 仍由声明行的花括号平衡计算得到。
+    """
     types = []
     seen = Counter()
     for i, l in enumerate(lines):
@@ -82,7 +91,12 @@ def parse_types(lines):
             occ = seen[name]
             key = name if occ == 1 else f"{name}#{occ}"
             end = brace_end(lines, i)
-            types.append((key, i, end))
+            start = i
+            j = i - 1
+            while j >= 0 and ATTRIBUTE_RE.match(lines[j]):
+                start = j
+                j -= 1
+            types.append((key, start, end))
     return types
 
 

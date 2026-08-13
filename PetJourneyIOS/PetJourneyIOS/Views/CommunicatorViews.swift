@@ -28,6 +28,7 @@ struct JourneyHomeTabs: View {
     }
 }
 
+@MainActor
 final class CommunicatorViewModel: ObservableObject {
     @Published var status: AgentStatus?
     @Published var messages: [CommunicatorMessage] = []
