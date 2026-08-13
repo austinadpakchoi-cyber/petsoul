@@ -417,6 +417,8 @@ struct MemoryEditorSheet: View {
                         .frame(minHeight: 118)
                 }
 
+#if DEBUG
+                // 内部记忆引擎字段：仅 DEBUG 构建可见（硬规则 2——用户文案不得暴露内部机制）。
                 Section("分类") {
                     Picker("Kind", selection: $kind) {
                         ForEach(kindOptions, id: \.self) { option in
@@ -440,6 +442,7 @@ struct MemoryEditorSheet: View {
                     SliderValueRow(title: "情绪值", value: $emotionalValence, range: -1...1)
                     SliderValueRow(title: "信心值", value: $confidence, range: 0...1)
                 }
+#endif
             }
             .navigationTitle(memory == nil ? "新增记忆" : "编辑记忆")
             .navigationBarTitleDisplayMode(.inline)
