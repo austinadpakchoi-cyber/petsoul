@@ -81,9 +81,9 @@ struct MapControlDock: View {
             Divider()
             Button(action: actions.onShowAccount) {
                 if isSignedIn {
-                    Label("账号 · \(accountName ?? "已登录")", systemImage: "checkmark.icloud")
+                    Label("旅程 · \(accountName ?? "已保存")", systemImage: "checkmark.icloud")
                 } else {
-                    Label("保存旅程到账号", systemImage: "person.crop.circle.badge.plus")
+                    Label("保存这趟旅程", systemImage: "person.crop.circle.badge.plus")
                 }
             }
             Button(action: actions.onShowDNA) {

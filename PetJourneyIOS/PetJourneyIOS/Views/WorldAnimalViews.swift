@@ -97,7 +97,7 @@ final class WorldAnimalBadgeView: UIControl {
         container.layer.cornerRadius = 22
         container.layer.cornerCurve = .continuous
         container.clipsToBounds = true
-        container.contentView.backgroundColor = UIColor.white.withAlphaComponent(0.40)
+        container.contentView.backgroundColor = DesignTokens.annotation.cardSurface.withAlphaComponent(0.40)
         container.isUserInteractionEnabled = false
         addSubview(container)
 
@@ -105,7 +105,7 @@ final class WorldAnimalBadgeView: UIControl {
         compactContainer.layer.cornerRadius = 22
         compactContainer.layer.cornerCurve = .continuous
         compactContainer.clipsToBounds = true
-        compactContainer.contentView.backgroundColor = UIColor.white.withAlphaComponent(0.44)
+        compactContainer.contentView.backgroundColor = DesignTokens.annotation.cardSurface.withAlphaComponent(0.44)
         compactContainer.isUserInteractionEnabled = false
         compactContainer.isHidden = true
         addSubview(compactContainer)
@@ -140,12 +140,12 @@ final class WorldAnimalBadgeView: UIControl {
 
         dot.translatesAutoresizingMaskIntoConstraints = false
         dot.layer.cornerRadius = 4
-        dot.layer.borderColor = UIColor.white.cgColor
+        dot.layer.borderColor = DesignTokens.annotation.cardSurface.cgColor
         dot.layer.borderWidth = 1.4
 
         compactDot.translatesAutoresizingMaskIntoConstraints = false
         compactDot.layer.cornerRadius = 3.5
-        compactDot.layer.borderColor = UIColor.white.cgColor
+        compactDot.layer.borderColor = DesignTokens.annotation.cardSurface.cgColor
         compactDot.layer.borderWidth = 1.3
 
         container.contentView.addSubview(iconCircle)
@@ -245,8 +245,8 @@ final class WorldEventAnnotationView: MKAnnotationView {
             UIView.animate(withDuration: 0.2) {
                 self.transform = self.isSelected ? CGAffineTransform(scaleX: 1.08, y: 1.08) : .identity
                 self.container.contentView.backgroundColor = self.isSelected
-                    ? UIColor.white.withAlphaComponent(0.58)
-                    : UIColor.white.withAlphaComponent(0.36)
+                    ? DesignTokens.annotation.cardSurface.withAlphaComponent(0.58)
+                    : DesignTokens.annotation.cardSurface.withAlphaComponent(0.36)
             }
         }
     }
@@ -256,7 +256,7 @@ final class WorldEventAnnotationView: MKAnnotationView {
         container.layer.cornerRadius = 22
         container.layer.cornerCurve = .continuous
         container.clipsToBounds = true
-        container.contentView.backgroundColor = UIColor.white.withAlphaComponent(0.40)
+        container.contentView.backgroundColor = DesignTokens.annotation.cardSurface.withAlphaComponent(0.40)
         addSubview(container)
 
         layer.shadowColor = DesignTokens.annotation.shadowBrown.cgColor
@@ -282,7 +282,7 @@ final class WorldEventAnnotationView: MKAnnotationView {
 
         dot.translatesAutoresizingMaskIntoConstraints = false
         dot.layer.cornerRadius = 5
-        dot.layer.borderColor = UIColor.white.cgColor
+        dot.layer.borderColor = DesignTokens.annotation.cardSurface.cgColor
         dot.layer.borderWidth = 1.5
 
         container.contentView.addSubview(iconCircle)

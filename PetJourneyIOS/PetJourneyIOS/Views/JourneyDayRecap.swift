@@ -239,7 +239,7 @@ struct DayRecapView: View {
                                 .overlay {
                                     Circle().stroke(DesignTokens.surfaceStroke.opacity(0.9), lineWidth: 1.5)
                                 }
-                                .shadow(color: .black.opacity(0.18), radius: 6, x: 0, y: 3)
+                                .shadow(color: DesignTokens.deepInk.opacity(0.18), radius: 6, x: 0, y: 3)
                         }
                     }
 
@@ -387,7 +387,7 @@ struct DayRecapView: View {
             .frame(maxWidth: 330)
             .background(DesignTokens.surface.opacity(0.97))
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .shadow(color: .black.opacity(0.2), radius: 30, x: 0, y: 14)
+            .shadow(color: DesignTokens.deepInk.opacity(0.2), radius: 30, x: 0, y: 14)
         }
         .transition(.opacity)
     }
@@ -552,7 +552,7 @@ struct RecapPetMarker: View {
         .overlay {
             Circle().stroke(.white, lineWidth: 2)
         }
-        .shadow(color: .black.opacity(0.22), radius: 10, x: 0, y: 5)
+        .shadow(color: DesignTokens.deepInk.opacity(0.22), radius: 10, x: 0, y: 5)
     }
 }
 
@@ -603,7 +603,7 @@ struct RecapChapterCard: View {
         .padding(12)
         .background(DesignTokens.surface.opacity(0.94))
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .shadow(color: .black.opacity(0.14), radius: 16, x: 0, y: 8)
+        .shadow(color: DesignTokens.deepInk.opacity(0.14), radius: 16, x: 0, y: 8)
     }
 }
 

@@ -31,7 +31,7 @@ extension MockPetJourneyService {
             city: plan.city,
             generatedAt: Date(),
             provider: "mock-ios-pet-guide-brain",
-            model: "mock-guide-model",
+            model: "deepseek-chat",
             title: "\(profile?.name ?? "TA")的\(plan.city)慢游攻略",
             animalText: petType.vocalization(for: "guide_saved"),
             translation: "我想先替你在\(plan.city)慢慢走一遍，不赶路。哪里有舒服的光、好闻的味道，或者值得停久一点的小店，我都会记下来。以后有机会，你也可以来看看。",

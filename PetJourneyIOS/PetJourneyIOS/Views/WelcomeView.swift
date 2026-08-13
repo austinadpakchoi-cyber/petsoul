@@ -115,7 +115,7 @@ struct PublicWorldView: View {
                     Text("PetJourney")
                         .font(.headline.weight(.semibold))
                         .foregroundStyle(DesignTokens.ink)
-                    Text("灵魂世界正在旅行")
+                    Text("平行世界正在旅行")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(DesignTokens.welcome.subInk)
                 }

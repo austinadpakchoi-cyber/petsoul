@@ -311,7 +311,7 @@ struct CredentialPortraitGlyph: View {
                 .font(.system(size: 8, weight: .heavy, design: .rounded))
                 .foregroundStyle(.white)
                 .lineLimit(1)
-                .minimumScaleFactor(0.62)
+                .minimumScaleFactor(0.8)
                 .padding(.vertical, 4)
                 .padding(.horizontal, 7)
                 .frame(maxWidth: .infinity)
@@ -359,7 +359,7 @@ struct CredentialSeal: View {
                 .font(.system(size: 9, weight: .heavy, design: .rounded))
                 .foregroundStyle(.white.opacity(0.86))
                 .lineLimit(1)
-                .minimumScaleFactor(0.55)
+                .minimumScaleFactor(0.8)
                 .padding(9)
         }
         .frame(width: 48, height: 48)

@@ -257,7 +257,7 @@ struct PetChatAvatar: View {
             Circle()
                 .stroke(DesignTokens.surfaceStroke.opacity(0.9), lineWidth: 1)
         }
-        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .shadow(color: DesignTokens.deepInk.opacity(0.05), radius: 5, x: 0, y: 2)
     }
 }
 

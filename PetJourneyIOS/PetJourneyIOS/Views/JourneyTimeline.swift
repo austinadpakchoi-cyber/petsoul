@@ -236,11 +236,11 @@ struct PostcardCard: View {
                     Text(greetingPlace)
                         .font(.system(size: 42, weight: .bold, design: .serif))
                         .italic()
-                        .minimumScaleFactor(0.58)
+                        .minimumScaleFactor(0.8)
                         .lineLimit(1)
                 }
                 .foregroundStyle(.white.opacity(0.94))
-                .shadow(color: .black.opacity(0.28), radius: 8, x: 0, y: 3)
+                .shadow(color: DesignTokens.deepInk.opacity(0.28), radius: 8, x: 0, y: 3)
                 .padding(18)
             }
 

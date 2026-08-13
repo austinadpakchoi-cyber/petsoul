@@ -452,7 +452,7 @@ struct CredentialPhotoArchivePreview: View {
                     .frame(height: 286)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .padding(.vertical, 12)
-                    .shadow(color: .black.opacity(0.12), radius: 16, x: 0, y: 8)
+                    .shadow(color: DesignTokens.deepInk.opacity(0.12), radius: 16, x: 0, y: 8)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 330)
@@ -584,7 +584,7 @@ struct PetCredentialPortraitViewer: View {
                         RoundedRectangle(cornerRadius: 24, style: .continuous)
                             .stroke(DesignTokens.surfaceStroke.opacity(0.16), lineWidth: 1)
                     }
-                    .shadow(color: .black.opacity(0.38), radius: 28, x: 0, y: 16)
+                    .shadow(color: DesignTokens.deepInk.opacity(0.38), radius: 28, x: 0, y: 16)
                     .padding(.horizontal, DesignTokens.pagePadding)
 
                 Spacer(minLength: 0)

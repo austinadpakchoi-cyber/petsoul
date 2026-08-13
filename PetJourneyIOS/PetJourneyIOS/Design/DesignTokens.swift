@@ -98,6 +98,7 @@ enum DesignTokens {
 
     /// 地图标注文字与阴影（WorldAnimalViews，UIKit）。
     enum annotation {
+        static let cardSurface = UIColor(hex: 0xFDF9EF)
         static let shadowBrown = UIColor(hex: 0x6C554F)
         static let titleInk = UIColor(hex: 0x26302F)
         static let subtitleInk = UIColor(hex: 0x697673)
