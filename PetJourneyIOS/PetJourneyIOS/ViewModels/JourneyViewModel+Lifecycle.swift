@@ -47,7 +47,7 @@ extension JourneyViewModel {
             }
         } catch {
             if Task.isCancelled { return }
-            // 离线冷启动：有缓存就先让 TA 的世界亮起来，标记 stale 待信号恢复。
+            // 离线冷启动：仅当缓存未超 TTL 时才点亮 UI 并标记 stale；超龄缓存由 JourneyCacheRepository 直接拒绝。
             if let cachedStatus = cache.load(AgentStatus.self, kind: .agentStatus) {
                 status = cachedStatus.value
                 cityPosition = cache.load(CityPosition.self, kind: .cityPosition)?.value

@@ -2,8 +2,11 @@ import Foundation
 import SwiftData
 
 /// 离线发件队列：断网时主人讯息先落盘，信号恢复后按写入顺序补发。
+/// 每条消息独立计数：超过上限标记 failed（死信），不再阻塞后面的消息。
 @MainActor
 final class OutboundMessageQueue: ObservableObject {
+    static let maxAttempts = 5
+
     @Published private(set) var pendingCount = 0
 
     private let context: ModelContext
@@ -22,7 +25,8 @@ final class OutboundMessageQueue: ObservableObject {
         refreshPendingCount()
     }
 
-    /// 逐条补发；一旦失败立即停下，剩余讯息留到下次信号恢复。送达即删，历史由服务器消息流承载。
+    /// 逐条补发：失败的消息独立回退为 queued 并累计 attempts；达到上限标记 failed（死信）并跳过，
+    /// 不再阻塞队列中后面的消息。送达即删，历史由服务器消息流承载。
     func drain(send: (String) async throws -> Void) async {
         guard !isDraining else { return }
         isDraining = true
@@ -39,9 +43,12 @@ final class OutboundMessageQueue: ObservableObject {
                 context.delete(message)
                 try? context.save()
             } catch {
-                message.stateRaw = OutboundMessageState.queued.rawValue
+                if message.attempts >= Self.maxAttempts {
+                    message.stateRaw = OutboundMessageState.failed.rawValue
+                } else {
+                    message.stateRaw = OutboundMessageState.queued.rawValue
+                }
                 try? context.save()
-                break
             }
         }
     }

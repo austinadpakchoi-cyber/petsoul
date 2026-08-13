@@ -92,7 +92,7 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(queue.pendingCount, 0)
     }
 
-    func testOutboxStopsOnFailureAndKeepsRemaining() async {
+    func testOutboxFailureKeepsMessagesQueuedAndDoesNotBlockRest() async {
         let queue = OutboundMessageQueue(petID: "pet-1", container: container)
         queue.enqueue(text: "第一句")
         queue.enqueue(text: "第二句")
@@ -103,8 +103,38 @@ final class PersistenceTests: XCTestCase {
             throw PetJourneyError.offline
         }
 
-        XCTAssertEqual(attempted, ["第一句"])
-        XCTAssertEqual(queue.pendingCount, 2, "失败的和未尝试的都应留在队列里")
+        XCTAssertEqual(attempted, ["第一句", "第二句"], "一条消息失败不应阻塞后面的消息")
+        XCTAssertEqual(queue.pendingCount, 2, "失败的消息应回到队列等待下次补发")
+    }
+
+    func testPoisonMessageIsMarkedFailedAndSkipsOthers() async {
+        let queue = OutboundMessageQueue(petID: "pet-1", container: container)
+        queue.enqueue(text: "坏消息")
+        queue.enqueue(text: "好消息")
+
+        for _ in 0..<OutboundMessageQueue.maxAttempts {
+            await queue.drain { text in
+                if text == "坏消息" { throw PetJourneyError.requestFailed("拒绝") }
+            }
+        }
+
+        // 坏消息达到上限应转 failed；好消息在最后一轮已被送达。
+        XCTAssertEqual(queue.pendingCount, 0, "坏消息进入死信（failed），好消息应已送达")
+    }
+
+    func testExpiredCacheIsRejected() {
+        let repository = JourneyCacheRepository(petID: "pet-1", container: container)
+        repository.store(CityPosition(city: "京都", latitude: 35.0116, longitude: 135.7681), kind: .cityPosition)
+
+        // 手动把 updatedAt 拨回 2 小时前（cityPosition TTL 为 1 小时）
+        let context = container.mainContext
+        let rows = try! context.fetch(FetchDescriptor<CachedPayload>())
+        for row in rows {
+            row.updatedAt = Date().addingTimeInterval(-2 * 60 * 60)
+        }
+        try? context.save()
+
+        XCTAssertNil(repository.load(CityPosition.self, kind: .cityPosition), "超龄缓存不应再点亮 UI")
     }
 
     func testMediaCacheStoresAndPurges() async {

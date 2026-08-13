@@ -42,8 +42,23 @@ final class JourneyCacheRepository {
 
     func load<T: Decodable>(_ type: T.Type, kind: PayloadKind) -> Snapshot<T>? {
         guard let row = fetchRow(kind: kind),
+              Date().timeIntervalSince(row.updatedAt) <= ttl(for: kind),
               let value = try? decoder.decode(T.self, from: row.jsonData) else { return nil }
         return Snapshot(value: value, updatedAt: row.updatedAt)
+    }
+
+    /// 各类快照的存活时间：超龄视为过期，不再点亮 UI（离线冷启动不展示陈旧世界状态）。
+    private func ttl(for kind: PayloadKind) -> TimeInterval {
+        switch kind {
+        case .worldSnapshot:
+            return 30 * 60
+        case .agentStatus, .cityPosition, .economy, .travelQuests, .moments, .communicatorMessages, .memories:
+            return 60 * 60
+        case .dayPlan, .journeyPlan, .souvenirs:
+            return 2 * 60 * 60
+        case .illustratedGuide, .dna:
+            return 24 * 60 * 60
+        }
     }
 
     /// 远端优先：成功→写穿并返回 fresh；失败→回退缓存返回 stale；两者皆无→抛原错误。

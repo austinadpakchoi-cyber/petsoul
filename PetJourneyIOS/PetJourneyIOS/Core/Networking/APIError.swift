@@ -5,6 +5,7 @@ enum APIError: Error, Equatable {
     case offline
     case timeout
     case server(status: Int, message: String)
+    case unauthorized
     case decoding
     case transport(String)
 }
@@ -16,6 +17,8 @@ extension APIError {
         switch self {
         case .offline, .timeout, .transport:
             return .offline
+        case .unauthorized:
+            return .sessionExpired
         case .server(_, let message):
             return .requestFailed(message)
         case .decoding:

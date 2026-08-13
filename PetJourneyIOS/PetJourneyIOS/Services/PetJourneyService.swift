@@ -5,6 +5,7 @@ enum PetJourneyError: LocalizedError, Equatable {
     case invalidResponse
     case noPetSession
     case offline
+    case sessionExpired
     case requestFailed(String)
 
     var errorDescription: String? {
@@ -17,6 +18,8 @@ enum PetJourneyError: LocalizedError, Equatable {
             "还没有建立宠物旅程"
         case .offline:
             "信号暂时没有接通，稍后会自动再试。"
+        case .sessionExpired:
+            "连接已失效，重新登录后 TA 会继续在这里等你。"
         case .requestFailed(let message):
             message
         }

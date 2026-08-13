@@ -135,6 +135,27 @@ final class APIClientTests: XCTestCase {
         }
     }
 
+    func testUnauthorizedMapsToSessionExpired() async {
+        StubURLProtocol.handler = { request in
+            (self.makeResponse(request.url!, status: 401), Data("expired".utf8))
+        }
+
+        var request = URLRequest(url: client.endpoint("/ping"))
+        request.httpMethod = "GET"
+        do {
+            _ = try await client.send(Payload.self, request: request, retry: .none)
+            XCTFail("应当抛出 unauthorized")
+        } catch let error as APIError {
+            XCTAssertEqual(error, .unauthorized)
+            XCTAssertEqual(error.asPetJourneyError, .sessionExpired)
+            let description = error.asPetJourneyError.errorDescription ?? ""
+            XCTAssertTrue(description.contains("重新登录"), "401 文案要提示重新登录: \(description)")
+        } catch {
+            XCTFail("错误类型不符: \(error)")
+        }
+        XCTAssertEqual(StubURLProtocol.requestCount, 1)
+    }
+
     func testDecodingFailureMapsToInvalidResponse() async {
         StubURLProtocol.handler = { request in
             (self.makeResponse(request.url!, status: 200), Data("not-json".utf8))

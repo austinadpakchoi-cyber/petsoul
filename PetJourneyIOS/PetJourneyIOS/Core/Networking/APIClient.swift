@@ -87,6 +87,9 @@ final class APIClient {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.transport("非 HTTP 响应")
         }
+        if httpResponse.statusCode == 401 {
+            throw APIError.unauthorized
+        }
         guard (200..<300).contains(httpResponse.statusCode) else {
             let message = String(data: data, encoding: .utf8) ?? "请求失败"
             throw APIError.server(status: httpResponse.statusCode, message: message)
