@@ -2,18 +2,16 @@ import SwiftUI
 
 /// "这条街 TA 最想去哪"：把街区排行讲成 TA 的心愿清单，而不是排行榜。
 struct StreetRankSheet: View {
-    let petID: String
-    let service: any PetJourneyService
-    var theme: String = "street"
+    @StateObject private var viewModel: StreetRankViewModel
 
-    @State private var response: StreetRankResponse?
-    @State private var isLoading = true
-    @State private var errorMessage: String?
+    init(petID: String, service: any PetJourneyService, theme: String = "street") {
+        _viewModel = StateObject(wrappedValue: StreetRankViewModel(petID: petID, service: service, theme: theme))
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                if isLoading {
+                if viewModel.isLoading {
                     HStack(spacing: 10) {
                         ProgressView()
                         Text("正在听 TA 数这条街的心愿…")
@@ -22,13 +20,13 @@ struct StreetRankSheet: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.top, 32)
-                } else if let errorMessage {
+                } else if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
                         .font(.subheadline)
                         .foregroundStyle(DesignTokens.secondaryInk)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 32)
-                } else if let response {
+                } else if let response = viewModel.response {
                     Text("\(response.city) · \(response.weather)")
                         .font(.caption)
                         .foregroundStyle(DesignTokens.secondaryInk)
@@ -43,16 +41,7 @@ struct StreetRankSheet: View {
         .background(DesignTokens.porcelain)
         .navigationTitle("这条街 TA 最想去哪")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await load() }
-    }
-
-    private func load() async {
-        defer { isLoading = false }
-        do {
-            response = try await service.fetchStreetRank(petID: petID, theme: theme)
-        } catch {
-            errorMessage = "这条街的信号还没接通，稍后再来听。"
-        }
+        .task { await viewModel.load() }
     }
 }
 

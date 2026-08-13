@@ -3,15 +3,21 @@ import UIKit
 
 struct ConnectingView: View {
     var draft: OnboardingDraft
-    let service: any PetJourneyService
     var onBack: () -> Void
     var onEnterJourney: (String) -> Void
 
-    @State private var stageIndex = 0
-    @State private var response: CreatePetResponse?
-    @State private var errorMessage: String?
-    @State private var hasStarted = false
+    @StateObject private var viewModel: ConnectingViewModel
     @State private var dialRotates = false
+
+    init(draft: OnboardingDraft,
+         service: any PetJourneyService,
+         onBack: @escaping () -> Void,
+         onEnterJourney: @escaping (String) -> Void) {
+        self.draft = draft
+        self.onBack = onBack
+        self.onEnterJourney = onEnterJourney
+        _viewModel = StateObject(wrappedValue: ConnectingViewModel(draft: draft, service: service))
+    }
 
     private var stages: [(title: String, detail: String, icon: String)] {
         [
@@ -25,12 +31,12 @@ struct ConnectingView: View {
         ZStack {
             AppBackground()
             AmbientSignalField(
-                tint: response == nil ? DesignTokens.sea : DesignTokens.sage,
+                tint: viewModel.response == nil ? DesignTokens.sea : DesignTokens.sage,
                 warmth: DesignTokens.pollen,
-                density: response == nil ? 30 : 18,
-                drift: response == nil ? 0.9 : 0.34
+                density: viewModel.response == nil ? 30 : 18,
+                drift: viewModel.response == nil ? 0.9 : 0.34
             )
-            .opacity(response == nil ? 0.82 : 0.48)
+            .opacity(viewModel.response == nil ? 0.82 : 0.48)
 
             VStack(spacing: 22) {
                 Spacer(minLength: 24)
@@ -38,10 +44,10 @@ struct ConnectingView: View {
                 connectionDial
 
                 VStack(spacing: 8) {
-                    Text(stages[stageIndex].title)
+                    Text(stages[viewModel.stageIndex].title)
                         .font(.system(size: 36, weight: .semibold, design: .rounded))
                         .foregroundStyle(DesignTokens.ink)
-                    Text(stages[stageIndex].detail)
+                    Text(stages[viewModel.stageIndex].detail)
                         .font(.body)
                         .foregroundStyle(DesignTokens.secondaryInk)
                         .multilineTextAlignment(.center)
@@ -49,10 +55,10 @@ struct ConnectingView: View {
                 }
                 .padding(.horizontal, 26)
 
-                StageDots(count: stages.count, activeIndex: stageIndex)
+                StageDots(count: stages.count, activeIndex: viewModel.stageIndex)
                 stageTimeline
 
-                if let response {
+                if let response = viewModel.response {
                     communicatorCard(response: response)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
 
@@ -63,7 +69,7 @@ struct ConnectingView: View {
                     }
                     .primaryActionStyle()
                     .padding(.horizontal, DesignTokens.pagePadding)
-                } else if let errorMessage {
+                } else if let errorMessage = viewModel.errorMessage {
                     errorCard(message: errorMessage)
                 } else {
                     Text("请稍等片刻")
@@ -78,11 +84,8 @@ struct ConnectingView: View {
                 Spacer(minLength: 24)
             }
         }
-        .task {
-            guard !hasStarted else { return }
-            hasStarted = true
-            await runConnection()
-        }
+        .task { await viewModel.start() }
+        .animation(.easeInOut(duration: 0.25), value: viewModel.stageIndex)
         .onAppear {
             withAnimation(.linear(duration: 12).repeatForever(autoreverses: false)) {
                 dialRotates = true
@@ -93,9 +96,9 @@ struct ConnectingView: View {
     private var connectionDial: some View {
         SoulSearchDial(
             draft: draft,
-            icon: stages[stageIndex].icon,
-            stageIndex: stageIndex,
-            isConnected: response != nil,
+            icon: stages[viewModel.stageIndex].icon,
+            stageIndex: viewModel.stageIndex,
+            isConnected: viewModel.response != nil,
             rotates: dialRotates
         )
     }
@@ -103,8 +106,8 @@ struct ConnectingView: View {
     private var stageTimeline: some View {
         HStack(spacing: 8) {
             ForEach(stages.indices, id: \.self) { index in
-                let isActive = index == stageIndex
-                let isFinished = index < stageIndex
+                let isActive = index == viewModel.stageIndex
+                let isFinished = index < viewModel.stageIndex
 
                 HStack(spacing: 6) {
                     Image(systemName: isFinished ? "checkmark" : stages[index].icon)
@@ -138,7 +141,7 @@ struct ConnectingView: View {
                 .quietActionStyle()
 
                 Button {
-                    Task { await runConnection() }
+                    Task { await viewModel.connect() }
                 } label: {
                     Label("重试", systemImage: "arrow.clockwise")
                 }
@@ -146,27 +149,6 @@ struct ConnectingView: View {
             }
         }
         .padding(.horizontal, DesignTokens.pagePadding)
-    }
-
-    private func runConnection() async {
-        errorMessage = nil
-        response = nil
-        do {
-            withAnimation(.easeInOut(duration: 0.25)) { stageIndex = 0 }
-            try await Task.sleep(for: .seconds(1))
-            withAnimation(.easeInOut(duration: 0.25)) { stageIndex = 1 }
-            try await Task.sleep(for: .seconds(1.2))
-            let created = try await service.createPet(request: draft.createRequest)
-            if let photoData = draft.photoData {
-                PetAvatarStore.save(photoData, petID: created.petID)
-            }
-            withAnimation(.easeInOut(duration: 0.25)) {
-                response = created
-                stageIndex = 2
-            }
-        } catch {
-            errorMessage = "这次连接没有稳定下来，可以稍后再试。"
-        }
     }
 
     private func communicatorCard(response: CreatePetResponse) -> some View {

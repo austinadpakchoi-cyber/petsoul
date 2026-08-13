@@ -110,6 +110,8 @@
 		A0000000000000000000027E /* TravelBagSouvenir.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000017E /* TravelBagSouvenir.swift */; };
 		A0000000000000000000027F /* DNASettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000017F /* DNASettings.swift */; };
 		A00000000000000000000280 /* JourneyTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000180 /* JourneyTimeline.swift */; };
+		A00000000000000000000281 /* ConnectingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000181 /* ConnectingViewModel.swift */; };
+		A00000000000000000000282 /* StreetRankViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000182 /* StreetRankViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -228,6 +230,8 @@
 		A0000000000000000000017E /* TravelBagSouvenir.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelBagSouvenir.swift; sourceTree = "<group>"; };
 		A0000000000000000000017F /* DNASettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DNASettings.swift; sourceTree = "<group>"; };
 		A00000000000000000000180 /* JourneyTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyTimeline.swift; sourceTree = "<group>"; };
+		A00000000000000000000181 /* ConnectingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectingViewModel.swift; sourceTree = "<group>"; };
+		A00000000000000000000182 /* StreetRankViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreetRankViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -406,6 +410,8 @@
 				A00000000000000000000163 /* JourneyViewModel+Communication.swift */,
 				A00000000000000000000164 /* JourneyViewModel+Travel.swift */,
 				A00000000000000000000165 /* JourneyViewModel+Souvenirs.swift */,
+				A00000000000000000000181 /* ConnectingViewModel.swift */,
+				A00000000000000000000182 /* StreetRankViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -707,6 +713,8 @@
 				A0000000000000000000027E /* TravelBagSouvenir.swift in Sources */,
 				A0000000000000000000027F /* DNASettings.swift in Sources */,
 				A00000000000000000000280 /* JourneyTimeline.swift in Sources */,
+				A00000000000000000000281 /* ConnectingViewModel.swift in Sources */,
+				A00000000000000000000282 /* StreetRankViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
