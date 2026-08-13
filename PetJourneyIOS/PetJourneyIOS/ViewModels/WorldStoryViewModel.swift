@@ -14,21 +14,13 @@ final class WorldStoryViewModel: ObservableObject {
         guard serviceMode == .remote,
               let base = URL(string: baseURLString) else { return }
 
-        struct TickerItem: Decodable {
-            let id: String
-            let text: String
-            let city: String
-        }
-        struct TickerResponse: Decodable {
-            let items: [TickerItem]
-        }
-
-        let url = base.appendingPathComponent("api/v1/world/story_ticker")
-        guard let (data, response) = try? await URLSession.shared.data(from: url),
-              let http = response as? HTTPURLResponse,
-              http.statusCode == 200,
-              let payload = try? JSONDecoder().decode(TickerResponse.self, from: data),
-              !payload.items.isEmpty else { return }
+        // 走统一 APIClient（重试/错误归一），不直接 URLSession。
+        let client = APIClient(baseURL: base.appendingPathComponent("api/v1"), authProvider: NoAuthProvider())
+        guard let payload = try? await client.send(
+            StoryTickerResponse.self,
+            request: URLRequest(url: client.endpoint("/world/story_ticker")),
+            retry: .idempotent
+        ), !payload.items.isEmpty else { return }
 
         remoteEvents = payload.items.map { item in
             WorldLifeEvent(

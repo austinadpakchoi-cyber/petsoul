@@ -241,6 +241,22 @@ struct LifeTickResult: Codable, Equatable, Sendable {
     }
 }
 
+struct StoryTickerItem: Codable, Equatable, Sendable {
+    var id: String
+    var text: String
+    var city: String
+}
+
+struct StoryTickerResponse: Codable, Equatable, Sendable {
+    var generatedAt: Date
+    var items: [StoryTickerItem]
+
+    enum CodingKeys: String, CodingKey {
+        case generatedAt = "generated_at"
+        case items
+    }
+}
+
 struct WorldSimulationSnapshot: Codable, Equatable, Sendable {
     var petID: String
     var city: String
