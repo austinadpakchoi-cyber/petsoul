@@ -478,38 +478,4 @@ extension ScheduledTransportLeg {
     }
 }
 
-extension String {
-    var petSoulUserFacingText: String {
-        var text = self
-        let replacements: [(String, String)] = [
-            ("适合攻略型打卡，但不强迫 TA 喜欢这里。", "这里有真实的本地味道，TA 可以进去看看，再把感受记下来。"),
-            ("适合攻略型打卡，但不强迫 TA 喜欢这里", "这里有真实的本地味道，TA 可以进去看看，再把感受记下来"),
-            ("不强迫 TA 喜欢这里", "TA 只是按自己的节奏停一会儿"),
-            ("用户可以收藏这段攻略，但不会改变 TA 的感受。", "你可以把这段记下来，TA 仍然会按自己的节奏继续走。"),
-            ("用户可以收藏这段攻略，但不会改变 TA 的感受", "你可以把这段记下来，TA 仍然会按自己的节奏继续走"),
-            ("适合攻略型打卡", "适合进去看看"),
-            ("攻略型打卡", "旅程记录"),
-            ("可能会", "会"),
-            ("可能", ""),
-            ("打卡", "停留")
-        ]
-        for (source, target) in replacements {
-            text = text.replacingOccurrences(of: source, with: target)
-        }
 
-        let patterns = [
-            #"[\s·。；;，,]*(?:地点来源|数据来源|来源|source|provider)\s*[:：]\s*[\w.+/\- ]+"#,
-            #"这个地点来自[^。；;]*[。；;]?"#,
-            #"来自(?:高德|Google|google|AMap|amap)[^。；;]*[。；;]?"#,
-            #"\b(?:amap|google|mock|hybrid|openai|web|map|provider|service|engine|client|route|planner|mission)(?:[-_][A-Za-z0-9]+)+\b"#,
-            #"适合[^。；;]*攻略型[^。；;]*[。；;]?"#
-        ]
-        for pattern in patterns {
-            text = text.replacingOccurrences(of: pattern, with: "", options: .regularExpression)
-        }
-        text = text.replacingOccurrences(of: #"\s{2,}"#, with: " ", options: .regularExpression)
-        text = text.replacingOccurrences(of: #"\s+([。；;，,])"#, with: "$1", options: .regularExpression)
-        text = text.replacingOccurrences(of: #"([，,。；;])\1+"#, with: "$1", options: .regularExpression)
-        return text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "·,，;；。")))
-    }
-}
