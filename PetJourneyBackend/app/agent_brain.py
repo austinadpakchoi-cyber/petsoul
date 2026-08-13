@@ -114,17 +114,12 @@ class OpenAIPetAgentBrain:
             return self.fallback.speak(context)
 
         try:
-            payload = self.build_responses_payload(context)
-            response = self._post_json("/responses", payload)
+            payload = self.build_chat_completions_payload(context)
+            response = self._post_json("/chat/completions", payload)
             data = self._extract_json_object(response)
-        except Exception as responses_error:
-            try:
-                payload = self.build_chat_completions_payload(context)
-                response = self._post_json("/chat/completions", payload)
-                data = self._extract_json_object(response)
-            except Exception as chat_error:
-                self.last_remote_error = self._redact_error(f"{responses_error}; {chat_error}")
-                return self.fallback.speak(context)
+        except Exception as chat_error:
+            self.last_remote_error = self._redact_error(str(chat_error))
+            return self.fallback.speak(context)
 
         try:
             self.last_remote_call_succeeded = True
@@ -161,52 +156,15 @@ class OpenAIPetAgentBrain:
             "turn_interval_seconds": self.settings.agent_turn_interval_seconds,
         }
 
-    def build_responses_payload(self, context: AgentTurnContext) -> dict[str, object]:
-        return {
-            "model": self.settings.agent_model,
-            "reasoning": {"effort": self.settings.agent_reasoning_effort},
-            "text": {
-                "verbosity": self.settings.agent_response_verbosity,
-                "format": {
-                    "type": "json_schema",
-                    "name": "pet_agent_utterance",
-                    "strict": True,
-                    "schema": {
-                        "type": "object",
-                        "additionalProperties": False,
-                        "required": ["animal_text", "translation", "tone", "language_style", "content_intent"],
-                        "properties": {
-                            "animal_text": {"type": "string"},
-                            "translation": {"type": "string"},
-                            "tone": {"type": "string"},
-                            "language_style": {"type": "string"},
-                            "content_intent": {"type": "string", "enum": list(CONTENT_INTENTS)},
-                        },
-                    },
-                },
-            },
-            "input": [
-                {"role": "system", "content": self._system_prompt()},
-                {"role": "user", "content": json.dumps(self._context_payload(context), ensure_ascii=False)},
-            ],
-        }
-
     def build_chat_completions_payload(self, context: AgentTurnContext) -> dict[str, object]:
-        schema = self.build_responses_payload(context)["text"]["format"]
         return {
             "model": self.settings.agent_model,
             "messages": [
                 {"role": "system", "content": self._system_prompt()},
                 {"role": "user", "content": json.dumps(self._context_payload(context), ensure_ascii=False)},
             ],
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": schema["name"],
-                    "strict": True,
-                    "schema": schema["schema"],
-                },
-            },
+            "response_format": {"type": "json_object"},
+            "max_tokens": self.settings.agent_max_tokens,
         }
 
     def _post_json(self, path: str, payload: dict[str, object]) -> dict[str, object]:
@@ -310,7 +268,11 @@ class OpenAIPetAgentBrain:
             "Also decide content_intent: whether this moment is worth sharing. "
             "Use 'postcard' only for genuinely memorable milestones (first arrival in a new city, departures, big events). "
             "Use 'moment' for small warm everyday scenes worth a casual friends-circle post. "
-            "Use 'none' for ordinary moments — most moments should be 'none'; a real pet does not share everything."
+            "Use 'none' for ordinary moments — most moments should be 'none'; a real pet does not share everything. "
+            "Respond with a single JSON object only, matching this schema: "
+            '{"animal_text": string, "translation": string, "tone": string, '
+            '"language_style": string, "content_intent": "none" | "moment" | "postcard"}. '
+            "Do not wrap the JSON in markdown fences and do not add commentary outside the JSON."
         )
 
     def _context_payload(self, context: AgentTurnContext) -> dict[str, object]:

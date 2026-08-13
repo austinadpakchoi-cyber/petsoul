@@ -20,12 +20,15 @@ class Settings:
 
     llm_provider: str = "mock"
     openai_api_key: str | None = None
-    openai_base_url: str = "https://api.openai.com/v1"
-    agent_model: str = "gpt-5.5"
-    agent_deep_model: str = "gpt-5.5"
-    agent_fast_model: str = "gpt-5.4-mini"
-    translation_model: str = "gpt-5.4-mini"
-    photo_mission_model: str = "gpt-5.5"
+    openai_base_url: str = "https://api.deepseek.com/v1"
+    agent_model: str = "deepseek-chat"
+    agent_deep_model: str = "deepseek-chat"
+    agent_fast_model: str = "deepseek-chat"
+    translation_model: str = "deepseek-chat"
+    photo_mission_model: str = "deepseek-chat"
+    agent_max_tokens: int = 512
+    photo_mission_max_tokens: int = 900
+    guide_max_tokens: int = 1600
     image_model: str = "gpt-image-2"
     image_base_url: str = "https://api.openai.com/v1"
     place_reference_images_enabled: bool = True
@@ -37,7 +40,7 @@ class Settings:
     agent_timeout_seconds: float = 30.0
     image_timeout_seconds: float = 240.0
     map_timeout_seconds: float = 10.0
-    agent_turn_interval_seconds: float = 900.0
+    agent_turn_interval_seconds: float = 1800.0
 
     amap_api_key: str | None = None
     google_maps_api_key: str | None = None
@@ -53,10 +56,10 @@ class Settings:
 
     transport_schedule_provider: str = "mock"
     transport_web_search_enabled: bool = False
-    transport_search_model: str = "gpt-5.4-mini"
+    transport_search_model: str = "deepseek-chat"
     transport_search_timeout_seconds: float = 30.0
     travel_guide_research_provider: str = "auto"
-    travel_guide_search_model: str = "gpt-5.4-mini"
+    travel_guide_search_model: str = "deepseek-chat"
     doubao_guide_model: str = "doubao-seed-2-1-pro-260628"
 
     apns_environment: str = "sandbox"
@@ -93,15 +96,18 @@ def load_settings() -> Settings:
         cors_origins=cors_origins,
         llm_provider=os.getenv("PETJOURNEY_LLM_PROVIDER", "mock"),
         openai_api_key=os.getenv("OPENAI_API_KEY"),
-        openai_base_url=os.getenv("PETJOURNEY_OPENAI_BASE_URL", os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")),
-        agent_model=os.getenv("PETJOURNEY_AGENT_MODEL", "gpt-5.5"),
-        agent_deep_model=os.getenv("PETJOURNEY_AGENT_DEEP_MODEL", "gpt-5.5"),
-        agent_fast_model=os.getenv("PETJOURNEY_AGENT_FAST_MODEL", "gpt-5.4-mini"),
-        translation_model=os.getenv("PETJOURNEY_TRANSLATION_MODEL", "gpt-5.4-mini"),
+        openai_base_url=os.getenv("PETJOURNEY_OPENAI_BASE_URL", os.getenv("OPENAI_BASE_URL", "https://api.deepseek.com/v1")),
+        agent_model=os.getenv("PETJOURNEY_AGENT_MODEL", "deepseek-chat"),
+        agent_deep_model=os.getenv("PETJOURNEY_AGENT_DEEP_MODEL", "deepseek-chat"),
+        agent_fast_model=os.getenv("PETJOURNEY_AGENT_FAST_MODEL", "deepseek-chat"),
+        translation_model=os.getenv("PETJOURNEY_TRANSLATION_MODEL", "deepseek-chat"),
         photo_mission_model=os.getenv(
             "PETJOURNEY_PHOTO_MISSION_MODEL",
-            os.getenv("PETJOURNEY_AGENT_DEEP_MODEL", "gpt-5.5"),
+            os.getenv("PETJOURNEY_AGENT_DEEP_MODEL", "deepseek-chat"),
         ),
+        agent_max_tokens=int(os.getenv("PETJOURNEY_AGENT_MAX_TOKENS", "512")),
+        photo_mission_max_tokens=int(os.getenv("PETJOURNEY_PHOTO_MISSION_MAX_TOKENS", "900")),
+        guide_max_tokens=int(os.getenv("PETJOURNEY_GUIDE_MAX_TOKENS", "1600")),
         image_model=os.getenv("PETJOURNEY_IMAGE_MODEL", "gpt-image-2"),
         image_base_url=os.getenv(
             "PETJOURNEY_IMAGE_BASE_URL",
@@ -118,7 +124,7 @@ def load_settings() -> Settings:
         agent_timeout_seconds=float(os.getenv("PETJOURNEY_AGENT_TIMEOUT_SECONDS", "30")),
         image_timeout_seconds=float(os.getenv("PETJOURNEY_IMAGE_TIMEOUT_SECONDS", "240")),
         map_timeout_seconds=float(os.getenv("PETJOURNEY_MAP_TIMEOUT_SECONDS", "10")),
-        agent_turn_interval_seconds=float(os.getenv("PETJOURNEY_AGENT_TURN_INTERVAL_SECONDS", "900")),
+        agent_turn_interval_seconds=float(os.getenv("PETJOURNEY_AGENT_TURN_INTERVAL_SECONDS", "1800")),
         amap_api_key=os.getenv("AMAP_API_KEY"),
         google_maps_api_key=os.getenv("GOOGLE_MAPS_API_KEY"),
         doubao_api_key=os.getenv("DOUBAO_API_KEY"),
@@ -134,13 +140,13 @@ def load_settings() -> Settings:
         in {"1", "true", "yes", "on"},
         transport_search_model=os.getenv(
             "PETJOURNEY_TRANSPORT_SEARCH_MODEL",
-            os.getenv("PETJOURNEY_AGENT_FAST_MODEL", "gpt-5.4-mini"),
+            os.getenv("PETJOURNEY_AGENT_FAST_MODEL", "deepseek-chat"),
         ),
         transport_search_timeout_seconds=float(os.getenv("PETJOURNEY_TRANSPORT_SEARCH_TIMEOUT_SECONDS", "30")),
         travel_guide_research_provider=os.getenv("PETJOURNEY_TRAVEL_GUIDE_RESEARCH_PROVIDER", "auto"),
         travel_guide_search_model=os.getenv(
             "PETJOURNEY_TRAVEL_GUIDE_SEARCH_MODEL",
-            os.getenv("PETJOURNEY_AGENT_FAST_MODEL", "gpt-5.4-mini"),
+            os.getenv("PETJOURNEY_AGENT_FAST_MODEL", "deepseek-chat"),
         ),
         doubao_guide_model=os.getenv("PETJOURNEY_DOUBAO_GUIDE_MODEL", "doubao-seed-2-1-pro-260628"),
         apns_environment=os.getenv("PETJOURNEY_APNS_ENVIRONMENT", "sandbox"),
