@@ -107,6 +107,20 @@ final class JourneyViewModel: ObservableObject {
     var activeWorldCupQuest: TravelQuest? {
         travelQuests.first { $0.worldcupEvent }
     }
+
+    /// 登录成功后把当前宠物认领到账号；成功返回会话凭据供上层落盘，失败返回 nil。
+    func linkAccount(identityToken: String, fullName: String?) async -> AuthSessionResponse? {
+        do {
+            let auth = try await service.signInWithApple(
+                request: AppleSignInRequest(identityToken: identityToken, displayName: fullName)
+            )
+            _ = try? await service.claimPet(petID: petID)
+            toastMessage = "TA 的旅程已经和你连在一起了。"
+            return auth
+        } catch {
+            return nil
+        }
+    }
 }
 
 extension Array where Element == TravelQuest {

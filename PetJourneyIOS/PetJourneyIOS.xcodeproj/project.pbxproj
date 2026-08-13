@@ -47,8 +47,6 @@
 		A00000000000000000000239 /* PersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000139 /* PersistenceTests.swift */; };
 		A00000000000000000000240 /* PushDeepLinkRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000140 /* PushDeepLinkRouter.swift */; };
 		A00000000000000000000241 /* PushDeepLinkRouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000141 /* PushDeepLinkRouterTests.swift */; };
-		A00000000000000000000242 /* MemorySearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000142 /* MemorySearchView.swift */; };
-		A00000000000000000000243 /* CredentialPromptsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000143 /* CredentialPromptsView.swift */; };
 		A00000000000000000000244 /* StreetRankSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000144 /* StreetRankSheet.swift */; };
 		A00000000000000000000245 /* MapControlDock.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000145 /* MapControlDock.swift */; };
 		A00000000000000000000246 /* PetPresenceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000146 /* PetPresenceCard.swift */; };
@@ -112,6 +110,7 @@
 		A00000000000000000000280 /* JourneyTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000180 /* JourneyTimeline.swift */; };
 		A00000000000000000000281 /* ConnectingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000181 /* ConnectingViewModel.swift */; };
 		A00000000000000000000282 /* StreetRankViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000182 /* StreetRankViewModel.swift */; };
+		A00000000000000000000283 /* WorldStoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000183 /* WorldStoryViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -167,8 +166,6 @@
 		A00000000000000000000139 /* PersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceTests.swift; sourceTree = "<group>"; };
 		A00000000000000000000140 /* PushDeepLinkRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushDeepLinkRouter.swift; sourceTree = "<group>"; };
 		A00000000000000000000141 /* PushDeepLinkRouterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushDeepLinkRouterTests.swift; sourceTree = "<group>"; };
-		A00000000000000000000142 /* MemorySearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorySearchView.swift; sourceTree = "<group>"; };
-		A00000000000000000000143 /* CredentialPromptsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialPromptsView.swift; sourceTree = "<group>"; };
 		A00000000000000000000144 /* StreetRankSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreetRankSheet.swift; sourceTree = "<group>"; };
 		A00000000000000000000145 /* MapControlDock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapControlDock.swift; sourceTree = "<group>"; };
 		A00000000000000000000146 /* PetPresenceCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPresenceCard.swift; sourceTree = "<group>"; };
@@ -232,6 +229,7 @@
 		A00000000000000000000180 /* JourneyTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyTimeline.swift; sourceTree = "<group>"; };
 		A00000000000000000000181 /* ConnectingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectingViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000182 /* StreetRankViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreetRankViewModel.swift; sourceTree = "<group>"; };
+		A00000000000000000000183 /* WorldStoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldStoryViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -412,6 +410,7 @@
 				A00000000000000000000165 /* JourneyViewModel+Souvenirs.swift */,
 				A00000000000000000000181 /* ConnectingViewModel.swift */,
 				A00000000000000000000182 /* StreetRankViewModel.swift */,
+				A00000000000000000000183 /* WorldStoryViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -464,7 +463,6 @@
 		A00000000000000000000043 /* Memories */ = {
 			isa = PBXGroup;
 			children = (
-				A00000000000000000000142 /* MemorySearchView.swift */,
 			);
 			path = Memories;
 			sourceTree = "<group>";
@@ -472,7 +470,6 @@
 		A00000000000000000000044 /* Credentials */ = {
 			isa = PBXGroup;
 			children = (
-				A00000000000000000000143 /* CredentialPromptsView.swift */,
 			);
 			path = Credentials;
 			sourceTree = "<group>";
@@ -632,8 +629,6 @@
 				A00000000000000000000237 /* OutboundMessageQueue.swift in Sources */,
 				A00000000000000000000238 /* MediaCache.swift in Sources */,
 				A00000000000000000000240 /* PushDeepLinkRouter.swift in Sources */,
-				A00000000000000000000242 /* MemorySearchView.swift in Sources */,
-				A00000000000000000000243 /* CredentialPromptsView.swift in Sources */,
 				A00000000000000000000244 /* StreetRankSheet.swift in Sources */,
 				A00000000000000000000245 /* MapControlDock.swift in Sources */,
 				A00000000000000000000246 /* PetPresenceCard.swift in Sources */,
@@ -715,6 +710,7 @@
 				A00000000000000000000280 /* JourneyTimeline.swift in Sources */,
 				A00000000000000000000281 /* ConnectingViewModel.swift in Sources */,
 				A00000000000000000000282 /* StreetRankViewModel.swift in Sources */,
+				A00000000000000000000283 /* WorldStoryViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

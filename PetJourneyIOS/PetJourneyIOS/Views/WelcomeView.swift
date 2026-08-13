@@ -498,7 +498,7 @@ struct WorldEventDetailCard: View {
 struct WorldLiveStoryTicker: View {
     @EnvironmentObject var session: AppSessionStore
     @Environment(\.accessibilityReduceMotion) var reduceMotion
-    @State var remoteEvents: [WorldLifeEvent] = []
+    @StateObject private var viewModel = WorldStoryViewModel()
 
     let storyInterval: TimeInterval = 4.2
 
@@ -557,15 +557,11 @@ struct WorldLiveStoryTicker: View {
             .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: event.id)
         }
-        .task { await loadRemoteStories() }
-    }
-
-    var storyPool: [WorldLifeEvent] {
-        remoteEvents.isEmpty ? WorldLifeEvent.samples : remoteEvents
+        .task { await viewModel.loadRemoteStories(serviceMode: session.serviceMode, baseURLString: session.baseURLString) }
     }
 
     func currentEvent(at date: Date) -> WorldLifeEvent {
-        let pool = storyPool
+        let pool = viewModel.storyPool
         guard !pool.isEmpty else {
             return WorldLifeEvent(
                 id: "world-empty",
@@ -584,41 +580,6 @@ struct WorldLiveStoryTicker: View {
 
         let index = Int(date.timeIntervalSinceReferenceDate / storyInterval) % pool.count
         return pool[index]
-    }
-
-    /// 拉取世界故事条：成功则替换本地样本；失败时本地生成器继续兜底，界面无感。
-    func loadRemoteStories() async {
-        guard session.serviceMode == .remote,
-              let base = URL(string: session.baseURLString) else { return }
-        struct TickerItem: Decodable {
-            let id: String
-            let text: String
-            let city: String
-        }
-        struct TickerResponse: Decodable {
-            let items: [TickerItem]
-        }
-        let url = base.appendingPathComponent("api/v1/world/story_ticker")
-        guard let (data, response) = try? await URLSession.shared.data(from: url),
-              let http = response as? HTTPURLResponse,
-              http.statusCode == 200,
-              let payload = try? JSONDecoder().decode(TickerResponse.self, from: data),
-              !payload.items.isEmpty else { return }
-        remoteEvents = payload.items.map { item in
-            WorldLifeEvent(
-                id: item.id,
-                city: item.city,
-                place: item.city,
-                petName: "平行世界",
-                petType: .cat,
-                activity: item.text,
-                detail: item.text,
-                latitude: 0,
-                longitude: 0,
-                tintHex: 0xD6AA63,
-                sceneIcon: "sparkles"
-            )
-        }
     }
 }
 

@@ -597,21 +597,15 @@ struct JourneyMapView: View {
 
     /// 登录成功后把当前宠物认领到账号；返回 nil 表示成功，否则为展示给用户的错误文案
     func linkAccount(identityToken: String, fullName: String?) async -> String? {
-        do {
-            let auth = try await service.signInWithApple(
-                request: AppleSignInRequest(identityToken: identityToken, displayName: fullName)
-            )
-            session.storeAuthSession(
-                token: auth.accessToken,
-                userID: auth.userID,
-                displayName: auth.displayName ?? fullName
-            )
-            _ = try? await service.claimPet(petID: petID)
-            viewModel.toastMessage = "TA 的旅程已经和你连在一起了。"
-            return nil
-        } catch {
+        guard let auth = await viewModel.linkAccount(identityToken: identityToken, fullName: fullName) else {
             return "这次没有连上，稍后可以从右上角菜单再试。"
         }
+        session.storeAuthSession(
+            token: auth.accessToken,
+            userID: auth.userID,
+            displayName: auth.displayName ?? fullName
+        )
+        return nil
     }
 
     func showWorldCupStadiumMap() {
