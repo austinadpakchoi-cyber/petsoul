@@ -106,6 +106,8 @@ class OpenAIPetAgentBrain:
         self.fallback = MockPetAgentBrain(settings)
         self.last_remote_call_succeeded = False
         self.last_remote_error = ""
+        self.last_remote_prompt_tokens = 0
+        self.last_remote_completion_tokens = 0
 
     def speak(self, context: AgentTurnContext) -> AgentUtterance:
         self.last_remote_call_succeeded = False
@@ -116,6 +118,7 @@ class OpenAIPetAgentBrain:
         try:
             payload = self.build_chat_completions_payload(context)
             response = self._post_json("/chat/completions", payload)
+            self._record_usage(response)
             data = self._extract_json_object(response)
         except Exception as chat_error:
             self.last_remote_error = self._redact_error(str(chat_error))
@@ -154,6 +157,8 @@ class OpenAIPetAgentBrain:
             "last_remote_error": self.last_remote_error,
             "timeout_seconds": self.settings.agent_timeout_seconds,
             "turn_interval_seconds": self.settings.agent_turn_interval_seconds,
+            "last_remote_prompt_tokens": float(self.last_remote_prompt_tokens),
+            "last_remote_completion_tokens": float(self.last_remote_completion_tokens),
         }
 
     def build_chat_completions_payload(self, context: AgentTurnContext) -> dict[str, object]:
@@ -226,6 +231,12 @@ class OpenAIPetAgentBrain:
         if not isinstance(parsed, dict):
             raise ValueError("model returned non-object JSON")
         return parsed
+
+    def _record_usage(self, response: dict[str, object]) -> None:
+        usage = response.get("usage")
+        if isinstance(usage, dict):
+            self.last_remote_prompt_tokens = int(usage.get("prompt_tokens") or 0)
+            self.last_remote_completion_tokens = int(usage.get("completion_tokens") or 0)
 
     def _redacted_base_url(self) -> str:
         return self.settings.openai_base_url.rstrip("/")

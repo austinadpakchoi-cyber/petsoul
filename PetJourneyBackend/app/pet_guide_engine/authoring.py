@@ -15,7 +15,25 @@ from ..storage import PetRecord
 
 
 class PetGuideAuthoringMixin:
+    _guide_cache_ttl_seconds = 30 * 60
+    _guide_cache: dict[tuple[str, str, str], tuple[datetime, PetAuthoredGuide]] = {}
+
+    def _cached_guide(self, cache_key: tuple[str, str, str], now: datetime) -> PetAuthoredGuide | None:
+        entry = self._guide_cache.get(cache_key)
+        if not entry:
+            return None
+        cached_at, guide = entry
+        if (now - cached_at).total_seconds() > self._guide_cache_ttl_seconds:
+            self._guide_cache.pop(cache_key, None)
+            return None
+        return guide.model_copy(deep=True)
+
     def build_pet_guide(self, pet: PetRecord, plan: JourneyPlan, now: datetime) -> PetAuthoredGuide:
+        cache_key = (pet.pet_id, plan.city, now.astimezone().date().isoformat())
+        cached = self._cached_guide(cache_key, now)
+        if cached is not None:
+            return cached
+
         self.last_remote_call_succeeded = False
         self.last_remote_error = ""
         guide: PetAuthoredGuide | None = None
@@ -29,7 +47,9 @@ class PetGuideAuthoringMixin:
         if guide is None:
             guide = self._fallback_pet_guide(pet, plan, now)
         guide = self._attach_orchestration_metadata(guide=guide, plan=plan)
-        return self._maybe_rewrite_with_doubao_voice(guide=guide, pet=pet, plan=plan)
+        guide = self._maybe_rewrite_with_doubao_voice(guide=guide, pet=pet, plan=plan)
+        self._guide_cache[cache_key] = (now, guide)
+        return guide.model_copy(deep=True)
     def _remote_pet_guide(self, pet: PetRecord, plan: JourneyPlan) -> tuple[dict[str, object], str]:
         payload = self._chat_payload(pet, plan)
         response = self._post_json("/chat/completions", payload)

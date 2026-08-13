@@ -63,6 +63,18 @@ class PhotoMixin:
             now = utcnow()
             elapsed = (now - pet.created_at).total_seconds()
             city = self._city_for_elapsed(elapsed, now=now)
+            latest = self.storage.latest_postcard(pet.pet_id)
+            if latest and (now - latest["timestamp"]).total_seconds() < 20 * 60:
+                result = Postcard.model_validate(latest)
+                steps.append(self._trace_step("action_validation", outputs={"cooldown_reused_latest": True}))
+                self._save_trace(
+                    pet_id=pet.pet_id,
+                    operation="generate_selfie",
+                    started_at=trace_started,
+                    steps=steps,
+                    state_after={"postcard_id": result.id, "reused": True},
+                )
+                return result
             mission = self.photo_mission(pet_id)
             steps.append(
                 self._trace_step(
@@ -75,18 +87,6 @@ class PhotoMixin:
             if existing:
                 result = Postcard.model_validate(existing)
                 steps.append(self._trace_step("action_validation", outputs={"deduped_by_mission": True}))
-                self._save_trace(
-                    pet_id=pet.pet_id,
-                    operation="generate_selfie",
-                    started_at=trace_started,
-                    steps=steps,
-                    state_after={"postcard_id": result.id, "reused": True},
-                )
-                return result
-            latest = self.storage.latest_postcard(pet.pet_id)
-            if latest and (now - latest["timestamp"]).total_seconds() < 20 * 60:
-                result = Postcard.model_validate(latest)
-                steps.append(self._trace_step("action_validation", outputs={"cooldown_reused_latest": True}))
                 self._save_trace(
                     pet_id=pet.pet_id,
                     operation="generate_selfie",

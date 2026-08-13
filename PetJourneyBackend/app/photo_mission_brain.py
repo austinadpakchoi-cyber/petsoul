@@ -82,6 +82,8 @@ class OpenAICompatiblePhotoMissionBrain:
         self.settings = settings
         self.last_remote_call_succeeded = False
         self.last_remote_error = ""
+        self.last_remote_prompt_tokens = 0
+        self.last_remote_completion_tokens = 0
 
     def draft(self, context: PhotoMissionContext) -> PhotoMissionDraft | None:
         self.last_remote_call_succeeded = False
@@ -93,6 +95,7 @@ class OpenAICompatiblePhotoMissionBrain:
         try:
             payload = self.build_chat_completions_payload(context)
             response = self._post_json("/chat/completions", payload)
+            self._record_usage(response)
             data = self._extract_json_object(response)
         except Exception as chat_error:
             self.last_remote_error = self._redact_error(str(chat_error))
@@ -121,6 +124,8 @@ class OpenAICompatiblePhotoMissionBrain:
             "last_remote_success": self.last_remote_call_succeeded,
             "last_remote_error": self.last_remote_error,
             "timeout_seconds": self.settings.agent_timeout_seconds,
+            "last_remote_prompt_tokens": float(self.last_remote_prompt_tokens),
+            "last_remote_completion_tokens": float(self.last_remote_completion_tokens),
         }
 
     def build_chat_completions_payload(self, context: PhotoMissionContext) -> dict[str, object]:
@@ -283,6 +288,12 @@ class OpenAICompatiblePhotoMissionBrain:
                 continue
             compact[key] = str(value)[:180]
         return compact
+
+    def _record_usage(self, response: dict[str, object]) -> None:
+        usage = response.get("usage")
+        if isinstance(usage, dict):
+            self.last_remote_prompt_tokens = int(usage.get("prompt_tokens") or 0)
+            self.last_remote_completion_tokens = int(usage.get("completion_tokens") or 0)
 
     def _post_json(self, path: str, payload: dict[str, object]) -> dict[str, object]:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")

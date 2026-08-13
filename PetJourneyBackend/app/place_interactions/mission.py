@@ -31,10 +31,22 @@ class PlaceInteractionMissionMixin:
         re.IGNORECASE,
     )
 
+    _mission_cache_ttl_seconds = 30 * 60
+
     def __init__(self, photo_mission_brain: PhotoMissionBrain | None = None, photo_pipeline: PhotoPipeline | None = None):
         self.photo_mission_brain = photo_mission_brain
         self.photo_prompt_builder = PetPhotoPromptBuilder()
         self.photo_pipeline = photo_pipeline or PhotoPipeline()
+        self._mission_cache: dict[str, tuple[float, PhotoMission]] = {}
+    def _cached_mission(self, cache_key: str, now: datetime) -> PhotoMission | None:
+        entry = self._mission_cache.get(cache_key)
+        if not entry:
+            return None
+        cached_at, mission = entry
+        if (now - cached_at).total_seconds() > self._mission_cache_ttl_seconds:
+            self._mission_cache.pop(cache_key, None)
+            return None
+        return mission.model_copy(deep=True)
     def build_photo_mission(
         self,
         *,
@@ -49,6 +61,10 @@ class PlaceInteractionMissionMixin:
         if not place:
             place = self._fallback_place(activity)
         time_of_day = self._time_of_day(now)
+        cache_key = self._stable_photo_id(pet=pet, place=place, now=now)
+        cached = self._cached_mission(cache_key, now)
+        if cached is not None:
+            return cached
         if self.photo_mission_brain is not None:
             draft = self.photo_mission_brain.draft(
                 PhotoMissionContext(
@@ -70,7 +86,9 @@ class PlaceInteractionMissionMixin:
                     now=now,
                     draft=draft,
                 )
-                return self._enrich_mission(mission=mission, pet=pet)
+                mission = self._enrich_mission(mission=mission, pet=pet)
+                self._mission_cache[cache_key] = (now, mission)
+                return mission
 
         mission = self._rule_based_photo_mission(
             pet=pet,
@@ -81,7 +99,9 @@ class PlaceInteractionMissionMixin:
             time_of_day=time_of_day,
             worldcup_event=worldcup_event,
         )
-        return self._enrich_mission(mission=mission, pet=pet)
+        mission = self._enrich_mission(mission=mission, pet=pet)
+        self._mission_cache[cache_key] = (now, mission)
+        return mission
     def _enrich_mission(self, *, mission: PhotoMission, pet: PetRecord) -> PhotoMission:
         try:
             return self.photo_pipeline.enrich_mission(mission=mission, pet=pet)
