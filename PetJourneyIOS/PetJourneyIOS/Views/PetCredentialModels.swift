@@ -94,7 +94,7 @@ enum PetCredentialKind: String, CaseIterable, Identifiable {
         }
     }
 
-    // 这些内置素材只是 PetCredentialPromptTemplate 生成卡面的风格示例,
+    // 这些内置素材只是证件卡面的风格示例,
     // 不允许作为任何宠物的卡面/照片直接展示在 UI 上。
     var promptExampleImageName: String {
         switch self {
@@ -302,10 +302,6 @@ struct PetCredentialSnapshot {
 
     var detailDescription: String {
         kind.note
-    }
-
-    var documentImagePrompt: String {
-        PetCredentialPromptTemplate.prompt(for: self)
     }
 
     var cardDisplayFields: [(String, String)] {
@@ -627,161 +623,5 @@ struct PetCredentialSnapshot {
             "United States", "Canada", "Mexico", "Los Angeles", "Seattle", "New York"
         ]
         return markers.contains { text.localizedCaseInsensitiveContains($0) }
-    }
-}
-
-enum PetCredentialPromptTemplate {
-    static func prompt(for credential: PetCredentialSnapshot) -> String {
-        let fields = credential.fields
-            .map { "- \($0.0): \($0.1)" }
-            .joined(separator: "\n")
-        let documentDirection = direction(for: credential)
-        let visibleContent = visibleContent(for: credential, fields: fields)
-        let petIdentityGuidance = petIdentityGuidance(for: credential)
-        let visualSystem = visualSystem(for: credential)
-        let safetyGuards = safetyGuards(for: credential)
-        return """
-        Create one polished full-document image for a fictional PetSoul credential.
-
-        Document type:
-        - \(title(for: credential.kind))
-        - Serial: \(credential.serial)
-        - Issued: \(credential.issueDate)
-        - PetSoul reappearance context: \(credential.currentLocation)
-        - \(documentDirection)
-
-        Pet identity:
-        - Subject is \(credential.holderName), species/breed: \(credential.species).
-        - Only user-entered DNA and pet type/name are factual inputs. All other dates, desks, rooms, seats, routes, care records, and planet lore are fictional PetSoul-generated content for a soul that reappeared on this planet.
-        - Do not synchronize, infer, or display any real current address, GPS location, route, city stay, medical record, airline, hotel, DMV, or legal status.
-        \(petIdentityGuidance)
-
-        \(visibleContent)
-
-        \(visualSystem)
-
-        Safety guards:
-        \(safetyGuards)
-        """
-    }
-
-    static func title(for kind: PetCredentialKind) -> String {
-        switch kind {
-        case .identity: "PETSOUL IDENTITY CARD / 宠物身份卡"
-        case .passport: "PETSOUL PASSPORT / 宠物灵魂护照"
-        case .driverLicense: "PAW DRIVER LICENSE / 爪爪驾驶证"
-        case .healthRecord: "PETSOUL HEALTH RECORD / 健康证"
-        case .boardingPass: "PETSOUL BOARDING PASS / 登机牌"
-        case .hotelKey: "PETSOUL HOTEL KEY CARD / 酒店房卡"
-        }
-    }
-
-    static func direction(for credential: PetCredentialSnapshot) -> String {
-        switch credential.kind {
-        case .passport:
-            return "Wide passport information page: large portrait panel on the left, PETS type, PSR issuing country, passport number, soul-country fields, expiry date, paw seal watermark, and MRZ-like decorative line that is clearly fictional."
-        case .identity:
-            return "Wide Pet ID identity card: portrait panel on the left, identity fields on the right, compact PET ID badge, soft sage/cream base, paw seal, identity desk stamp, and a clean wallet-card feeling."
-        case .driverLicense:
-            return "Wide Paw Driver License: premium amber/cream card, small slow-car silhouette, wheel and road-line motifs, permitted class for slow scenic rides, window-seat rider stamp, and clear non-legal fantasy wording."
-        case .healthRecord:
-            return "Warm health record card: caring clinic style, vaccination and care fields, gentle blue-green accents, and soft medical-file structure without real medical authority."
-        case .boardingPass:
-            return "Real-world boarding pass layout, paper or e-boarding pass style: wide ticket, detachable stub, airline color strip, route codes, flight, seat, gate, boarding time, zone, and a decorative non-scannable ticket code area. Do not make it look like the PetSoul passport."
-        case .hotelKey:
-            return "Real-world hotel key card layout: one clean physical card with minimal branding, subtle contactless icon, soft material texture, and no guest information, room number, date, field table, portrait, signature, or document layout."
-        }
-    }
-
-    static func petIdentityGuidance(for credential: PetCredentialSnapshot) -> String {
-        switch credential.kind {
-        case .boardingPass:
-            return "- Do not include a pet portrait or ID photo. Use the pet only as the passenger name on the ticket."
-        case .hotelKey:
-            return "- Do not include a pet portrait, guest name, room number, date, or ID photo. The output is just a hotel key card."
-        default:
-            return """
-            - Use the pet_identity reference only to preserve the exact pet identity, coat or feather colors, face shape, markings, ears, eyes, expression, collar, and body details.
-            - Put the pet portrait inside the credential as an official-looking document portrait, not a pasted sticker or cutout.
-            """
-        }
-    }
-
-    static func visibleContent(for credential: PetCredentialSnapshot, fields: String) -> String {
-        switch credential.kind {
-        case .boardingPass:
-            return """
-            Required visible ticket content:
-            \(fields)
-            - Use these as boarding-pass fields, not as a passport or certificate table.
-            - Include a decorative non-scannable barcode or QR-like ticket area labeled fictional / not for real travel.
-            """
-        case .hotelKey:
-            return """
-            Visible content:
-            - Minimal branding only, such as PETSOUL STAY, SOFT BLANKET INN, LITTLE SOUL REST KEY, FICTIONAL KEEPSAKE.
-            - Do not print the metadata fields as visible text. Do not show guest name, room number, stay dates, serial number, or care notes on the card face.
-            """
-        default:
-            return """
-            Required visible field content:
-            \(fields)
-            """
-        }
-    }
-
-    static func visualSystem(for credential: PetCredentialSnapshot) -> String {
-        switch credential.kind {
-        case .boardingPass:
-            return """
-            Visual system:
-            - Clean realistic airline boarding pass, English-dominant, short Chinese labels allowed.
-            - White paper base with PetSoul amber/teal accent strip, crisp typography, rounded corners, light paper shadow.
-            - Full ticket visible in frame, front-facing flat lay, no crop, no phone UI.
-            - Avoid passport guilloche borders, ceremonial seals, MRZ lines, signatures, or large decorative document stamps.
-            """
-        case .hotelKey:
-            return """
-            Visual system:
-            - Premium physical hotel key card, credit-card proportions, rounded corners, subtle plastic/paper texture, soft shadow.
-            - Warm cream base with sage/clay accents, abstract window-light or soft lodging illustration, tiny paw emblem.
-            - Full card visible in frame, no crop, no phone UI.
-            - Avoid passport guilloche borders, ceremonial seals, field rows, signatures, barcodes, QR codes, or ticket layout.
-            """
-        default:
-            return """
-            Unified PetSoul visual system:
-            - Premium fictional travel-document design, warm cream paper, soft rose, sage, amber, and dusty blue accents.
-            - Fine guilloche linework, subtle paw seals, soft security-pattern texture, rounded card/page corners, gentle paper grain.
-            - Bilingual Chinese/English labels where space allows; polished but warm, not childish.
-            - Full document visible in frame, front-facing flat lay or clean scanned-document perspective, no crop, no phone UI.
-            - Make the layout feel related to the PetSoul passport: PETSOUL REPUBLIC, paw emblem, commemorative edition stamp, and tender companion-world details.
-            """
-        }
-    }
-
-    static func safetyGuards(for credential: PetCredentialSnapshot) -> String {
-        switch credential.kind {
-        case .boardingPass:
-            return """
-            - Fictional PetSoul travel keepsake only.
-            - Use a common boarding-pass structure, but do not copy any real airline brand, logo, ticket, airport system, or boarding credential exactly.
-            - No real scannable QR code or machine-readable barcode; decorative non-scannable ticket marks are allowed.
-            - No real address, no private human face, no official travel authority, and no claim of real boarding permission.
-            """
-        case .hotelKey:
-            return """
-            - Fictional PetSoul hotel key keepsake only.
-            - Do not copy any real hotel brand, access card, booking confirmation, or room key exactly.
-            - No guest name, room number, stay date, barcode, QR code, magnetic stripe data, or real access claim.
-            - No official authority, no private human face, and no real address.
-            """
-        default:
-            return """
-            - Fictional commemorative PetSoul document only.
-            - Do not copy or imitate any real government ID, passport, DMV, driver license, medical card, flag, seal, airline ticket, or legal document.
-            - No scannable QR code, no barcode, no real address or current city, no real license plate, no watermark, no brand logo, no private human face.
-            """
-        }
     }
 }

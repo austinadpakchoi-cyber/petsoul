@@ -270,10 +270,6 @@ final class RemotePetJourneyService: PetJourneyService {
         return try await decode(Postcard.self, from: request)
     }
 
-    func fetchCredentialPrompts(petID: String) async throws -> [PetCredentialPrompt] {
-        try await get([PetCredentialPrompt].self, path: "/api/v1/pets/\(petID)/credentials/prompts")
-    }
-
     func fetchStreetRank(petID: String, theme: String) async throws -> StreetRankResponse {
         let encodedTheme = theme.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? theme
         return try await get(StreetRankResponse.self, path: "/api/v1/pets/\(petID)/street_rank?theme=\(encodedTheme)")

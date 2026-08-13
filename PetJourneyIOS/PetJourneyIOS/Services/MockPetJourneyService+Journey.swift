@@ -368,37 +368,6 @@ extension MockPetJourneyService {
         )
     }
 
-    func fetchCredentialPrompts(petID: String) async throws -> [PetCredentialPrompt] {
-        try ensureJourneyExists(for: petID)
-        guard let journey = journeys[petID] else { throw PetJourneyError.noPetSession }
-        let name = journey.profile.name
-        let serialSeed = String(petID.replacingOccurrences(of: "-", with: "").prefix(6)).uppercased()
-        return [
-            PetCredentialPrompt(
-                kind: .identity,
-                title: "PetSoul 居民证",
-                subtitle: "\(name) 在平行世界的身份",
-                serial: "PS-\(serialSeed)-ID",
-                imagePrompt: "PetSoul parallel-world resident card for \(name), warm paper texture, no readable logos",
-                size: "1536x1024",
-                referenceRoles: ["pet_photo"],
-                safetyNotes: ["Preserve pet identity"],
-                fields: ["姓名": name, "身份": "平行世界旅行者"]
-            ),
-            PetCredentialPrompt(
-                kind: .healthRecord,
-                title: "健康小手册",
-                subtitle: "TA 在旅途中的元气记录",
-                serial: "PS-\(serialSeed)-HR",
-                imagePrompt: "PetSoul travel health booklet for \(name), soft illustration, no readable logos",
-                size: "1536x1024",
-                referenceRoles: ["pet_photo"],
-                safetyNotes: ["Preserve pet identity"],
-                fields: ["元气": "很好", "最近一次休息": "昨晚睡得很沉"]
-            )
-        ]
-    }
-
     func fetchStreetRank(petID: String, theme: String) async throws -> StreetRankResponse {
         try ensureJourneyExists(for: petID)
         let plan = try await fetchJourneyPlan(petID: petID)
