@@ -179,7 +179,7 @@ struct DayPlanSheetView: View {
         guard let start = minuteOfDay(from: time(in: items, at: index)) else {
             return .upcoming
         }
-        let current = Calendar.current.component(.hour, from: now) * 60 + Calendar.current.component(.minute, from: now)
+        let current = now.petSoulMinuteOfDay
         if current < start {
             return .upcoming
         }

@@ -3,6 +3,14 @@ import MapKit
 import SwiftUI
 import UIKit
 
+extension Date {
+    /// 当天分钟数（0-1439）：多个视图的时间相位判定共用，避免重复计算。
+    var petSoulMinuteOfDay: Int {
+        let calendar = Calendar.current
+        return calendar.component(.hour, from: self) * 60 + calendar.component(.minute, from: self)
+    }
+}
+
 enum JourneyMapEventPhase: Equatable {
     case past
     case current
@@ -133,7 +141,7 @@ struct JourneyMapEvent: Identifiable, Equatable {
         guard let start = minuteOfDay(from: time(in: items, at: index)) else {
             return .upcoming
         }
-        let current = Calendar.current.component(.hour, from: now) * 60 + Calendar.current.component(.minute, from: now)
+        let current = now.petSoulMinuteOfDay
         if current < start {
             return .upcoming
         }

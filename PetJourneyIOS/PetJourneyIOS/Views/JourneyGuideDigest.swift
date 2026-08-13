@@ -231,7 +231,7 @@ struct PetGuideDigest {
 
     var currentStop: GuideDigestStop? {
         guard !stops.isEmpty else { return nil }
-        let nowMinute = Calendar.current.component(.hour, from: Date()) * 60 + Calendar.current.component(.minute, from: Date())
+        let nowMinute = Date().petSoulMinuteOfDay
         let timedStops = stops.compactMap { stop -> (GuideDigestStop, Int) in
             (stop, Self.minuteOfDay(from: stop.time) ?? 0)
         }
@@ -243,7 +243,7 @@ struct PetGuideDigest {
 
     var currentStageText: String {
         guard let currentStop else { return "正在同步" }
-        let nowMinute = Calendar.current.component(.hour, from: Date()) * 60 + Calendar.current.component(.minute, from: Date())
+        let nowMinute = Date().petSoulMinuteOfDay
         guard let start = Self.minuteOfDay(from: currentStop.time) else {
             return "正在停留"
         }
