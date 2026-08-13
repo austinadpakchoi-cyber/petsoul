@@ -78,14 +78,35 @@ def _build_file_line(build_id: str, ref_id: str, name: str) -> str:
     )
 
 
-def _insert_into_list(text: str, block_id: str, list_key: str, lines: list) -> str:
+def _block_start(text: str, block_id: str, isa: str) -> int:
+    """定位 block 定义起始（`<id> /* name */ = {` 紧跟 `isa = <isa>;`）。
+
+    不能直接用 `text.index("\\t\\t<id> /* ")` 找，因为 children / buildPhases
+    等列表里的 4-tab 引用行（如 `\\t\\t\\t\\t<id> /* name */,`）的后两个 tab
+    会恰好构成 `\\t\\t<id> /* ` 前缀，导致误定位到引用行而非定义块。
+    这里用「定义行 + isa 行」两行连查，杜绝前缀误匹配。
+    """
+    m = re.search(
+        rf"^\t\t{block_id} /\* .+? \*/ = \{{\n\t\t\tisa = {isa};",
+        text, re.MULTILINE,
+    )
+    if not m:
+        raise RuntimeError(f"找不到 block {block_id} 定义（isa={isa}）")
+    return m.start()
+
+
+def _insert_into_list(text: str, block_id: str, isa: str, list_key: str, lines: list) -> str:
     """在指定 block（group 或 build phase）的列表（children/files）末尾插入新行。"""
-    start = text.index(f"\t\t{block_id} /* ")
+    start = _block_start(text, block_id, isa)
     list_marker = f"{list_key} = (\n"
     lpos = text.index(list_marker, start)
-    close_marker = "\n\t\t\t);"
+    # 列表结束符是「三个 tab + ");"」。不能以 "\n" 开头匹配：空列表时
+    # `(\n\t\t\t);` 的换行会被 list_marker 末尾的 `\n` 吃掉，导致匹配跳到
+    # 下一个非空列表的结束符而插错 block。故从 `(` 换行之后直接找 `\t\t\t);`，
+    # 空 / 非空列表均正确。
+    close_marker = "\t\t\t);"
     cpos = text.index(close_marker, lpos + len(list_marker))
-    insert = "\n" + "\n".join(lines)
+    insert = "\n".join(lines) + "\n"
     return text[:cpos] + insert + text[cpos:]
 
 
@@ -121,10 +142,10 @@ def add_files(text: str, group_id: str, sources_phase: str, names: list) -> str:
         text = text.replace(marker, "\n".join(lines) + "\n" + marker, 1)
 
     # 3: 归属 group 的 children
-    text = _insert_into_list(text, group_id, "children", child_lines)
+    text = _insert_into_list(text, group_id, "PBXGroup", "children", child_lines)
 
     # 4: Sources 编译阶段的 files
-    text = _insert_into_list(text, sources_phase, "files", source_lines)
+    text = _insert_into_list(text, sources_phase, "PBXSourcesBuildPhase", "files", source_lines)
 
     return text
 
