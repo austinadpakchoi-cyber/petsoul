@@ -78,6 +78,11 @@
 		A0000000000000000000025E /* MockPetJourneyService+TravelBag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000015E /* MockPetJourneyService+TravelBag.swift */; };
 		A0000000000000000000025F /* MockPetJourneyService+Communicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000015F /* MockPetJourneyService+Communicator.swift */; };
 		A00000000000000000000260 /* MockPetJourneyService+Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000160 /* MockPetJourneyService+Memory.swift */; };
+		A00000000000000000000261 /* JourneyViewModel+Lifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000161 /* JourneyViewModel+Lifecycle.swift */; };
+		A00000000000000000000262 /* JourneyViewModel+Details.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000162 /* JourneyViewModel+Details.swift */; };
+		A00000000000000000000263 /* JourneyViewModel+Communication.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000163 /* JourneyViewModel+Communication.swift */; };
+		A00000000000000000000264 /* JourneyViewModel+Travel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000164 /* JourneyViewModel+Travel.swift */; };
+		A00000000000000000000265 /* JourneyViewModel+Souvenirs.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000165 /* JourneyViewModel+Souvenirs.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -164,6 +169,11 @@
 		A0000000000000000000015E /* MockPetJourneyService+TravelBag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockPetJourneyService+TravelBag.swift"; sourceTree = "<group>"; };
 		A0000000000000000000015F /* MockPetJourneyService+Communicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockPetJourneyService+Communicator.swift"; sourceTree = "<group>"; };
 		A00000000000000000000160 /* MockPetJourneyService+Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MockPetJourneyService+Memory.swift"; sourceTree = "<group>"; };
+		A00000000000000000000161 /* JourneyViewModel+Lifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JourneyViewModel+Lifecycle.swift"; sourceTree = "<group>"; };
+		A00000000000000000000162 /* JourneyViewModel+Details.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JourneyViewModel+Details.swift"; sourceTree = "<group>"; };
+		A00000000000000000000163 /* JourneyViewModel+Communication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JourneyViewModel+Communication.swift"; sourceTree = "<group>"; };
+		A00000000000000000000164 /* JourneyViewModel+Travel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JourneyViewModel+Travel.swift"; sourceTree = "<group>"; };
+		A00000000000000000000165 /* JourneyViewModel+Souvenirs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JourneyViewModel+Souvenirs.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -337,6 +347,11 @@
 			children = (
 				A00000000000000000000108 /* OnboardingViewModel.swift */,
 				A00000000000000000000109 /* JourneyViewModel.swift */,
+				A00000000000000000000161 /* JourneyViewModel+Lifecycle.swift */,
+				A00000000000000000000162 /* JourneyViewModel+Details.swift */,
+				A00000000000000000000163 /* JourneyViewModel+Communication.swift */,
+				A00000000000000000000164 /* JourneyViewModel+Travel.swift */,
+				A00000000000000000000165 /* JourneyViewModel+Souvenirs.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -579,6 +594,11 @@
 				A0000000000000000000025E /* MockPetJourneyService+TravelBag.swift in Sources */,
 				A0000000000000000000025F /* MockPetJourneyService+Communicator.swift in Sources */,
 				A00000000000000000000260 /* MockPetJourneyService+Memory.swift in Sources */,
+				A00000000000000000000261 /* JourneyViewModel+Lifecycle.swift in Sources */,
+				A00000000000000000000262 /* JourneyViewModel+Details.swift in Sources */,
+				A00000000000000000000263 /* JourneyViewModel+Communication.swift in Sources */,
+				A00000000000000000000264 /* JourneyViewModel+Travel.swift in Sources */,
+				A00000000000000000000265 /* JourneyViewModel+Souvenirs.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
