@@ -450,7 +450,7 @@ struct SleepRestStatusCard: View {
                     .clipShape(Circle())
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("手机已调低声音")
+                    Text("通讯器已调低声音")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(DesignTokens.ink)
                     Text("\(petName) 醒来后会继续自己的小旅程")
@@ -521,7 +521,7 @@ struct SleepQuietHint: View {
             Image(systemName: "speaker.slash.fill")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(tint)
-            Text("TA 现在不用赶路，也不用回复。你留下的话会安静放在手机里。")
+            Text("TA 现在不用赶路，也不用回复。你留下的话会安静放在通讯器里。")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(DesignTokens.secondaryInk)
                 .lineLimit(2)

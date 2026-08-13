@@ -482,7 +482,7 @@ extension String {
             options: .regularExpression
         )
         let replacements: [(String, String)] = [
-            ("手机记录：", ""),
+            ("通讯器记录：", ""),
             ("这是一条建议或陪伴讯息，我会自己判断怎么回应。", "这句话已经被我收好了。"),
             ("宠物自主回应类型", "回应"),
             ("主人发来：", "你说："),
@@ -518,8 +518,8 @@ extension String {
         let patterns = [
             #"[\s·。；;，,]*(?:地点来源|数据来源|来源|source|provider)\s*[:：]\s*[\w.+/\- ]+"#,
             #"这个地点来自[^。；;]*[。；;]?"#,
-            #"来自(?:高德|Google|google|AMap|amap)[^。；;]*[。；;]?"#,
-            #"\b(?:amap|google|mock|hybrid|openai|web|map|provider|service|engine|client|route|planner|mission)(?:[-_][A-Za-z0-9]+)+\b"#,
+            #"来自(?:高德|Google|google|AMap|amap|DeepSeek|deepseek|豆包|doubao|GPT|gpt|抖音|小红书|文心|通义|智谱)[^。；;]*[。；;]?"#,
+            #"\b(?:amap|google|mock|hybrid|openai|deepseek|doubao|gpt|web|map|provider|service|engine|client|route|planner|mission)(?:[-_][A-Za-z0-9]+)+\b"#,
             #"适合[^。；;]*攻略型[^。；;]*[。；;]?"#
         ]
         for pattern in patterns {

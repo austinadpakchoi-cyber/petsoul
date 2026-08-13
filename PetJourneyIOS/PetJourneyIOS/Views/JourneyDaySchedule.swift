@@ -82,7 +82,7 @@ enum JourneyDaySchedule {
                 event: event(at: 3, events: events),
                 anchor: anchor,
                 title: "去海边收下午的风",
-                detail: "TA 靠近环岛路和白城沙滩，走慢一点，把海面、树影和路边的光记进手机。"
+                detail: "TA 靠近环岛路和白城沙滩，走慢一点，把海面、树影和路边的光记进通讯器。"
             )
         case 1_080..<1_140:
             return walk(

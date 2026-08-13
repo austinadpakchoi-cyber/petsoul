@@ -54,7 +54,7 @@ final class CommunicatorViewModel: ObservableObject {
     }
 
     var statusLine: String {
-        guard let status else { return "手机正在接收信号" }
+        guard let status else { return "通讯器正在接收信号" }
         return "\(status.agentState.location) · \(status.agentState.status.displayName)"
     }
 
@@ -64,7 +64,7 @@ final class CommunicatorViewModel: ObservableObject {
     }
 
     var chatHeaderSubtitle: String {
-        guard let status else { return "通讯器在线" }
+        guard let status else { return "信号已连接" }
         return "\(status.agentState.location) · \(status.agentState.status.displayName)"
     }
 
@@ -124,7 +124,7 @@ final class CommunicatorViewModel: ObservableObject {
             self.messages = try await messages
             self.moments = try await moments
         } catch {
-            toastMessage = "手机信号有点弱，稍后再试。"
+            toastMessage = "通讯器信号有点弱，稍后再试。"
         }
     }
 
@@ -298,7 +298,7 @@ struct CommunicatorHomeView: View {
                         PetChatView(viewModel: viewModel)
                     } label: {
                         CommunicatorEntryCard(
-                            title: "消息",
+                            title: "通讯",
                             detail: viewModel.messageEntryDetail,
                             footnote: "\(viewModel.messages.count) 条通讯记录",
                             systemImage: "bubble.left.and.text.bubble.right.fill",
@@ -332,7 +332,7 @@ struct CommunicatorHomeView: View {
                 .padding(DesignTokens.pagePadding)
             }
             .background(AppBackground())
-            .navigationTitle("手机")
+            .navigationTitle("通讯器")
             .task { await viewModel.load() }
             .refreshable { await viewModel.load() }
             .overlay(alignment: .bottom) {
@@ -364,7 +364,7 @@ struct CommunicatorHomeView: View {
                         .clipShape(Circle())
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("\(viewModel.petName) 的手机")
+                        Text("\(viewModel.petName) 的通讯器")
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(DesignTokens.ink)
                         Text(viewModel.statusLine)
@@ -382,7 +382,7 @@ struct CommunicatorHomeView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(spacing: 8) {
-                    CommunicatorSignalChip(title: "消息", value: "\(viewModel.messages.count)", tint: DesignTokens.sea)
+                    CommunicatorSignalChip(title: "通讯", value: "\(viewModel.messages.count)", tint: DesignTokens.sea)
                     CommunicatorSignalChip(title: "朋友圈", value: "\(viewModel.friendsCircleMoments.count)", tint: DesignTokens.amber)
                     CommunicatorSignalChip(title: "状态", value: viewModel.chatAvailabilityText, tint: DesignTokens.clay)
                 }

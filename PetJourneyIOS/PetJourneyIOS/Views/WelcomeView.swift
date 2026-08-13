@@ -570,7 +570,7 @@ struct WorldLiveStoryTicker: View {
                 petName: "TA",
                 petType: .dog,
                 activity: "在等一个熟悉的信号",
-                detail: "手机正在寻找。",
+                detail: "通讯器正在寻找。",
                 latitude: 0,
                 longitude: 0,
                 tintHex: 0xD6AA63,

@@ -31,7 +31,7 @@ extension MockPetJourneyService {
             city: plan.city,
             generatedAt: Date(),
             provider: "mock-ios-pet-guide-brain",
-            model: "gpt-5.5",
+            model: "mock-guide-model",
             title: "\(profile?.name ?? "TA")的\(plan.city)慢游攻略",
             animalText: petType.vocalization(for: "guide_saved"),
             translation: "我想先替你在\(plan.city)慢慢走一遍，不赶路。哪里有舒服的光、好闻的味道，或者值得停久一点的小店，我都会记下来。以后有机会，你也可以来看看。",
@@ -209,7 +209,7 @@ extension MockPetJourneyService {
                 plannedTime: "前一晚",
                 dwellMinutes: 90,
                 petVoice: "我会先睡够，不急着出门。",
-                ownerTip: "手机里展示为准备态。",
+                ownerTip: "通讯器里展示为准备态。",
                 sourceNotes: []
             ),
             TravelQuestStop(
@@ -237,13 +237,13 @@ extension MockPetJourneyService {
         ]
         let research = TravelGuideResearch(
             provider: .hybrid,
-            providerName: isWorldCup ? "GPT Web Search + 地图资料" : "豆包社媒线索 + 地图资料",
+            providerName: isWorldCup ? "沿途线索 + 地图资料" : "本地生活线索 + 地图资料",
             destinationRegion: isWorldCup ? "海外赛事城市" : "国内/本地目的地",
             query: ownerMessage,
             strategy: isWorldCup ? "先确认比赛和城市交通，再找赛场外可停留的地点。" : "先看真实路线和本地推荐，再让 TA 选择想停的地方。",
             findings: isWorldCup
                 ? ["先查赛程、场馆和入场时间", "长途交通用真实航班或中转时间推进", "到场后先找安静缓冲点，再靠近赛场"]
-                : ["先看榜单、游记和真实 POI", "同城路线优先用步行、地铁或短途打车", "每一站都要能产生照片、明信片或带回物"],
+                : ["先看榜单、游记和真实地点", "同城路线优先用步行、地铁或短途打车", "每一站都要能产生照片、明信片或带回物"],
             recommendedSources: isWorldCup ? ["赛事官网", "Google Maps", "旅行攻略网站"] : ["高德地图", "小红书/抖音线索", "本地榜单"],
             missingCapabilities: [],
             generatedAt: now

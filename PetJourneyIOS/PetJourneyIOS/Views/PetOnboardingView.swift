@@ -85,8 +85,8 @@ struct PetOnboardingView: View {
         return VStack(alignment: .leading, spacing: 18) {
             StepTitle(
                 eyebrow: "第一步",
-                title: "先让手机看见 TA。",
-                detail: "上传一张你最熟悉的照片。手机会把这张脸作为寻找 TA 的第一个锚点。"
+                title: "先让通讯器看见 TA。",
+                detail: "上传一张你最熟悉的照片。通讯器会把这张脸作为寻找 TA 的第一个锚点。"
             )
 
             PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
@@ -198,7 +198,7 @@ struct PetOnboardingView: View {
                 }
 
                 StoryTextField(
-                    title: "你最想让手机记住的一句话",
+                    title: "你最想让通讯器记住的一句话",
                     placeholder: "比如：慢慢走，我在",
                     text: $viewModel.catchphrase
                 )
@@ -262,7 +262,7 @@ struct PetOnboardingView: View {
         case .photo:
             viewModel.hasPhoto ? "照片已经成为这次寻找的第一个锚点。" : "先上传一张照片，会让寻找仪式更像 TA。"
         case .identity:
-            viewModel.canContinueIdentity ? "很好，手机已经知道 TA 会怎么叫你。" : "写下名字和 TA 对你的称呼，就能继续。"
+            viewModel.canContinueIdentity ? "很好，通讯器已经知道 TA 会怎么叫你。" : "写下名字和 TA 对你的称呼，就能继续。"
         case .memory:
             viewModel.canContinue ? "准备好了，下一步会开始连接。" : "至少写下一句性格描述，让 TA 的声音更像 TA。"
         }
@@ -405,7 +405,7 @@ private struct PhotoRecognitionCard: View {
                             .foregroundStyle(photoData == nil ? DesignTokens.ink : .white)
                             .padding(.vertical, 10)
                             .padding(.horizontal, 14)
-                            .background(photoData == nil ? .white.opacity(0.86) : DesignTokens.ink.opacity(0.68))
+                            .background(photoData == nil ? DesignTokens.surface.opacity(0.86) : DesignTokens.ink.opacity(0.68))
                             .clipShape(Capsule())
                         Spacer()
                     }

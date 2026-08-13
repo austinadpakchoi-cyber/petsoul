@@ -116,7 +116,7 @@ extension JourneyViewModel {
                 markPhotoMissionReceived(missionID)
             }
             hasUnreadPostcard = true
-            toastMessage = "手机里多了一张此刻照片。"
+            toastMessage = "通讯器里多了一张此刻照片。"
             PetPushRegistrationCoordinator.shared.requestAuthorizationForUserMoment()
             await refreshStatus()
             await refreshPhotoMission()

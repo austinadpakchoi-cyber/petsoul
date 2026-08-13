@@ -163,7 +163,7 @@ struct JourneyMapEvent: Identifiable, Equatable {
         [
             DayPlanItem(id: "morning", time: "08:30", title: "在有光的地方醒来", detail: "TA 慢慢伸展了一下，像是在确认今天要往哪里走。", kind: .morning),
             DayPlanItem(id: "noon", time: "12:10", title: "进一间小店坐下", detail: "TA 看了看店里的招牌，选了一个闻起来最有当地味道的位置。", kind: .noon),
-            DayPlanItem(id: "afternoon", time: "16:20", title: "把今天的一幕存下来", detail: "TA 在手机里留下一点轻轻的想法。", kind: .afternoon),
+            DayPlanItem(id: "afternoon", time: "16:20", title: "把今天的一幕存下来", detail: "TA 在通讯器里留下一点轻轻的想法。", kind: .afternoon),
             DayPlanItem(id: "evening", time: "20:40", title: "找一处安静地方休息", detail: "TA 没有被安排，只是自己选了一个舒服的位置。", kind: .evening)
         ]
     }
@@ -202,7 +202,7 @@ struct MerchantStop {
 
         let fallback: [(String, String, String, CoordinateOffset, String, Color)] = [
             ("街角小食铺", "在街角小食铺点了店里的招牌小吃", "TA 走进店里坐下，边听周围人说话边慢慢吃。", CoordinateOffset(latitude: 0.0012, longitude: -0.0010), "fork.knife", DesignTokens.amber),
-            ("咖啡窗口", "在咖啡窗口旁喝了一杯招牌饮品", "TA 选了靠窗的小桌，把这段路记进手机。", CoordinateOffset(latitude: -0.0008, longitude: 0.0014), "cup.and.saucer.fill", DesignTokens.sage),
+            ("咖啡窗口", "在咖啡窗口旁喝了一杯招牌饮品", "TA 选了靠窗的小桌，把这段路记进通讯器。", CoordinateOffset(latitude: -0.0008, longitude: 0.0014), "cup.and.saucer.fill", DesignTokens.sage),
             ("便利店", "在便利店里挑了一个小补给", "灯光稳定、声音熟悉，适合走走停停。", CoordinateOffset(latitude: 0.0015, longitude: 0.0010), "basket.fill", DesignTokens.amber),
             ("安静网吧", "在网吧角落待了一会儿", "这是 TA 自己选择的室内停留点。", CoordinateOffset(latitude: -0.0013, longitude: -0.0015), "desktopcomputer", DesignTokens.dusk),
             ("花店橱窗", "在花店前停住，看了很久的叶子", "街面安静、气味柔和，适合作为中途停留。", CoordinateOffset(latitude: 0.0005, longitude: -0.0017), "camera.macro", DesignTokens.clay)
@@ -417,7 +417,7 @@ struct JourneyActivitySnapshot {
     func sleepDetail(petName: String) -> String {
         let cleaned = detail.petSoulUserFacingText
         if cleaned.contains("天亮") || cleaned.contains("今天还没有开始") {
-            return "我还在昨晚停下来的地方睡着。手机会把声音放轻，天亮后我会自己慢慢醒来。"
+            return "我还在昨晚停下来的地方睡着。通讯器会把声音放轻，天亮后我会自己慢慢醒来。"
         }
         return "我先在这里睡一会儿，呼吸慢慢放轻。醒来以后，我会自己继续往前走。"
     }

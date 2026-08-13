@@ -652,7 +652,7 @@ enum PetCredentialPromptTemplate {
 
         Pet identity:
         - Subject is \(credential.holderName), species/breed: \(credential.species).
-        - Only user-entered DNA and pet type/name are factual inputs. All other dates, desks, rooms, seats, routes, care records, and planet lore are fictional PetSoul/GPT generated content for a soul that reappeared on this planet.
+        - Only user-entered DNA and pet type/name are factual inputs. All other dates, desks, rooms, seats, routes, care records, and planet lore are fictional PetSoul-generated content for a soul that reappeared on this planet.
         - Do not synchronize, infer, or display any real current address, GPS location, route, city stay, medical record, airline, hotel, DMV, or legal status.
         \(petIdentityGuidance)
 

@@ -262,7 +262,7 @@ struct PetChatAvatar: View {
 }
 
 struct ChatEmptyState: View {
-    var title: String = "还没有消息"
+    var title: String = "还没有来信"
     var detail: String = "你可以问问 TA 现在在干嘛，或者轻轻说一句想念。"
     var systemImage: String = "bubble.left.and.text.bubble.right"
 

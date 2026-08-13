@@ -522,7 +522,7 @@ struct MemoryOverviewCard: View {
                         Text("\(petName) 的回忆盒")
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(DesignTokens.ink)
-                        Text(isLoading ? "正在同步手机里的收藏" : "最近停在 \(location)")
+                        Text(isLoading ? "正在同步通讯器里的收藏" : "最近停在 \(location)")
                             .font(.subheadline)
                             .foregroundStyle(DesignTokens.secondaryInk)
                             .lineLimit(1)
@@ -546,7 +546,7 @@ struct MemoryOverviewCard: View {
                         tint: latestHighlight.tint
                     )
                 } else {
-                    Text(isLoading ? "正在把手机、朋友圈和旅行包里的内容放到同一个回忆盒里。" : "等 TA 真正寄来或带回什么，这里才会慢慢变厚。")
+                    Text(isLoading ? "正在把通讯器、朋友圈和旅行包里的内容放到同一个回忆盒里。" : "等 TA 真正寄来或带回什么，这里才会慢慢变厚。")
                         .font(.subheadline)
                         .foregroundStyle(DesignTokens.secondaryInk)
                         .lineSpacing(3)

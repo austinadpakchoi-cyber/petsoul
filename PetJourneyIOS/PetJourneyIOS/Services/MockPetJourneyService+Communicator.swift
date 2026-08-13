@@ -42,7 +42,7 @@ extension MockPetJourneyService {
             JourneyEvent(
                 id: UUID().uuidString,
                 title: request.liked ? "你收藏了一段攻略" : "你略过了这类攻略",
-                detail: request.liked ? "这是你的旅行偏好，不会决定 TA 对这个地方的感受。" : "手机会少给你推荐类似地点，但 TA 的旅程仍然自由。",
+                detail: request.liked ? "这是你的旅行偏好，不会决定 TA 对这个地方的感受。" : "通讯器会少给你推荐类似地点，但 TA 的旅程仍然自由。",
                 timestamp: Date()
             )
         )
@@ -71,7 +71,7 @@ extension MockPetJourneyService {
         let reply: String
         if clean.contains("想你") || clean.contains("晚安") || clean.contains("早安") {
             decision = "comfort"
-            reply = "我听见了。它像一点暖光，被我收进手机里。"
+            reply = "我听见了。它像一点暖光，被我收进通讯器里。"
         } else if clean.contains("去") || clean.contains("看看") || clean.contains("咖啡") || clean.contains("海") {
             let accepts = abs(clean.hashValue) % 4 != 0
             decision = accepts ? "accepted" : "declined"

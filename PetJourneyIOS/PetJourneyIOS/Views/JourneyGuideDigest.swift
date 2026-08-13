@@ -429,7 +429,7 @@ struct PetGuideDigest {
         if let count = journeyPlan?.places.count {
             return "\(count) 个地图点"
         }
-        return "手机整理"
+        return "通讯器整理"
     }
 
     static func routeBadge(city: String, stops: [GuideDigestStop]) -> String {

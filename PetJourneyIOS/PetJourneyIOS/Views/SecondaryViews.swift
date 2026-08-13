@@ -72,7 +72,7 @@ struct DayPlanSheetView: View {
                         .controlSize(.large)
                     EmptyStateView(
                         title: "正在同步 TA 今天经过的地方",
-                        detail: "先别急，手机正在把 TA 今天走过的痕迹整理成一条生活线。",
+                        detail: "先别急，通讯器正在把 TA 今天走过的痕迹整理成一条生活线。",
                         systemImage: "map"
                     )
                 }

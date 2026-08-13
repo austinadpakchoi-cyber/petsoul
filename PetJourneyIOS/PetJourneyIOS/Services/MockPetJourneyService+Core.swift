@@ -39,7 +39,7 @@ extension MockPetJourneyService {
             photoURL: MockDemoMedia.frenchieProfileURL
         )
         let thought = agentThought(
-            translation: "我回到手机里了，今天也会慢慢走。",
+            translation: "我回到通讯器里了，今天也会慢慢走。",
             tone: "restored",
             petType: profile.petType
         )

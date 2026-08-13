@@ -117,7 +117,7 @@ struct DNASettingsView: View {
             } else {
                 EmptyStateView(
                     title: "DNA 暂未同步",
-                    detail: "手机还没有读到 TA 的完整偏好。",
+                    detail: "通讯器还没有读到 TA 的完整偏好。",
                     systemImage: "slider.horizontal.3"
                 )
             }

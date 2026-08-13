@@ -171,7 +171,7 @@ struct JourneySignalErrorCard: View {
         if normalizedMessage.contains("internet") || normalizedMessage.contains("network") || normalizedMessage.contains("offline") {
             return "当前网络有点不稳定"
         }
-        return "手机会保留刚刚的位置"
+        return "通讯器会保留刚刚的位置"
     }
 }
 

@@ -154,7 +154,7 @@ struct JourneyChapterModePicker: View {
                     .foregroundStyle(activeMode == mode ? DesignTokens.ink : DesignTokens.secondaryInk)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
-                    .background(activeMode == mode ? .white.opacity(0.84) : .white.opacity(0.42))
+                    .background(activeMode == mode ? DesignTokens.surface.opacity(0.84) : DesignTokens.surface.opacity(0.42))
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .overlay {
                         RoundedRectangle(cornerRadius: 14, style: .continuous)

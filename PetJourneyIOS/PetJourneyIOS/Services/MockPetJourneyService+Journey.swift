@@ -135,7 +135,7 @@ extension MockPetJourneyService {
             itineraryStop(places[0], title: "在高一点的地方醒来", detail: "我想先去高一点、绿一点的地方。风从山海健康步道吹过来，我会慢慢把今天的方向想清楚。", plannedTime: "07:40", dwellMinutes: 45),
             itineraryStop(places[1], title: "走进老城的人间烟火", detail: "我会沿着八市和开禾路慢慢看，听摊位的声音，选一口厦门早午间的本地味道。", plannedTime: "09:20", dwellMinutes: 65, photoCandidate: true),
             itineraryStop(places[2], title: "在老港边慢慢逛", detail: "这里有海风、旧港和小店。我会在大学路附近找个不挡路的位置，坐下来把看到的颜色记住。", plannedTime: "11:10", dwellMinutes: 90, photoCandidate: true),
-            itineraryStop(places[3], title: "去海边收下午的风", detail: "下午我会靠近环岛路和白城沙滩，走慢一点，把海面、树影和路边的光记进手机。", plannedTime: "14:30", dwellMinutes: 85, photoCandidate: true),
+            itineraryStop(places[3], title: "去海边收下午的风", detail: "下午我会靠近环岛路和白城沙滩，走慢一点，把海面、树影和路边的光记进通讯器。", plannedTime: "14:30", dwellMinutes: 85, photoCandidate: true),
             itineraryStop(places[4], title: "傍晚写一封小信", detail: "天色变软以后，我会回到白鹭洲和筼筜湖边，让脚步慢下来，把今天写成一封小小的信。", plannedTime: "17:40", dwellMinutes: 50, postcardCandidate: true)
         ] : [
             itineraryStop(places[0], title: "醒来和确认方向", detail: "我先在这里听一会儿风和声音，慢慢醒过来。", plannedTime: "07:40", dwellMinutes: 55),
@@ -449,7 +449,7 @@ extension MockPetJourneyService {
                 ("huweishan-walkway", "狐尾山 / 山海健康步道", "park", 24.4874, 118.0847, "在狐尾山的风里慢慢醒来，看见厦门从高处亮起来", "高处、绿意和城市边界都很清楚，适合作为一日路线的开场。"),
                 ("bashi-kaihe-food", "八市 / 开禾路老街", "food", 24.4579, 118.0739, "走进八市和开禾路的人间烟火里，看摊位、听声音、选一口本地味道", "老城市场和本地小吃让路线有厦门记忆点，适合作为早午间核心停靠。"),
                 ("shapowei-daxue-road", "沙坡尾 / 大学路", "place", 24.4386, 118.0930, "在沙坡尾和大学路慢慢逛，听海风钻进巷子里", "老港、巷子、小店和海风都有画面感，适合照片、明信片和慢逛。"),
-                ("baicheng-beach-ring-road", "环岛路 / 白城沙滩", "park", 24.4319, 118.1036, "下午沿环岛路靠近白城沙滩，把海风记进手机", "海边和环岛路是厦门很强的城市标签，适合作为下午的核心照片点。"),
+                ("baicheng-beach-ring-road", "环岛路 / 白城沙滩", "park", 24.4319, 118.1036, "下午沿环岛路靠近白城沙滩，把海风记进通讯器", "海边和环岛路是厦门很强的城市标签，适合作为下午的核心照片点。"),
                 ("bailuzhou-yundang-lake", "白鹭洲 / 筼筜湖", "park", 24.4772, 118.0961, "傍晚在白鹭洲和筼筜湖边慢下来，写一封小小的信", "傍晚湖面、城市灯和安静步道适合作为当天收束与明信片候选点。"),
                 ("zhongshan-road-cafe-window", "中山路骑楼咖啡窗口", "cafe", 24.4570, 118.0806, "在骑楼边的小咖啡窗口喝一杯店里的特色饮品", "这是可选休息点，不抢主线，只在 TA 需要补给或躲雨时出现。"),
                 ("local-supply-stop", "老城补给小店", "shop", 24.4592, 118.0786, "在老城小店里挑一件路上用得上的小东西", "隐藏补给点，不作为核心攻略站。")
@@ -473,7 +473,7 @@ extension MockPetJourneyService {
         default:
             [
                 ("street-food", "街角小食铺", "food", city.position.latitude + 0.0012, city.position.longitude - 0.0010, "在街角小食铺里点了店里的招牌小吃", "TA 走进店里坐下，边听周围人说话边慢慢吃。"),
-                ("coffee-window", "咖啡窗口", "cafe", city.position.latitude - 0.0008, city.position.longitude + 0.0014, "在咖啡窗口旁的小桌喝了一杯饮料", "TA 选了靠窗的小桌，把这段路记进手机。"),
+                ("coffee-window", "咖啡窗口", "cafe", city.position.latitude - 0.0008, city.position.longitude + 0.0014, "在咖啡窗口旁的小桌喝了一杯饮料", "TA 选了靠窗的小桌，把这段路记进通讯器。"),
                 ("convenience", "便利店", "shop", city.position.latitude + 0.0015, city.position.longitude + 0.0010, "在便利店里挑了一个小补给", "灯光稳定、声音熟悉，适合走走停停。"),
                 ("quiet-netcafe", "安静网吧", "netcafe", city.position.latitude - 0.0013, city.position.longitude - 0.0015, "在网吧角落待了一会儿", "这是 TA 自己选择的室内停留点。"),
                 ("flower-window", "花店橱窗", "flower", city.position.latitude + 0.0005, city.position.longitude - 0.0017, "在花店前停住，看了很久的叶子", "街面安静、气味柔和，适合作为中途停留。")

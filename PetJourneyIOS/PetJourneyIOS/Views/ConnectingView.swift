@@ -23,7 +23,7 @@ struct ConnectingView: View {
         [
             ("调频中", "给 \(draft.name) 留出一个可以抵达的位置", "waveform.path"),
             ("寻找中", "正在 \(draft.petType.searchWorldName) 里辨认熟悉的信号", "dot.radiowaves.left.and.right"),
-            ("已连接", "手机已经收到第一段回声", "checkmark.seal.fill")
+            ("已连接", "通讯器已经收到第一段回声", "checkmark.seal.fill")
         ]
     }
 
@@ -65,7 +65,7 @@ struct ConnectingView: View {
                     Button {
                         onEnterJourney(response.petID)
                     } label: {
-                        Label("打开手机", systemImage: "rectangle.connected.to.line.below")
+                        Label("打开通讯器", systemImage: "rectangle.connected.to.line.below")
                     }
                     .primaryActionStyle()
                     .padding(.horizontal, DesignTokens.pagePadding)

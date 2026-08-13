@@ -483,7 +483,7 @@ struct JourneyMapView: View {
             Label("还没有旅程", systemImage: "map")
                 .font(.headline)
                 .foregroundStyle(DesignTokens.ink)
-            Text("手机已经准备好，但还没有收到第一段位置。")
+            Text("通讯器已经准备好，但还没有收到第一段位置。")
                 .font(.subheadline)
                 .foregroundStyle(DesignTokens.secondaryInk)
             Button(action: onReset) {
