@@ -51,6 +51,8 @@
 		A00000000000000000000242 /* MemorySearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000142 /* MemorySearchView.swift */; };
 		A00000000000000000000243 /* CredentialPromptsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000143 /* CredentialPromptsView.swift */; };
 		A00000000000000000000244 /* StreetRankSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000144 /* StreetRankSheet.swift */; };
+		A00000000000000000000245 /* MapControlDock.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000145 /* MapControlDock.swift */; };
+		A00000000000000000000246 /* PetPresenceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000146 /* PetPresenceCard.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,6 +112,8 @@
 		A00000000000000000000142 /* MemorySearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorySearchView.swift; sourceTree = "<group>"; };
 		A00000000000000000000143 /* CredentialPromptsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialPromptsView.swift; sourceTree = "<group>"; };
 		A00000000000000000000144 /* StreetRankSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreetRankSheet.swift; sourceTree = "<group>"; };
+		A00000000000000000000145 /* MapControlDock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapControlDock.swift; sourceTree = "<group>"; };
+		A00000000000000000000146 /* PetPresenceCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPresenceCard.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -300,6 +304,8 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000144 /* StreetRankSheet.swift */,
+				A00000000000000000000145 /* MapControlDock.swift */,
+				A00000000000000000000146 /* PetPresenceCard.swift */,
 			);
 			path = Map;
 			sourceTree = "<group>";
@@ -452,6 +458,8 @@
 				A00000000000000000000242 /* MemorySearchView.swift in Sources */,
 				A00000000000000000000243 /* CredentialPromptsView.swift in Sources */,
 				A00000000000000000000244 /* StreetRankSheet.swift in Sources */,
+				A00000000000000000000245 /* MapControlDock.swift in Sources */,
+				A00000000000000000000246 /* PetPresenceCard.swift in Sources */,
 				A00000000000000000000203 /* DesignTokens.swift in Sources */,
 				A00000000000000000000204 /* PetModels.swift in Sources */,
 				A00000000000000000000205 /* PetJourneyService.swift in Sources */,

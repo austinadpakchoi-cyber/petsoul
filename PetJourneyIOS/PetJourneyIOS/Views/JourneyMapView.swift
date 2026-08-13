@@ -167,6 +167,8 @@ struct JourneyMapView: View {
                                 Task { await viewModel.updateDNA(nextDNA) }
                             }
                         )
+                    case .streetRank:
+                        StreetRankSheet(petID: petID, service: service)
                     }
                 }
                 .presentationDetents(sheet.presentationDetents)
@@ -324,41 +326,48 @@ struct JourneyMapView: View {
 
                 JourneyMapAtmosphere(tint: activity.tint, date: timeline.date)
 
+                // 审计 #3：地图全出血，顶部只留一张情感状态卡 + 一列紧凑控制坞。
                 VStack(spacing: 0) {
-                    JourneyTopBar(
-                        status: status,
-                        hasUnreadPostcard: viewModel.hasUnreadPostcard,
-                        onCenter: {
-                            centerOnJourney(liveCoordinate, routePlan: routePlan, events: mapEvents, activity: activity)
-                        },
-                        onShowDayPlan: showDayPlan,
-                        onShowRecap: { showDayRecap = true },
-                        onShowPostcards: showPostcards,
-                        onShowTravelKit: showTravelKit,
-                        onShowSouvenirs: showSouvenirs,
-                        onShowDNA: showDNA,
-                        isSignedIn: session.isSignedIn,
-                        accountName: session.userDisplayName,
-                        onShowAccount: { showAccountSheet = true },
-                        onReset: onReset
-                    )
-                    .padding(.horizontal, DesignTokens.pagePadding)
-                    .padding(.top, 12)
-
-                    HStack {
-                        NavigationModeStrip(
-                            perspective: routePerspective,
-                            routePlan: routePlan,
-                            activity: activity,
-                            showNearbySignals: showNearbySignals,
-                            onTogglePerspective: togglePerspective,
-                            onToggleNearbySignals: toggleNearbySignals
+                    HStack(alignment: .top, spacing: 10) {
+                        PetPresenceCard(
+                            petName: status.name,
+                            travelDay: status.agentState.travelDay,
+                            location: status.agentState.location,
+                            modeLabel: activity.modeLabel,
+                            modeSystemImage: activity.systemImage,
+                            tint: activity.tint,
+                            statusNote: status.agentState.statusNote.petSoulUserFacingText
                         )
 
-                        Spacer(minLength: 0)
+                        Spacer(minLength: 10)
+
+                        MapControlDock(
+                            hasUnreadPostcard: viewModel.hasUnreadPostcard,
+                            showNearbySignals: showNearbySignals,
+                            perspectiveTitle: perspectiveTitle(for: activity),
+                            perspectiveSystemImage: perspectiveSystemImage(for: activity),
+                            isSignedIn: session.isSignedIn,
+                            accountName: session.userDisplayName,
+                            actions: MapDockActions(
+                                onCenter: {
+                                    centerOnJourney(liveCoordinate, routePlan: routePlan, events: mapEvents, activity: activity)
+                                },
+                                onTogglePerspective: togglePerspective,
+                                onToggleNearbySignals: toggleNearbySignals,
+                                onShowDayPlan: showDayPlan,
+                                onShowRecap: { showDayRecap = true },
+                                onShowPostcards: showPostcards,
+                                onShowTravelKit: showTravelKit,
+                                onShowSouvenirs: showSouvenirs,
+                                onShowStreetRank: { activeSheet = .streetRank },
+                                onShowDNA: showDNA,
+                                onShowAccount: { showAccountSheet = true },
+                                onReset: onReset
+                            )
+                        )
                     }
                     .padding(.horizontal, DesignTokens.pagePadding)
-                    .padding(.top, 8)
+                    .padding(.top, 12)
 
                     Spacer()
                 }
@@ -517,6 +526,20 @@ struct JourneyMapView: View {
 
     private func togglePerspective() {
         routePerspective.toggle()
+    }
+
+    private func perspectiveTitle(for activity: JourneyActivitySnapshot) -> String {
+        if routePerspective == .threeD, activity.prefersNavigationCamera {
+            return "导航"
+        }
+        return routePerspective.title
+    }
+
+    private func perspectiveSystemImage(for activity: JourneyActivitySnapshot) -> String {
+        if routePerspective == .threeD, activity.prefersNavigationCamera {
+            return "location.north.line.fill"
+        }
+        return routePerspective.systemImage
     }
 
     private func toggleNearbySignals() {
@@ -1020,6 +1043,7 @@ private enum JourneySheet: String, Identifiable {
     case souvenirs
     case worldCupQuest
     case dna
+    case streetRank
 
     var id: String { rawValue }
 
@@ -1027,7 +1051,7 @@ private enum JourneySheet: String, Identifiable {
         switch self {
         case .dayPlan, .travelKit, .souvenirs, .postcards, .worldCupQuest:
             return [.large]
-        case .dna:
+        case .dna, .streetRank:
             return [.medium, .large]
         }
     }
@@ -1456,65 +1480,6 @@ private enum JourneyRouteVisual {
     }
 }
 
-private struct NavigationModeStrip: View {
-    var perspective: RoutePerspective
-    var routePlan: JourneyRoutePlan
-    var activity: JourneyActivitySnapshot
-    var showNearbySignals: Bool
-    var onTogglePerspective: () -> Void
-    var onToggleNearbySignals: () -> Void
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Label(activity.modeLabel, systemImage: activity.systemImage)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(DesignTokens.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.78)
-
-            Divider()
-                .frame(height: 16)
-
-            Button(action: onTogglePerspective) {
-                Label(perspectiveTitle, systemImage: perspectiveSystemImage)
-                    .labelStyle(.titleAndIcon)
-            }
-            .buttonStyle(.plain)
-
-            Button(action: onToggleNearbySignals) {
-                Image(systemName: showNearbySignals ? "eye.fill" : "eye.slash.fill")
-                    .frame(width: 20, height: 20)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(showNearbySignals ? "隐藏附近信号" : "显示附近信号")
-        }
-        .font(.caption.weight(.semibold))
-        .foregroundStyle(DesignTokens.secondaryInk)
-        .padding(.vertical, 8)
-        .padding(.horizontal, 11)
-        .background(DesignTokens.surface.opacity(0.88))
-        .clipShape(Capsule())
-        .overlay {
-            Capsule().stroke(DesignTokens.surfaceStroke.opacity(0.78), lineWidth: 1)
-        }
-        .shadow(color: DesignTokens.deepInk.opacity(0.08), radius: 12, x: 0, y: 7)
-    }
-
-    private var perspectiveTitle: String {
-        if perspective == .threeD, activity.prefersNavigationCamera {
-            return "导航"
-        }
-        return perspective.title
-    }
-
-    private var perspectiveSystemImage: String {
-        if perspective == .threeD, activity.prefersNavigationCamera {
-            return "location.north.line.fill"
-        }
-        return perspective.systemImage
-    }
-}
-
 private struct JourneyMapAtmosphere: View {
     var tint: Color
     var date: Date = Date()
@@ -1652,129 +1617,6 @@ private struct NavigationScanOverlay: View {
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
-    }
-}
-
-private struct JourneyTopBar: View {
-    var status: AgentStatus
-    var hasUnreadPostcard: Bool
-    var onCenter: () -> Void
-    var onShowDayPlan: () -> Void
-    var onShowRecap: () -> Void
-    var onShowPostcards: () -> Void
-    var onShowTravelKit: () -> Void
-    var onShowSouvenirs: () -> Void
-    var onShowDNA: () -> Void
-    var isSignedIn: Bool = false
-    var accountName: String?
-    var onShowAccount: () -> Void = {}
-    var onReset: () -> Void
-
-    var body: some View {
-        HStack(spacing: 10) {
-            HStack(spacing: 10) {
-                PetSoulAssetIcon(
-                    asset: .signalPaw,
-                    fallbackSystemImage: "dot.radiowaves.left.and.right",
-                    fallbackTint: DesignTokens.sage,
-                    size: 30
-                )
-                    .frame(width: 34, height: 34)
-                    .background(DesignTokens.mist.opacity(0.94))
-                    .clipShape(Circle())
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(status.name)的旅程在线")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(DesignTokens.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.78)
-                    Text("第 \(status.agentState.travelDay) 天 · \(status.agentState.location)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(DesignTokens.secondaryInk)
-                        .lineLimit(1)
-                }
-            }
-            .padding(.vertical, 9)
-            .padding(.horizontal, 10)
-            .background(DesignTokens.surface.opacity(0.9))
-            .clipShape(Capsule())
-            .overlay {
-                Capsule().stroke(DesignTokens.surfaceStroke.opacity(0.75), lineWidth: 1)
-            }
-
-            Spacer(minLength: 0)
-
-            TopCircleButton(systemImage: "location.fill", action: onCenter, accessibilityLabel: "回到 TA 的位置")
-
-            Menu {
-                Button(action: onShowDayPlan) {
-                    Label("今日路线", systemImage: "map.fill")
-                }
-                Button(action: onShowRecap) {
-                    Label("TA 的一天", systemImage: "play.rectangle.fill")
-                }
-                Button(action: onShowPostcards) {
-                    Label(hasUnreadPostcard ? "查看新明信片" : "查看明信片", systemImage: "mail.stack")
-                }
-                Button(action: onShowTravelKit) {
-                    Label("旅行小包", systemImage: "backpack.fill")
-                }
-                Button(action: onShowSouvenirs) {
-                    Label("带回的小东西", systemImage: "gift.fill")
-                }
-                Divider()
-                Button(action: onShowAccount) {
-                    if isSignedIn {
-                        Label("账号 · \(accountName ?? "已登录")", systemImage: "checkmark.icloud")
-                    } else {
-                        Label("保存旅程到账号", systemImage: "person.crop.circle.badge.plus")
-                    }
-                }
-                Button(action: onShowDNA) {
-                    Label("查看记忆档案", systemImage: "slider.horizontal.3")
-                }
-                Button(action: onReset) {
-                    Label("重新寻找", systemImage: "arrow.counterclockwise")
-                }
-            } label: {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: "ellipsis")
-                        .font(.headline.weight(.bold))
-                        .foregroundStyle(DesignTokens.secondaryInk)
-                        .frame(width: 44, height: 44)
-                        .background(DesignTokens.surface.opacity(0.9))
-                        .clipShape(Circle())
-                    if hasUnreadPostcard {
-                        Circle()
-                            .fill(DesignTokens.clay)
-                            .frame(width: 8, height: 8)
-                            .offset(x: -7, y: 8)
-                    }
-                }
-            }
-            .accessibilityLabel("更多")
-        }
-        .shadow(color: DesignTokens.deepInk.opacity(0.09), radius: 16, x: 0, y: 8)
-    }
-}
-
-private struct TopCircleButton: View {
-    var systemImage: String
-    var action: () -> Void
-    var accessibilityLabel: String
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(DesignTokens.sage)
-                .frame(width: 44, height: 44)
-                .background(DesignTokens.surface.opacity(0.9))
-                .clipShape(Circle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(accessibilityLabel)
     }
 }
 
