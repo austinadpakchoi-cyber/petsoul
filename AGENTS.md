@@ -12,7 +12,7 @@ PetSoul / PetJourney 是"宠物在平行世界继续生活"的**关系型**旅�
 
 1. **UI 代码不允许写死"小福"或任何特定宠物的素材。** 小福只是测试样板宠物，只能出现在测试/Mock 数据里（`MockPetJourneyService.swift`）。所有界面围绕"当前宠物"（名字、照片、DNA、性格、旅行状态）动态生成。
 2. **文案不得暴露内部机制**（如"第一版会做模拟识别"），保持仪式感。
-3. **iOS 工程是经典 pbxproj**（objectVersion 56）：新建 Swift 文件必须同步登记进 `project.pbxproj`，否则 Xcode 不收录。优先往现有文件里加代码，不要随意新建文件。
+3. **iOS 工程是经典 pbxproj**（objectVersion 56）：新建 Swift 文件必须同步登记进 `project.pbxproj`，否则 Xcode 不收录。**鼓励按职责拆分文件**——新建文件是正常且被鼓励的，只要登记 pbxproj 即可；不要为了省登记步骤而往现有文件里无限堆代码。单文件宜控制在 ~800 行以内、单一文件内类型不宜超过 ~30 个，超过就应拆分（可跑 `scripts/arch_gate.py` 自查）。
 4. **改动 iOS 代码后必须构建/测试通过**（命令见下）。
 
 ## 仓库结构
