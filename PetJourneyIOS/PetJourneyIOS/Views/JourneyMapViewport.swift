@@ -451,7 +451,7 @@ struct JourneyMapAtmosphere: View {
         case .dawn:
             [
                 DesignTokens.amber.opacity(0.20),
-                Color(hex: 0xFBE8C8).opacity(0.10),
+                DesignTokens.mapWash.dawnCream.opacity(0.10),
                 DesignTokens.porcelain.opacity(0.44)
             ]
         case .day:
@@ -462,15 +462,15 @@ struct JourneyMapAtmosphere: View {
             ]
         case .dusk:
             [
-                Color(hex: 0x8A5A78).opacity(0.22),
-                Color(hex: 0xE0956B).opacity(0.14),
-                Color(hex: 0xF6E3CE).opacity(0.40)
+                DesignTokens.mapWash.duskMauve.opacity(0.22),
+                DesignTokens.mapWash.duskEmber.opacity(0.14),
+                DesignTokens.mapWash.duskCream.opacity(0.40)
             ]
         case .night:
             [
-                Color(hex: 0x131E36).opacity(0.46),
-                Color(hex: 0x1E2A44).opacity(0.30),
-                Color(hex: 0x2A3752).opacity(0.34)
+                DesignTokens.mapWash.nightDeep.opacity(0.46),
+                DesignTokens.mapWash.nightMid.opacity(0.30),
+                DesignTokens.mapWash.nightSoft.opacity(0.34)
             ]
         }
     }
@@ -487,7 +487,7 @@ struct JourneyMapAtmosphere: View {
                 LinearGradient(
                     colors: [
                         .clear,
-                        Color(hex: 0xF8F2EA).opacity(0.36)
+                        DesignTokens.mapWash.horizonGlow.opacity(0.36)
                     ],
                     startPoint: .center,
                     endPoint: .bottom
@@ -497,7 +497,7 @@ struct JourneyMapAtmosphere: View {
             if phase == .night {
                 AmbientSignalField(
                     tint: .white,
-                    warmth: Color(hex: 0xFDF6DC),
+                    warmth: DesignTokens.mapWash.nightStarlight,
                     density: 26,
                     drift: 0.1
                 )

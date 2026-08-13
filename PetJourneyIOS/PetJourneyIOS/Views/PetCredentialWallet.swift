@@ -439,8 +439,8 @@ struct CredentialPhotoArchivePreview: View {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color(hex: 0xEAF4F7),
-                        Color(hex: 0xF8F2E6)
+                        DesignTokens.credential.passportPhotoTop,
+                        DesignTokens.credential.passportPhotoBottom
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing

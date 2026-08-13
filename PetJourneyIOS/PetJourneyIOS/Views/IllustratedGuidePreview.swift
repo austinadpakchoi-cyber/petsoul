@@ -42,13 +42,13 @@ struct IllustratedGuidePreviewCanvas: View {
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color(hex: 0xD8C8AA).opacity(0.48), lineWidth: 1)
+                .stroke(DesignTokens.notebook.stroke.opacity(0.48), lineWidth: 1)
         )
     }
 
     var notebookPaper: some View {
         ZStack {
-            Color(hex: 0xFFF6E5)
+            DesignTokens.notebook.paper
             LinearGradient(
                 colors: [
                     Color.white.opacity(0.25),
@@ -261,10 +261,10 @@ struct IllustratedGuideSpiralBinding: View {
             ForEach(0..<18, id: \.self) { _ in
                 HStack(spacing: 0) {
                     Circle()
-                        .stroke(Color(hex: 0x9B8C78).opacity(0.62), lineWidth: 1.4)
+                        .stroke(DesignTokens.notebook.binding.opacity(0.62), lineWidth: 1.4)
                         .frame(width: 9, height: 9)
                     RoundedRectangle(cornerRadius: 1)
-                        .fill(Color(hex: 0x9B8C78).opacity(0.42))
+                        .fill(DesignTokens.notebook.binding.opacity(0.42))
                         .frame(width: 10, height: 2)
                 }
             }

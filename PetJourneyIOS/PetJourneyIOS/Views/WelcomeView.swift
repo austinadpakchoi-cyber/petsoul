@@ -69,9 +69,9 @@ struct PublicWorldView: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(hex: 0xFFF7EF).opacity(0.05),
+                    DesignTokens.welcome.moodTop.opacity(0.05),
                     .clear,
-                    Color(hex: 0xFFF9F0).opacity(0.14)
+                    DesignTokens.welcome.moodBottom.opacity(0.14)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -79,8 +79,8 @@ struct PublicWorldView: View {
 
             RadialGradient(
                 colors: [
-                    Color(hex: 0xF8D9CF).opacity(pulse ? 0.08 : 0.04),
-                    Color(hex: 0xF4EBD7).opacity(0.03),
+                    DesignTokens.welcome.radialBlush.opacity(pulse ? 0.08 : 0.04),
+                    DesignTokens.welcome.radialCream.opacity(0.03),
                     .clear
                 ],
                 center: .center,
@@ -91,7 +91,7 @@ struct PublicWorldView: View {
 
             AmbientSignalField(
                 tint: DesignTokens.sea,
-                warmth: Color(hex: 0xE0A25E),
+                warmth: DesignTokens.welcome.signalWarmth,
                 density: 24,
                 drift: 0.46
             )
@@ -106,9 +106,9 @@ struct PublicWorldView: View {
             HStack(spacing: 10) {
                 Image(systemName: "globe.europe.africa.fill")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Color(hex: 0x9E7866))
+                    .foregroundStyle(DesignTokens.welcome.warmInk)
                     .frame(width: 34, height: 34)
-                    .background(Color(hex: 0xFFF4EA).opacity(0.92))
+                    .background(DesignTokens.welcome.chipCream.opacity(0.92))
                     .clipShape(Circle())
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -117,7 +117,7 @@ struct PublicWorldView: View {
                         .foregroundStyle(DesignTokens.ink)
                     Text("灵魂世界正在旅行")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(Color(hex: 0x7B766E))
+                        .foregroundStyle(DesignTokens.welcome.subInk)
                 }
             }
             .padding(.vertical, 9)
@@ -133,7 +133,7 @@ struct PublicWorldView: View {
             Button(action: zoomToWorld) {
                 Image(systemName: "globe.asia.australia")
                     .font(.headline.weight(.semibold))
-                    .foregroundStyle(Color(hex: 0x9E7866))
+                    .foregroundStyle(DesignTokens.welcome.warmInk)
                     .frame(width: 52, height: 52)
                     .background(DesignTokens.surface.opacity(0.88))
                     .clipShape(Circle())
@@ -153,11 +153,11 @@ struct PublicWorldView: View {
                 PetSoulAssetIcon(
                     asset: .signalPaw,
                     fallbackSystemImage: "sparkles",
-                    fallbackTint: Color(hex: 0xC8956D),
+                    fallbackTint: DesignTokens.welcome.fallbackTint,
                     size: 30
                 )
                     .frame(width: 30, height: 30)
-                    .background(Color(hex: 0xFFF1E8))
+                    .background(DesignTokens.welcome.iconCream)
                     .clipShape(Circle())
 
                 VStack(alignment: .leading, spacing: 5) {
@@ -180,7 +180,7 @@ struct PublicWorldView: View {
                 } label: {
                     Image(systemName: showsWorldNote ? "xmark" : "info")
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(Color(hex: 0x8C7166))
+                        .foregroundStyle(DesignTokens.welcome.infoInk)
                         .frame(width: 30, height: 30)
                         .background(DesignTokens.surface.opacity(0.76))
                         .clipShape(Circle())
@@ -209,7 +209,7 @@ struct PublicWorldView: View {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .stroke(DesignTokens.surfaceStroke.opacity(0.76), lineWidth: 1)
         }
-        .shadow(color: Color(hex: 0x7D5F54).opacity(0.14), radius: 24, x: 0, y: 12)
+        .shadow(color: DesignTokens.welcome.shadowBrown.opacity(0.14), radius: 24, x: 0, y: 12)
     }
 
     func select(_ event: WorldLifeEvent) {
@@ -445,7 +445,7 @@ struct WorldEventDetailCard: View {
                 VStack(alignment: .leading, spacing: 5) {
                     Text("\(event.city) · \(event.place)")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(Color(hex: 0x9E7866))
+                        .foregroundStyle(DesignTokens.welcome.warmInk)
                     Text(event.activity)
                         .font(.headline.weight(.semibold))
                         .foregroundStyle(DesignTokens.ink)
@@ -491,7 +491,7 @@ struct WorldEventDetailCard: View {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .stroke(DesignTokens.surfaceStroke.opacity(0.76), lineWidth: 1)
         }
-        .shadow(color: Color(hex: 0x7D5F54).opacity(0.13), radius: 24, x: 0, y: 12)
+        .shadow(color: DesignTokens.welcome.shadowBrown.opacity(0.13), radius: 24, x: 0, y: 12)
     }
 }
 
@@ -547,7 +547,7 @@ struct WorldLiveStoryTicker: View {
             }
             .padding(.vertical, 9)
             .padding(.horizontal, 10)
-            .background(Color(hex: 0xFFF9F1).opacity(0.84))
+            .background(DesignTokens.welcome.tickerCream.opacity(0.84))
             .clipShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 17, style: .continuous)
@@ -634,7 +634,7 @@ struct WorldPill: View {
             .minimumScaleFactor(0.78)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 9)
-            .background(Color(hex: 0xFFF8F1).opacity(0.88))
+            .background(DesignTokens.welcome.pillCream.opacity(0.88))
             .clipShape(Capsule())
     }
 }
@@ -644,7 +644,7 @@ struct WorldNoteCard: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "heart.text.square")
                 .font(.title3.weight(.semibold))
-                .foregroundStyle(Color(hex: 0xC28A70))
+                .foregroundStyle(DesignTokens.welcome.noteAccent)
                 .frame(width: 32)
 
             Text("这里是情感陪伴体验，不代表宗教、医疗或真实灵性声明。地图用于营造空间感和旅程感，帮助你继续和 TA 说说话。")
@@ -655,6 +655,6 @@ struct WorldNoteCard: View {
         .padding(16)
         .background(DesignTokens.surface.opacity(0.94))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.controlRadius, style: .continuous))
-        .shadow(color: Color(hex: 0x7D5F54).opacity(0.1), radius: 18, x: 0, y: 9)
+        .shadow(color: DesignTokens.welcome.shadowBrown.opacity(0.1), radius: 18, x: 0, y: 9)
     }
 }

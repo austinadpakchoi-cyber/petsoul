@@ -110,7 +110,7 @@ final class WorldAnimalBadgeView: UIControl {
         compactContainer.isHidden = true
         addSubview(compactContainer)
 
-        layer.shadowColor = UIColor(hex: 0x6C554F).cgColor
+        layer.shadowColor = DesignTokens.annotation.shadowBrown.cgColor
         layer.shadowOpacity = 0.18
         layer.shadowRadius = 14
         layer.shadowOffset = CGSize(width: 0, height: 8)
@@ -131,11 +131,11 @@ final class WorldAnimalBadgeView: UIControl {
 
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.font = .systemFont(ofSize: 11, weight: .bold)
-        titleLabel.textColor = UIColor(hex: 0x26302F)
+        titleLabel.textColor = DesignTokens.annotation.titleInk
 
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
         subtitleLabel.font = .systemFont(ofSize: 8.8, weight: .semibold)
-        subtitleLabel.textColor = UIColor(hex: 0x697673)
+        subtitleLabel.textColor = DesignTokens.annotation.subtitleInk
         subtitleLabel.lineBreakMode = .byTruncatingTail
 
         dot.translatesAutoresizingMaskIntoConstraints = false
@@ -236,7 +236,7 @@ final class WorldEventAnnotationView: MKAnnotationView {
         dot.backgroundColor = event.uiTint
         titleLabel.text = event.city
         subtitleLabel.text = event.activity
-        subtitleLabel.textColor = event.isGenerated ? UIColor(hex: 0x5F6C69) : UIColor(hex: 0x697673)
+        subtitleLabel.textColor = event.isGenerated ? DesignTokens.annotation.generatedInk : DesignTokens.annotation.subtitleInk
         accessibilityLabel = "\(event.city)，\(event.activity)"
     }
 
@@ -259,7 +259,7 @@ final class WorldEventAnnotationView: MKAnnotationView {
         container.contentView.backgroundColor = UIColor.white.withAlphaComponent(0.40)
         addSubview(container)
 
-        layer.shadowColor = UIColor(hex: 0x6C554F).cgColor
+        layer.shadowColor = DesignTokens.annotation.shadowBrown.cgColor
         layer.shadowOpacity = 0.18
         layer.shadowRadius = 14
         layer.shadowOffset = CGSize(width: 0, height: 8)
@@ -273,11 +273,11 @@ final class WorldEventAnnotationView: MKAnnotationView {
 
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.font = .systemFont(ofSize: 11, weight: .bold)
-        titleLabel.textColor = UIColor(hex: 0x26302F)
+        titleLabel.textColor = DesignTokens.annotation.titleInk
 
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
         subtitleLabel.font = .systemFont(ofSize: 8.8, weight: .semibold)
-        subtitleLabel.textColor = UIColor(hex: 0x697673)
+        subtitleLabel.textColor = DesignTokens.annotation.subtitleInk
         subtitleLabel.lineBreakMode = .byTruncatingTail
 
         dot.translatesAutoresizingMaskIntoConstraints = false

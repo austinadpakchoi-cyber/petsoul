@@ -148,17 +148,17 @@ enum PetCredentialKind: String, CaseIterable, Identifiable {
     var gradientColors: [Color] {
         switch self {
         case .identity:
-            [Color(hex: 0x4E8074), Color(hex: 0x9BC3B4)]
+            [DesignTokens.credential.identityDeep, DesignTokens.credential.identityLight]
         case .passport:
-            [Color(hex: 0x33445E), Color(hex: 0x6C7F9E)]
+            [DesignTokens.credential.passportDeep, DesignTokens.credential.passportLight]
         case .healthRecord:
-            [Color(hex: 0x6797A4), Color(hex: 0xB7D8D7)]
+            [DesignTokens.credential.healthDeep, DesignTokens.credential.healthLight]
         case .driverLicense:
-            [Color(hex: 0xAF8441), Color(hex: 0xE3C878)]
+            [DesignTokens.credential.driverDeep, DesignTokens.credential.driverLight]
         case .boardingPass:
-            [Color(hex: 0x526D86), Color(hex: 0x9BB4C9)]
+            [DesignTokens.credential.boardingDeep, DesignTokens.credential.boardingLight]
         case .hotelKey:
-            [Color(hex: 0xA46658), Color(hex: 0xE1A590)]
+            [DesignTokens.credential.hotelDeep, DesignTokens.credential.hotelLight]
         }
     }
 

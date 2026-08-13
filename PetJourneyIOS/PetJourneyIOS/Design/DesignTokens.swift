@@ -34,6 +34,80 @@ enum DesignTokens {
     static let paperInk = Color(hex: 0x30352C)
     static let paperSecondaryInk = Color(hex: 0x77715C)
     static let paperAccent = Color(hex: 0x5D738F)
+
+    // 下方均为「场景/实物」固定色（同 paper 系约定）：夜里也保持原有的暖纸/氛围/实物质感，
+    // 不走 Color(light:dark:) 自适应，避免地图昼夜氛围、纸质插图、证件卡、欢迎暖调在夜间被
+    // 错误翻转。这些原本散落在各 View 里的 hex 字面量收敛到此，作为唯一色值来源。
+
+    /// 手账插图（IllustratedGuidePreview）的纸质底、描边与线圈装订。
+    enum notebook {
+        static let paper = Color(hex: 0xFFF6E5)
+        static let stroke = Color(hex: 0xD8C8AA)
+        static let binding = Color(hex: 0x9B8C78)
+    }
+
+    /// 地图昼夜氛围洗色（JourneyMapViewport）：时间场景色，非 UI 主题色。
+    enum mapWash {
+        static let dawnCream = Color(hex: 0xFBE8C8)
+        static let duskMauve = Color(hex: 0x8A5A78)
+        static let duskEmber = Color(hex: 0xE0956B)
+        static let duskCream = Color(hex: 0xF6E3CE)
+        static let nightDeep = Color(hex: 0x131E36)
+        static let nightMid = Color(hex: 0x1E2A44)
+        static let nightSoft = Color(hex: 0x2A3752)
+        static let horizonGlow = Color(hex: 0xF8F2EA)
+        static let nightStarlight = Color(hex: 0xFDF6DC)
+    }
+
+    /// 宠物证件卡渐变（PetCredentialModels / PetCredentialWallet）：实物卡面色。
+    enum credential {
+        static let identityDeep = Color(hex: 0x4E8074)
+        static let identityLight = Color(hex: 0x9BC3B4)
+        static let passportDeep = Color(hex: 0x33445E)
+        static let passportLight = Color(hex: 0x6C7F9E)
+        static let healthDeep = Color(hex: 0x6797A4)
+        static let healthLight = Color(hex: 0xB7D8D7)
+        static let driverDeep = Color(hex: 0xAF8441)
+        static let driverLight = Color(hex: 0xE3C878)
+        static let boardingDeep = Color(hex: 0x526D86)
+        static let boardingLight = Color(hex: 0x9BB4C9)
+        static let hotelDeep = Color(hex: 0xA46658)
+        static let hotelLight = Color(hex: 0xE1A590)
+        static let passportPhotoTop = Color(hex: 0xEAF4F7)
+        static let passportPhotoBottom = Color(hex: 0xF8F2E6)
+    }
+
+    /// 欢迎/地球视角的暖纸暖棕主题（WelcomeView）。
+    enum welcome {
+        static let moodTop = Color(hex: 0xFFF7EF)
+        static let moodBottom = Color(hex: 0xFFF9F0)
+        static let radialBlush = Color(hex: 0xF8D9CF)
+        static let radialCream = Color(hex: 0xF4EBD7)
+        static let signalWarmth = Color(hex: 0xE0A25E)
+        static let warmInk = Color(hex: 0x9E7866)
+        static let chipCream = Color(hex: 0xFFF4EA)
+        static let subInk = Color(hex: 0x7B766E)
+        static let fallbackTint = Color(hex: 0xC8956D)
+        static let iconCream = Color(hex: 0xFFF1E8)
+        static let infoInk = Color(hex: 0x8C7166)
+        static let shadowBrown = Color(hex: 0x7D5F54)
+        static let tickerCream = Color(hex: 0xFFF9F1)
+        static let pillCream = Color(hex: 0xFFF8F1)
+        static let noteAccent = Color(hex: 0xC28A70)
+    }
+
+    /// 地图标注文字与阴影（WorldAnimalViews，UIKit）。
+    enum annotation {
+        static let shadowBrown = UIColor(hex: 0x6C554F)
+        static let titleInk = UIColor(hex: 0x26302F)
+        static let subtitleInk = UIColor(hex: 0x697673)
+        static let generatedInk = UIColor(hex: 0x5F6C69)
+    }
+
+    /// 纪念品/明信片卡片（SecondaryViews）。
+    enum souvenir {
+        static let cardCream = Color(hex: 0xFFF7E8)
+    }
 }
 
 extension Color {

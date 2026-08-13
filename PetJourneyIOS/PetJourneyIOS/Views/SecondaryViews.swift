@@ -504,7 +504,7 @@ struct IllustratedGuideImagePlaceholder: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(hex: 0xFFF7E8).opacity(0.92),
+                            DesignTokens.souvenir.cardCream.opacity(0.92),
                             DesignTokens.porcelain.opacity(0.72),
                             DesignTokens.mist.opacity(0.58)
                         ],
