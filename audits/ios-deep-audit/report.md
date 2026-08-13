@@ -99,6 +99,30 @@ iOS 侧整体健康度**中上**：上一轮「God File 拆分 / VM 下沉 / Des
 
 ---
 
+## 附：整改落实情况（2026-08-14 更新）
+
+| 项 | 状态 | 提交 |
+|---|---|---|
+| 后端 illustrated_guide.model 漂移 | ✅ 已修（取实际 provider 模型） | dd5d919 |
+| P0-1 Outbox 队头阻塞 | ✅ 已修（attempts 上限 5 + 死信 + 不再 break）+ poison 测试 | 5cd545a |
+| P0-2 401 路径 | ✅ 已修（APIError.unauthorized → sessionExpired + 信号文案）+ 测试 | 5cd545a、dcc0807 |
+| P0-3 缓存 TTL | ✅ 已修（13 种 kind 分级 TTL）+ 超龄拒绝测试 | 5cd545a |
+| P1-2 9 处 reduceMotion | ✅ 已修（1/30 上限 + paused） | 5ffbe02 |
+| P1-3 MemoryEditor 内部字段 | ✅ 已修（#if DEBUG 门控） | 0a7adb7 |
+| P1-4 契约补齐 | ✅ 已修（7 结构体字段 + 2 处 JSONValue 承载）+ ContractDecodingTests | bfdcb16 |
+| P1-5 凭据双轨 | ✅ 已修（删 155 行模板 + 死方法 + 重复枚举） | c56243b |
+| P1-6 尺寸硬编码 | ✅ 已修（标准卡/护照尺寸常量集中 + 注释说明服务端接入路径） | bea6ad5 |
+| P1-7 WorldStoryViewModel | ✅ 已修（走统一 APIClient） | 2e5e964 |
+| P1-8 VM 迁出 View | ✅ 已修（CommunicatorViewModel/MemoryHubViewModel → ViewModels/，pbxproj 登记） | 20877c1 |
+| P1-9 NPC 单一数据源 | ✅ 已修（NPCSociety.cast，View/Mock 元数据分离） | b021132 |
+| P1-10 分钟数共享 | ✅ 已修（Date.petSoulMinuteOfDay，3 处收敛） | 7181e74 |
+| P2 全部（Info.plist/机制词/cardSurface/阴影/账号/术语/minimumScaleFactor/死代码） | ✅ 已修 | 52d5a37、db37c10、bea6ad5 |
+| CI 编译修复（RetryPolicy 穷尽 switch） | ✅ 已修 | dcc0807 |
+
+验证状态：后端 82 测试全绿；arch_gate 绿；Architecture Gate CI ✅；iOS Build & Test CI（macOS 真机编译+测试）最终确认见 Actions。
+
+---
+
 ## 附：正面确认（审计双方一致）
 
 - 小福/模拟/占位/第一版/正在输入/输入中/在线/已读/好友/联系人/通知栏/接口/数据源/后台/引擎/算法/提示词/系统/版本/升级/数据同步：全库 0 命中。
