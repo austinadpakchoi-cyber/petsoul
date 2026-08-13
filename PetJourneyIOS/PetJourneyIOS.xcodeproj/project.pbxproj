@@ -83,6 +83,8 @@
 		A00000000000000000000263 /* JourneyViewModel+Communication.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000163 /* JourneyViewModel+Communication.swift */; };
 		A00000000000000000000264 /* JourneyViewModel+Travel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000164 /* JourneyViewModel+Travel.swift */; };
 		A00000000000000000000265 /* JourneyViewModel+Souvenirs.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000165 /* JourneyViewModel+Souvenirs.swift */; };
+		A00000000000000000000266 /* WorldLifeEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000166 /* WorldLifeEvent.swift */; };
+		A00000000000000000000267 /* WorldAnimalViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000167 /* WorldAnimalViews.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -174,6 +176,8 @@
 		A00000000000000000000163 /* JourneyViewModel+Communication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JourneyViewModel+Communication.swift"; sourceTree = "<group>"; };
 		A00000000000000000000164 /* JourneyViewModel+Travel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JourneyViewModel+Travel.swift"; sourceTree = "<group>"; };
 		A00000000000000000000165 /* JourneyViewModel+Souvenirs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JourneyViewModel+Souvenirs.swift"; sourceTree = "<group>"; };
+		A00000000000000000000166 /* WorldLifeEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldLifeEvent.swift; sourceTree = "<group>"; };
+		A00000000000000000000167 /* WorldAnimalViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldAnimalViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -370,6 +374,8 @@
 				A00000000000000000000123 /* JourneyRouteSupport.swift */,
 				A00000000000000000000127 /* CommunicatorViews.swift */,
 				A00000000000000000000118 /* SecondaryViews.swift */,
+				A00000000000000000000166 /* WorldLifeEvent.swift */,
+				A00000000000000000000167 /* WorldAnimalViews.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -599,6 +605,8 @@
 				A00000000000000000000263 /* JourneyViewModel+Communication.swift in Sources */,
 				A00000000000000000000264 /* JourneyViewModel+Travel.swift in Sources */,
 				A00000000000000000000265 /* JourneyViewModel+Souvenirs.swift in Sources */,
+				A00000000000000000000266 /* WorldLifeEvent.swift in Sources */,
+				A00000000000000000000267 /* WorldAnimalViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
