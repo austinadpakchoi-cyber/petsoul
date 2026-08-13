@@ -112,6 +112,8 @@
 		A00000000000000000000282 /* StreetRankViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000182 /* StreetRankViewModel.swift */; };
 		A00000000000000000000283 /* WorldStoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000183 /* WorldStoryViewModel.swift */; };
 		A00000000000000000000284 /* ContractDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000184 /* ContractDecodingTests.swift */; };
+		A00000000000000000000285 /* CommunicatorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000185 /* CommunicatorViewModel.swift */; };
+		A00000000000000000000286 /* MemoryHubViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000186 /* MemoryHubViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -232,6 +234,8 @@
 		A00000000000000000000182 /* StreetRankViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreetRankViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000183 /* WorldStoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldStoryViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000184 /* ContractDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractDecodingTests.swift; sourceTree = "<group>"; };
+		A00000000000000000000185 /* CommunicatorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicatorViewModel.swift; sourceTree = "<group>"; };
+		A00000000000000000000186 /* MemoryHubViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryHubViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -414,6 +418,8 @@
 				A00000000000000000000181 /* ConnectingViewModel.swift */,
 				A00000000000000000000182 /* StreetRankViewModel.swift */,
 				A00000000000000000000183 /* WorldStoryViewModel.swift */,
+				A00000000000000000000185 /* CommunicatorViewModel.swift */,
+				A00000000000000000000186 /* MemoryHubViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -714,6 +720,8 @@
 				A00000000000000000000281 /* ConnectingViewModel.swift in Sources */,
 				A00000000000000000000282 /* StreetRankViewModel.swift in Sources */,
 				A00000000000000000000283 /* WorldStoryViewModel.swift in Sources */,
+				A00000000000000000000285 /* CommunicatorViewModel.swift in Sources */,
+				A00000000000000000000286 /* MemoryHubViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
