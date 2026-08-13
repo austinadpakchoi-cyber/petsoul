@@ -514,7 +514,7 @@ struct CommunicatorPhotoAttachmentView: View {
 
     var statusBadgeText: String? {
         if isPendingGeneration {
-            return "生成中"
+            return "洗印中"
         }
         if attachment.photoURL == nil {
             return "未取得照片"
@@ -604,7 +604,7 @@ struct CommunicatorPhotoAttachmentView: View {
     }
 
     var pendingPhotoPlaceholder: some View {
-        photoPlaceholder(title: isPendingGeneration ? "这一刻的照片正在生成" : "这条照片没有拿到地址", systemImage: "photo.on.rectangle.angled")
+        photoPlaceholder(title: isPendingGeneration ? "这一刻的照片正在洗出来" : "这条照片没有拿到地址", systemImage: "photo.on.rectangle.angled")
     }
 
     var loadingPhotoPlaceholder: some View {

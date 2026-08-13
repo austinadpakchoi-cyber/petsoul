@@ -164,7 +164,7 @@ struct PublicWorldView: View {
                     Text("也许 TA 正在世界某个角落。")
                         .font(.headline.weight(.semibold))
                         .foregroundStyle(DesignTokens.ink)
-                    Text("从一张照片和一点记忆开始，沿着真实地图慢慢寻找属于你的那一个信号。")
+                    Text("从一张照片和一点记忆开始，沿着地图慢慢寻找属于你的那一个信号。")
                         .font(.caption)
                         .foregroundStyle(DesignTokens.secondaryInk)
                         .lineSpacing(2)

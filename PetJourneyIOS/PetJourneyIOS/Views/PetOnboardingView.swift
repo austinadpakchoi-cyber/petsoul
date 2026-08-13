@@ -243,9 +243,9 @@ struct PetOnboardingView: View {
 
     private var primaryTitle: String {
         switch step {
-        case .photo: "开始照片识别"
+        case .photo: "开始记住这张脸"
         case .identity: "继续写下 TA 的记忆"
-        case .memory: "生成通讯卡并寻找 TA"
+        case .memory: "写好通讯卡并寻找 TA"
         }
     }
 

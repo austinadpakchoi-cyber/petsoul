@@ -60,7 +60,7 @@ enum JourneyDaySchedule {
         case 690..<750:
             return walk(
                 title: "从老城靠近老港",
-                detail: "TA 沿真实道路去沙坡尾和大学路，中途不会乱穿路，也不会突然跳到海上。",
+                detail: "TA 沿着道路去沙坡尾和大学路，中途不会乱穿路，也不会突然跳到海上。",
                 movingCoordinate: movingCoordinate,
                 relatedEvent: event(at: 2, events: events)
             )

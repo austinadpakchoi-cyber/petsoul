@@ -362,7 +362,7 @@ struct RouteMovementDisclosureCard: View {
                         .clipShape(Circle())
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("真实移动")
+                        Text("这趟移动")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(DesignTokens.ink)
                         Text(summary)

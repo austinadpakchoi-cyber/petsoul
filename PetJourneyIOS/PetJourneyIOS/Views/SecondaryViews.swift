@@ -217,7 +217,7 @@ struct IllustratedGuideCard: View {
         }
         switch guide?.status {
         case .ready:
-            return "已生成"
+            return "已画好"
         case .generating:
             return "正在画"
         case .failed:
@@ -549,14 +549,14 @@ struct IllustratedGuideImagePlaceholder: View {
                 if isGenerating {
                     ProgressView()
                         .tint(DesignTokens.clay)
-                    Text("路线、地点和文字已经锁定，正在生成真正的手绘攻略图。")
+                    Text("路线、地点和文字已经锁定，正在画真正的手绘攻略图。")
                         .font(.caption)
                         .foregroundStyle(DesignTokens.secondaryInk.opacity(0.84))
                         .multilineTextAlignment(.center)
                         .lineSpacing(3)
                         .padding(.horizontal, 26)
                 } else if isFailed {
-                    Text("生成信号暂时不稳定，稍后重新打开会再尝试。")
+                    Text("画笔信号暂时不稳定，稍后重新打开会再尝试。")
                         .font(.caption)
                         .foregroundStyle(DesignTokens.secondaryInk.opacity(0.84))
                         .multilineTextAlignment(.center)
@@ -586,7 +586,7 @@ struct IllustratedGuideImagePlaceholder: View {
         if isGenerating {
             return "正在画这页手账"
         }
-        return "等待生成手绘攻略图"
+        return "等待画好手绘攻略图"
     }
 }
 

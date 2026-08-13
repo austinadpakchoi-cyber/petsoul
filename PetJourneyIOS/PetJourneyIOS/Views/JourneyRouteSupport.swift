@@ -34,7 +34,7 @@ struct JourneyRoutePlan {
         case .mapKitWalking:
             "沿步行路走"
         case .backendPolyline:
-            "沿真实道路走"
+            "沿着道路走"
         case .mockStreet:
             "沿街慢慢走"
         }

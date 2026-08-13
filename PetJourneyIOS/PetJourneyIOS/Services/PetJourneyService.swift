@@ -13,7 +13,7 @@ enum PetJourneyError: LocalizedError, Equatable {
         case .invalidBaseURL:
             "baseURL 无效"
         case .invalidResponse:
-            "服务返回的数据暂时无法识别"
+            "信号暂时没有接通，稍后再试。"
         case .noPetSession:
             "还没有建立宠物旅程"
         case .offline:
