@@ -85,6 +85,31 @@
 		A00000000000000000000265 /* JourneyViewModel+Souvenirs.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000165 /* JourneyViewModel+Souvenirs.swift */; };
 		A00000000000000000000266 /* WorldLifeEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000166 /* WorldLifeEvent.swift */; };
 		A00000000000000000000267 /* WorldAnimalViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000167 /* WorldAnimalViews.swift */; };
+		A00000000000000000000268 /* JourneyMapLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000168 /* JourneyMapLoading.swift */; };
+		A00000000000000000000269 /* JourneyMapViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000169 /* JourneyMapViewport.swift */; };
+		A0000000000000000000026A /* JourneyWorldCup.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000016A /* JourneyWorldCup.swift */; };
+		A0000000000000000000026B /* JourneyLiveSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000016B /* JourneyLiveSignal.swift */; };
+		A0000000000000000000026C /* JourneyTelemetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000016C /* JourneyTelemetry.swift */; };
+		A0000000000000000000026D /* JourneyPetCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000016D /* JourneyPetCards.swift */; };
+		A0000000000000000000026E /* JourneyMapMarkers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000016E /* JourneyMapMarkers.swift */; };
+		A0000000000000000000026F /* JourneyMapModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000016F /* JourneyMapModels.swift */; };
+		A00000000000000000000270 /* JourneyDaySchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000170 /* JourneyDaySchedule.swift */; };
+		A00000000000000000000271 /* JourneyDayRecap.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000171 /* JourneyDayRecap.swift */; };
+		A00000000000000000000272 /* CommunicatorChat.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000172 /* CommunicatorChat.swift */; };
+		A00000000000000000000273 /* CommunicatorMoments.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000173 /* CommunicatorMoments.swift */; };
+		A00000000000000000000274 /* MemoryHub.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000174 /* MemoryHub.swift */; };
+		A00000000000000000000275 /* MemoryEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000175 /* MemoryEditor.swift */; };
+		A00000000000000000000276 /* PetCredentialModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000176 /* PetCredentialModels.swift */; };
+		A00000000000000000000277 /* PetCredentialWallet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000177 /* PetCredentialWallet.swift */; };
+		A00000000000000000000278 /* PetCredentialCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000178 /* PetCredentialCard.swift */; };
+		A00000000000000000000279 /* IllustratedGuidePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000179 /* IllustratedGuidePreview.swift */; };
+		A0000000000000000000027A /* JourneyGuideDigest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000017A /* JourneyGuideDigest.swift */; };
+		A0000000000000000000027B /* JourneyChapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000017B /* JourneyChapter.swift */; };
+		A0000000000000000000027C /* TravelGuide.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000017C /* TravelGuide.swift */; };
+		A0000000000000000000027D /* TravelViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000017D /* TravelViews.swift */; };
+		A0000000000000000000027E /* TravelBagSouvenir.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000017E /* TravelBagSouvenir.swift */; };
+		A0000000000000000000027F /* DNASettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000017F /* DNASettings.swift */; };
+		A00000000000000000000280 /* JourneyTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000180 /* JourneyTimeline.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -178,6 +203,31 @@
 		A00000000000000000000165 /* JourneyViewModel+Souvenirs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JourneyViewModel+Souvenirs.swift"; sourceTree = "<group>"; };
 		A00000000000000000000166 /* WorldLifeEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldLifeEvent.swift; sourceTree = "<group>"; };
 		A00000000000000000000167 /* WorldAnimalViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldAnimalViews.swift; sourceTree = "<group>"; };
+		A00000000000000000000168 /* JourneyMapLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyMapLoading.swift; sourceTree = "<group>"; };
+		A00000000000000000000169 /* JourneyMapViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyMapViewport.swift; sourceTree = "<group>"; };
+		A0000000000000000000016A /* JourneyWorldCup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyWorldCup.swift; sourceTree = "<group>"; };
+		A0000000000000000000016B /* JourneyLiveSignal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyLiveSignal.swift; sourceTree = "<group>"; };
+		A0000000000000000000016C /* JourneyTelemetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyTelemetry.swift; sourceTree = "<group>"; };
+		A0000000000000000000016D /* JourneyPetCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyPetCards.swift; sourceTree = "<group>"; };
+		A0000000000000000000016E /* JourneyMapMarkers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyMapMarkers.swift; sourceTree = "<group>"; };
+		A0000000000000000000016F /* JourneyMapModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyMapModels.swift; sourceTree = "<group>"; };
+		A00000000000000000000170 /* JourneyDaySchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyDaySchedule.swift; sourceTree = "<group>"; };
+		A00000000000000000000171 /* JourneyDayRecap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyDayRecap.swift; sourceTree = "<group>"; };
+		A00000000000000000000172 /* CommunicatorChat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicatorChat.swift; sourceTree = "<group>"; };
+		A00000000000000000000173 /* CommunicatorMoments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicatorMoments.swift; sourceTree = "<group>"; };
+		A00000000000000000000174 /* MemoryHub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryHub.swift; sourceTree = "<group>"; };
+		A00000000000000000000175 /* MemoryEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryEditor.swift; sourceTree = "<group>"; };
+		A00000000000000000000176 /* PetCredentialModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetCredentialModels.swift; sourceTree = "<group>"; };
+		A00000000000000000000177 /* PetCredentialWallet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetCredentialWallet.swift; sourceTree = "<group>"; };
+		A00000000000000000000178 /* PetCredentialCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetCredentialCard.swift; sourceTree = "<group>"; };
+		A00000000000000000000179 /* IllustratedGuidePreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IllustratedGuidePreview.swift; sourceTree = "<group>"; };
+		A0000000000000000000017A /* JourneyGuideDigest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyGuideDigest.swift; sourceTree = "<group>"; };
+		A0000000000000000000017B /* JourneyChapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyChapter.swift; sourceTree = "<group>"; };
+		A0000000000000000000017C /* TravelGuide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelGuide.swift; sourceTree = "<group>"; };
+		A0000000000000000000017D /* TravelViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelViews.swift; sourceTree = "<group>"; };
+		A0000000000000000000017E /* TravelBagSouvenir.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelBagSouvenir.swift; sourceTree = "<group>"; };
+		A0000000000000000000017F /* DNASettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DNASettings.swift; sourceTree = "<group>"; };
+		A00000000000000000000180 /* JourneyTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyTimeline.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -376,6 +426,31 @@
 				A00000000000000000000118 /* SecondaryViews.swift */,
 				A00000000000000000000166 /* WorldLifeEvent.swift */,
 				A00000000000000000000167 /* WorldAnimalViews.swift */,
+				A00000000000000000000168 /* JourneyMapLoading.swift */,
+				A00000000000000000000169 /* JourneyMapViewport.swift */,
+				A0000000000000000000016A /* JourneyWorldCup.swift */,
+				A0000000000000000000016B /* JourneyLiveSignal.swift */,
+				A0000000000000000000016C /* JourneyTelemetry.swift */,
+				A0000000000000000000016D /* JourneyPetCards.swift */,
+				A0000000000000000000016E /* JourneyMapMarkers.swift */,
+				A0000000000000000000016F /* JourneyMapModels.swift */,
+				A00000000000000000000170 /* JourneyDaySchedule.swift */,
+				A00000000000000000000171 /* JourneyDayRecap.swift */,
+				A00000000000000000000172 /* CommunicatorChat.swift */,
+				A00000000000000000000173 /* CommunicatorMoments.swift */,
+				A00000000000000000000174 /* MemoryHub.swift */,
+				A00000000000000000000175 /* MemoryEditor.swift */,
+				A00000000000000000000176 /* PetCredentialModels.swift */,
+				A00000000000000000000177 /* PetCredentialWallet.swift */,
+				A00000000000000000000178 /* PetCredentialCard.swift */,
+				A00000000000000000000179 /* IllustratedGuidePreview.swift */,
+				A0000000000000000000017A /* JourneyGuideDigest.swift */,
+				A0000000000000000000017B /* JourneyChapter.swift */,
+				A0000000000000000000017C /* TravelGuide.swift */,
+				A0000000000000000000017D /* TravelViews.swift */,
+				A0000000000000000000017E /* TravelBagSouvenir.swift */,
+				A0000000000000000000017F /* DNASettings.swift */,
+				A00000000000000000000180 /* JourneyTimeline.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -607,6 +682,31 @@
 				A00000000000000000000265 /* JourneyViewModel+Souvenirs.swift in Sources */,
 				A00000000000000000000266 /* WorldLifeEvent.swift in Sources */,
 				A00000000000000000000267 /* WorldAnimalViews.swift in Sources */,
+				A00000000000000000000268 /* JourneyMapLoading.swift in Sources */,
+				A00000000000000000000269 /* JourneyMapViewport.swift in Sources */,
+				A0000000000000000000026A /* JourneyWorldCup.swift in Sources */,
+				A0000000000000000000026B /* JourneyLiveSignal.swift in Sources */,
+				A0000000000000000000026C /* JourneyTelemetry.swift in Sources */,
+				A0000000000000000000026D /* JourneyPetCards.swift in Sources */,
+				A0000000000000000000026E /* JourneyMapMarkers.swift in Sources */,
+				A0000000000000000000026F /* JourneyMapModels.swift in Sources */,
+				A00000000000000000000270 /* JourneyDaySchedule.swift in Sources */,
+				A00000000000000000000271 /* JourneyDayRecap.swift in Sources */,
+				A00000000000000000000272 /* CommunicatorChat.swift in Sources */,
+				A00000000000000000000273 /* CommunicatorMoments.swift in Sources */,
+				A00000000000000000000274 /* MemoryHub.swift in Sources */,
+				A00000000000000000000275 /* MemoryEditor.swift in Sources */,
+				A00000000000000000000276 /* PetCredentialModels.swift in Sources */,
+				A00000000000000000000277 /* PetCredentialWallet.swift in Sources */,
+				A00000000000000000000278 /* PetCredentialCard.swift in Sources */,
+				A00000000000000000000279 /* IllustratedGuidePreview.swift in Sources */,
+				A0000000000000000000027A /* JourneyGuideDigest.swift in Sources */,
+				A0000000000000000000027B /* JourneyChapter.swift in Sources */,
+				A0000000000000000000027C /* TravelGuide.swift in Sources */,
+				A0000000000000000000027D /* TravelViews.swift in Sources */,
+				A0000000000000000000027E /* TravelBagSouvenir.swift in Sources */,
+				A0000000000000000000027F /* DNASettings.swift in Sources */,
+				A00000000000000000000280 /* JourneyTimeline.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
