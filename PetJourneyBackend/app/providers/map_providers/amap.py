@@ -1,88 +1,15 @@
-"""地图 Provider 实现：MapProvider 协议 + Mock/Remote/AMapWeb/GoogleMaps/Hybrid。
-
-将原 providers.py 中部所有地图相关的 Provider 类集中于此，共享城市目录与
-`is_china_city` 判断（来自 catalog）。
-"""
+"""高德地图 Web Provider：around 检索 + POI 清洗与评分。"""
 
 from __future__ import annotations
 
 import json
-from typing import Protocol
 from urllib import error, parse, request
 
-from ..config import Settings
-from ..google_maps_services import GoogleMapsServiceClient
-from ..schemas import PlaceSignal
-from ..utils import sanitize_place_id
-from .catalog import CITIES, SAFE_PLACE_CATALOG, JourneyCity, is_china_city
-
-
-class MapProvider(Protocol):
-    provider_name: str
-
-    def city_for_elapsed(self, elapsed_seconds: float) -> JourneyCity:
-        ...
-
-    def places_for_city(self, city: JourneyCity) -> list[PlaceSignal]:
-        ...
-
-
-class MockMapProvider:
-    provider_name = "mock-map-provider"
-
-    def city_for_elapsed(self, elapsed_seconds: float) -> JourneyCity:
-        index = max(0, int(elapsed_seconds // 172_800)) % len(CITIES)
-        return CITIES[index]
-
-    def places_for_city(self, city: JourneyCity) -> list[PlaceSignal]:
-        places = SAFE_PLACE_CATALOG.get(city.name) or self._compact_fallback_places(city)
-        return [
-            PlaceSignal(
-                id=f"{city.name}-{place_id}",
-                name=name,
-                category=category,
-                city=city.name,
-                lat=lat,
-                lng=lng,
-                activity_hint=activity,
-                detail_hint=detail,
-                source=self.provider_name,
-            )
-            for place_id, name, category, lat, lng, activity, detail in places
-        ]
-
-    def _compact_fallback_places(self, city: JourneyCity) -> list[tuple[str, str, str, float, float, str, str]]:
-        # Tiny offsets keep unknown-city demos close to the city anchor. Known cities use
-        # SAFE_PLACE_CATALOG so coastal demos do not drift into water.
-        offsets = [
-            ("street-food", "街角小食铺", "food", 0.0012, -0.0010, "在街角小食铺里点了一份招牌小吃", "短暂停留点，适合本地生活感的小卡片。"),
-            ("coffee-window", "咖啡窗口", "cafe", -0.0008, 0.0014, "在咖啡窗口旁的小桌喝了一杯店里的推荐饮品", "适合安静等待，不像热门景点那样拥挤。"),
-            ("convenience", "便利店", "shop", 0.0015, 0.0010, "在便利店里挑了一个小补给", "灯光稳定、声音熟悉，适合走走停停。"),
-            ("quiet-netcafe", "安静网吧", "netcafe", -0.0013, -0.0015, "在网吧角落待了一会儿", "这不是景点，而是 TA 自己选择的停留点。"),
-            ("flower-window", "花店橱窗", "flower", 0.0005, -0.0017, "在花店前停住，看了很久的叶子", "街面安静、气味柔和，适合作为中途停留。"),
-        ]
-        return [
-            (place_id, name, category, city.lat + lat_offset, city.lng + lng_offset, activity, detail)
-            for place_id, name, category, lat_offset, lng_offset, activity, detail in offsets
-        ]
-
-
-class RemoteMapProvider:
-    provider_name = "remote-map-provider-placeholder"
-
-    def __init__(self, settings: Settings):
-        self.settings = settings
-        self.fallback = MockMapProvider()
-
-    def city_for_elapsed(self, elapsed_seconds: float) -> JourneyCity:
-        return self.fallback.city_for_elapsed(elapsed_seconds)
-
-    def places_for_city(self, city: JourneyCity) -> list[PlaceSignal]:
-        # Future hook:
-        # - China: use AMAP nearby/search/route APIs.
-        # - Overseas: use Google Maps Places/Directions APIs.
-        # Keep returning mock data until the corresponding keys and contracts are supplied.
-        return self.fallback.places_for_city(city)
+from ..catalog import JourneyCity
+from ...config import Settings
+from ...schemas import PlaceSignal
+from ...utils import sanitize_place_id
+from .mock import MockMapProvider
 
 
 class AMapWebMapProvider:
@@ -435,82 +362,3 @@ class AMapWebMapProvider:
             return None
         value = value.strip()
         return value or None
-
-
-class GoogleMapsMapProvider:
-    provider_name = "google-maps-map-provider"
-
-    def __init__(self, settings: Settings, google_client: GoogleMapsServiceClient | None = None):
-        self.settings = settings
-        self.google_client = google_client or GoogleMapsServiceClient(settings)
-        self.fallback = MockMapProvider()
-
-    def city_for_elapsed(self, elapsed_seconds: float) -> JourneyCity:
-        return self.fallback.city_for_elapsed(elapsed_seconds)
-
-    def places_for_city(self, city: JourneyCity) -> list[PlaceSignal]:
-        if not self.google_client.configured:
-            return self.fallback.places_for_city(city)
-        try:
-            places = self.google_client.places_nearby(
-                city_name=city.name,
-                lat=city.lat,
-                lng=city.lng,
-                theme="street",
-                limit=12,
-            )
-        except Exception:
-            places = []
-        return self._merged_with_fallback(city, places, limit=12)
-
-    def places_for_theme(self, city: JourneyCity, theme: str, limit: int = 10) -> list[PlaceSignal]:
-        if not self.google_client.configured:
-            return self.fallback.places_for_city(city)[:limit]
-        try:
-            places = self.google_client.places_nearby(
-                city_name=city.name,
-                lat=city.lat,
-                lng=city.lng,
-                theme=theme,
-                radius=6000,
-                limit=limit,
-            )
-        except Exception:
-            places = []
-        return self._merged_with_fallback(city, places, limit=limit)
-
-    def _merged_with_fallback(self, city: JourneyCity, places: list[PlaceSignal], limit: int) -> list[PlaceSignal]:
-        if len(places) >= limit:
-            return places[:limit]
-        existing_names = {place.name for place in places}
-        fallback_places = [
-            place.model_copy(update={"source": self.provider_name})
-            for place in self.fallback.places_for_city(city)
-            if place.name not in existing_names
-        ]
-        return [*places, *fallback_places][:limit]
-
-
-class HybridMapProvider:
-    provider_name = "hybrid-amap-google-map-provider"
-
-    def __init__(
-        self,
-        settings: Settings,
-        google_client: GoogleMapsServiceClient | None = None,
-    ):
-        self.amap_provider = AMapWebMapProvider(settings)
-        self.google_provider = GoogleMapsMapProvider(settings, google_client=google_client)
-
-    def city_for_elapsed(self, elapsed_seconds: float) -> JourneyCity:
-        return self.amap_provider.city_for_elapsed(elapsed_seconds)
-
-    def places_for_city(self, city: JourneyCity) -> list[PlaceSignal]:
-        if is_china_city(city):
-            return self.amap_provider.places_for_city(city)
-        return self.google_provider.places_for_city(city)
-
-    def places_for_theme(self, city: JourneyCity, theme: str, limit: int = 10) -> list[PlaceSignal]:
-        if is_china_city(city):
-            return self.amap_provider.places_for_theme(city, theme, limit=limit)
-        return self.google_provider.places_for_theme(city, theme, limit=limit)
