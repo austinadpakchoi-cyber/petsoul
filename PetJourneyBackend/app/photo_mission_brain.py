@@ -91,17 +91,12 @@ class OpenAICompatiblePhotoMissionBrain:
             return None
 
         try:
-            payload = self.build_responses_payload(context)
-            response = self._post_json("/responses", payload)
+            payload = self.build_chat_completions_payload(context)
+            response = self._post_json("/chat/completions", payload)
             data = self._extract_json_object(response)
-        except Exception as responses_error:
-            try:
-                payload = self.build_chat_completions_payload(context)
-                response = self._post_json("/chat/completions", payload)
-                data = self._extract_json_object(response)
-            except Exception as chat_error:
-                self.last_remote_error = self._redact_error(f"{responses_error}; {chat_error}")
-                return None
+        except Exception as chat_error:
+            self.last_remote_error = self._redact_error(str(chat_error))
+            return None
 
         try:
             draft = self._draft_from_data(data, response, context.pet)
@@ -128,41 +123,15 @@ class OpenAICompatiblePhotoMissionBrain:
             "timeout_seconds": self.settings.agent_timeout_seconds,
         }
 
-    def build_responses_payload(self, context: PhotoMissionContext) -> dict[str, object]:
-        return {
-            "model": self.settings.photo_mission_model,
-            "reasoning": {"effort": self.settings.agent_reasoning_effort},
-            "text": {
-                "verbosity": "low",
-                "format": {
-                    "type": "json_schema",
-                    "name": "petsoul_photo_mission",
-                    "strict": True,
-                    "schema": self._json_schema(),
-                },
-            },
-            "input": [
-                {"role": "system", "content": self._system_prompt()},
-                {"role": "user", "content": json.dumps(self._context_payload(context), ensure_ascii=False)},
-            ],
-        }
-
     def build_chat_completions_payload(self, context: PhotoMissionContext) -> dict[str, object]:
-        schema = self._json_schema()
         return {
             "model": self.settings.photo_mission_model,
             "messages": [
                 {"role": "system", "content": self._system_prompt()},
                 {"role": "user", "content": json.dumps(self._context_payload(context), ensure_ascii=False)},
             ],
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "petsoul_photo_mission",
-                    "strict": True,
-                    "schema": schema,
-                },
-            },
+            "response_format": {"type": "json_object"},
+            "max_tokens": self.settings.photo_mission_max_tokens,
         }
 
     def _json_schema(self) -> dict[str, object]:
@@ -217,23 +186,26 @@ class OpenAICompatiblePhotoMissionBrain:
     def _system_prompt(self) -> str:
         return (
             "You are PetSoul's Photo Mission Brain. Your job is not to write a generic image prompt. "
-            "You convert the pet agent's current real-world context into a structured photo mission for GPT Image. "
+            "You convert the pet agent's current real-world context into a structured photo mission for the image generator. "
             "The pet is autonomous in a parallel-world emotional companion simulation; the owner does not command its feelings or route. "
             "Use the provided place, public map/place details, weather, current activity, pet DNA, and time. "
             "Invent only plausible local visual details; never require a place that is not in the context. "
             "For cafes, restaurants, food stalls, bakeries, tea shops, and convenience stores, make the pet participate in normal human city life: going inside, reading the menu, noticing what nearby people order, and choosing a signature coffee, seasonal drink, local dish, snack, dessert, or small purchase based on the place name and public metadata. "
             "Do not over-constrain food scenes as safe pet food, tiny portions, warm water, or only smelling outside; this is a parallel-world simulation, not real pet feeding advice. "
             "Never mention provider names, API names, source fields, raw IDs, or internal implementation details in title, detail, pet_action, hints, or postcard_text. "
-            "The image_prompt must be directly usable by GPT Image and must ask it to use the reference pet image as identity guidance for a full new generated photo. "
+            "The image_prompt must be directly usable by the image generator and must ask it to use the reference pet image as identity guidance for a full new generated photo. "
             "Default every mission to a first-person pet selfie from the pet's own communicator/phone: close pet face, paw, wing, nose, whiskers, collar, or chest can be in the foreground, with the real place behind. "
             "Even for landmarks, stadiums, airports, stations, and scenic spots, prefer a candid handheld pet selfie over a third-person postcard composition. "
             "Do not ask for cutout, paste, sticker, collage, overlay, or compositing; ask for coherent second-creation with natural lighting, shadows, scale, and perspective. "
-            "If place.photo_url_available is true, assume GPT Image may receive an additional place_environment reference image; use it for location layout, storefront/scenery, lighting, and material details, not for pet identity. "
+            "If place.photo_url_available is true, assume the image generator may receive an additional place_environment reference image; use it for location layout, storefront/scenery, lighting, and material details, not for pet identity. "
             "Never output unavailable, cannot_generate, insufficient_information, or a refusal-style mission; choose the best plausible photo mission from the context. "
             "When the scene involves sports or public events, use generic crowd colors and atmosphere, but no official logos, readable marks, real athletes, or public figures. "
             "Do not claim medical, religious, or supernatural proof. "
             "The user-facing postcard_text should feel like a small message from the pet, warm and restrained. "
-            "If the pet addresses the owner directly, use pet.owner_title exactly. Never default to 宝宝, 宝贝, darling, or baby unless owner_title is exactly that."
+            "If the pet addresses the owner directly, use pet.owner_title exactly. Never default to 宝宝, 宝贝, darling, or baby unless owner_title is exactly that. "
+            "Respond with a single JSON object only that matches this schema exactly: "
+            + json.dumps(self._json_schema(), ensure_ascii=False)
+            + ". Do not wrap the JSON in markdown fences and do not add commentary outside the JSON."
         )
 
     def _context_payload(self, context: PhotoMissionContext) -> dict[str, object]:

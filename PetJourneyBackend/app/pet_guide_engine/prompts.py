@@ -14,24 +14,6 @@ from ..storage import PetRecord
 
 
 class PetGuidePromptsMixin:
-    def _responses_payload(self, pet: PetRecord, plan: JourneyPlan) -> dict[str, object]:
-        return {
-            "model": self.settings.agent_deep_model,
-            "reasoning": {"effort": self.settings.agent_reasoning_effort},
-            "text": {
-                "verbosity": self.settings.agent_response_verbosity,
-                "format": {
-                    "type": "json_schema",
-                    "name": "pet_authored_city_guide",
-                    "strict": True,
-                    "schema": self._json_schema(),
-                },
-            },
-            "input": [
-                {"role": "system", "content": self._system_prompt(pet)},
-                {"role": "user", "content": json.dumps(self._context_payload(pet, plan), ensure_ascii=False)},
-            ],
-        }
     def _chat_payload(self, pet: PetRecord, plan: JourneyPlan) -> dict[str, object]:
         return {
             "model": self.settings.agent_deep_model,
@@ -39,14 +21,8 @@ class PetGuidePromptsMixin:
                 {"role": "system", "content": self._system_prompt(pet)},
                 {"role": "user", "content": json.dumps(self._context_payload(pet, plan), ensure_ascii=False)},
             ],
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "pet_authored_city_guide",
-                    "strict": True,
-                    "schema": self._json_schema(),
-                },
-            },
+            "response_format": {"type": "json_object"},
+            "max_tokens": self.settings.guide_max_tokens,
         }
     def _json_schema(self) -> dict[str, object]:
         return {
@@ -139,7 +115,10 @@ class PetGuidePromptsMixin:
             "Do not claim supernatural proof. Do not say the owner commands your preference. "
             "Use only place_id values from provided_places. Use first person in Chinese. "
             "Do not use maybe/probably language. Do not expose internal planning fields. "
-            "Make the guide valuable as a real city route, not a list of random nearby shops."
+            "Make the guide valuable as a real city route, not a list of random nearby shops. "
+            "Respond with a single JSON object only that matches this schema exactly: "
+            + json.dumps(self._json_schema(), ensure_ascii=False)
+            + ". Do not wrap the JSON in markdown fences and do not add commentary outside the JSON."
         )
     def _doubao_voice_payload(self, *, guide: PetAuthoredGuide, pet: PetRecord, plan: JourneyPlan) -> dict[str, object]:
         prompt = self._doubao_voice_prompt(guide=guide, pet=pet, plan=plan)

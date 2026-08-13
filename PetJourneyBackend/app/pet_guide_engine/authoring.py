@@ -31,17 +31,9 @@ class PetGuideAuthoringMixin:
         guide = self._attach_orchestration_metadata(guide=guide, plan=plan)
         return self._maybe_rewrite_with_doubao_voice(guide=guide, pet=pet, plan=plan)
     def _remote_pet_guide(self, pet: PetRecord, plan: JourneyPlan) -> tuple[dict[str, object], str]:
-        try:
-            payload = self._responses_payload(pet, plan)
-            response = self._post_json("/responses", payload)
-            return self._extract_json_object(response), str(response.get("model") or self.settings.agent_deep_model)
-        except Exception as responses_error:
-            payload = self._chat_payload(pet, plan)
-            response = self._post_json("/chat/completions", payload)
-            try:
-                return self._extract_json_object(response), str(response.get("model") or self.settings.agent_deep_model)
-            except Exception as chat_error:
-                raise RuntimeError(f"{responses_error}; {chat_error}") from chat_error
+        payload = self._chat_payload(pet, plan)
+        response = self._post_json("/chat/completions", payload)
+        return self._extract_json_object(response), str(response.get("model") or self.settings.agent_deep_model)
     def _guide_from_model_data(
         self,
         pet: PetRecord,

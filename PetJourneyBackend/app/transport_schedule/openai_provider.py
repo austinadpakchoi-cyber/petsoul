@@ -37,7 +37,7 @@ class OpenAIWebSearchTransportScheduleProvider:
             return []
 
         try:
-            response = self._post_json("/responses", self.build_responses_payload(search))
+            response = self._post_json("/chat/completions", self.build_chat_completions_payload(search))
             data = self._extract_json_object(response)
             candidates = self._candidates_from_data(search, data)
         except Exception as exc:
@@ -47,18 +47,8 @@ class OpenAIWebSearchTransportScheduleProvider:
         self.last_remote_call_succeeded = bool(candidates)
         return candidates
 
-    def build_responses_payload(self, search: TransportScheduleRequest) -> dict[str, object]:
+    def _json_schema(self) -> dict[str, object]:
         return {
-            "model": self.settings.transport_search_model,
-            "tools": [{"type": "web_search_preview"}],
-            "tool_choice": "auto",
-            "text": {
-                "verbosity": "low",
-                "format": {
-                    "type": "json_schema",
-                    "name": "transport_schedule_itinerary",
-                    "strict": True,
-                    "schema": {
                         "type": "object",
                         "additionalProperties": False,
                         "required": [
@@ -115,13 +105,17 @@ class OpenAIWebSearchTransportScheduleProvider:
                                 },
                             },
                         },
-                    },
-                },
-            },
-            "input": [
+                    }
+
+    def build_chat_completions_payload(self, search: TransportScheduleRequest) -> dict[str, object]:
+        return {
+            "model": self.settings.transport_search_model,
+            "messages": [
                 {"role": "system", "content": self._system_prompt()},
                 {"role": "user", "content": json.dumps(self._context_payload(search), ensure_ascii=False)},
             ],
+            "response_format": {"type": "json_object"},
+            "max_tokens": self.settings.transport_search_max_tokens,
         }
 
     def _post_json(self, path: str, payload: dict[str, object]) -> dict[str, object]:
@@ -370,15 +364,17 @@ class OpenAIWebSearchTransportScheduleProvider:
 
     def _system_prompt(self) -> str:
         return (
-            "You search public web pages for one realistic transport itinerary for PetSoul. Prefer a direct "
-            "flight or train when public sources support it. If no direct service is apparent, return a "
-            "reasonable connecting itinerary with each segment's service number and scheduled departure/arrival "
-            "time. You may use airline, railway, airport, official tourism, reputable timetable, travel, or "
-            "ticketing websites only as public timetable references. Do not collect, infer, or return prices, "
-            "seat availability, booking status, purchase links, or ticketing advice. If service numbers and "
-            "times are not supported by public sources, set found=false. Prefer ISO 8601 datetimes with timezone "
-            "offsets. If the source only publishes local HH:MM times, return those exact local times and city "
-            "names for timezone normalization. Return only JSON matching the schema."
+            "You draft one realistic public transport itinerary for PetSoul from your timetable knowledge and "
+            "the provided context. You have no live web access: only include a segment when its service number "
+            "and schedule are well-known public facts; when they cannot be supported reliably, set found=false "
+            "instead of inventing them. Prefer a direct flight or train; otherwise return a reasonable "
+            "connecting itinerary with each segment's service number and scheduled departure/arrival time. "
+            "Do not collect, infer, or return prices, seat availability, booking status, purchase links, or "
+            "ticketing advice. Prefer ISO 8601 datetimes with timezone offsets. If a source only publishes "
+            "local HH:MM times, return those exact local times and city names for timezone normalization. "
+            "Respond with a single JSON object only that matches this schema exactly: "
+            + json.dumps(self._json_schema(), ensure_ascii=False)
+            + ". Do not wrap the JSON in markdown fences and do not add commentary outside the JSON."
         )
 
     def _clean_required_string(self, value: object) -> str | None:

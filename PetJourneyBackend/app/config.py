@@ -57,6 +57,7 @@ class Settings:
     transport_schedule_provider: str = "mock"
     transport_web_search_enabled: bool = False
     transport_search_model: str = "deepseek-chat"
+    transport_search_max_tokens: int = 1200
     transport_search_timeout_seconds: float = 30.0
     travel_guide_research_provider: str = "auto"
     travel_guide_search_model: str = "deepseek-chat"
@@ -142,6 +143,7 @@ def load_settings() -> Settings:
             "PETJOURNEY_TRANSPORT_SEARCH_MODEL",
             os.getenv("PETJOURNEY_AGENT_FAST_MODEL", "deepseek-chat"),
         ),
+        transport_search_max_tokens=int(os.getenv("PETJOURNEY_TRANSPORT_SEARCH_MAX_TOKENS", "1200")),
         transport_search_timeout_seconds=float(os.getenv("PETJOURNEY_TRANSPORT_SEARCH_TIMEOUT_SECONDS", "30")),
         travel_guide_research_provider=os.getenv("PETJOURNEY_TRAVEL_GUIDE_RESEARCH_PROVIDER", "auto"),
         travel_guide_search_model=os.getenv(

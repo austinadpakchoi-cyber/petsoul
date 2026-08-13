@@ -61,13 +61,14 @@ class TransportApiTests(PetJourneyApiTestBase):
         self.assertTrue(candidate.is_simulated)
         self.assertIsNotNone(provider.captured_payload)
         assert provider.captured_payload is not None
-        self.assertEqual(provider.captured_payload["tools"], [{"type": "web_search_preview"}])
-        prompt = provider.captured_payload["input"][0]["content"]
+        self.assertEqual(provider.captured_payload["response_format"], {"type": "json_object"})
+        self.assertGreater(provider.captured_payload["max_tokens"], 0)
+        prompt = provider.captured_payload["messages"][0]["content"]
         self.assertIn("Do not collect", prompt)
         self.assertIn("prices", prompt)
         self.assertIn("seat availability", prompt)
         self.assertIn("booking", prompt)
-        self.assertIn("ticketing websites", prompt)
+        self.assertIn("ticketing advice", prompt)
 
     def test_web_search_transport_schedule_parses_connecting_itinerary(self) -> None:
         class FakeConnectingWebSearchProvider(OpenAIWebSearchTransportScheduleProvider):
