@@ -1,0 +1,36 @@
+name: iOS Build & Test
+
+# 在 macOS 真机环境编译 + 跑单元测试，闭环验证 iOS 改动。
+# Windows 本地无法 xcodebuild（SwiftUI/UIKit/XCTest 为 Apple 专属框架），
+# 因此「Windows 开发 → push → macOS CI 编译验证」是本仓库的 iOS 验证路径。
+# 与 scripts/arch_gate.py 配合：拆完 God File 后由本 job 确认真机可编译。
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode & simulators
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available | grep -i "iPhone" | head -20 || true
+
+      - name: Build & test
+        working-directory: PetJourneyIOS
+        run: |
+          # 首选 AGENTS.md 规定的 iPhone 17 Pro；缺失则回退 iPhone 16 Pro
+          DEST="platform=iOS Simulator,name=iPhone 17 Pro"
+          if ! xcrun simctl list devices available | grep -q "iPhone 17 Pro"; then
+            DEST="platform=iOS Simulator,name=iPhone 16 Pro"
+          fi
+          echo "Destination: $DEST"
+          xcodebuild -project PetJourneyIOS.xcodeproj -scheme PetJourneyIOS \
+            -destination "$DEST" \
+            test
