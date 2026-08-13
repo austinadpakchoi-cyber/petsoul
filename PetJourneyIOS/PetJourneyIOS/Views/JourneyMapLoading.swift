@@ -19,8 +19,8 @@ struct JourneyLoadingView: View {
     ]
 
     var body: some View {
-        TimelineView(.animation) { timeline in
-            let time = timeline.date.timeIntervalSinceReferenceDate
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             let phaseIndex = Int(time / 1.55) % phases.count
             let phase = phases[phaseIndex]
             let pulse = reduceMotion ? 0.5 : (sin(time * 2.4) + 1) / 2

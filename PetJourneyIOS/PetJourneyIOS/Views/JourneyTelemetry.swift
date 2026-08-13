@@ -7,11 +7,13 @@ struct PixelPetActivityAnimation: View {
     var hint: String
     var petType: PetType
     var tint: Color
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             Canvas { context, size in
-                let tick = Int(timeline.date.timeIntervalSinceReferenceDate * 3) % 4
+                let tick = Int(time * 3) % 4
                 let cell = min(size.width, size.height) / 12
                 let origin = CGPoint(
                     x: (size.width - cell * 12) / 2,
@@ -368,11 +370,13 @@ struct JourneyMusicCue {
 
 struct NavigationProgressGlint: View {
     var tint: Color
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             GeometryReader { proxy in
-                let phase = timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 2.4) / 2.4
+                let phase = time.truncatingRemainder(dividingBy: 2.4) / 2.4
                 let width = proxy.size.width
                 LinearGradient(
                     colors: [
@@ -396,10 +400,12 @@ struct NavigationProgressGlint: View {
 
 struct NavigationPulseDot: View {
     var tint: Color
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation) { timeline in
-            let phase = (timeline.date.timeIntervalSinceReferenceDate * 0.9).truncatingRemainder(dividingBy: 1)
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            let phase = (time * 0.9).truncatingRemainder(dividingBy: 1)
             Circle()
                 .fill(tint.opacity(0.72))
                 .frame(width: 6, height: 6)

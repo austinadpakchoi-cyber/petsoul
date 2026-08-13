@@ -386,10 +386,12 @@ struct LiveSignalPanel: View {
 struct SleepBreathingHalo: View {
     var tint: Color
     var size: CGFloat
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation) { timeline in
-            let phase = (sin(timeline.date.timeIntervalSinceReferenceDate * 1.4) + 1) / 2
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            let phase = (sin(time * 1.4) + 1) / 2
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(
                     LinearGradient(
@@ -415,10 +417,12 @@ struct SleepBreathingHalo: View {
 
 struct SleepBreathDot: View {
     var tint: Color
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation) { timeline in
-            let phase = (sin(timeline.date.timeIntervalSinceReferenceDate * 1.8) + 1) / 2
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            let phase = (sin(time * 1.8) + 1) / 2
             HStack(spacing: 3) {
                 ForEach(0..<3, id: \.self) { index in
                     Circle()

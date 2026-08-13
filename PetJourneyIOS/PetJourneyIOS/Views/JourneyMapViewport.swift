@@ -523,12 +523,14 @@ struct JourneyMapAtmosphere: View {
 
 struct NavigationScanOverlay: View {
     var tint: Color
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             Canvas { context, size in
                 guard size.width > 0, size.height > 0 else { return }
-                let phase = timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3.8) / 3.8
+                let phase = time.truncatingRemainder(dividingBy: 3.8) / 3.8
                 let scanY = size.height * (0.19 + phase * 0.34)
 
                 var scanLine = Path()

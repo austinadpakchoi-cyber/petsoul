@@ -195,10 +195,12 @@ struct LivePetMarkerView: View {
 struct PetMotionWake: View {
     var kind: JourneyActivitySnapshot.Kind
     var tint: Color
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation) { timeline in
-            let phase = timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.8) / 1.8
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            let phase = time.truncatingRemainder(dividingBy: 1.8) / 1.8
             ZStack {
                 switch kind {
                 case .transporting:
@@ -240,10 +242,12 @@ struct PetMotionWake: View {
 
 struct PetFootstepOrbit: View {
     var tint: Color
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation) { timeline in
-            let phase = timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.2) / 1.2
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            let phase = time.truncatingRemainder(dividingBy: 1.2) / 1.2
             ZStack {
                 ForEach(0..<3, id: \.self) { index in
                     let local = (phase + Double(index) * 0.28).truncatingRemainder(dividingBy: 1)
