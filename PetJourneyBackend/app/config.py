@@ -31,6 +31,8 @@ class Settings:
     guide_max_tokens: int = 1600
     image_model: str = "gpt-image-2"
     image_base_url: str = "https://api.openai.com/v1"
+    image_provider_type: str = "openai"
+    volcengine_image_model: str = "doubao-seedream-4-0-250828"
     place_reference_images_enabled: bool = True
     place_reference_image_max_bytes: int = 8_000_000
     souvenir_images_enabled: bool = True
@@ -110,6 +112,8 @@ def load_settings() -> Settings:
         photo_mission_max_tokens=int(os.getenv("PETJOURNEY_PHOTO_MISSION_MAX_TOKENS", "900")),
         guide_max_tokens=int(os.getenv("PETJOURNEY_GUIDE_MAX_TOKENS", "1600")),
         image_model=os.getenv("PETJOURNEY_IMAGE_MODEL", "gpt-image-2"),
+        image_provider_type=os.getenv("PETJOURNEY_IMAGE_PROVIDER", "openai").strip().lower(),
+        volcengine_image_model=os.getenv("PETJOURNEY_VOLCENGINE_IMAGE_MODEL", "doubao-seedream-4-0-250828"),
         image_base_url=os.getenv(
             "PETJOURNEY_IMAGE_BASE_URL",
             os.getenv("PETJOURNEY_OPENAI_BASE_URL", os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")),

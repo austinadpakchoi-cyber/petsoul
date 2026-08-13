@@ -14,7 +14,12 @@ from app.communicator.schemas import CommunicatorIntent, CommunicatorWorldSnapsh
 from app.config import Settings
 from app.credential_prompt_builder import PetCredentialPromptBuilder
 from app.google_maps_services import GoogleMapsServiceClient
-from app.image_provider import ImageReference, OpenAICompatibleImageProvider
+from app.image_provider import (
+    DoubaoSeedreamImageProvider,
+    ImageReference,
+    OpenAICompatibleImageProvider,
+    build_image_provider,
+)
 from app.illustrated_guide_styles import (
     ACTIVE_STYLE_IDS,
     ILLUSTRATED_GUIDE_STYLES,
