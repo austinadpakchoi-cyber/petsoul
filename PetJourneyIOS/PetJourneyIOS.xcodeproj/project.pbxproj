@@ -69,6 +69,15 @@
 		A00000000000000000000255 /* WorldCupModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000155 /* WorldCupModels.swift */; };
 		A00000000000000000000256 /* CredentialModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000156 /* CredentialModels.swift */; };
 		A00000000000000000000257 /* AuthModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000157 /* AuthModels.swift */; };
+		A00000000000000000000258 /* MockPetJourneyService+Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000158 /* MockPetJourneyService+Core.swift */; };
+		A00000000000000000000259 /* MockPetJourneyService+Pet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000159 /* MockPetJourneyService+Pet.swift */; };
+		A0000000000000000000025A /* MockPetJourneyService+Journey.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000015A /* MockPetJourneyService+Journey.swift */; };
+		A0000000000000000000025B /* MockPetJourneyService+Guide.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000015B /* MockPetJourneyService+Guide.swift */; };
+		A0000000000000000000025C /* MockPetJourneyService+TravelQuest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000015C /* MockPetJourneyService+TravelQuest.swift */; };
+		A0000000000000000000025D /* MockPetJourneyService+Economy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000015D /* MockPetJourneyService+Economy.swift */; };
+		A0000000000000000000025E /* MockPetJourneyService+TravelBag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000015E /* MockPetJourneyService+TravelBag.swift */; };
+		A0000000000000000000025F /* MockPetJourneyService+Communicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000015F /* MockPetJourneyService+Communicator.swift */; };
+		A00000000000000000000260 /* MockPetJourneyService+Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000160 /* MockPetJourneyService+Memory.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -146,6 +155,15 @@
 		A00000000000000000000155 /* WorldCupModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldCupModels.swift; sourceTree = "<group>"; };
 		A00000000000000000000156 /* CredentialModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialModels.swift; sourceTree = "<group>"; };
 		A00000000000000000000157 /* AuthModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthModels.swift; sourceTree = "<group>"; };
+		A00000000000000000000158 /* MockPetJourneyService+Core.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Core.swift; sourceTree = "<group>"; };
+		A00000000000000000000159 /* MockPetJourneyService+Pet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Pet.swift; sourceTree = "<group>"; };
+		A0000000000000000000015A /* MockPetJourneyService+Journey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Journey.swift; sourceTree = "<group>"; };
+		A0000000000000000000015B /* MockPetJourneyService+Guide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Guide.swift; sourceTree = "<group>"; };
+		A0000000000000000000015C /* MockPetJourneyService+TravelQuest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+TravelQuest.swift; sourceTree = "<group>"; };
+		A0000000000000000000015D /* MockPetJourneyService+Economy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Economy.swift; sourceTree = "<group>"; };
+		A0000000000000000000015E /* MockPetJourneyService+TravelBag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+TravelBag.swift; sourceTree = "<group>"; };
+		A0000000000000000000015F /* MockPetJourneyService+Communicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Communicator.swift; sourceTree = "<group>"; };
+		A00000000000000000000160 /* MockPetJourneyService+Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPetJourneyService+Memory.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -301,6 +319,15 @@
 				A00000000000000000000105 /* PetJourneyService.swift */,
 				A00000000000000000000106 /* MockPetJourneyService.swift */,
 				A00000000000000000000107 /* RemotePetJourneyService.swift */,
+				A00000000000000000000158 /* MockPetJourneyService+Core.swift */,
+				A00000000000000000000159 /* MockPetJourneyService+Pet.swift */,
+				A0000000000000000000015A /* MockPetJourneyService+Journey.swift */,
+				A0000000000000000000015B /* MockPetJourneyService+Guide.swift */,
+				A0000000000000000000015C /* MockPetJourneyService+TravelQuest.swift */,
+				A0000000000000000000015D /* MockPetJourneyService+Economy.swift */,
+				A0000000000000000000015E /* MockPetJourneyService+TravelBag.swift */,
+				A0000000000000000000015F /* MockPetJourneyService+Communicator.swift */,
+				A00000000000000000000160 /* MockPetJourneyService+Memory.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -543,6 +570,15 @@
 				A00000000000000000000255 /* WorldCupModels.swift in Sources */,
 				A00000000000000000000256 /* CredentialModels.swift in Sources */,
 				A00000000000000000000257 /* AuthModels.swift in Sources */,
+				A00000000000000000000258 /* MockPetJourneyService+Core.swift in Sources */,
+				A00000000000000000000259 /* MockPetJourneyService+Pet.swift in Sources */,
+				A0000000000000000000025A /* MockPetJourneyService+Journey.swift in Sources */,
+				A0000000000000000000025B /* MockPetJourneyService+Guide.swift in Sources */,
+				A0000000000000000000025C /* MockPetJourneyService+TravelQuest.swift in Sources */,
+				A0000000000000000000025D /* MockPetJourneyService+Economy.swift in Sources */,
+				A0000000000000000000025E /* MockPetJourneyService+TravelBag.swift in Sources */,
+				A0000000000000000000025F /* MockPetJourneyService+Communicator.swift in Sources */,
+				A00000000000000000000260 /* MockPetJourneyService+Memory.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
