@@ -27,3 +27,7 @@ jobs:
 
       - name: Run backend unit tests
         run: python -m unittest discover -s tests
+
+      - name: Run frontend/backend contract drift gate
+        working-directory: .
+        run: python scripts/contract_diff.py

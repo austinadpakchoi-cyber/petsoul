@@ -121,6 +121,7 @@ struct CommunicatorAttachment: Codable, Identifiable, Equatable, Sendable {
     var location: CommunicatorLocation?
     var photoMissionID: String?
     var availableAfter: Date?
+    var metadata: [String: JSONValue]?
 
     enum CodingKeys: String, CodingKey {
         case type
@@ -131,6 +132,7 @@ struct CommunicatorAttachment: Codable, Identifiable, Equatable, Sendable {
         case location
         case photoMissionID = "photo_mission_id"
         case availableAfter = "available_after"
+        case metadata
     }
 }
 
@@ -140,10 +142,12 @@ struct CommunicatorMessage: Codable, Identifiable, Equatable, Sendable {
     var sender: CommunicatorSender
     var text: String
     var intent: CommunicatorIntent?
+    var sceneHash: String?
     var messageState: String
     var replyPolicy: CommunicatorReplyPolicy?
     var attachments: [CommunicatorAttachment]
     var relatedMessageID: String?
+    var clientMessageID: String?
     var createdAt: Date
     var updatedAt: Date?
 
@@ -153,10 +157,12 @@ struct CommunicatorMessage: Codable, Identifiable, Equatable, Sendable {
         case sender
         case text
         case intent
+        case sceneHash = "scene_hash"
         case messageState = "message_state"
         case replyPolicy = "reply_policy"
         case attachments
         case relatedMessageID = "related_message_id"
+        case clientMessageID = "client_message_id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -166,10 +172,12 @@ struct CommunicatorSendRequest: Codable, Equatable, Sendable {
     var text: String
     // 客户端生成、重发复用的幂等键：同 (pet_id, client_message_id) 后端只处理一次
     var clientMessageID: String? = nil
+    var clientTime: Date? = nil
 
     enum CodingKeys: String, CodingKey {
         case text
         case clientMessageID = "client_message_id"
+        case clientTime = "client_time"
     }
 }
 
@@ -188,6 +196,8 @@ struct PendingPhotoRequest: Codable, Identifiable, Equatable, Sendable {
     var availableAfter: Date
     var expiresAt: Date
     var fulfilledMessageID: String?
+    var attemptCount: Int?
+    var maxAttempts: Int?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -204,6 +214,8 @@ struct PendingPhotoRequest: Codable, Identifiable, Equatable, Sendable {
         case availableAfter = "available_after"
         case expiresAt = "expires_at"
         case fulfilledMessageID = "fulfilled_message_id"
+        case attemptCount = "attempt_count"
+        case maxAttempts = "max_attempts"
     }
 }
 
