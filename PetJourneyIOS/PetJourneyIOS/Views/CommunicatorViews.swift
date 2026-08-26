@@ -29,6 +29,9 @@ struct JourneyHomeTabs: View {
 }
 
 struct CommunicatorHomeView: View {
+    @EnvironmentObject private var session: AppSessionStore
+    @State private var showsAccountSheet = false
+
     let petID: String
     let service: any PetJourneyService
     @StateObject var viewModel: CommunicatorViewModel
@@ -84,6 +87,22 @@ struct CommunicatorHomeView: View {
             }
             .background(AppBackground())
             .navigationTitle("通讯器")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showsAccountSheet = true
+                    } label: {
+                        Image(systemName: "person.crop.circle")
+                            .font(.body.weight(.semibold))
+                    }
+                    .foregroundStyle(DesignTokens.ink)
+                    .accessibilityLabel("账号")
+                }
+            }
+            .sheet(isPresented: $showsAccountSheet) {
+                AccountSheetView(currentPetName: session.petName)
+                    .environmentObject(session)
+            }
             .task { await viewModel.load() }
             .refreshable { await viewModel.load() }
             .overlay(alignment: .bottom) {

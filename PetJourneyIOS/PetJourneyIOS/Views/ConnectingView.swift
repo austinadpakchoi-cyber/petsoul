@@ -11,12 +11,13 @@ struct ConnectingView: View {
 
     init(draft: OnboardingDraft,
          service: any PetJourneyService,
+         claimsToAccount: Bool = false,
          onBack: @escaping () -> Void,
          onEnterJourney: @escaping (String) -> Void) {
         self.draft = draft
         self.onBack = onBack
         self.onEnterJourney = onEnterJourney
-        _viewModel = StateObject(wrappedValue: ConnectingViewModel(draft: draft, service: service))
+        _viewModel = StateObject(wrappedValue: ConnectingViewModel(draft: draft, service: service, claimsToAccount: claimsToAccount))
     }
 
     private var stages: [(title: String, detail: String, icon: String)] {

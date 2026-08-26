@@ -115,6 +115,9 @@
 		A00000000000000000000285 /* CommunicatorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000185 /* CommunicatorViewModel.swift */; };
 		A00000000000000000000286 /* MemoryHubViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000186 /* MemoryHubViewModel.swift */; };
 		A00000000000000000000287 /* NPCSociety.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000187 /* NPCSociety.swift */; };
+		A00000000000000000000288 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000188 /* SignInView.swift */; };
+		A00000000000000000000289 /* PetPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000189 /* PetPickerView.swift */; };
+		A0000000000000000000028A /* AccountSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018A /* AccountSheetView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -238,6 +241,9 @@
 		A00000000000000000000185 /* CommunicatorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicatorViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000186 /* MemoryHubViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryHubViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000187 /* NPCSociety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPCSociety.swift; sourceTree = "<group>"; };
+		A00000000000000000000188 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		A00000000000000000000189 /* PetPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPickerView.swift; sourceTree = "<group>"; };
+		A0000000000000000000018A /* AccountSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSheetView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -468,6 +474,9 @@
 				A0000000000000000000017E /* TravelBagSouvenir.swift */,
 				A0000000000000000000017F /* DNASettings.swift */,
 				A00000000000000000000180 /* JourneyTimeline.swift */,
+				A00000000000000000000188 /* SignInView.swift */,
+				A00000000000000000000189 /* PetPickerView.swift */,
+				A0000000000000000000018A /* AccountSheetView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -726,6 +735,9 @@
 				A00000000000000000000285 /* CommunicatorViewModel.swift in Sources */,
 				A00000000000000000000286 /* MemoryHubViewModel.swift in Sources */,
 				A00000000000000000000287 /* NPCSociety.swift in Sources */,
+				A00000000000000000000288 /* SignInView.swift in Sources */,
+				A00000000000000000000289 /* PetPickerView.swift in Sources */,
+				A0000000000000000000028A /* AccountSheetView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

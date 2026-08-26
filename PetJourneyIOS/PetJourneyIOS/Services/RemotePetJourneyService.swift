@@ -273,6 +273,10 @@ final class RemotePetJourneyService: PetJourneyService {
         try await postJSON(AuthSessionResponse.self, path: "/api/v1/auth/apple", body: request)
     }
 
+    func fetchMe() async throws -> MeResponse {
+        try await get(MeResponse.self, path: "/api/v1/me")
+    }
+
     func claimPet(petID: String) async throws -> MeResponse {
         try await postJSON(MeResponse.self, path: "/api/v1/me/claim_pet", body: ClaimPetRequest(petID: petID))
     }
