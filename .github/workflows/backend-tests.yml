@@ -1,0 +1,29 @@
+name: Backend Tests
+
+# 后端单元测试门禁：unittest 全量（AGENTS.md 要求 82+ 全绿）。
+# 2026-08-26 之前 CI 完全不跑后端测试，改坏后端只有本地人肉能发现；
+# 此 workflow 补上机器强制，测试失败即 CI 红。
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: PetJourneyBackend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run backend unit tests
+        run: python -m unittest discover -s tests
