@@ -75,7 +75,7 @@ class PetLifeDecisionMixin:
                 "lng": activity.lng,
                 "place_name": activity.place_name,
                 "mode": activity.mode or TravelMode.stay,
-                "detail": f"{action.detail} 手机把位置校准回当前真实活动点。",
+                "detail": f"{action.detail} 通讯器把位置校准回当前真实活动点。",
             }
         )
     def _nearby_places(self, activity: WorldActivity, places: list[PlaceSignal]) -> list[PlaceSignal]:
@@ -130,7 +130,7 @@ class PetLifeDecisionMixin:
         place = action.place_name or activity.place_name or activity.city
         prefix = "TA 正在"
         if action.action_type == "rest_nearby":
-            return f"{prefix}{place}安静休息，手机会把声音放轻。"
+            return f"{prefix}{place}安静休息，通讯器会把声音放轻。"
         if action.action_type == "drink_nearby":
             return f"{prefix}{place}找点喝的，补一补水再继续走。"
         if action.action_type == "eat_nearby":
@@ -146,7 +146,7 @@ class PetLifeDecisionMixin:
         if action.action_type == "continue_transport":
             return activity.detail or f"{pet.name} 正在前往下一站。"
         if decision.adjusted:
-            return f"手机把 {pet.name} 的位置校准回真实路线，TA 继续慢慢生活。"
+            return f"通讯器把 {pet.name} 的位置校准回真实路线，TA 继续慢慢生活。"
         return f"{prefix}{place}观察附近的声音和气味。"
     def _visible_thought(
         self,
@@ -237,7 +237,7 @@ class PetLifeDecisionMixin:
             return "这里更像生活停留点，不只是路过。"
         memory = next((item for item in memories if item.kind in {"owner_message", "postcard", "identity"}), None)
         if memory:
-            return f"手机记得「{memory.title}」，所以 TA 会多留意一点。"
+            return f"通讯器记得「{memory.title}」，所以 TA 会多留意一点。"
         return "TA 还在根据声音、气味和人流判断下一步。"
     def _time_window_for_action(self, action: WorldAction) -> str:
         minutes = max(1, action.duration_minutes)

@@ -233,7 +233,7 @@ class PlaceInteractionTextMixin:
                 f"这里的味道和声音都是真的：{interaction.pet_action}。"
             )
         return (
-            f"手机自己记录了 {place.name} 的这一刻。"
+            f"通讯器自己记录了 {place.name} 的这一刻。"
             f"{pet.name} 没有被安排，只是在这里按自己的节奏停了一会儿。"
         )
     def _image_prompt(

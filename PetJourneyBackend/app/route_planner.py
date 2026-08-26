@@ -221,7 +221,7 @@ class MockTravelRoutePlanner:
             "park",
             24.4319,
             118.1036,
-            "下午沿环岛路靠近白城沙滩，把海风记进手机",
+            "下午沿环岛路靠近白城沙滩，把海风记进通讯器",
             "海边和环岛路是厦门很强的城市标签，适合作为下午的核心照片点。",
         )
         bailuzhou = self._xiamen_place(
@@ -239,7 +239,7 @@ class MockTravelRoutePlanner:
             self._stop(huweishan, "在高一点的地方醒来", "我想先去高一点、绿一点的地方。风从山海健康步道吹过来，我会慢慢把今天的方向想清楚。", "07:40", 45),
             self._stop(bashi, "走进老城的人间烟火", "我会沿着八市和开禾路慢慢看，听摊位的声音，选一口厦门早午间的本地味道。", "09:20", 65, photo=True),
             self._stop(shapowei, "在老港边慢慢逛", "这里有海风、旧港和小店。我会在大学路附近找个不挡路的位置，坐下来把看到的颜色记住。", "11:10", 90, photo=True),
-            self._stop(baicheng, "去海边收下午的风", "下午我会靠近环岛路和白城沙滩，走慢一点，把海面、树影和路边的光记进手机。", "14:30", 85, photo=True),
+            self._stop(baicheng, "去海边收下午的风", "下午我会靠近环岛路和白城沙滩，走慢一点，把海面、树影和路边的光记进通讯器。", "14:30", 85, photo=True),
             self._stop(bailuzhou, "傍晚写一封小信", "天色变软以后，我会回到白鹭洲和筼筜湖边，让脚步慢下来，把今天写成一封小小的信。", "17:40", 50, postcard=True),
         ]
         segments = [
@@ -436,7 +436,7 @@ class MockTravelRoutePlanner:
                 id="home-city-to-la-flight",
                 mode=TravelMode.flight,
                 title="长途飞行段",
-                detail="这是一段很长的跨城移动，手机会按真实时间慢慢推进。",
+                detail="这是一段很长的跨城移动，通讯器会按真实时间慢慢推进。",
                 from_place=places[0].name,
                 to_place=airport.name,
                 distance_meters=11_100_000,

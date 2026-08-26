@@ -250,7 +250,7 @@ class PetTravelQuestFlowMixin:
                 planned_time="前一晚",
                 dwell_minutes=90,
                 pet_voice="我会先睡够，不急着出门。明天要走很远，我想把精神留给赛场的声音。",
-                owner_tip="适合在手机里展示为睡眠/准备态，而不是马上移动。",
+                owner_tip="适合在通讯器里展示为睡眠/准备态，而不是马上移动。",
                 source_notes=["pet-life-rhythm"],
             ),
             TravelQuestStop(

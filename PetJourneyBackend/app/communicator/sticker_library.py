@@ -8,7 +8,7 @@ class StickerLibrary:
 
     def select(self, *, intent: CommunicatorIntent, energy: int) -> tuple[str, str] | None:
         if intent == CommunicatorIntent.affection_i_miss_you:
-            return ("🐾 蹭蹭", "TA 轻轻蹭了蹭手机。")
+            return ("🐾 蹭蹭", "TA 轻轻蹭了蹭通讯器。")
         if intent == CommunicatorIntent.care_check or energy < 35:
             return ("💤 小小趴下", "TA 有点累，但还是抬头看了你一下。")
         if intent == CommunicatorIntent.current_status_visual_request:

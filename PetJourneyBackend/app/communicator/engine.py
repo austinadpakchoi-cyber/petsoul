@@ -530,7 +530,7 @@ class PetCommunicatorEngine:
         self.memory_store.add_memory(
             pet_id=pet_id,
             kind="communicator_message",
-            title="手机里的一句话",
+            title="通讯器里的一句话",
             content=f"你发来：{owner_text}。TA 回应：{reply_text}。意图：{intent.value}",
             salience=0.72 if intent != CommunicatorIntent.general_chat else 0.52,
             source="communicator_message",

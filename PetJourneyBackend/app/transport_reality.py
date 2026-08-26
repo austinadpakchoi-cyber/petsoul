@@ -196,7 +196,7 @@ class MockTransportRealityProvider:
                 id="worldcup-shadow-flight",
                 mode=TravelMode.flight,
                 title="长途飞行影子段",
-                detail="手机会按真实的起降节奏推进这段长途移动，只记录时间、航线和抵达感。",
+                detail="通讯器会按真实的起降节奏推进这段长途移动，只记录时间、航线和抵达感。",
                 origin=origin,
                 destination=airport,
                 departure=departure,

@@ -45,7 +45,7 @@ class PetDNAInterviewEngine:
         missing = [dimension for dimension in DNA_DIMENSIONS if dimension not in state.covered_dimensions]
         should_end = not missing and len(state.conversation_history) >= 4
         collected_dna = self._fallback_dna(state) if should_end else None
-        question = "我大概听见 TA 的样子了。最后，你希望手机用什么语气帮你翻译 TA 的原声或小信号？"
+        question = "我大概听见 TA 的样子了。最后，你希望通讯器用什么语气帮你翻译 TA 的原声或小信号？"
         if missing:
             question = self._question_for(missing[0])
 

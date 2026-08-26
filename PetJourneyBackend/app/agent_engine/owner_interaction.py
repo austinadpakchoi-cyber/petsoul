@@ -1,4 +1,4 @@
-"""主人交互编排：主人讯息的意图理解、回应决策与手机侧回复落库。"""
+"""主人交互编排：主人讯息的意图理解、回应决策与通讯器侧回复落库。"""
 
 from __future__ import annotations
 
@@ -111,15 +111,15 @@ class OwnerInteractionMixin:
         )
         self.storage.append_event(
             pet.pet_id,
-            "TA 在手机里回应了你",
+            "TA 在通讯器里回应了你",
             scene,
             timestamp=now,
         )
         self._remember_safely(
             pet_id=pet.pet_id,
             kind="communicator_reply",
-            title="手机回应",
-            content=f"TA 在手机里回应：{scene}。决策：{decision}",
+            title="通讯器回应",
+            content=f"TA 在通讯器里回应：{scene}。决策：{decision}",
             salience=0.64,
             source="communicator_reply",
             metadata={"decision": decision},
@@ -166,7 +166,7 @@ class OwnerInteractionMixin:
         if decision == "declined":
             return f"我听见{owner}说「{message}」。今天我先不往那里走，我想按自己的节奏把眼前这段路走完。"
         if decision == "comfort":
-            return f"我听见{owner}说「{message}」。这句话我收好了，像把一小块暖光放进手机里。"
+            return f"我听见{owner}说「{message}」。这句话我收好了，像把一小块暖光放进通讯器里。"
         return f"我听见{owner}说「{message}」。我先记住它，不急着决定，下一段路我自己慢慢判断。"
 
     def _owner_message_event_title(self, decision: str) -> str:
@@ -182,7 +182,7 @@ class OwnerInteractionMixin:
         response = {
             "accepted": "我会把这句建议先放进口袋里，等路线和天气合适时自己靠近看看。",
             "declined": "我先把这句话收好，但今天还是想按自己的节奏走完眼前这段路。",
-            "comfort": "我把这句话收好了，像把一小块暖光放进手机里。",
+            "comfort": "我把这句话收好了，像把一小块暖光放进通讯器里。",
             "remembered": "我先记住它，不急着决定，下一段路我会自己慢慢判断。",
         }.get(decision, "我收到了，会按自己的节奏慢慢回应。")
         return f"你发来：「{message}」。{response}"
