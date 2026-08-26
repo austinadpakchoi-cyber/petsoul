@@ -43,7 +43,7 @@ final class CommunicatorViewModel: ObservableObject {
     }
 
     var chatAvailabilityText: String {
-        guard let status else { return "正在连接" }
+        guard let status else { return "等待信号" }
         switch status.agentState.status {
         case .flying:
             return "信号不稳定"
