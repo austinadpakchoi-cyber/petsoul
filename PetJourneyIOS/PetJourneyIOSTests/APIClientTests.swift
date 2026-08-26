@@ -191,4 +191,36 @@ final class APIClientTests: XCTestCase {
         monitor.apply(isOnline: true)
         XCTAssertTrue(monitor.isOnline)
     }
+
+    // MARK: - 地图昼夜相位与墙上时间（UI/UX 审计 P0-2）
+
+    func testNaiveWallTimeDecodesAsGMTHour() throws {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            try RemoteDateDecoding.decodeFlexibleISO8601Date(from: decoder)
+        }
+        struct Payload: Decodable { var localTime: Date }
+        let json = Data(#"{"localTime":"2026-08-27T01:23:45"}"#.utf8)
+        let payload = try decoder.decode(Payload.self, from: json)
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let hour = calendar.component(.hour, from: payload.localTime)
+        XCTAssertEqual(hour, 1, "墙上时间必须按 GMT 解析，小时分量即 TA 所在地小时")
+    }
+
+    func testMapPhaseFollowsPetLocalWallTime() {
+        let petCalendar = JourneyMapAtmosphere.petLocalCalendar
+        var date = DateComponents(calendar: petCalendar, year: 2026, month: 8, day: 27, hour: 1, minute: 30)
+        let nightLocal = petCalendar.date(from: date)!
+        date.hour = 10
+        let dayLocal = petCalendar.date(from: date)!
+
+        XCTAssertEqual(JourneyMapAtmosphere.phase(for: nightLocal, calendar: petCalendar), .night)
+        XCTAssertEqual(JourneyMapAtmosphere.phase(for: dayLocal, calendar: petCalendar), .day)
+        // 同一 UTC 时刻下，TA 当地时间不同 → 相位不同（这正是审计验收第 3 条）
+        XCTAssertNotEqual(
+            JourneyMapAtmosphere.phase(for: nightLocal, calendar: petCalendar),
+            JourneyMapAtmosphere.phase(for: dayLocal, calendar: petCalendar)
+        )
+    }
 }

@@ -328,7 +328,11 @@ struct JourneyMapView: View {
                     startIntroFlight(to: liveCoordinate)
                 }
 
-                JourneyMapAtmosphere(tint: activity.tint, date: timeline.date)
+                JourneyMapAtmosphere(
+                    tint: activity.tint,
+                    date: timeline.date,
+                    localTime: viewModel.worldSnapshot?.lifeTick?.observation?.localTime
+                )
 
                 // 审计 #3：地图全出血，顶部只留一张情感状态卡 + 一列紧凑控制坞。
                 VStack(spacing: 0) {

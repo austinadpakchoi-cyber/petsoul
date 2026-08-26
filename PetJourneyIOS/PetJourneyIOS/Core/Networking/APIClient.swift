@@ -115,9 +115,33 @@ enum RemoteDateDecoding {
             return date
         }
 
+        // 无时区偏移的「墙上时间」（后端 city_timezones.local_wall_time 下发，
+        // 如 local_time="2026-08-27T01:23:45"）：按 GMT 解析，调用方直接取
+        // 小时/分钟分量作为 TA 所在地的当地时间，不再做设备时区换算。
+        if let date = Self.naiveWallTimeFormatter.date(from: value)
+            ?? Self.naiveWallTimeFractionalFormatter.date(from: value) {
+            return date
+        }
+
         throw DecodingError.dataCorruptedError(
             in: container,
             debugDescription: "Invalid ISO8601 date: \(value)"
         )
     }
+
+    private static let naiveWallTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        return formatter
+    }()
+
+    private static let naiveWallTimeFractionalFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
+        return formatter
+    }()
 }

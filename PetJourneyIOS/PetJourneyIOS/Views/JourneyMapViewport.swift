@@ -429,48 +429,74 @@ enum JourneyRouteVisual {
 struct JourneyMapAtmosphere: View {
     var tint: Color
     var date: Date = Date()
+    /// TA 所在地的当地时间（后端 local_time，墙上时间按 GMT 解析）：
+    /// 地图昼夜必须跟着 TA 走，而不是主人的设备时区（UI/UX 审计 P0-2）。
+    var localTime: Date?
 
-    enum DayPhase {
+    enum DayPhase: CaseIterable {
         case dawn
         case day
         case dusk
         case night
     }
 
-    var phase: DayPhase {
-        switch Calendar.current.component(.hour, from: date) {
-        case 5..<8: .dawn
-        case 8..<17: .day
-        case 17..<20: .dusk
-        default: .night
+    /// 读墙上时间的日历：local_time 按 GMT 解析，小时分量即 TA 所在地的小时。
+    static let petLocalCalendar: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
+        return calendar
+    }()
+
+    static func phase(for date: Date, calendar: Calendar) -> DayPhase {
+        #if DEBUG
+        if let override = ProcessInfo.processInfo.environment["PETJOURNEY_MAP_PHASE"] {
+            if let matched = DayPhase.allCases.first(where: { String(describing: $0) == override }) {
+                return matched
+            }
         }
+        #endif
+        switch calendar.component(.hour, from: date) {
+        case 5..<8: return .dawn
+        case 8..<17: return .day
+        case 17..<20: return .dusk
+        default: return .night
+        }
+    }
+
+    private var phaseDate: Date { localTime ?? date }
+    private var phaseCalendar: Calendar { localTime == nil ? Calendar.current : Self.petLocalCalendar }
+
+    var phase: DayPhase {
+        Self.phase(for: phaseDate, calendar: phaseCalendar)
     }
 
     var washColors: [Color] {
         switch phase {
         case .dawn:
             [
-                DesignTokens.amber.opacity(0.20),
-                DesignTokens.mapWash.dawnCream.opacity(0.10),
-                DesignTokens.porcelain.opacity(0.44)
+                DesignTokens.amber.opacity(0.30),
+                DesignTokens.mapWash.dawnCream.opacity(0.18),
+                DesignTokens.porcelain.opacity(0.52)
             ]
         case .day:
             [
-                Color.black.opacity(0.18),
+                Color.black.opacity(0.14),
                 .clear,
                 DesignTokens.porcelain.opacity(0.44)
             ]
         case .dusk:
             [
-                DesignTokens.mapWash.duskMauve.opacity(0.22),
-                DesignTokens.mapWash.duskEmber.opacity(0.14),
-                DesignTokens.mapWash.duskCream.opacity(0.40)
+                DesignTokens.mapWash.duskMauve.opacity(0.36),
+                DesignTokens.mapWash.duskEmber.opacity(0.24),
+                DesignTokens.mapWash.duskCream.opacity(0.48)
             ]
         case .night:
+            // UI/UX 审计 P0-1：夜间 wash 此前落到屏上约 0.08–0.12，约等于没有。
+            // 提高强度让暖夜性格可见，同时保留路网可读性。
             [
-                DesignTokens.mapWash.nightDeep.opacity(0.46),
-                DesignTokens.mapWash.nightMid.opacity(0.30),
-                DesignTokens.mapWash.nightSoft.opacity(0.34)
+                DesignTokens.mapWash.nightDeep.opacity(0.78),
+                DesignTokens.mapWash.nightMid.opacity(0.58),
+                DesignTokens.mapWash.nightSoft.opacity(0.62)
             ]
         }
     }
@@ -501,7 +527,7 @@ struct JourneyMapAtmosphere: View {
                     density: 26,
                     drift: 0.1
                 )
-                .opacity(0.5)
+                .opacity(0.68)
             }
 
             AmbientSignalField(
@@ -510,7 +536,7 @@ struct JourneyMapAtmosphere: View {
                 density: 16,
                 drift: 0.28
             )
-            .opacity(phase == .night ? 0.26 : 0.38)
+            .opacity(phase == .night ? 0.5 : 0.55)
 
             NavigationScanOverlay(tint: tint)
                 .opacity(0.42)
