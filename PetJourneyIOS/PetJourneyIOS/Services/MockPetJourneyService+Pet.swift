@@ -153,6 +153,18 @@ extension MockPetJourneyService {
         )
     }
 
+    func fetchMe() async throws -> MeResponse {
+        guard let userID = mockUserID else {
+            throw PetJourneyError.sessionExpired
+        }
+        return MeResponse(
+            userID: userID,
+            displayName: mockUserDisplayName,
+            email: nil,
+            pets: mockClaimedPets()
+        )
+    }
+
     func claimPet(petID: String) async throws -> MeResponse {
         try ensureJourneyExists(for: petID)
         guard let userID = mockUserID else {

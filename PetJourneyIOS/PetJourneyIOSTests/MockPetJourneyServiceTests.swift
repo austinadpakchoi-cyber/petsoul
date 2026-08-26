@@ -22,6 +22,40 @@ final class MockPetJourneyServiceTests: XCTestCase {
         XCTAssertNotNil(response.photoURL)
     }
 
+    func testMockAccountFlowSignsInClaimsAndFetchesMe() async throws {
+        let service = MockPetJourneyService()
+
+        do {
+            _ = try await service.fetchMe()
+            XCTFail("未登录时 fetchMe 应失败")
+        } catch {
+            // 预期：sessionExpired
+        }
+
+        let auth = try await service.signInWithApple(request: AppleSignInRequest(
+            identityToken: "mock-apple-sub:test-user",
+            displayName: "本地旅人"
+        ))
+        XCTAssertEqual(auth.userID, "PU-MOCK0001")
+        XCTAssertTrue(auth.isNewUser)
+        XCTAssertTrue(auth.pets.isEmpty)
+
+        let created = try await service.createPet(request: CreatePetRequest(
+            name: "小黑",
+            petType: .dog,
+            photoData: nil,
+            photoFilename: nil,
+            dna: .fallback
+        ))
+
+        let claimed = try await service.claimPet(petID: created.petID)
+        XCTAssertEqual(claimed.pets.map(\.petID), [created.petID])
+
+        let me = try await service.fetchMe()
+        XCTAssertEqual(me.userID, "PU-MOCK0001")
+        XCTAssertEqual(me.pets.map(\.name), ["小黑"])
+    }
+
     func testFeedbackStoresUserGuidePreferenceWithoutOwningPetMood() async throws {
         let service = MockPetJourneyService()
         let response = try await service.createPet(request: CreatePetRequest(

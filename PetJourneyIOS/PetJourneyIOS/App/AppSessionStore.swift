@@ -62,6 +62,7 @@ final class AppSessionStore: ObservableObject {
 
     private enum Key {
         static let petID = "pet_id"
+        static let petName = "pet_name"
         static let onboardingCompleted = "onboarding_completed"
         static let serviceMode = "service_mode"
         static let baseURL = "base_url"
@@ -82,6 +83,12 @@ final class AppSessionStore: ObservableObject {
     @Published private(set) var petID: String? {
         didSet {
             defaults.set(petID, forKey: Key.petID)
+        }
+    }
+
+    @Published private(set) var petName: String? {
+        didSet {
+            defaults.set(petName, forKey: Key.petName)
         }
     }
 
@@ -124,6 +131,7 @@ final class AppSessionStore: ObservableObject {
     init(userDefaults: UserDefaults = .standard) {
         defaults = userDefaults
         petID = userDefaults.string(forKey: Key.petID)
+        petName = userDefaults.string(forKey: Key.petName)
         onboardingCompleted = userDefaults.bool(forKey: Key.onboardingCompleted)
         serviceMode = ServiceMode(rawValue: userDefaults.string(forKey: Key.serviceMode) ?? "") ?? Self.defaultServiceMode(for: userDefaults)
         let storedBaseURL = userDefaults.string(forKey: Key.baseURL)
@@ -153,14 +161,18 @@ final class AppSessionStore: ObservableObject {
         authToken = nil
         userID = nil
         userDisplayName = nil
+        resetJourney()
     }
 
     var useMockData: Bool {
         serviceMode == .mock
     }
 
-    func completeOnboarding(petID: String) {
+    func completeOnboarding(petID: String, petName: String? = nil) {
         self.petID = petID
+        if let petName, !petName.isEmpty {
+            self.petName = petName
+        }
         onboardingCompleted = true
     }
 
@@ -183,6 +195,7 @@ final class AppSessionStore: ObservableObject {
             MediaCache.purge(petID: petID)
         }
         petID = nil
+        petName = nil
         onboardingCompleted = false
     }
 
@@ -198,6 +211,11 @@ final class AppSessionStore: ObservableObject {
     private static func defaultBaseURLString(for userDefaults: UserDefaults) -> String {
         #if DEBUG
         if userDefaults === UserDefaults.standard {
+            // 本地联调：可用 PETJOURNEY_BASE_URL 环境变量指向本机后端
+            if let override = ProcessInfo.processInfo.environment["PETJOURNEY_BASE_URL"],
+               !override.isEmpty {
+                return override
+            }
             return debugBackendBaseURLString
         }
         #endif
