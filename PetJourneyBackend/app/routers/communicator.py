@@ -13,7 +13,8 @@ from ..communicator.schemas import (
     MomentReactionResponse,
 )
 from ..dependencies import get_communicator_engine, get_settings
-from ..http_utils import public_media_url, save_upload, with_not_found
+from ..http_utils import public_media_url, save_upload
+from .helpers import with_not_found
 from ..schemas import OwnerMessageRequest, OwnerMessageResponse
 
 router = APIRouter()

@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from ..dependencies import get_engine, get_notification_dispatcher, get_storage
-from ..http_utils import with_not_found
+from .helpers import with_not_found
 from ..schemas import (
     DeviceRegistrationRequest,
     DeviceRegistrationResponse,

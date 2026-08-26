@@ -1,40 +1,21 @@
-"""HTTP 层共享工具函数。
+"""HTTP 层共享工具：上传落盘、文件名清洗、公开媒体 URL（纯底层工具）。
 
-从 ``main.py`` 抽出，供各个 APIRouter 复用，避免端点与装配逻辑耦合在同一个
-God File 里。
+架构审计 P1-3 后本模块只剩「真正的 HTTP/文件工具」：
+- parse_dna / with_not_found → app/routers/helpers.py
+- ensure_demo_media / DEMO_* 常量 → app/seeding.py
+- lightweight_illustrated_guide_plan → app/pet_guide_engine/preview_plan.py
+本模块不得 import 任何引擎层模块（依赖方向门禁会检查）。
 """
 
 from __future__ import annotations
 
-import json
 import re
-import shutil
 import uuid
 from pathlib import Path
 
-from fastapi import HTTPException, UploadFile
+from fastapi import UploadFile
 
-from .agent_engine import (
-    JourneyEngine,
-    PetNotFoundError,
-    ThoughtNotFoundError,
-    TravelQuestNotFoundError,
-)
 from .config import Settings
-from .route_planner import TravelRoutePlanner
-from .schemas import JourneyPlan, PetDNA
-from .utils import utcnow
-
-DEMO_FRENCHIE_PROFILE_PHOTO = "demo/frenchie-profile.png"
-DEMO_FRENCHIE_POSTCARD_PHOTO = "demo/frenchie-netcafe-postcard.png"
-
-
-def parse_dna(raw: str) -> PetDNA:
-    try:
-        payload = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        raise HTTPException(status_code=422, detail=f"dna must be JSON: {exc}") from exc
-    return PetDNA.model_validate(payload)
 
 
 async def save_upload(upload_dir: Path, upload: UploadFile | None, subdir: str = "pet_photos") -> str | None:
@@ -53,25 +34,6 @@ async def save_upload(upload_dir: Path, upload: UploadFile | None, subdir: str =
     return target.relative_to(upload_dir).as_posix()
 
 
-def ensure_demo_media(upload_dir: Path) -> None:
-    # 版本化的 demo 素材（随代码/镜像分发）优先；data/uploads/demo 兼容旧部署
-    candidate_dirs = (
-        Path(__file__).resolve().parent / "assets" / "demo",
-        Path(__file__).resolve().parents[1] / "data" / "uploads" / "demo",
-    )
-    target_dir = upload_dir / "demo"
-    for filename in (DEMO_FRENCHIE_PROFILE_PHOTO, DEMO_FRENCHIE_POSTCARD_PHOTO):
-        target = target_dir / Path(filename).name
-        if target.exists():
-            continue
-        for source_dir in candidate_dirs:
-            source = source_dir / Path(filename).name
-            if source.exists():
-                target_dir.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(source, target)
-                break
-
-
 def sanitize_filename(filename: str) -> str:
     return re.sub(r"[^A-Za-z0-9._-]", "-", filename)
 
@@ -87,24 +49,3 @@ def public_media_url(settings: Settings, media_path: str | None) -> str | None:
         return None
     base = settings.public_base_url.rstrip("/")
     return f"{base}/media/{media_path}"
-
-
-def with_not_found(factory):
-    try:
-        return factory()
-    except PetNotFoundError as exc:
-        raise HTTPException(status_code=404, detail="pet not found") from exc
-    except ThoughtNotFoundError as exc:
-        raise HTTPException(status_code=404, detail="thought translation not found") from exc
-    except TravelQuestNotFoundError as exc:
-        raise HTTPException(status_code=404, detail="travel quest not found") from exc
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail="resource not found") from exc
-
-
-def lightweight_illustrated_guide_plan(engine: JourneyEngine, route_planner: TravelRoutePlanner, pet) -> JourneyPlan:
-    now = utcnow()
-    elapsed = (now - pet.created_at).total_seconds()
-    city = engine._city_for_elapsed(elapsed, now=now)
-    planner = getattr(route_planner, "fallback", route_planner)
-    return planner.build_journey_plan(pet, city, now)

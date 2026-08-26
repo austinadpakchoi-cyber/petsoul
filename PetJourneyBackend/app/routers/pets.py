@@ -13,16 +13,10 @@ from ..dependencies import (
     get_settings,
     get_storage,
 )
-from ..http_utils import (
-    DEMO_FRENCHIE_POSTCARD_PHOTO,
-    DEMO_FRENCHIE_PROFILE_PHOTO,
-    lightweight_illustrated_guide_plan,
-    parse_dna,
-    public_media_url,
-    public_photo_url,
-    save_upload,
-    with_not_found,
-)
+from ..http_utils import public_media_url, public_photo_url, save_upload
+from ..pet_guide_engine.preview_plan import lightweight_illustrated_guide_plan
+from ..seeding import DEMO_FRENCHIE_POSTCARD_PHOTO, DEMO_FRENCHIE_PROFILE_PHOTO
+from .helpers import parse_dna, with_not_found
 from ..schemas import (
     AgentStatus,
     CityPosition,

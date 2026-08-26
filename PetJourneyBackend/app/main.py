@@ -17,7 +17,7 @@ from .economy_engine import PetEconomyEngine
 from .event_generator import JourneyEventGenerator
 from .feedback_effects import JourneyFeedbackPolicy
 from .google_maps_services import build_google_maps_service
-from .http_utils import ensure_demo_media
+from .seeding import ensure_demo_media
 from .illustrated_guide import IllustratedGuideEngine
 from .image_provider import build_image_provider
 from .memory_store import build_memory_store

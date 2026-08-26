@@ -7,7 +7,7 @@ from datetime import date
 from fastapi import APIRouter, Depends
 
 from ..dependencies import get_engine, get_memory_store
-from ..http_utils import with_not_found
+from .helpers import with_not_found
 from ..schemas import (
     MemoryConsolidationResult,
     MemoryCreateRequest,

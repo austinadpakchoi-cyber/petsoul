@@ -31,3 +31,7 @@ jobs:
       - name: Run frontend/backend contract drift gate
         working-directory: .
         run: python scripts/contract_diff.py
+
+      - name: Run backend dependency direction gate
+        working-directory: .
+        run: python scripts/dependency_gate.py

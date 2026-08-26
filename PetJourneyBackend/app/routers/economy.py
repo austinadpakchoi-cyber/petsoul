@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 
 from ..dependencies import get_engine, get_settings
 from ..economy_engine import EconomyConflictError
-from ..http_utils import with_not_found
+from .helpers import with_not_found
 from ..schemas import (
     ArchiveItemRequest,
     EconomyResponse,
