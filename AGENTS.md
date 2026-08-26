@@ -24,6 +24,26 @@ PetSoul / PetJourney 是"宠物在平行世界继续生活"的**关系型**旅�
 
 服务模式：`AppSessionStore` 默认 remote，指向生产 `https://api.petsoul.games`（Release 与 DEBUG 真机一致，TestFlight 包不会落到 Mock）；测试环境默认 Mock；DEBUG 下可用 `PETJOURNEY_BASE_URL` 环境变量把真机指向本机后端联调。
 
+## 架构分层（2026-08-26 起生效，配合 scripts/arch_gate.py 机器检查）
+
+**后端依赖方向**（自上而下，底层不得反向 import 上层）：
+
+```
+routers → engines（agent_engine / communicator / pet_life_engine / world_simulation
+        / travel_quest_engine / image_provider 等包）→ repositories → storage/infra
+schemas / utils / config 是公共底层：只允许 import schemas、标准库与底层工具，
+不得 import engines 或 routers。组合根（main.py / dependencies.py）可以 import 一切。
+```
+
+- 新增引擎的形态规则：**单文件 ≤ 400 行且职责单一 → 平铺 `app/` 根目录；超过其一 → 建包**（`app/<name>/` 多文件），并参照 `app/storage.py` 的门面模式：`app/<name>.py` 保留历史导入面、注释交代拆分原因。
+- 工具模块（如 `http_utils.py`）不得 import 引擎层；领域解析归 `schemas`，路由辅助归 `routers`/`dependencies`，演示数据播种归启动路径。
+
+**iOS 类型归属**：
+
+- `Views/` **只放 SwiftUI View**（含 `UIViewRepresentable`/`UIViewControllerRepresentable`）。领域模型、枚举、构建器、布局几何辅助一律进 `Models/`（或新建 `Presentation/`）。
+- ViewModel 进 `ViewModels/`，一个 ViewModel 一个职责面；**跨文件 extension 拆分不能替代职责拆分**——`arch_gate.py` 已按类型名跨文件归并体量（阈值 600 行 / 25 定义），超标的「待拆分」清单会出现在门禁输出里，拆分后自动消失。
+- 新文件照旧必须 `scripts/register_swift_file.py` 登记 pbxproj；迁移文件 = 移动 + 登记，不要顺手改逻辑。
+
 ## iOS 设计系统（DesignTokens.swift）
 
 - 全部颜色通过 `Color(light:dark:)` 自适应：日间瓷白，夜间是"灯下暖夜"（深暖绿炭底），不是纯黑。
