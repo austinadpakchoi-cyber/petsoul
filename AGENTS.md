@@ -22,7 +22,7 @@ PetSoul / PetJourney 是"宠物在平行世界继续生活"的**关系型**旅�
 - `petjourney-mvp/` — 早期 Next.js 网页 MVP，已被 iOS 取代，不要在里面开发新功能。
 - `audits/` — UX 审计记录。
 
-服务模式：`AppSessionStore` 在 DEBUG 下默认 remote，指向局域网 `http://192.168.31.237:8000`，可切 Mock。
+服务模式：`AppSessionStore` 默认 remote，指向生产 `https://api.petsoul.games`（Release 与 DEBUG 真机一致，TestFlight 包不会落到 Mock）；测试环境默认 Mock；DEBUG 下可用 `PETJOURNEY_BASE_URL` 环境变量把真机指向本机后端联调。
 
 ## iOS 设计系统（DesignTokens.swift）
 

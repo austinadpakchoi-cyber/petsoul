@@ -71,7 +71,7 @@ final class AppSessionStore: ObservableObject {
         static let userDisplayName = "auth_user_display_name"
     }
 
-    private static let debugBackendBaseURLString = "https://api.petsoul.games"
+    private static let productionBackendBaseURLString = "https://api.petsoul.games"
     /// 旧的本地开发地址：后端已迁移到云端，启动时自动替换存量配置
     private static let legacyBaseURLStrings: Set<String> = [
         "http://192.168.31.237:8000",
@@ -201,25 +201,29 @@ final class AppSessionStore: ObservableObject {
 
     private static func defaultServiceMode(for userDefaults: UserDefaults) -> ServiceMode {
         #if DEBUG
-        if userDefaults === UserDefaults.standard {
-            return .remote
+        // 测试/预览环境（非 standard 的 UserDefaults suite）默认 Mock，避免测试碰网络
+        if userDefaults !== UserDefaults.standard {
+            return .mock
         }
         #endif
-        return .mock
+        // Release 与 DEBUG 真机一律默认 remote：TestFlight/App Store 包
+        // 必须直连生产账号体系，不允许首发即样板数据。
+        return .remote
     }
 
     private static func defaultBaseURLString(for userDefaults: UserDefaults) -> String {
         #if DEBUG
-        if userDefaults === UserDefaults.standard {
-            // 本地联调：可用 PETJOURNEY_BASE_URL 环境变量指向本机后端
-            if let override = ProcessInfo.processInfo.environment["PETJOURNEY_BASE_URL"],
-               !override.isEmpty {
-                return override
-            }
-            return debugBackendBaseURLString
+        if userDefaults !== UserDefaults.standard {
+            // 仅测试环境占位，Mock 服务不会真正发起请求
+            return "http://127.0.0.1:8000"
+        }
+        // 本地联调：可用 PETJOURNEY_BASE_URL 环境变量指向本机后端
+        if let override = ProcessInfo.processInfo.environment["PETJOURNEY_BASE_URL"],
+           !override.isEmpty {
+            return override
         }
         #endif
-        return "http://127.0.0.1:8000"
+        return productionBackendBaseURLString
     }
 }
 
