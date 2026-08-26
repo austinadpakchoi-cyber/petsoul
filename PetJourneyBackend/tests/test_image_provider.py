@@ -32,7 +32,7 @@ class SeedreamImageProviderTests(PetJourneyApiTestBase):
         self.assertEqual(payload["response_format"], "url")
         self.assertNotIn("image", payload)
 
-    def test_two_references_map_to_image_array_with_roles(self) -> None:
+    def test_two_references_become_ordered_data_uris(self) -> None:
         import base64 as b64
 
         fake = {"b64": b64.b64encode(b"PNGDATA").decode("ascii")}
@@ -40,8 +40,8 @@ class SeedreamImageProviderTests(PetJourneyApiTestBase):
         pet_ref = ImageReference(image_bytes=b"PET", mime_type="image/png", filename="pet.png", role="pet_identity")
         place_ref = ImageReference(image_bytes=b"PLACE", mime_type="image/png", filename="place.png", role="place_environment")
         image = provider.generate_image_with_references(
-            "参考图自拍",
-            references=[pet_ref, place_ref],
+            "在海边拍一张自拍",
+            references=[place_ref, pet_ref],  # 输入顺序打乱，输出必须 pet 在前
             size="1536x1024",
         )
         self.assertEqual(image.image_bytes, b"PNGDATA")
@@ -50,10 +50,51 @@ class SeedreamImageProviderTests(PetJourneyApiTestBase):
         images = payload["image"]
         assert isinstance(images, list)
         self.assertEqual(len(images), 2)
-        self.assertEqual(images[0]["role"], "pet_identity")
-        self.assertEqual(images[0]["image_data"], b64.b64encode(b"PET").decode("ascii"))
-        self.assertEqual(images[1]["role"], "place_environment")
-        self.assertEqual(images[1]["image_data"], b64.b64encode(b"PLACE").decode("ascii"))
+        # 火山方舟协议：image 是 data-URI 字符串数组，不是 {image_data, role} 对象
+        self.assertEqual(images[0], "data:image/png;base64," + b64.b64encode(b"PET").decode("ascii"))
+        self.assertEqual(images[1], "data:image/png;base64," + b64.b64encode(b"PLACE").decode("ascii"))
+        prompt = str(payload["prompt"])
+        self.assertIn("图一", prompt)
+        self.assertIn("图二", prompt)
+        self.assertIn("长相", prompt)
+        self.assertIn("氛围", prompt)
+        self.assertLess(prompt.index("图一"), prompt.index("图二"))
+
+    def test_single_reference_becomes_single_data_uri(self) -> None:
+        import base64 as b64
+
+        fake = {"b64": b64.b64encode(b"PNGDATA").decode("ascii")}
+        provider = self._provider(fake)
+        image = provider.generate_image_with_reference(
+            "保持 TA 的长相",
+            reference_image_bytes=b"PET",
+            reference_mime_type="image/jpeg",
+        )
+        self.assertEqual(image.image_bytes, b"PNGDATA")
+        payload = provider.captured_payload
+        assert payload is not None
+        images = payload["image"]
+        assert isinstance(images, list)
+        self.assertEqual(len(images), 1)
+        self.assertEqual(images[0], "data:image/jpeg;base64," + b64.b64encode(b"PET").decode("ascii"))
+
+    def test_volcengine_key_prefers_doubao_over_image_key(self) -> None:
+        settings = Settings(
+            image_provider_type="volcengine",
+            doubao_api_key="ark-key",
+            image_api_key="legacy-openai-image-key",
+        )
+        provider = DoubaoSeedreamImageProvider(settings)
+        self.assertEqual(provider._api_key(), "ark-key")
+
+    def test_volcengine_key_falls_back_to_image_key(self) -> None:
+        settings = Settings(
+            image_provider_type="volcengine",
+            doubao_api_key=None,
+            image_api_key="ark-key-in-image-slot",
+        )
+        provider = DoubaoSeedreamImageProvider(settings)
+        self.assertEqual(provider._api_key(), "ark-key-in-image-slot")
 
     def test_url_response_downloads_image(self) -> None:
         class FakeUrlSeedreamProvider(DoubaoSeedreamImageProvider):
