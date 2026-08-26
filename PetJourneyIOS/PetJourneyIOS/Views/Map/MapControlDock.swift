@@ -36,18 +36,6 @@ struct MapControlDock: View {
                 label: "回到 TA 的位置",
                 action: actions.onCenter
             )
-            dockButton(
-                systemImage: perspectiveSystemImage,
-                tint: DesignTokens.dusk,
-                label: "切换视角：当前 \(perspectiveTitle)",
-                action: actions.onTogglePerspective
-            )
-            dockButton(
-                systemImage: showNearbySignals ? "eye.fill" : "eye.slash.fill",
-                tint: DesignTokens.sea,
-                label: showNearbySignals ? "隐藏附近信号" : "显示附近信号",
-                action: actions.onToggleNearbySignals
-            )
         }
         .padding(6)
         .background(DesignTokens.surface.opacity(0.88))
@@ -60,6 +48,16 @@ struct MapControlDock: View {
 
     private var menuButton: some View {
         Menu {
+            Button(action: actions.onCenter) {
+                Label("回到 TA 的位置", systemImage: "location.fill")
+            }
+            Button(action: actions.onTogglePerspective) {
+                Label("切换视角：当前 \(perspectiveTitle)", systemImage: perspectiveSystemImage)
+            }
+            Button(action: actions.onToggleNearbySignals) {
+                Label(showNearbySignals ? "隐藏附近信号" : "显示附近信号", systemImage: showNearbySignals ? "eye.fill" : "eye.slash.fill")
+            }
+            Divider()
             Button(action: actions.onShowDayPlan) {
                 Label("今日路线", systemImage: "map.fill")
             }

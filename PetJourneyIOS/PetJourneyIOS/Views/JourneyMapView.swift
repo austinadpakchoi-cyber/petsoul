@@ -381,7 +381,8 @@ struct JourneyMapView: View {
                 }
 
                 VStack(spacing: 10) {
-                    if showWorldCupStadiums {
+                    // P0-3：底部浮层最多两层——出现同伴/事件卡时，世界杯卡让位
+                    if showWorldCupStadiums, selectedDisplayCompanion == nil, selectedDisplayEvent == nil {
                         WorldCupMapStatusCard(
                             selectedHost: selectedWorldCupHost,
                             activeQuest: viewModel.activeWorldCupQuest,
@@ -401,7 +402,9 @@ struct JourneyMapView: View {
                             }
                         )
                         .transition(.move(edge: .bottom).combined(with: .opacity))
-                    } else if viewModel.activeWorldCupQuest == nil {
+                    } else if viewModel.activeWorldCupQuest == nil,
+                              selectedDisplayCompanion == nil,
+                              selectedDisplayEvent == nil {
                         WorldCupInvitationTeaserCard(
                             petName: status.name,
                             onOpen: {

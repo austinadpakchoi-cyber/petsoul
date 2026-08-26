@@ -210,7 +210,8 @@ struct LiveSignalPanel: View {
                 Text(headline)
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(DesignTokens.ink)
-                    .lineLimit(isExpanded ? 2 : 1)
+                    // P0-3：标题不允许截断（半收态也放两行）
+                    .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(spacing: 6) {
