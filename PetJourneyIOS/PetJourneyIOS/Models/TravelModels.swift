@@ -154,6 +154,11 @@ struct ScheduledTransportLeg: Codable, Identifiable, Equatable, Sendable {
     var realityLevel: String
     var isSimulated: Bool
     var timelineNote: String?
+    // 班次真实性的证据（后端真的在填，之前被 iOS 丢弃）：
+    // 只在需要展示「这条班次来自哪里」时使用，文案层不得暴露机制词。
+    var sourceURLs: [String]?
+    var confidence: String?
+    var searchQuery: String?
 
     var originCoordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: originLatitude, longitude: originLongitude)
@@ -197,6 +202,9 @@ struct ScheduledTransportLeg: Codable, Identifiable, Equatable, Sendable {
         case realityLevel = "reality_level"
         case isSimulated = "is_simulated"
         case timelineNote = "timeline_note"
+        case sourceURLs = "source_urls"
+        case confidence
+        case searchQuery = "search_query"
     }
 }
 
@@ -283,4 +291,4 @@ struct JourneyPlan: Codable, Equatable, Sendable {
         case worldcupEvent = "worldcup_event"
     }
 }
-
+
