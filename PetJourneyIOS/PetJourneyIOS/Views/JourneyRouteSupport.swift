@@ -448,7 +448,7 @@ enum RoutePolylineDecoder {
     }
 }
 
-struct CoordinateOffset {
+struct CoordinateOffset: Equatable {
     var latitude: Double
     var longitude: Double
 }

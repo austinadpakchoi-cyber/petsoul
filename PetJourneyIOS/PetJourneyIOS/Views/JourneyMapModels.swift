@@ -269,15 +269,9 @@ struct DemoCompanionPet: Identifiable {
     var showsLabel: Bool
 
     static func samples(around events: [JourneyMapEvent], fallback coordinate: CLLocationCoordinate2D) -> [DemoCompanionPet] {
-        // 身份来自 NPCSociety.cast（与后端 npc_society.py 同一批），展示元数据由本视图携带。
-        let presentation: [String: (PetType, String, CoordinateOffset, Color, Bool, String, String)] = [
-            "Nana": (.cat, "看橱窗", CoordinateOffset(latitude: 0.00072, longitude: -0.00096), DesignTokens.clay, true, "它蹲在玻璃窗前，像在研究里面一排亮亮的小物件。", "看完橱窗就去晒下一段太阳"),
-            "团子": (.dog, "等面包", CoordinateOffset(latitude: -0.00092, longitude: 0.00078), DesignTokens.amber, true, "它在小店门口闻到刚烤好的香气，正耐心排队。", "可能会带走一小份路上的点心"),
-            "啾啾": (.parrot, "学人说话", CoordinateOffset(latitude: 0.00084, longitude: 0.00074), DesignTokens.sage, false, "它停在树梢上，把刚听到的一句话小声学了一遍。", "学会了就飞去更安静的树边"),
-            "Momo": (.rabbit, "听风铃", CoordinateOffset(latitude: -0.00086, longitude: -0.00088), DesignTokens.dusk, false, "它躲在人少的角落，耳朵跟着风铃轻轻动。", "再听一会儿就把这里记进小地图"),
-            "米粒": (.hamster, "找补给", CoordinateOffset(latitude: 0.00104, longitude: -0.00066), DesignTokens.pollen, false, "它绕进灯光稳定的小店，挑了一个适合路上带着的小东西。", "可能会把这个小东西放进背包"),
-            "Lucky": (.dog, "追光斑", CoordinateOffset(latitude: 0.00058, longitude: 0.00102), DesignTokens.amber, false, "它追着一块移动的光斑跑了半条街，尾巴摇个不停。", "追到光就去下一条街巡逻"),
-        ]
+        // 身份来自 NPCSociety.cast（与后端 npc_society.py 同一批），
+        // 展示元数据统一登记在 CompanionCastPresentation；缺条目时兜底显示，不丢人。
+        let presentation = CompanionCastPresentation.map
 
         // 每天轮换出场 5 位,街上的邻居有自己的生活,而不是永远同一张合影
         let dayIndex = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
@@ -289,13 +283,12 @@ struct DemoCompanionPet: Identifiable {
 
         for (index, identity) in samples.enumerated() {
             let name = identity.name
-            guard let meta = presentation[name] else { continue }
-            let (petType, action, offset, tint, showsLabel, story, nextHint) = meta
+            let meta = presentation[name] ?? CompanionCastPresentation.mapFallback
             let anchorEvent = events.isEmpty ? nil : events[index % events.count]
             let anchor = anchorEvent?.coordinate ?? coordinate
             let candidate = CLLocationCoordinate2D(
-                latitude: anchor.latitude + offset.latitude,
-                longitude: anchor.longitude + offset.longitude
+                latitude: anchor.latitude + meta.offset.latitude,
+                longitude: anchor.longitude + meta.offset.longitude
             )
             let spacedCoordinate = coordinateAvoidingCrowd(
                 candidate,
@@ -308,14 +301,14 @@ struct DemoCompanionPet: Identifiable {
             companions.append(DemoCompanionPet(
                 id: identity.id,
                 name: name,
-                petType: petType,
-                action: action,
+                petType: meta.petType,
+                action: meta.action,
                 placeName: anchorEvent?.shortPlaceName ?? "附近街角",
-                microStory: story,
-                nextHint: nextHint,
+                microStory: meta.story,
+                nextHint: meta.nextHint,
                 coordinate: spacedCoordinate,
-                tint: tint,
-                showsLabel: showsLabel
+                tint: meta.tint,
+                showsLabel: meta.showsLabel
             ))
         }
 

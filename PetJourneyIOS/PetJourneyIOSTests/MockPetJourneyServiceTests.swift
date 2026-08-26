@@ -1,4 +1,5 @@
 import XCTest
+import CoreLocation
 @testable import PetJourneyIOS
 
 @MainActor
@@ -54,6 +55,24 @@ final class MockPetJourneyServiceTests: XCTestCase {
         let me = try await service.fetchMe()
         XCTAssertEqual(me.userID, "PU-MOCK0001")
         XCTAssertEqual(me.pets.map(\.name), ["小黑"])
+    }
+
+    func testCompanionCastPresentationCoversEveryNPC() {
+        // 审计 P1-2：任何人往 cast 加人而忘补展示字典，地图会静默少人——
+        // 这里把「cast 与两个字典一一覆盖」固化成断言。
+        let castNames = Set(NPCSociety.cast.map(\.name))
+        XCTAssertEqual(castNames, Set(CompanionCastPresentation.map.keys), "地图展示字典必须覆盖 cast 中每个身份")
+        XCTAssertEqual(castNames, Set(CompanionCastPresentation.moments.keys), "朋友圈互动字典必须覆盖 cast 中每个身份")
+    }
+
+    func testMapSamplesNeverDropsCompanions() {
+        // 兜底保证：即使某个身份缺展示元数据，5 位邻居也要全部出场。
+        let samples = DemoCompanionPet.samples(
+            around: [],
+            fallback: CLLocationCoordinate2D(latitude: 24.4798, longitude: 118.0894)
+        )
+        XCTAssertEqual(samples.count, 5)
+        XCTAssertEqual(Set(samples.map(\.name)).count, 5, "轮换出场不得重复")
     }
 
     func testFeedbackStoresUserGuidePreferenceWithoutOwningPetMood() async throws {

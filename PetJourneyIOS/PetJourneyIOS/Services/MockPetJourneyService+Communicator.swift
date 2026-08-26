@@ -572,29 +572,23 @@ extension MockPetJourneyService {
     }
 
     func mockSocialReactors(seed: String, createdAt: Date) -> [MomentSocialReactor] {
-        // 身份来自 NPCSociety.cast（与后端 npc_society.py 同一批），互动元数据由 Mock 携带。
-        let presentation: [String: (String, MomentReaction, String)] = [
-            "Nana": ("🐱", .like, "在附近的窗台看见了这一刻"),
-            "团子": ("🐶", .like, "也觉得这里适合慢慢待着"),
-            "啾啾": ("🦜", .hug, "从公共频道轻轻回应了一下"),
-            "Momo": ("🐰", .like, "把这一刻收藏进小地图"),
-            "米粒": ("🐹", .hug, "偷偷把这一刻塞进了腮帮子"),
-            "Lucky": ("🐶", .like, "在街角朝这边汪了一声"),
-        ]
+        // 身份来自 NPCSociety.cast（与后端 npc_society.py 同一批），
+        // 互动元数据统一登记在 CompanionCastPresentation；缺条目时兜底显示，不丢人。
+        let presentation = CompanionCastPresentation.moments
         let pool = NPCSociety.cast
         let value = seed.unicodeScalars.reduce(0) { $0 + Int($1.value) }
         let count = 1 + value % 3
         let start = value % pool.count
         return (0..<count).map { index in
             let identity = pool[(start + index) % pool.count]
-            let meta = presentation[identity.name] ?? ("🐾", .like, "轻轻回应了一下")
+            let meta = presentation[identity.name] ?? CompanionCastPresentation.momentsFallback
             return MomentSocialReactor(
                 id: identity.id,
                 name: identity.name,
                 species: identity.typeRaw,
-                avatarEmoji: meta.0,
-                reaction: meta.1,
-                note: meta.2,
+                avatarEmoji: meta.avatarEmoji,
+                reaction: meta.reaction,
+                note: meta.note,
                 createdAt: createdAt.addingTimeInterval(TimeInterval(18 + index * 31))
             )
         }
