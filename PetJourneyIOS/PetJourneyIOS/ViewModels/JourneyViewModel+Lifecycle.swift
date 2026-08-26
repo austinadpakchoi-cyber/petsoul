@@ -107,17 +107,25 @@ extension JourneyViewModel {
     }
 
     /// 信号恢复后补发离线期间存下的讯息。
-
     func drainOutboxIfNeeded() async {
+        // 死信再给一次机会（有界：毒消息一次失败即回死信），绝不静默消失。
+        outbox.retryFailed()
         guard outbox.pendingCount > 0 else { return }
-        await outbox.drain { [service, petID] text in
+        let result = await outbox.drain { [service, petID] message in
             _ = try await service.sendOwnerMessage(
                 petID: petID,
-                request: OwnerMessageRequest(message: text, intentHint: "owner_suggestion_or_companion_message")
+                request: OwnerMessageRequest(
+                    message: message.text,
+                    intentHint: "owner_suggestion_or_companion_message",
+                    clientMessageID: message.clientMessageID.isEmpty ? nil : message.clientMessageID
+                )
             )
         }
-        if outbox.pendingCount == 0 {
+        if result.delivered > 0 && result.failed == 0 {
             toastMessage = "刚才没送出去的话，已经送达 TA 的世界。"
+        } else if result.failed > 0 {
+            // 诚实告知：有失败就不说「已送达」
+            toastMessage = "有一句话还没能送到 TA 那里，我会继续试着送出。"
         }
     }
 

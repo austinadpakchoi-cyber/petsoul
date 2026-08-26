@@ -19,10 +19,18 @@ extension JourneyViewModel {
         isSendingOwnerMessage = true
         defer { isSendingOwnerMessage = false }
 
+        // 幂等键与回执同源：首次发送与离线补发复用同一个 ID，
+        // 后端据此去重，弱网重试不会产生重复消息。
+        let clientMessageID = receiptID.uuidString
+
         do {
             let response = try await service.sendOwnerMessage(
                 petID: petID,
-                request: OwnerMessageRequest(message: clean, intentHint: "owner_suggestion_or_companion_message")
+                request: OwnerMessageRequest(
+                    message: clean,
+                    intentHint: "owner_suggestion_or_companion_message",
+                    clientMessageID: clientMessageID
+                )
             )
             updateOwnerMessageReceipt(
                 id: receiptID,
@@ -42,7 +50,7 @@ extension JourneyViewModel {
         } catch {
             // 断网时不丢话：先收进发件队列，信号恢复后由 drainOutboxIfNeeded 自动送出。
             if case PetJourneyError.offline = error {
-                outbox.enqueue(text: clean)
+                outbox.enqueue(text: clean, clientMessageID: clientMessageID)
                 updateOwnerMessageReceipt(
                     id: receiptID,
                     state: .sending,

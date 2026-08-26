@@ -164,6 +164,13 @@ struct CommunicatorMessage: Codable, Identifiable, Equatable, Sendable {
 
 struct CommunicatorSendRequest: Codable, Equatable, Sendable {
     var text: String
+    // 客户端生成、重发复用的幂等键：同 (pet_id, client_message_id) 后端只处理一次
+    var clientMessageID: String? = nil
+
+    enum CodingKeys: String, CodingKey {
+        case text
+        case clientMessageID = "client_message_id"
+    }
 }
 
 struct PendingPhotoRequest: Codable, Identifiable, Equatable, Sendable {
@@ -269,4 +276,4 @@ struct MomentReactionResponse: Codable, Equatable, Sendable {
         case message
     }
 }
-
+

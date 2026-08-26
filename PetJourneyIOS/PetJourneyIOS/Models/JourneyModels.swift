@@ -156,10 +156,12 @@ struct FeedbackResponse: Codable, Equatable, Sendable {
 struct OwnerMessageRequest: Codable, Equatable, Sendable {
     var message: String
     var intentHint: String?
+    var clientMessageID: String? = nil
 
     enum CodingKeys: String, CodingKey {
         case message
         case intentHint = "intent_hint"
+        case clientMessageID = "client_message_id"
     }
 }
 

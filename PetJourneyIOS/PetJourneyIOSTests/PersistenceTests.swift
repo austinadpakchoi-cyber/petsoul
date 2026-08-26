@@ -84,12 +84,14 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(queue.pendingCount, 2)
 
         var sent: [String] = []
-        await queue.drain { text in
-            sent.append(text)
+        let result = await queue.drain { message in
+            sent.append(message.text)
         }
 
         XCTAssertEqual(sent, ["第一句", "第二句"])
         XCTAssertEqual(queue.pendingCount, 0)
+        XCTAssertEqual(result.delivered, 2)
+        XCTAssertEqual(result.failed, 0)
     }
 
     func testOutboxFailureKeepsMessagesQueuedAndDoesNotBlockRest() async {
@@ -98,13 +100,15 @@ final class PersistenceTests: XCTestCase {
         queue.enqueue(text: "第二句")
 
         var attempted: [String] = []
-        await queue.drain { text in
-            attempted.append(text)
+        let result = await queue.drain { message in
+            attempted.append(message.text)
             throw PetJourneyError.offline
         }
 
         XCTAssertEqual(attempted, ["第一句", "第二句"], "一条消息失败不应阻塞后面的消息")
         XCTAssertEqual(queue.pendingCount, 2, "失败的消息应回到队列等待下次补发")
+        XCTAssertEqual(result.delivered, 0, "全部失败时不得报告有送达")
+        XCTAssertEqual(result.failed, 0, "未达上限的失败仍算在队，不计入死信")
     }
 
     func testPoisonMessageIsMarkedFailedAndSkipsOthers() async {
@@ -113,13 +117,66 @@ final class PersistenceTests: XCTestCase {
         queue.enqueue(text: "好消息")
 
         for _ in 0..<OutboundMessageQueue.maxAttempts {
-            await queue.drain { text in
-                if text == "坏消息" { throw PetJourneyError.requestFailed("拒绝") }
+            await queue.drain { message in
+                if message.text == "坏消息" { throw PetJourneyError.requestFailed("拒绝") }
             }
         }
 
-        // 坏消息达到上限应转 failed；好消息在最后一轮已被送达。
-        XCTAssertEqual(queue.pendingCount, 0, "坏消息进入死信（failed），好消息应已送达")
+        // 坏消息达到上限应转 failed（死信可见）；好消息已送达，但仍有死信残留，
+        // 上层必须如实知道「有没送出去的话」，而不是看到 pendingCount == 0 就报「已送达」。
+        XCTAssertEqual(queue.pendingCount, 0)
+        XCTAssertEqual(queue.failedCount, 1, "死信必须对上层可见")
+    }
+
+    func testSendingStateIsRecoveredOnInit() async {
+        let queue = OutboundMessageQueue(petID: "pet-1", container: container)
+        queue.enqueue(text: "中断中的话")
+
+        // 模拟 drain 进行中被进程回收：消息停在 .sending
+        let context = container.mainContext
+        let descriptor = FetchDescriptor<OutboundMessage>()
+        let messages = try! context.fetch(descriptor)
+        messages.first?.stateRaw = OutboundMessageState.sending.rawValue
+        try! context.save()
+
+        // 重新初始化（等价于 App 重启）：.sending 必须复位回队列，不能静默消失
+        let restored = OutboundMessageQueue(petID: "pet-1", container: container)
+        XCTAssertEqual(restored.pendingCount, 1)
+
+        var sent: [String] = []
+        let result = await restored.drain { message in sent.append(message.text) }
+        XCTAssertEqual(sent, ["中断中的话"])
+        XCTAssertEqual(result.delivered, 1)
+    }
+
+    func testRetryFailedGivesOneMoreChance() async {
+        let queue = OutboundMessageQueue(petID: "pet-1", container: container)
+        queue.enqueue(text: "坏消息")
+        for _ in 0..<OutboundMessageQueue.maxAttempts {
+            await queue.drain { _ in throw PetJourneyError.requestFailed("拒绝") }
+        }
+        XCTAssertEqual(queue.failedCount, 1)
+
+        // 死信出口：再给一次机会
+        queue.retryFailed()
+        XCTAssertEqual(queue.pendingCount, 1)
+        XCTAssertEqual(queue.failedCount, 0)
+
+        // 毒消息一轮后重新回到死信（有界，不会无限循环）
+        await queue.drain { _ in throw PetJourneyError.requestFailed("拒绝") }
+        XCTAssertEqual(queue.failedCount, 1)
+    }
+
+    func testEnqueueStoresClientMessageID() async {
+        let queue = OutboundMessageQueue(petID: "pet-1", container: container)
+        queue.enqueue(text: "带上幂等键", clientMessageID: "cmid-1")
+
+        var ids: [String] = []
+        await queue.drain { message in
+            ids.append(message.clientMessageID)
+        }
+
+        XCTAssertEqual(ids, ["cmid-1"], "补发必须复用首次发送的幂等键")
     }
 
     func testExpiredCacheIsRejected() {

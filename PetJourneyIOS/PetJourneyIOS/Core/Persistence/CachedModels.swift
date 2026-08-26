@@ -19,17 +19,20 @@ final class CachedPayload {
 }
 
 /// 离线时写下的主人讯息，重连后按写入顺序补发。
+/// clientMessageID 在入队时生成、补发时复用——后端据此去重，弱网重试不会产生重复消息。
 @Model
 final class OutboundMessage {
     var petID: String
     var text: String
+    var clientMessageID: String
     var createdAt: Date
     var stateRaw: String
     var attempts: Int
 
-    init(petID: String, text: String, createdAt: Date = Date()) {
+    init(petID: String, text: String, clientMessageID: String = "", createdAt: Date = Date()) {
         self.petID = petID
         self.text = text
+        self.clientMessageID = clientMessageID
         self.createdAt = createdAt
         stateRaw = OutboundMessageState.queued.rawValue
         attempts = 0
@@ -39,7 +42,6 @@ final class OutboundMessage {
 enum OutboundMessageState: String {
     case queued
     case sending
-    case sent
     case failed
 }
 
