@@ -291,7 +291,7 @@ struct IllustratedGuideSketchStamp: View {
         }
         .padding(6)
         .rotationEffect(.degrees(3))
-        .background(Color.white.opacity(0.62))
+        .background(DesignTokens.paper.opacity(0.62))
         .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 9, style: .continuous)

@@ -357,13 +357,13 @@ extension MockPetJourneyService {
             interaction: interaction,
             cameraPerspective: .firstPersonSelfie,
             sceneAnchor: "\(place.city) · \(place.name)",
-            landmarkHints: ["真实地点附近的街巷", "低角度手机视角"],
+            landmarkHints: ["真实地点附近的街巷", "低角度镜头视角"],
             localDetailHints: ["pet face close to lens", "one paw in foreground", "screen glow", "keyboard", "drink cup"],
             crowdHints: [],
             weather: "室内有蓝色的灯，外面应该还是温暖的",
             timeOfDay: "afternoon",
             imagePrompt: "PetSoul parallel-world first-person pet selfie from TA's own phone near \(place.name). Preserve the exact pet identity from the reference photo by redrawing a complete natural new image, not a cutout or pasted sticker. Close pet face or paw in the foreground, low handheld angle, slightly imperfect framing, screen glow, keyboard, drink cup, real local background behind, warm emotional phone-photo style, no visible text, no logo, no watermark.",
-            postcardText: "我把手机举得低低的，在 \(place.name) 把这一刻留下来了。这里有键盘声和一点点像冒险的光。",
+            postcardText: "我把镜头放得低低的，在 \(place.name) 把这一刻留下来了。这里有键盘声和一点点像冒险的光。",
             safetyNotes: ["Preserve pet identity", "No official logos or readable brand marks"]
         )
     }

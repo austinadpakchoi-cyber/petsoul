@@ -262,20 +262,36 @@ struct JourneyMapView: View {
     }
 
     func journeyWorld(status: AgentStatus) -> some View {
-        TimelineView(.periodic(from: .now, by: 1.0)) { timeline in
-            let mapEvents = JourneyMapEvent.events(
-                around: viewModel.coordinate,
-                status: status,
-                dayPlan: viewModel.dayPlan,
-                remoteRoutePlan: viewModel.remoteRoutePlan
-            )
-            let routeStops = JourneyMotion.stopCoordinates(anchor: viewModel.coordinate, events: mapEvents)
-            let routeKey = JourneyMotion.routeKey(stops: routeStops)
-            let fallbackPlan = JourneyRoutePlan.fallback(key: routeKey, stops: routeStops)
-            let backendPlan = JourneyRoutePlan.backendPlan(from: viewModel.journeyPlan)
-            let routePlan = backendPlan ?? (plannedRoute.key == routeKey && plannedRoute.hasRoute ? plannedRoute : fallbackPlan)
-            let route = routePlan.coordinates
-            let movingCoordinate = JourneyMotion.stablePreviewCoordinate(route: route, fallback: viewModel.coordinate)
+        // 天/请求级派生值：事件、路线、同伴、选中项不随秒变（审计 P2-1），
+        // 提到 tick 外，只有随秒推进的坐标/活动/氛围留在 TimelineView 闭包里。
+        let mapEvents = JourneyMapEvent.events(
+            around: viewModel.coordinate,
+            status: status,
+            dayPlan: viewModel.dayPlan,
+            remoteRoutePlan: viewModel.remoteRoutePlan
+        )
+        let routeStops = JourneyMotion.stopCoordinates(anchor: viewModel.coordinate, events: mapEvents)
+        let routeKey = JourneyMotion.routeKey(stops: routeStops)
+        let fallbackPlan = JourneyRoutePlan.fallback(key: routeKey, stops: routeStops)
+        let backendPlan = JourneyRoutePlan.backendPlan(from: viewModel.journeyPlan)
+        let routePlan = backendPlan ?? (plannedRoute.key == routeKey && plannedRoute.hasRoute ? plannedRoute : fallbackPlan)
+        let route = routePlan.coordinates
+        let movingCoordinate = JourneyMotion.stablePreviewCoordinate(route: route, fallback: viewModel.coordinate)
+        let snapshotActivity = JourneyActivitySnapshot.from(
+            snapshot: viewModel.worldSnapshot,
+            journeyPlan: viewModel.journeyPlan,
+            events: mapEvents,
+            anchor: viewModel.coordinate
+        )
+        let companions = DemoCompanionPet.samples(around: mapEvents, fallback: viewModel.coordinate)
+        let selectedDisplayEvent = selectedMapEvent.flatMap { selected in
+            mapEvents.first(where: { $0.id == selected.id }) ?? selected
+        }
+        let selectedDisplayCompanion = selectedCompanion.flatMap { selected in
+            companions.first(where: { $0.id == selected.id }) ?? selected
+        }
+
+        return TimelineView(.periodic(from: .now, by: 1.0)) { timeline in
             let fallbackActivity = JourneyDaySchedule.activity(
                 date: timeline.date,
                 anchor: viewModel.coordinate,
@@ -283,22 +299,10 @@ struct JourneyMapView: View {
                 movingCoordinate: movingCoordinate,
                 scheduledTransport: viewModel.journeyPlan?.scheduledTransport ?? []
             )
-            let activity = JourneyActivitySnapshot.from(
-                snapshot: viewModel.worldSnapshot,
-                journeyPlan: viewModel.journeyPlan,
-                events: mapEvents,
-                anchor: viewModel.coordinate
-            ) ?? fallbackActivity
+            let activity = snapshotActivity ?? fallbackActivity
             let liveCoordinate = activity.liveCoordinate
             let displayCoordinate = wanderAdjustedCoordinate(for: activity, petID: status.petID, date: timeline.date)
             let liveEvent = activity.relatedEvent ?? JourneyMotion.nearestEvent(to: liveCoordinate, events: mapEvents, maxDistanceMeters: 180)
-            let selectedDisplayEvent = selectedMapEvent.flatMap { selected in
-                mapEvents.first(where: { $0.id == selected.id }) ?? selected
-            }
-            let companions = DemoCompanionPet.samples(around: mapEvents, fallback: viewModel.coordinate)
-            let selectedDisplayCompanion = selectedCompanion.flatMap { selected in
-                companions.first(where: { $0.id == selected.id }) ?? selected
-            }
 
             ZStack(alignment: .bottom) {
                 LivingJourneyMap(

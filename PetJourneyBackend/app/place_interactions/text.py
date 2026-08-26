@@ -94,7 +94,7 @@ class PlaceInteractionTextMixin:
         if interaction_type == "watching_match_at_stadium":
             return "坐在赛场外较安静的一侧，捧着小饮料听远处的欢呼声，偶尔看一眼黑红金颜色的人群"
         if interaction_type == "seaside_memory_walk":
-            return "沿着海风慢慢走，找了一块能看见海的位置坐下，把手机放低一点看风"
+            return "沿着海风慢慢走，找了一块能看见海的位置坐下，把镜头放低一点看风"
         if interaction_type == "landmark_visit":
             return "站在能看见地标轮廓的位置，回头看镜头，像是在认真确认自己真的到了这里"
         if interaction_type == "local_food_or_cafe_stop":
@@ -224,12 +224,12 @@ class PlaceInteractionTextMixin:
     ) -> str:
         if perspective == PhotoPerspective.passerby_third_person:
             return (
-                f"今天我在 {place.name} 停了一会儿。有人从旁边帮我按了一下手机，"
+                f"今天我在 {place.name} 停了一会儿。有人从旁边帮我按了一下快门，"
                 f"所以你能看到我和这里在同一张照片里。{interaction.pet_action}。"
             )
         if perspective == PhotoPerspective.first_person_selfie:
             return (
-                f"我把手机举得低低的，在 {place.name} 把这一刻留下来了。"
+                f"我把镜头举得低低的，在 {place.name} 把这一刻留下来了。"
                 f"这里的味道和声音都是真的：{interaction.pet_action}。"
             )
         return (
