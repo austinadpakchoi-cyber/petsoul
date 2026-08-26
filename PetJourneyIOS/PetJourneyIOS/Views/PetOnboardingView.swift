@@ -210,12 +210,7 @@ struct PetOnboardingView: View {
 
     private var bottomControls: some View {
         VStack(spacing: 10) {
-            Button(action: handlePrimaryAction) {
-                Label(primaryTitle, systemImage: primaryIcon)
-            }
-            .primaryActionStyle()
-            .disabled(!canUsePrimaryAction)
-            .opacity(canUsePrimaryAction ? 1 : 0.45)
+            primaryButton
 
             if step == .photo && !viewModel.hasPhoto {
                 Button {
@@ -239,6 +234,22 @@ struct PetOnboardingView: View {
         .padding(.top, 12)
         .padding(.bottom, 18)
         .background(.ultraThinMaterial)
+    }
+
+    @ViewBuilder
+    private var primaryButton: some View {
+        let button = Button(action: handlePrimaryAction) {
+            Label(primaryTitle, systemImage: primaryIcon)
+        }
+        if canUsePrimaryAction {
+            button.primaryActionStyle()
+        } else {
+            // UI/UX 审计 P2-3：禁用态不再是最重的元素——降为轻量描边样式
+            button
+                .quietActionStyle()
+                .disabled(true)
+                .opacity(0.55)
+        }
     }
 
     private var primaryTitle: String {
@@ -397,19 +408,21 @@ private struct PhotoRecognitionCard: View {
                         .opacity(0.54)
                 }
 
-                VStack {
-                    Spacer()
-                    HStack {
-                        Label(photoData == nil ? "上传 TA 的照片" : scanPhase, systemImage: photoData == nil ? "photo.badge.plus" : "faceid")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(photoData == nil ? DesignTokens.ink : .white)
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 14)
-                            .background(photoData == nil ? DesignTokens.surface.opacity(0.86) : DesignTokens.ink.opacity(0.68))
-                            .clipShape(Capsule())
+                if photoData != nil {
+                    VStack {
                         Spacer()
+                        HStack {
+                            Label(scanPhase, systemImage: "faceid")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 14)
+                                .background(DesignTokens.ink.opacity(0.68))
+                                .clipShape(Capsule())
+                            Spacer()
+                        }
+                        .padding(14)
                     }
-                    .padding(14)
                 }
             }
             .overlay {
@@ -504,13 +517,19 @@ private struct RecognitionBadge: View {
     var isActive: Bool
 
     var body: some View {
-        Label(title, systemImage: isActive ? "checkmark.circle.fill" : "circle")
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(isActive ? DesignTokens.sage : DesignTokens.secondaryInk)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 9)
-            .background(DesignTokens.surface.opacity(0.72))
-            .clipShape(Capsule())
+        // UI/UX 审计 P2-3：完成度指示改用进度点，不再是可勾选的外形
+        HStack(spacing: 7) {
+            Circle()
+                .fill(isActive ? DesignTokens.sage : DesignTokens.secondaryInk.opacity(0.32))
+                .frame(width: 6, height: 6)
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(isActive ? DesignTokens.sage : DesignTokens.secondaryInk)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 9)
+        .background(DesignTokens.surface.opacity(0.72))
+        .clipShape(Capsule())
     }
 }
 
