@@ -204,7 +204,8 @@ class CommunicatorApiTests(PetJourneyApiTestBase):
         self.assertEqual(repeated_payload["intent"], "PHOTO_REQUEST")
         self.assertEqual(repeated_payload["reply_policy"]["mode"], "no_reply_needed")
         self.assertTrue(repeated_payload["reply_policy"]["cooldown_applied"])
-        self.assertEqual(repeated_payload["messages"][0]["attachments"][0]["type"], "photo_status_card")
+        # P1-1：冷却文案由气泡承载，不再挂同义状态卡（单块、不重复）
+        self.assertEqual(repeated_payload["messages"][0]["attachments"], [])
 
         messages = self.client.get(f"/api/v1/pets/{pet_id}/communicator/messages")
         self.assertEqual(messages.status_code, 200)
@@ -316,3 +317,32 @@ class CommunicatorApiTests(PetJourneyApiTestBase):
         self.assertEqual(memories.status_code, 200)
         self.assertTrue(any(item["kind"] == "owner_photo_share" for item in memories.json()))
 
+
+    def test_photo_reply_does_not_duplicate_bubble_and_card(self) -> None:
+        pet_id = self.create_pet()
+
+        visual = self.client.post(
+            f"/api/v1/pets/{pet_id}/communicator/messages",
+            json={"text": "你现在干嘛？"},
+        )
+        self.assertEqual(visual.status_code, 200)
+        payload = visual.json()
+
+        # 收集本轮所有「文字块」（气泡 + 附件卡正文），不允许逐字重复
+        blocks: list[str] = []
+        for message in payload["messages"]:
+            blocks.append(message["text"])
+            for attachment in message["attachments"]:
+                if attachment["text"]:
+                    blocks.append(attachment["text"])
+        self.assertEqual(len(blocks), len(set(blocks)), f"同一轮回应不允许重复文案: {blocks}")
+
+        # 单条消息的附件卡不超过 1 块（≤2 块上限：气泡 + 至多一张卡）
+        for message in payload["messages"]:
+            self.assertLessEqual(len(message["attachments"]), 1)
+
+        # 卡片正文若为空，话语必须由气泡承载（visible_status 非空）
+        for message in payload["messages"]:
+            for attachment in message["attachments"]:
+                if not attachment["text"]:
+                    self.assertTrue(message["text"], "空正文卡必须有气泡话语承载")

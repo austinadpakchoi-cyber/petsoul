@@ -56,21 +56,13 @@ class CommunicatorAttachmentPlanner:
             return attachments
 
         if intent == CommunicatorIntent.confirm_pending_photo:
-            attachments.append(self._location_card(world))
+            # 确认已存在的拍照承诺：回复本身已承载，不再挂卡（≤2 块上限）
             return attachments
 
         if intent in PHOTO_INTENTS:
             if policy.cooldown_applied:
-                attachments.append(
-                    CommunicatorAttachment(
-                        type=AttachmentType.photo_status_card,
-                        title="刚刚才拍过",
-                        text="TA 还在同一个地方，等走到新的地方再拍给你。",
-                        state=AttachmentState.planned,
-                        location=world.location,
-                        metadata={"scene_hash": world.scene_hash},
-                    )
-                )
+                # 正文（visible_status）已经说了「刚刚才拍过」，不再挂同义卡
+                return attachments
             elif policy.mode == ReplyMode.immediate and world.can_generate_photo:
                 attachments.append(
                     CommunicatorAttachment(
@@ -94,7 +86,8 @@ class CommunicatorAttachmentPlanner:
                     CommunicatorAttachment(
                         type=AttachmentType.pending_photo_request,
                         title="晚点拍给你",
-                        text=policy.visible_status,
+                        # 话语由气泡（visible_status）承载，卡不重复同一句话
+                        text="",
                         state=AttachmentState.planned,
                         location=world.location,
                         available_after=now + timedelta(seconds=max(60, policy.estimated_reply_seconds)),
@@ -106,13 +99,13 @@ class CommunicatorAttachmentPlanner:
                     CommunicatorAttachment(
                         type=AttachmentType.photo_status_card,
                         title="现在不方便拍",
-                        text=policy.visible_status,
+                        text="",
                         state=AttachmentState.planned,
                         location=world.location,
                         metadata={"scene_hash": world.scene_hash},
                     )
                 )
-            attachments.append(self._location_card(world))
+            # 位置卡只在用户明确问位置（location_check）时出现，避免三块堆叠
             return attachments
 
         sticker = self.sticker_library.select(intent=intent, energy=world.energy)
@@ -130,12 +123,44 @@ class CommunicatorAttachmentPlanner:
         return attachments
 
     def _location_card(self, world: CommunicatorWorldSnapshot) -> CommunicatorAttachment:
-        place = f"{world.city}{' · ' + world.place_name if world.place_name else ''}"
+        # 「城市 · 地点」去重：地点名已含城市名（如「洛杉矶国际机场」）时不重复前缀
+        place_name = world.place_name or ""
+        if world.city and world.city not in place_name:
+            place = f"{world.city} · {place_name}" if place_name else world.city
+        else:
+            place = place_name or world.city
+        # 气象串不进对话：结构化数值留给地图/状态区，卡上只留 TA 能说出口的体感
+        feeling = pet_voice_weather(world.weather)
+        text = f"{place}。{feeling}" if feeling else place
         return CommunicatorAttachment(
             type=AttachmentType.location_card,
             title="TA 此刻的位置",
-            text=f"{place}。{world.weather}",
+            text=text,
             state=AttachmentState.ready,
             location=world.location,
             metadata={"scene_hash": world.scene_hash},
         )
+
+
+def pet_voice_weather(weather: str) -> str | None:
+    """把气象串转成宠物能说出口的第一人称体感（UI/UX 审计 P1-2）。
+
+    报体感、不报数值：结构化气象（温度/湿度/风力）只用于地图与状态区，
+    对话里只出现 TA 的感知。识别不了的天气给一句不暴露机制的兜底。
+    """
+    text = weather or ""
+    if not text.strip():
+        return None
+    if any(marker in text for marker in ("雨", "rain", "storm")):
+        return "外面在下雨，我找了个能躲雨的地方"
+    if any(marker in text for marker in ("雪", "snow")):
+        return "外面飘着雪，我走得慢了一点"
+    if any(marker in text for marker in ("风", "wind")):
+        return "风有点大，耳朵一直轻轻动"
+    if any(marker in text for marker in ("多云", "cloud")):
+        return "云很多，光线软软的"
+    if any(marker in text for marker in ("晴", "sun")):
+        return "太阳很好，晒得暖暖的"
+    if any(marker in text for marker in ("雾", "fog")):
+        return "雾有点浓，我走得更小心了"
+    return "天气刚刚好，不冷不热"

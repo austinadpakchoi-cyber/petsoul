@@ -7,7 +7,7 @@ from typing import Any
 from ..memory_store import MemoryStore
 from ..schemas import JourneyThought, OwnerMessageResponse
 from ..storage import JourneyStorage, utcnow
-from .attachment_planner import CommunicatorAttachmentPlanner
+from .attachment_planner import CommunicatorAttachmentPlanner, pet_voice_weather
 from .intent_router import CommunicatorIntentRouter
 from .message_store import CommunicatorMessageStore, new_message_id, new_pending_id
 from .moment_generator import CommunicatorMomentGenerator
@@ -614,7 +614,8 @@ class PetCommunicatorEngine:
         if any(marker in place for marker in ("车", "路", "桥")):
             return "路边的光一下一下过去"
         if world.weather:
-            return f"{world.weather}，这一刻还算安静"
+            feeling = pet_voice_weather(world.weather)
+            return f"{feeling}，这一刻还算安静" if feeling else "这一刻还算安静"
         return "这一刻还算安静"
 
     def _record_pet_reply(self, *, pet_id: str, intent: CommunicatorIntent, text: str) -> JourneyThought:
