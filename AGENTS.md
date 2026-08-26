@@ -59,3 +59,4 @@ pip install -r requirements.txt   # 首次
 - 用 git 分支隔离各自的工作，小步提交；合并前跑对应测试。
 - 分工建议按模块/目录切，尤其不要同时改 `CommunicatorViews.swift`、`JourneyMapView.swift`、`SecondaryViews.swift` 这三个大文件。
 - 对世界观/文案有疑问时，宁可保守：不确定的机制描述不要写进用户可见文案。
+- 分支清理（2026-08-26 起为硬规则）：每一个完成合入 main 的分支必须及时清理——本地 `git branch -d <branch>` 与远端 `git push origin --delete <branch>` 同时删除（用 `-d` 而非 `-D`，它会在分支未完全合入时拒绝删除，是安全网；若 `-d` 报错先查清楚，不要改用 `-D`）。定期自查 `git branch --merged main` 与 `git branch -r --merged main` 应为空。
