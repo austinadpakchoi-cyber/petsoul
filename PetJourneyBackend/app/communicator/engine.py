@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sqlite3
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -69,6 +70,11 @@ class PetCommunicatorEngine:
         if not clean:
             raise ValueError("empty communicator message")
         pet = self._pet(pet_id)
+        client_message_id = (request.client_message_id or "").strip() or None
+        if client_message_id:
+            replayed = self._replay_response(pet_id=pet_id, client_message_id=client_message_id)
+            if replayed:
+                return replayed
         now = utcnow()
         world = self._world(pet_id)
         intent = self.intent_router.route(clean)
@@ -97,9 +103,18 @@ class PetCommunicatorEngine:
             message_state=UserMessageState.delivered,
             reply_policy=policy,
             attachments=[],
+            client_message_id=client_message_id,
             created_at=now,
         )
-        self.message_store.add_message(owner_message)
+        try:
+            self.message_store.add_message(owner_message)
+        except sqlite3.IntegrityError:
+            # 并发重试撞上唯一索引：回放首次的响应
+            if client_message_id:
+                replayed = self._replay_response(pet_id=pet_id, client_message_id=client_message_id)
+                if replayed:
+                    return replayed
+            raise
 
         attachments = self.attachment_planner.plan(intent=intent, world=world, policy=policy, now=now)
         messages: list[CommunicatorMessage] = []
@@ -200,8 +215,14 @@ class PetCommunicatorEngine:
         image_url: str,
         media_path: str,
         caption: str | None = None,
+        client_message_id: str | None = None,
     ) -> CommunicatorSendResponse:
         pet = self._pet(pet_id)
+        client_message_id = (client_message_id or "").strip() or None
+        if client_message_id:
+            replayed = self._replay_response(pet_id=pet_id, client_message_id=client_message_id)
+            if replayed:
+                return replayed
         now = utcnow()
         world = self._world(pet_id)
         clean = " ".join((caption or "").strip().split())
@@ -230,9 +251,17 @@ class PetCommunicatorEngine:
             message_state=UserMessageState.delivered,
             reply_policy=policy,
             attachments=[owner_attachment],
+            client_message_id=client_message_id,
             created_at=now,
         )
-        self.message_store.add_message(owner_message)
+        try:
+            self.message_store.add_message(owner_message)
+        except sqlite3.IntegrityError:
+            if client_message_id:
+                replayed = self._replay_response(pet_id=pet_id, client_message_id=client_message_id)
+                if replayed:
+                    return replayed
+            raise
 
         reply_text = self._owner_photo_reply(caption=clean, world=world)
         pet_message = CommunicatorMessage(
@@ -266,7 +295,19 @@ class PetCommunicatorEngine:
             pending_request=None,
         )
 
-    def legacy_owner_message(self, *, pet_id: str, message: str, intent_hint: str | None = None) -> OwnerMessageResponse:
+    def legacy_owner_message(
+        self,
+        *,
+        pet_id: str,
+        message: str,
+        intent_hint: str | None = None,
+        client_message_id: str | None = None,
+    ) -> OwnerMessageResponse:
+        client_message_id = (client_message_id or "").strip() or None
+        if client_message_id:
+            replayed = self._replay_legacy_response(pet_id=pet_id, client_message_id=client_message_id)
+            if replayed:
+                return replayed
         legacy = self.journey_engine.owner_message(pet_id=pet_id, message=message, intent_hint=intent_hint)
         now = utcnow()
         owner_message = CommunicatorMessage(
@@ -276,22 +317,80 @@ class PetCommunicatorEngine:
             text=message,
             intent=CommunicatorIntent.general_chat,
             message_state=UserMessageState.delivered,
+            client_message_id=client_message_id,
             created_at=now,
         )
-        self.message_store.add_message(owner_message)
-        self.message_store.add_message(
-            CommunicatorMessage(
-                id=new_message_id(),
-                pet_id=pet_id,
-                sender=MessageSender.pet,
-                text=legacy.message,
-                intent=CommunicatorIntent.general_chat,
-                message_state=PetReplyState.sent,
-                related_message_id=owner_message.id,
-                created_at=now,
+        try:
+            self.message_store.add_message(owner_message)
+            self.message_store.add_message(
+                CommunicatorMessage(
+                    id=new_message_id(),
+                    pet_id=pet_id,
+                    sender=MessageSender.pet,
+                    text=legacy.message,
+                    intent=CommunicatorIntent.general_chat,
+                    message_state=PetReplyState.sent,
+                    related_message_id=owner_message.id,
+                    created_at=now,
+                )
             )
-        )
+        except sqlite3.IntegrityError:
+            if client_message_id:
+                replayed = self._replay_legacy_response(pet_id=pet_id, client_message_id=client_message_id)
+                if replayed:
+                    return replayed
+            raise
         return legacy
+
+    def _replay_response(
+        self,
+        *,
+        pet_id: str,
+        client_message_id: str,
+    ) -> CommunicatorSendResponse | None:
+        """同一 client_message_id 的重发（客户端超时误判失败）直接返回首次的响应，不再生成新消息。"""
+        owner = self.message_store.find_by_client_message_id(pet_id, client_message_id)
+        if owner is None:
+            return None
+        messages = self.message_store.list_replies(pet_id, owner.id)
+        pending = self.message_store.find_pending_by_source(pet_id, owner.id)
+        policy = owner.reply_policy or ReplyPolicy(
+            mode=ReplyMode.immediate,
+            estimated_reply_seconds=6,
+            visible_status="收到了。",
+            reason_code="replayed_without_policy",
+        )
+        return CommunicatorSendResponse(
+            success=True,
+            intent=owner.intent or CommunicatorIntent.general_chat,
+            reply_policy=policy,
+            owner_message=owner,
+            messages=messages,
+            pending_request=pending,
+        )
+
+    def _replay_legacy_response(
+        self,
+        *,
+        pet_id: str,
+        client_message_id: str,
+    ) -> OwnerMessageResponse | None:
+        owner = self.message_store.find_by_client_message_id(pet_id, client_message_id)
+        if owner is None:
+            return None
+        replies = self.message_store.list_replies(pet_id, owner.id)
+        reply = replies[-1] if replies else None
+        return OwnerMessageResponse(
+            success=True,
+            decision="replayed",
+            message=reply.text if reply else owner.text,
+            thought=JourneyThought(
+                id=reply.id if reply else owner.id,
+                text=reply.text if reply else "",
+                timestamp=reply.created_at if reply else owner.created_at,
+                tone="replayed",
+            ),
+        )
 
     def list_messages(self, *, pet_id: str, limit: int = 80) -> list[CommunicatorMessage]:
         self._pet(pet_id)

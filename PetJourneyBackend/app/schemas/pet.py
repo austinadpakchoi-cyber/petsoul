@@ -231,6 +231,8 @@ class FeedbackResponse(PetJourneyBaseModel):
 class OwnerMessageRequest(PetJourneyBaseModel):
     message: str = Field(min_length=1, max_length=500)
     intent_hint: str | None = None
+    # 客户端生成、重发复用的幂等键：同 (pet_id, client_message_id) 只处理一次
+    client_message_id: str | None = None
 
 
 class OwnerIntentResult(PetJourneyBaseModel):

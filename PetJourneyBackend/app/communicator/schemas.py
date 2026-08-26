@@ -179,6 +179,7 @@ class CommunicatorMessage(PetJourneyBaseModel):
     reply_policy: ReplyPolicy | None = None
     attachments: list[CommunicatorAttachment] = Field(default_factory=list)
     related_message_id: str | None = None
+    client_message_id: str | None = None
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -186,6 +187,8 @@ class CommunicatorMessage(PetJourneyBaseModel):
 class CommunicatorSendRequest(PetJourneyBaseModel):
     text: str = Field(min_length=1, max_length=500)
     client_time: datetime | None = None
+    # 客户端生成、重发复用的幂等键：同 (pet_id, client_message_id) 只处理一次
+    client_message_id: str | None = None
 
 
 class CommunicatorSendResponse(PetJourneyBaseModel):

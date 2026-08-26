@@ -330,6 +330,11 @@ class SchemaInitializerMixin:
             self._ensure_column(conn, "souvenirs", "version", "INTEGER NOT NULL DEFAULT 1")
             self._ensure_column(conn, "souvenirs", "updated_at", "TEXT")
             self._ensure_column(conn, "souvenirs", "origin_event_id", "TEXT")
+            self._ensure_column(conn, "communicator_messages", "client_message_id", "TEXT")
+            conn.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_communicator_messages_pet_client "
+                "ON communicator_messages (pet_id, client_message_id) WHERE client_message_id IS NOT NULL"
+            )
             conn.execute("CREATE INDEX IF NOT EXISTS idx_postcards_pet_mission ON postcards (pet_id, mission_id)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_memories_pet_type_seen ON memories (pet_id, memory_type, last_seen_at)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_engine_traces_pet_started ON engine_traces (pet_id, started_at DESC)")

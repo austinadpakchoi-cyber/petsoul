@@ -45,6 +45,52 @@ class CommunicatorApiTests(PetJourneyApiTestBase):
         self.assertEqual(orphan_deliveries.status_code, 200)
         self.assertEqual(len(orphan_deliveries.json()), 0)
 
+    def test_communicator_client_message_id_dedup_replays_first_response(self) -> None:
+        pet_id = self.create_pet()
+
+        first = self.client.post(
+            f"/api/v1/pets/{pet_id}/communicator/messages",
+            json={"text": "你今天在哪呀", "client_message_id": "cmid-1"},
+        )
+        self.assertEqual(first.status_code, 200)
+        first_owner_id = first.json()["owner_message"]["id"]
+
+        replay = self.client.post(
+            f"/api/v1/pets/{pet_id}/communicator/messages",
+            json={"text": "你今天在哪呀", "client_message_id": "cmid-1"},
+        )
+        self.assertEqual(replay.status_code, 200)
+        # 同一幂等键：回放首次的响应，不生成新消息
+        self.assertEqual(replay.json()["owner_message"]["id"], first_owner_id)
+
+        listed = self.client.get(f"/api/v1/pets/{pet_id}/communicator/messages")
+        owner_messages = [
+            item for item in listed.json() if item["sender"] == "owner" and item["text"] == "你今天在哪呀"
+        ]
+        self.assertEqual(len(owner_messages), 1, "重发不得产生重复的主人消息")
+
+    def test_legacy_owner_message_dedup_does_not_duplicate(self) -> None:
+        pet_id = self.create_pet()
+
+        first = self.client.post(
+            f"/api/v1/pets/{pet_id}/messages",
+            json={"message": "想你了", "client_message_id": "legacy-cmid-1"},
+        )
+        self.assertEqual(first.status_code, 200)
+
+        replay = self.client.post(
+            f"/api/v1/pets/{pet_id}/messages",
+            json={"message": "想你了", "client_message_id": "legacy-cmid-1"},
+        )
+        self.assertEqual(replay.status_code, 200)
+        self.assertTrue(replay.json()["success"])
+
+        listed = self.client.get(f"/api/v1/pets/{pet_id}/communicator/messages")
+        owner_messages = [
+            item for item in listed.json() if item["sender"] == "owner" and item["text"] == "想你了"
+        ]
+        self.assertEqual(len(owner_messages), 1, "弱网重试不得重复落库")
+
     def test_generate_selfie_creates_postcard_and_memory(self) -> None:
         response = self.client.post("/api/v1/demo/frenchie")
         self.assertEqual(response.status_code, 200)

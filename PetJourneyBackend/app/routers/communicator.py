@@ -32,6 +32,7 @@ def owner_message(
             pet_id=pet_id,
             message=request.message,
             intent_hint=request.intent_hint,
+            client_message_id=request.client_message_id,
         )
     )
 
@@ -52,6 +53,7 @@ async def send_communicator_photo(
     pet_id: str,
     text: str = Form(default=""),
     image: UploadFile = File(...),
+    client_message_id: str = Form(default=""),
     settings=Depends(get_settings),
     communicator_engine=Depends(get_communicator_engine),
 ) -> CommunicatorSendResponse:
@@ -67,6 +69,7 @@ async def send_communicator_photo(
             image_url=image_url,
             media_path=media_path,
             caption=text,
+            client_message_id=client_message_id,
         )
     )
 
