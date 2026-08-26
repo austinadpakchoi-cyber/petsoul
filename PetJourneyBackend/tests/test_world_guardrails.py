@@ -140,3 +140,34 @@ class StoryTickerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CityTimezoneTests(unittest.TestCase):
+    """UI/UX 审计 P0-2：地图昼夜跟 TA 所在地的时间，而不是主人设备时区。"""
+
+    def test_local_wall_time_xiamen_is_utc_plus_8(self) -> None:
+        from datetime import datetime, timezone
+
+        from app.city_timezones import local_wall_time
+
+        utc_now = datetime(2026, 7, 4, 16, 30, tzinfo=timezone.utc)
+        wall = local_wall_time(utc_now, "厦门")
+        self.assertEqual((wall.hour, wall.minute), (0, 30))  # 16:30 UTC → 次日 00:30 厦门
+
+    def test_local_wall_time_la_is_pacific(self) -> None:
+        from datetime import datetime, timezone
+
+        from app.city_timezones import local_wall_time
+
+        utc_now = datetime(2026, 7, 4, 16, 30, tzinfo=timezone.utc)
+        wall = local_wall_time(utc_now, "洛杉矶")
+        self.assertEqual((wall.hour, wall.minute), (9, 30))  # 夏令时 PDT = UTC-7
+
+    def test_unknown_city_falls_back_to_shanghai(self) -> None:
+        from datetime import datetime, timezone
+
+        from app.city_timezones import local_wall_time
+
+        utc_now = datetime(2026, 7, 4, 16, 0, tzinfo=timezone.utc)
+        wall = local_wall_time(utc_now, "某个不存在的小镇")
+        self.assertEqual(wall.hour, 0)

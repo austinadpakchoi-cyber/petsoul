@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import uuid4
 
+from ..city_timezones import local_wall_time
 from ..config import Settings
 from ..meal_rules import is_place_plausible_at
 from ..memory_store import MemoryStore
@@ -55,7 +56,7 @@ class PetLifeTickMixin:
             pet_id=pet.pet_id,
             city=activity.city or city.name,
             weather=snapshot.weather,
-            local_time=now,
+            local_time=local_wall_time(now, activity.city or city.name),
             current_activity=activity,
             nearby_places=nearby_places,
             active_transport=snapshot.active_transport,

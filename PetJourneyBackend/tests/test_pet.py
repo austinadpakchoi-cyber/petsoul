@@ -142,3 +142,14 @@ class PetLifecycleApiTests(PetJourneyApiTestBase):
         self.assertTrue(mission_payload["remote_configured"])
         self.assertEqual(mission_payload["photo_mission_model"], "deepseek-chat")
 
+
+    def test_world_snapshot_local_time_follows_city_timezone(self) -> None:
+        from datetime import datetime, timezone
+
+        pet_id = self.create_pet()  # 默认旅程从厦门开始（UTC+8）
+        response = self.client.get(f"/api/v1/pets/{pet_id}/world_snapshot")
+        self.assertEqual(response.status_code, 200)
+        local_time = response.json()["life_tick"]["observation"]["local_time"]
+        hour = int(local_time.split("T")[1].split(":")[0])
+        utc_hour = datetime.now(timezone.utc).hour
+        self.assertEqual((hour - utc_hour) % 24, 8, f"厦门当地墙上时间应为 UTC+8（local_time={local_time}）")
