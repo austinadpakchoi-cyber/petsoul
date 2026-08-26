@@ -52,9 +52,11 @@ enum DesignTokens {
         static let duskMauve = Color(hex: 0x8A5A78)
         static let duskEmber = Color(hex: 0xE0956B)
         static let duskCream = Color(hex: 0xF6E3CE)
-        static let nightDeep = Color(hex: 0x131E36)
-        static let nightMid = Color(hex: 0x1E2A44)
-        static let nightSoft = Color(hex: 0x2A3752)
+        // 夜间对齐设计系统的「灯下暖夜」深暖绿炭底（porcelain.dark 0x131917 /
+        // mist.dark 0x1A2320 的色相族）：G 通道最高，不再是冷海军蓝。
+        static let nightDeep = Color(hex: 0x1A2A24)
+        static let nightMid = Color(hex: 0x24342C)
+        static let nightSoft = Color(hex: 0x34443A)
         static let horizonGlow = Color(hex: 0xF8F2EA)
         static let nightStarlight = Color(hex: 0xFDF6DC)
     }
