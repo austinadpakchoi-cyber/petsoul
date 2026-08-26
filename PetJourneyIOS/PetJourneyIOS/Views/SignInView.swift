@@ -84,7 +84,12 @@ struct SignInView: View {
                 .padding(.horizontal, DesignTokens.pagePadding)
 
                 Spacer()
-                Spacer()
+
+                // P2-2：底部留白用一句世界的话收住，读作「呼吸」而不是「没加载完」
+                Text("TA 在另一端的日常，一直在继续。")
+                    .font(.footnote)
+                    .foregroundStyle(DesignTokens.secondaryInk.opacity(0.85))
+                    .padding(.bottom, 22)
             }
         }
     }

@@ -20,6 +20,9 @@ struct PetPickerView: View {
             .opacity(0.42)
 
             VStack(spacing: 0) {
+                // P2-2：内容向视觉中心收拢，空态不「断开」
+                Spacer(minLength: 20)
+
                 VStack(spacing: 10) {
                     Text("TA 在这里")
                         .font(.system(size: 32, weight: .semibold, design: .rounded))
@@ -76,7 +79,7 @@ struct PetPickerView: View {
                 .lineSpacing(5)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 48)
+        .padding(.vertical, 36)
         .padding(.horizontal, DesignTokens.pagePadding)
     }
 
