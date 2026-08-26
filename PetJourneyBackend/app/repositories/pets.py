@@ -64,4 +64,5 @@ class PetRepositoryMixin:
             dna=PetDNA.model_validate(json.loads(row["dna_json"])),
             created_at=parse_dt(row["created_at"]),
             photo_path=row["photo_path"],
+            owner_user_id=row["owner_user_id"],
         )

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import suppress
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from .config import Settings
@@ -12,6 +13,16 @@ from .storage import JourneyStorage, utcnow
 
 if TYPE_CHECKING:
     from .agent_engine import JourneyEngine
+
+
+# 提醒节流（秒）：同一宠物同一类别的最小推送间隔。
+# 宠物世界每 tick 都可能产生新想法，逐条推送会变成骚扰；
+# 回信（message）稀有且重要，不节流。
+NOTIFY_INTERVAL_BY_CATEGORY: dict[str, int] = {
+    "thought": 600,
+    "postcard": 600,
+    "message": 0,
+}
 
 
 class BackgroundAgentScheduler:
@@ -66,7 +77,9 @@ class BackgroundAgentScheduler:
 
     def tick(self) -> SchedulerTickResult:
         started_at = utcnow()
-        pets = self.storage.list_pets()
+        # 只推进「有主人」的宠物：未认领的孤儿/演示宠物不再产生事件与提醒，
+        # 也避免向早已不在这位主人名下的宠物推送（数据跟账号走）。
+        pets = [pet for pet in self.storage.list_pets() if pet.owner_user_id]
         agent_turns = 0
         notifications_sent = 0
         errors: list[str] = []
@@ -83,25 +96,23 @@ class BackgroundAgentScheduler:
 
                 if latest_postcard and latest_postcard.id != before_postcard_id:
                     agent_turns += 1
-                    deliveries = self.notification_dispatcher.send_to_pet(
-                        pet.pet_id,
+                    notifications_sent += self._notify_throttled(
+                        pet,
+                        category="postcard",
                         title=f"{pet.name} 发来一张照片",
                         body=self._preview(latest_postcard.text),
-                        category="postcard",
                         data={"postcard_id": latest_postcard.id, "location": latest_postcard.location},
                     )
-                    notifications_sent += self._sent_count(deliveries)
                     self._remember_postcard(pet.pet_id, pet.name, latest_postcard)
                 elif latest_thought and latest_thought.id != before_thought_id:
                     agent_turns += 1
-                    deliveries = self.notification_dispatcher.send_to_pet(
-                        pet.pet_id,
+                    notifications_sent += self._notify_throttled(
+                        pet,
+                        category="thought",
                         title=f"{pet.name} 有新的声音",
                         body=self._preview(latest_thought.animal_text or latest_thought.text),
-                        category="thought",
                         data={"thought_id": latest_thought.id, "tone": latest_thought.tone},
                     )
-                    notifications_sent += self._sent_count(deliveries)
                     self._remember_thought(pet.pet_id, pet.name, latest_thought)
 
                 # 通讯器延迟回复（pending_resolver 在 advance_status 里兑现）到货时单独提醒。
@@ -110,14 +121,13 @@ class BackgroundAgentScheduler:
                     and latest_pet_message.id != before_message_id
                     and before_message_id is not None
                 ):
-                    deliveries = self.notification_dispatcher.send_to_pet(
-                        pet.pet_id,
+                    notifications_sent += self._notify_throttled(
+                        pet,
+                        category="message",
                         title=f"{pet.name} 回信了",
                         body=self._preview(latest_pet_message.text),
-                        category="message",
                         data={"message_id": latest_pet_message.id},
                     )
-                    notifications_sent += self._sent_count(deliveries)
 
                 if latest_thought:
                     self._set_latest_state_key(pet.pet_id, "thought", latest_thought.id)
@@ -167,6 +177,43 @@ class BackgroundAgentScheduler:
 
     def _set_latest_state_key(self, pet_id: str, kind: str, value: str) -> None:
         self.storage.set_scheduler_state(f"pet:{pet_id}:latest_{kind}_id", value)
+
+    def _notify_throttled(
+        self,
+        pet,
+        *,
+        category: str,
+        title: str,
+        body: str,
+        data: dict[str, object] | None = None,
+    ) -> int:
+        """按类别节流推送：同一宠物短时间内不重复打扰（回信除外）。
+
+        节流只拦推送，宠物世界照常推进、记忆照常沉淀——主人打开 App 仍能看到。
+        """
+        interval_seconds = NOTIFY_INTERVAL_BY_CATEGORY.get(category, 0)
+        if interval_seconds > 0:
+            key = f"pet:{pet.pet_id}:last_notified_{category}"
+            last = self.storage.get_scheduler_state(key)
+            if last:
+                try:
+                    last_at = datetime.fromisoformat(last)
+                    if (utcnow() - last_at).total_seconds() < interval_seconds:
+                        return 0
+                except (TypeError, ValueError):
+                    pass
+        deliveries = self.notification_dispatcher.send_to_pet(
+            pet.pet_id,
+            title=title,
+            body=body,
+            category=category,
+            data=data,
+        )
+        self.storage.set_scheduler_state(
+            f"pet:{pet.pet_id}:last_notified_{category}",
+            utcnow().isoformat(),
+        )
+        return self._sent_count(deliveries)
 
     def _sent_count(self, deliveries) -> int:
         return sum(1 for item in deliveries if item.status in {"sent", "mock_sent"})

@@ -5,6 +5,14 @@ class CommunicatorApiTests(PetJourneyApiTestBase):
 
     def test_scheduler_tick_registers_push_and_records_notification(self) -> None:
         pet_id = self.create_pet()
+        # 提醒只属于「有主人」的宠物：先认领，再验证调度器会推进并推送。
+        from pathlib import Path
+        from app.storage import JourneyStorage
+
+        storage = JourneyStorage(Path(self.tempdir.name) / "petjourney.sqlite3")
+        user, _ = storage.upsert_user_by_apple_sub("sub-notify-test", None, "测试主人")
+        storage.claim_pet(pet_id, user.user_id)
+        orphan_pet_id = self.create_pet()  # 无主宠物不应被推进
 
         registration = self.client.post(
             "/api/v1/push/register",
@@ -22,6 +30,7 @@ class CommunicatorApiTests(PetJourneyApiTestBase):
         self.assertEqual(tick.status_code, 200)
         tick_payload = tick.json()
         self.assertEqual(tick_payload["provider"], "background-agent-scheduler")
+        # 只推进认领过的宠物（孤儿宠物不进调度器）
         self.assertEqual(tick_payload["pets_seen"], 1)
         self.assertGreaterEqual(tick_payload["agent_turns"], 1)
         self.assertGreaterEqual(tick_payload["notifications_sent"], 1)
@@ -31,6 +40,10 @@ class CommunicatorApiTests(PetJourneyApiTestBase):
         self.assertEqual(deliveries.status_code, 200)
         self.assertGreaterEqual(len(deliveries.json()), 1)
         self.assertEqual(deliveries.json()[0]["status"], "mock_sent")
+
+        orphan_deliveries = self.client.get(f"/api/v1/pets/{orphan_pet_id}/notifications")
+        self.assertEqual(orphan_deliveries.status_code, 200)
+        self.assertEqual(len(orphan_deliveries.json()), 0)
 
     def test_generate_selfie_creates_postcard_and_memory(self) -> None:
         response = self.client.post("/api/v1/demo/frenchie")

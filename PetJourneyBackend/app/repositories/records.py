@@ -20,6 +20,7 @@ class PetRecord:
     dna: PetDNA
     created_at: datetime
     photo_path: str | None
+    owner_user_id: str | None = None
 
 
 class EconomyStorageConflict(Exception):
