@@ -41,7 +41,7 @@ schemas / utils / config 是公共底层：只允许 import schemas、标准库�
 
 **iOS 类型归属**：
 
-- `Views/` **只放 SwiftUI View**（含 `UIViewRepresentable`/`UIViewControllerRepresentable`）。领域模型、枚举、构建器、布局几何辅助一律进 `Models/`（或新建 `Presentation/`）。
+- `Views/` **只放 View 类型**：SwiftUI View（含 `UIViewRepresentable`/`UIViewControllerRepresentable`）与 UIKit 视图子类（`UIControl`/`MKAnnotationView` 等）。领域模型、枚举、构建器、布局几何辅助一律进 `Models/`（或新建 `Presentation/`）。
 - ViewModel 进 `ViewModels/`，一个 ViewModel 一个职责面；**跨文件 extension 拆分不能替代职责拆分**——`arch_gate.py` 已按类型名跨文件归并体量（阈值 600 行 / 25 定义），超标的「待拆分」清单会出现在门禁输出里，拆分后自动消失。
 - 新文件照旧必须 `scripts/register_swift_file.py` 登记 pbxproj；迁移文件 = 移动 + 登记，不要顺手改逻辑。
 

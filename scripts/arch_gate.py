@@ -7,8 +7,10 @@
 
 1. 跨文件类型体量：Swift 按类型名归并 struct/class/enum/extension，Python 按
    同名 class 归并，合并行数/定义数超标即红——拆文件绕不过去；
-2. Views 纯净度：Views/ 目录只允许 SwiftUI View（含 UIViewRepresentable），
-   领域模型/枚举/构建器不得再放进来（架构审计 P1-1）。
+2. Views 纯净度：Views/ 目录只允许 View 类型——SwiftUI View（含
+   UIViewRepresentable / UIViewControllerRepresentable）与 UIKit 视图子类
+   （UIControl / MKAnnotationView 等）；领域模型/枚举/构建器不得再放进来
+   （架构审计 P1-1）。
 
 用法：
     python scripts/arch_gate.py                  # 从仓库根运行，用默认阈值
@@ -166,6 +168,29 @@ VIEW_DECL_RE = re.compile(
 )
 
 
+# Views/ 下视为「View 层」的声明：
+# - SwiftUI View / UIViewRepresentable / UIViewControllerRepresentable
+# - UIKit 视图子类（UIControl、MKAnnotationView 等同样是视图层，不是领域模型）
+VIEW_BASE_TOKENS = (
+    ": View",
+    "UIViewRepresentable",
+    "UIViewControllerRepresentable",
+    ": UIControl",
+    ": UIView",
+    ": MKAnnotationView",
+    ": MKMarkerAnnotationView",
+    ": MKOverlayRenderer",
+    ": MKOverlayView",
+    ": UIButton",
+    ": UILabel",
+    ": UIImageView",
+    ": UITableViewCell",
+    ": UICollectionViewCell",
+    ": UIStackView",
+    ": UIScrollView",
+)
+
+
 def scan_views_non_view_types(root: Path):
     violations = []
     views_root = root / "Views"
@@ -181,7 +206,7 @@ def scan_views_non_view_types(root: Path):
             if not match:
                 continue
             name = match.group(2)
-            if ": View" in line or "UIViewRepresentable" in line or "UIViewControllerRepresentable" in line:
+            if any(token in line for token in VIEW_BASE_TOKENS):
                 continue
             violations.append(name)
     return sorted(set(violations))
