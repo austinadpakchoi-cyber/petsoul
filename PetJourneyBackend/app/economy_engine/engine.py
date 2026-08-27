@@ -1,11 +1,15 @@
+"""经济引擎核心（架构审计 P1-2 包化，自 economy_engine.py 原样迁入）。"""
+
+from __future__ import annotations
+
 from __future__ import annotations
 
 from datetime import datetime
 import hashlib
 import sqlite3
 
-from .config import Settings
-from .schemas import (
+from ..config import Settings
+from ..schemas import (
     AcquisitionSource,
     ArchiveItemRequest,
     CollectSouvenirsResponse,
@@ -25,12 +29,13 @@ from .schemas import (
     TravelQuest,
     Wallet,
 )
-from .storage import EconomyStorageConflict, JourneyStorage, PetRecord, utcnow
+from ..storage import EconomyStorageConflict, JourneyStorage, PetRecord, utcnow
+from .values import item_value
+
 
 
 class EconomyConflictError(Exception):
     pass
-
 
 class PetEconomyEngine:
     provider_name = "petsoul-economy-engine"
@@ -595,31 +600,3 @@ class PetEconomyEngine:
         if item.trade_policy == TradePolicy.time_locked and item.lock_until and item.lock_until <= now:
             return True
         return False
-
-
-def item_value(
-    *,
-    market_value: int,
-    emotional_value: int,
-    honor_value: int,
-    base: int,
-    rarity_multiplier: float,
-    source_multiplier: float,
-    condition_multiplier: float,
-    story_bonus: float,
-):
-    from .schemas import ItemValue
-
-    return ItemValue(
-        market_value=market_value,
-        emotional_value=emotional_value,
-        honor_value=honor_value,
-        value_breakdown={
-            "base": base,
-            "rarity_multiplier": rarity_multiplier,
-            "source_multiplier": source_multiplier,
-            "condition_multiplier": condition_multiplier,
-            "story_bonus": story_bonus,
-            "final_market_value": market_value,
-        },
-    )
