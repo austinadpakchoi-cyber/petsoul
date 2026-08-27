@@ -119,6 +119,8 @@
 		A0000000000000000000028D /* JourneyRouteSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018D /* JourneyRouteSupport.swift */; };
 		A0000000000000000000028E /* WorldLifeEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018E /* WorldLifeEvent.swift */; };
 		A0000000000000000000028F /* JourneyMapViewportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018F /* JourneyMapViewportModels.swift */; };
+		A00000000000000000000290 /* JourneyGuideDigestModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000190 /* JourneyGuideDigestModels.swift */; };
+		A00000000000000000000291 /* JourneyDayRecapModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000191 /* JourneyDayRecapModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -246,6 +248,8 @@
 		A0000000000000000000018D /* JourneyRouteSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyRouteSupport.swift; sourceTree = "<group>"; };
 		A0000000000000000000018E /* WorldLifeEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldLifeEvent.swift; sourceTree = "<group>"; };
 		A0000000000000000000018F /* JourneyMapViewportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyMapViewportModels.swift; sourceTree = "<group>"; };
+		A00000000000000000000190 /* JourneyGuideDigestModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyGuideDigestModels.swift; sourceTree = "<group>"; };
+		A00000000000000000000191 /* JourneyDayRecapModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyDayRecapModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -398,6 +402,8 @@
 				A0000000000000000000018D /* JourneyRouteSupport.swift */,
 				A0000000000000000000018E /* WorldLifeEvent.swift */,
 				A0000000000000000000018F /* JourneyMapViewportModels.swift */,
+				A00000000000000000000190 /* JourneyGuideDigestModels.swift */,
+				A00000000000000000000191 /* JourneyDayRecapModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -742,6 +748,8 @@
 				A0000000000000000000028D /* JourneyRouteSupport.swift in Sources */,
 				A0000000000000000000028E /* WorldLifeEvent.swift in Sources */,
 				A0000000000000000000028F /* JourneyMapViewportModels.swift in Sources */,
+				A00000000000000000000290 /* JourneyGuideDigestModels.swift in Sources */,
+				A00000000000000000000291 /* JourneyDayRecapModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
