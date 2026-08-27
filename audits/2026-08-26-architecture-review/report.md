@@ -265,3 +265,17 @@ cd PetJourneyIOS && xcodebuild -project PetJourneyIOS.xcodeproj -scheme PetJourn
 ```
 
 **注意**：§4 的迁移类改动（P1-1、P1-2）只做移动与登记，不要顺手改逻辑——否则 code review 无法区分「搬家」和「改行为」，出问题时也无法二分定位。
+
+## 8. 回访记录（2026-08-27）：CI 抓到宿主机时区依赖并已修复
+
+本报告 P0-3 主张的「CI 必须真跑后端测试」在首次实跑（`f1518f0`）即兑现价值：
+
+- **现象**：`Backend Tests` 在 CI（UTC）挂 1 个用例 `test_world_simulation_anchors_stops_without_location_drift`（`'默迹咖啡馆' != '狐尾山公园'`），本机（+8）95 全绿。
+- **根因**：`world_simulation/timeline.py` 的 `_stop_windows` 用裸 `now.astimezone()`（宿主机时区）划分行程窗口。生产跑 UTC，而 TA 在厦门——「当前活动」与本城墙上时间差 8 小时，该在公园时显示在咖啡馆。这是 UI/UX 审计 P0-2（地图天色）同一 bug 的后端版本：`local_time` 字段修好了，决定「TA 此刻在哪一站」的窗口划分却仍跟着服务器时区。
+- **修复**（`f620059` + `971d3d7`）：
+  1. `_stop_windows` / `_next_stop` 改用 `city_timezones`（`ZoneInfo(城市)`），`_timeline`/`snapshot` 传入 `plan.city`。
+  2. 全后端清扫同类漏网：`city_timezones` 消费方 1 → 10（communicator `local_hour`、pet_energy 钟点、meal_rules 餐段、place_interactions 时段、route_planner/event_generator 早间判定、agent_engine `_status_for` 与计划缓存日、quest_flow 出发日、guide 缓存日、transport_reality 当日班次起点）；`story_ticker`/memories 分桶/证件签发日等宿主日期改为确定性 UTC。
+  3. `meal_rules` 新约定：无时区 datetime = 墙上时间本身（直读小时），带时区 instant 需传城市名换算。
+  4. 新增跨时区一致性测试：同一 plan 在 UTC / America/New_York / Asia/Tokyo 宿主机时区下 `snapshot()` 结果一致（`time.tzset` 轮换）。
+  5. `AGENTS.md`：后端测试命令强制 `TZ=UTC` 对齐 CI；架构分层写入「世界模拟墙上时间一律走 `city_timezones`，禁裸 `now.astimezone()` / `date.today()`」。
+- **结果**：96 测试在 TZ=UTC / +8 / America/New_York 下全绿，三门禁通过，`origin/main = 971d3d7` 时 Backend Tests / Architecture Gate / iOS Build & Test 三项 CI 全部 success。
