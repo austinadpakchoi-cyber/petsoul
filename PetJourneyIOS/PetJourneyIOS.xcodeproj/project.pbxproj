@@ -121,6 +121,10 @@
 		A0000000000000000000028F /* JourneyMapViewportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018F /* JourneyMapViewportModels.swift */; };
 		A00000000000000000000290 /* JourneyGuideDigestModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000190 /* JourneyGuideDigestModels.swift */; };
 		A00000000000000000000291 /* JourneyDayRecapModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000191 /* JourneyDayRecapModels.swift */; };
+		A00000000000000000000292 /* IllustratedGuidePreviewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000192 /* IllustratedGuidePreviewModels.swift */; };
+		A00000000000000000000293 /* JourneyTelemetryModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000193 /* JourneyTelemetryModels.swift */; };
+		A00000000000000000000294 /* MapControlDockModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000194 /* MapControlDockModels.swift */; };
+		A00000000000000000000295 /* MemoryHubModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000195 /* MemoryHubModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -250,6 +254,10 @@
 		A0000000000000000000018F /* JourneyMapViewportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyMapViewportModels.swift; sourceTree = "<group>"; };
 		A00000000000000000000190 /* JourneyGuideDigestModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyGuideDigestModels.swift; sourceTree = "<group>"; };
 		A00000000000000000000191 /* JourneyDayRecapModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyDayRecapModels.swift; sourceTree = "<group>"; };
+		A00000000000000000000192 /* IllustratedGuidePreviewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IllustratedGuidePreviewModels.swift; sourceTree = "<group>"; };
+		A00000000000000000000193 /* JourneyTelemetryModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyTelemetryModels.swift; sourceTree = "<group>"; };
+		A00000000000000000000194 /* MapControlDockModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapControlDockModels.swift; sourceTree = "<group>"; };
+		A00000000000000000000195 /* MemoryHubModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryHubModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -404,6 +412,10 @@
 				A0000000000000000000018F /* JourneyMapViewportModels.swift */,
 				A00000000000000000000190 /* JourneyGuideDigestModels.swift */,
 				A00000000000000000000191 /* JourneyDayRecapModels.swift */,
+				A00000000000000000000192 /* IllustratedGuidePreviewModels.swift */,
+				A00000000000000000000193 /* JourneyTelemetryModels.swift */,
+				A00000000000000000000194 /* MapControlDockModels.swift */,
+				A00000000000000000000195 /* MemoryHubModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -750,6 +762,10 @@
 				A0000000000000000000028F /* JourneyMapViewportModels.swift in Sources */,
 				A00000000000000000000290 /* JourneyGuideDigestModels.swift in Sources */,
 				A00000000000000000000291 /* JourneyDayRecapModels.swift in Sources */,
+				A00000000000000000000292 /* IllustratedGuidePreviewModels.swift in Sources */,
+				A00000000000000000000293 /* JourneyTelemetryModels.swift in Sources */,
+				A00000000000000000000294 /* MapControlDockModels.swift in Sources */,
+				A00000000000000000000295 /* MemoryHubModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

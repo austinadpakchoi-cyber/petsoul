@@ -363,10 +363,6 @@ struct NavigationTelemetryStrip: View {
     }
 }
 
-struct JourneyMusicCue {
-    var title: String
-    var detail: String
-}
 
 struct NavigationProgressGlint: View {
     var tint: Color
