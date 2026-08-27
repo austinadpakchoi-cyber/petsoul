@@ -1,44 +1,28 @@
+"""Mock 交通现实性实现（架构审计 P1-2 包化）。"""
+
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta, timezone
-from typing import Protocol
 
-from .config import Settings
-from .providers import JourneyCity
-from .schemas import PlaceSignal, ScheduledTransportLeg, TransportLegStatus, TravelMode
-from .storage import PetRecord
-from .transport_schedule import (
+from ..config import Settings
+from ..providers import JourneyCity
+from ..schemas import (
+    JourneyPlan,
+    JourneyRoutePlan,
+    PlaceSignal,
+    RouteSegment,
+    ScheduledTransportLeg,
+    TransportLegStatus,
+    TravelMode,
+)
+from ..storage import PetRecord
+from ..transport_schedule import (
     MockTransportScheduleProvider,
     TransportScheduleCandidate,
     TransportScheduleProvider,
     TransportScheduleRequest,
-    build_transport_schedule_provider,
 )
-
-
-class TransportRealityProvider(Protocol):
-    provider_name: str
-
-    def local_life_legs(
-        self,
-        pet: PetRecord,
-        city: JourneyCity,
-        places: list[PlaceSignal],
-        now: datetime,
-    ) -> list[ScheduledTransportLeg]:
-        ...
-
-    def worldcup_legs(
-        self,
-        pet: PetRecord,
-        origin: PlaceSignal,
-        airport: PlaceSignal,
-        cafe: PlaceSignal,
-        stadium: PlaceSignal,
-        now: datetime,
-    ) -> list[ScheduledTransportLeg]:
-        ...
-
+from .protocol import TransportRealityProvider
 
 class MockTransportRealityProvider:
     base_provider_name = "mock-scheduled-transport-provider"
@@ -409,7 +393,3 @@ class MockTransportRealityProvider:
     def _local_day_start(self, now: datetime) -> datetime:
         local_now = now.astimezone()
         return datetime.combine(local_now.date(), time(hour=7, minute=20), tzinfo=local_now.tzinfo)
-
-
-def build_transport_reality_provider(settings: Settings | None = None) -> TransportRealityProvider:
-    return MockTransportRealityProvider(build_transport_schedule_provider(settings))

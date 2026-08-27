@@ -1,22 +1,13 @@
+"""Google Maps 服务客户端（架构审计 P1-2 包化）。"""
+
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime, timezone
-import json
-from urllib import error, parse, request
+from urllib import parse
 
-from .config import Settings
-from .schemas import PlaceSignal, ReverseGeocodeResult, TravelMode
-from .utils import sanitize_place_id
-
-
-@dataclass(frozen=True, slots=True)
-class GoogleRouteResult:
-    distance_meters: int | None
-    duration_seconds: int | None
-    polyline: str | None
-    provider: str
-
+from ..config import Settings
+from ..schemas import PlaceSignal, ReverseGeocodeResult, TravelMode
+from .models import GoogleRouteResult
 
 class GoogleMapsServiceClient:
     provider_name = "google-maps-service-client"
@@ -404,7 +395,3 @@ class GoogleMapsServiceClient:
         if self.settings.google_maps_api_key:
             return message.replace(self.settings.google_maps_api_key, "[REDACTED]")
         return message
-
-
-def build_google_maps_service(settings: Settings) -> GoogleMapsServiceClient:
-    return GoogleMapsServiceClient(settings)
