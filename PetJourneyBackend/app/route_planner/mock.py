@@ -40,7 +40,7 @@ class MockTravelRoutePlanner:
         if city.name == "厦门":
             return self._xiamen_signature_life_plan(pet, city, now, places)
 
-        wake_place, coffee_place, store_place, indoor_place, postcard_place = self._stable_local_stop_places(places, now=now)
+        wake_place, coffee_place, store_place, indoor_place, postcard_place = self._stable_local_stop_places(places, now=now, city_name=city.name)
         stops = [
             self._stop(wake_place, "醒来和确认方向", f"我先在这里听一会儿风和声音，慢慢醒过来。", "07:40", 55),
             self._stop(coffee_place, "咖啡店靠窗喝一会儿", "人不多，光线也软，我会进到靠窗的小桌边，看菜单，点一杯店里的推荐咖啡。", "09:40", 70),
@@ -280,9 +280,9 @@ class MockTravelRoutePlanner:
             guide_reason=detail_hint,
         )
 
-    def _stable_local_stop_places(self, places: list[PlaceSignal], *, now: datetime) -> tuple[PlaceSignal, PlaceSignal, PlaceSignal, PlaceSignal, PlaceSignal]:
+    def _stable_local_stop_places(self, places: list[PlaceSignal], *, now: datetime, city_name: str | None = None) -> tuple[PlaceSignal, PlaceSignal, PlaceSignal, PlaceSignal, PlaceSignal]:
         used: set[str] = set()
-        morning = is_morning(now)
+        morning = is_morning(now, city_name)
 
         def pick(categories: list[str], *, morning_friendly: bool = False) -> PlaceSignal:
             candidates = [place for place in places if place.id not in used and place.category in categories]

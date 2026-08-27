@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timezone
 
 from ..schemas import PetCredentialKind, PetCredentialPrompt
 from ..species import species_display_name, species_image_subject
@@ -51,7 +51,7 @@ class PetCredentialPromptBuilder(PetCredentialContentMixin):
         has_pet_reference: bool = False,
     ) -> PetCredentialPrompt:
         credential_kind = PetCredentialKind(kind)
-        issued = (issue_date or date.today()).isoformat()
+        issued = (issue_date or datetime.now(timezone.utc).date()).isoformat()
         serial = self._serial(kind=credential_kind, pet_id=pet.pet_id)
         reappearance_place = self._reappearance_place(pet)
         fields = self._fields(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from ..city_timezones import local_wall_time
 from ..schemas import (
     JourneyPlan,
     PetAuthoredGuide,
@@ -29,7 +30,7 @@ class PetGuideAuthoringMixin:
         return guide.model_copy(deep=True)
 
     def build_pet_guide(self, pet: PetRecord, plan: JourneyPlan, now: datetime) -> PetAuthoredGuide:
-        cache_key = (pet.pet_id, plan.city, now.astimezone().date().isoformat())
+        cache_key = (pet.pet_id, plan.city, local_wall_time(now, plan.city).date().isoformat())
         cached = self._cached_guide(cache_key, now)
         if cached is not None:
             return cached

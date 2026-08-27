@@ -11,8 +11,9 @@ from app.story_ticker import build_story_ticker
 
 
 def _at_hour(hour: int) -> datetime:
-    # meal_window 按本地时区判断，这里构造本地时间。
-    return datetime(2026, 7, 4, hour, 30).astimezone()
+    # meal_rules 约定：无时区 datetime 表示墙上时间本身（TA 所在地当地钟点），
+    # 与宿主机时区无关；带时区的 instant 才需要城市名换算。
+    return datetime(2026, 7, 4, hour, 30)
 
 
 class MealWindowTests(unittest.TestCase):

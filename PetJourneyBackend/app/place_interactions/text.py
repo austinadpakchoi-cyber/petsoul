@@ -8,6 +8,7 @@ from math import cos, radians, sqrt
 import re
 import uuid
 
+from ..city_timezones import local_wall_time
 from ..schemas import (
     PhotoPerspective,
     PlaceInteraction,
@@ -262,8 +263,8 @@ class PlaceInteractionTextMixin:
             has_pet_reference=bool(pet.photo_path),
             has_place_reference=bool(place.photo_url),
         )
-    def _time_of_day(self, now: datetime) -> str:
-        hour = now.astimezone().hour
+    def _time_of_day(self, now: datetime, city_name: str | None = None) -> str:
+        hour = local_wall_time(now, city_name).hour
         if hour < 6:
             return "late night"
         if hour < 11:

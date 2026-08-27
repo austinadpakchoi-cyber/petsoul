@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from ..config import Settings
 from ..schemas import MemoryConsolidationResult, MemoryRecord
@@ -149,7 +149,7 @@ class SQLiteMemoryStore:
         memories = [
             memory
             for memory in self.list_memories(pet_id, limit=200)
-            if memory.created_at.astimezone().date() == target_date
+            if memory.created_at.astimezone(timezone.utc).date() == target_date
         ]
         if not memories:
             return MemoryConsolidationResult(

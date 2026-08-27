@@ -18,7 +18,7 @@ class FeedbackMixin:
             city=current_city,
             trigger=effect.thought_tone,
             scene=effect.message,
-            status=self._status_for(utcnow()),
+            status=self._status_for(utcnow(), current_city.name),
         )
         self.storage.append_event(pet.pet_id, effect.event_title, effect.event_detail)
         self._remember_feedback(pet=pet, city=city, liked=liked, message=effect.message)

@@ -47,7 +47,7 @@ class OwnerInteractionMixin:
                 city=city,
                 trigger=f"owner_message_{decision}",
                 scene=scene,
-                status=self._status_for(now),
+                status=self._status_for(now, city.name),
                 timestamp=now,
             )
             steps.append(self._trace_step("agent_speech", outputs={"response_policy": owner_intent.response_policy}))
@@ -106,7 +106,7 @@ class OwnerInteractionMixin:
             city=city,
             trigger=trigger,
             scene=scene,
-            status=self._status_for(now),
+            status=self._status_for(now, city.name),
             timestamp=now,
         )
         self.storage.append_event(

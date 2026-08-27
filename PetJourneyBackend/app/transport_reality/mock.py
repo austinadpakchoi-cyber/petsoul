@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
+from ..city_timezones import timezone_for_city
 from ..config import Settings
 from ..providers import JourneyCity
 from ..schemas import (
@@ -43,7 +45,7 @@ class MockTransportRealityProvider:
         if len(places) < 4:
             return []
 
-        base = self._local_day_start(now)
+        base = self._local_day_start(now, city.name)
         return [
             self._leg(
                 id="local-walk-to-coffee",
@@ -390,6 +392,8 @@ class MockTransportRealityProvider:
     def _base_time(self, pet: PetRecord) -> datetime:
         return pet.created_at.astimezone(timezone.utc)
 
-    def _local_day_start(self, now: datetime) -> datetime:
-        local_now = now.astimezone()
-        return datetime.combine(local_now.date(), time(hour=7, minute=20), tzinfo=local_now.tzinfo)
+    def _local_day_start(self, now: datetime, city_name: str | None = None) -> datetime:
+        # 按「TA 所在城市」的墙上日期起算当天的行程（07:20 当地），不跟随宿主机时区。
+        zone = ZoneInfo(timezone_for_city(city_name))
+        local_now = now.astimezone(zone)
+        return datetime.combine(local_now.date(), time(hour=7, minute=20), tzinfo=zone)

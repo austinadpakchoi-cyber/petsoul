@@ -481,3 +481,131 @@ class PlaceAndWorldApiTests(PetJourneyApiTestBase):
         self.assertAlmostEqual(first_refresh.current_activity.lng, first_stop.lng)
         self.assertAlmostEqual(second_refresh.current_activity.lng, first_stop.lng)
 
+    def test_snapshot_invariant_across_host_timezones(self) -> None:
+        """同一份 plan，宿主机时区不同时 snapshot() 结果必须一致。
+
+        行程窗口按「TA 所在城市」的墙上时间划分（city_timezones），不能跟随宿主机
+        时区——CI 跑 UTC，开发者 Mac 多为 +8，之前 `now.astimezone()` 会让
+        同一时刻在两边得到不同的 current_activity（CI 已抓到过一次）。
+        """
+        import os as os_module
+        import time as time_module
+
+        if not hasattr(time_module, "tzset"):
+            self.skipTest("time.tzset() unavailable on this platform")
+
+        local_tz = timezone(timedelta(hours=8))
+        pet = self.sample_pet(created_at=datetime(2026, 7, 4, 0, 0, tzinfo=local_tz))
+        first_stop = ItineraryStop(
+            id="morning-park",
+            name="狐尾山公园",
+            category="park",
+            city="厦门",
+            lat=24.4928,
+            lng=118.0823,
+            title="在公园慢慢醒来",
+            detail="我先在这里听风。",
+            planned_time="08:10",
+            dwell_minutes=60,
+        )
+        last_stop = ItineraryStop(
+            id="evening-cafe",
+            name="默迹咖啡馆",
+            category="cafe",
+            city="厦门",
+            lat=24.4708,
+            lng=118.1011,
+            title="傍晚坐下喝点东西",
+            detail="我会在这里慢慢停留。",
+            planned_time="18:40",
+            dwell_minutes=50,
+        )
+        plan = JourneyPlan(
+            pet_id=pet.pet_id,
+            city="厦门",
+            generated_at=datetime(2026, 7, 4, 0, 0, tzinfo=local_tz),
+            provider="test-planner",
+            horizon_hours=24,
+            summary="今天慢慢生活。",
+            current_activity=first_stop.detail,
+            transport_decision=TransportDecision(
+                selected_mode=TravelMode.walk,
+                reason="短路段慢慢走。",
+                rejected_modes=[],
+                autonomy_note="TA 自己决定节奏。",
+            ),
+            route_segments=[
+                RouteSegment(
+                    id="park-to-cafe",
+                    mode=TravelMode.walk,
+                    title="沿真实道路慢慢走",
+                    detail="沿路慢慢靠近下一站。",
+                    from_place=first_stop.name,
+                    to_place=last_stop.name,
+                    distance_meters=2_400,
+                    duration_seconds=1_800,
+                    provider="test-planner",
+                )
+            ],
+            stops=[first_stop, last_stop],
+            places=[
+                PlaceSignal(
+                    id=first_stop.id,
+                    name=first_stop.name,
+                    category=first_stop.category,
+                    city=first_stop.city,
+                    lat=first_stop.lat,
+                    lng=first_stop.lng,
+                    activity_hint=first_stop.detail,
+                    detail_hint="第一站",
+                    source="test",
+                ),
+                PlaceSignal(
+                    id=last_stop.id,
+                    name=last_stop.name,
+                    category=last_stop.category,
+                    city=last_stop.city,
+                    lat=last_stop.lat,
+                    lng=last_stop.lng,
+                    activity_hint=last_stop.detail,
+                    detail_hint="最后一站",
+                    source="test",
+                ),
+            ],
+        )
+        city = JourneyCity(
+            name="厦门",
+            lat=24.4798,
+            lng=118.0894,
+            weather="多云，29°C",
+            phrases=("慢慢走",),
+            thoughts=("汪",),
+        )
+        engine = WorldSimulationEngine(Settings())
+        # 厦门当地 2026-07-04 01:00（第一站 08:10 之前）。裸 astimezone() 在 UTC 宿主
+        # 上会把它算成 2026-07-03 17:00，把 current_activity 漂到咖啡馆。
+        now = datetime(2026, 7, 3, 17, 0, tzinfo=timezone.utc)
+
+        original_tz = os_module.environ.get("TZ")
+        results: dict[str, tuple] = {}
+        try:
+            for host_tz in ("UTC", "America/New_York", "Asia/Tokyo"):
+                os_module.environ["TZ"] = host_tz
+                time_module.tzset()
+                snap = engine.snapshot(pet=pet, city=city, plan=plan, now=now)
+                results[host_tz] = (
+                    snap.current_activity.place_name,
+                    [(item.kind, item.planned_start.isoformat(), item.planned_end.isoformat()) for item in snap.timeline],
+                    snap.next_stop.name if snap.next_stop else None,
+                )
+        finally:
+            if original_tz is None:
+                os_module.environ.pop("TZ", None)
+            else:
+                os_module.environ["TZ"] = original_tz
+            time_module.tzset()
+
+        self.assertEqual(results["UTC"], results["America/New_York"])
+        self.assertEqual(results["UTC"], results["Asia/Tokyo"])
+        self.assertEqual(results["UTC"][0], first_stop.name)
+

@@ -60,7 +60,7 @@ class PlaceInteractionMissionMixin:
         place = self._select_place(activity=activity, places=places)
         if not place:
             place = self._fallback_place(activity)
-        time_of_day = self._time_of_day(now)
+        time_of_day = self._time_of_day(now, place.city or (activity.city if activity else None))
         cache_key = self._stable_photo_id(pet=pet, place=place, now=now)
         cached = self._cached_mission(cache_key, now)
         if cached is not None:

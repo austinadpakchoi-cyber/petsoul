@@ -108,7 +108,7 @@ class PhotoMixin:
                 city=city,
                 trigger="selfie",
                 scene=f"我在 {postcard.location} 拍了一张照片给你。{mission.interaction.pet_action}。",
-                status=self._status_for(now),
+                status=self._status_for(now, city.name),
                 timestamp=now,
             )
             steps.append(self._trace_step("agent_speech", outputs={"trigger": "selfie"}))

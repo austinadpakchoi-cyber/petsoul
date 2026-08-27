@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends
 
@@ -102,4 +102,5 @@ def consolidate_memories(
     target_date: date | None = None,
     engine=Depends(get_engine),
 ) -> MemoryConsolidationResult:
-    return with_not_found(lambda: engine.consolidate_daily_memories(pet_id, target_date or date.today()))
+    # 默认「今天」用 UTC 日期，与 consolidate_daily_memories 的 UTC 分桶一致，不依赖宿主机时区。
+    return with_not_found(lambda: engine.consolidate_daily_memories(pet_id, target_date or datetime.now(timezone.utc).date()))

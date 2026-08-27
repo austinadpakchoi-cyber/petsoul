@@ -44,7 +44,7 @@ class PetLifeDecisionMixin:
             now is not None
             and action.action_type in {"snack_or_coffee", "eat_nearby"}
             and action.place_name
-            and not is_place_plausible_at(now, action.place_name)
+            and not is_place_plausible_at(now, action.place_name, city_name=plan.city)
         ):
             blocked.append("meal_time_implausible")
 

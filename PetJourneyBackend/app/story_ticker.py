@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 
 from pydantic import BaseModel
 
@@ -40,7 +40,7 @@ class StoryTickerResponse(BaseModel):
 
 
 def build_story_ticker(*, limit: int = 8, now: datetime | None = None) -> StoryTickerResponse:
-    moment = now or datetime.now().astimezone()
+    moment = now or datetime.now(timezone.utc)
     seed = moment.strftime("%Y%m%d%H")
     rng = random.Random(seed)
     anchors = list(_ANCHORS)

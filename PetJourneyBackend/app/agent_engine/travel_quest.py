@@ -31,7 +31,7 @@ class TravelQuestMixin:
             city=city,
             trigger="travel_quest_guide_ready",
             scene=quest.current_phase_message,
-            status=self._status_for(now),
+            status=self._status_for(now, city.name),
             timestamp=now,
         )
         self.storage.append_event(
@@ -72,7 +72,7 @@ class TravelQuestMixin:
             city=city,
             trigger="travel_quest_preparing",
             scene=updated.current_phase_message,
-            status=self._status_for(now),
+            status=self._status_for(now, city.name),
             timestamp=now,
         )
         self.storage.append_event(
@@ -96,7 +96,7 @@ class TravelQuestMixin:
             city=city,
             trigger="travel_quest_return_planning",
             scene=updated.current_phase_message,
-            status=self._status_for(now),
+            status=self._status_for(now, city.name),
             timestamp=now,
         )
         self.storage.append_event(
@@ -130,7 +130,7 @@ class TravelQuestMixin:
             city=city,
             trigger=f"travel_quest_next_step_{updated.status.value}",
             scene=updated.current_phase_message,
-            status=self._status_for(now),
+            status=self._status_for(now, city.name),
             timestamp=now,
         )
         self.storage.append_event(

@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from math import pi, sin
 
 from ..agent_brain import AgentTurnContext
+from ..city_timezones import local_wall_time
 from ..providers import JourneyCity
 from ..schemas import (
     JourneyPlan,
@@ -96,7 +97,7 @@ class JourneyEngineHelpersMixin:
         return snapshot.model_copy(update={"life_tick": life_tick})
 
     def _journey_plan_for(self, pet: PetRecord, city: JourneyCity, now: datetime) -> JourneyPlan:
-        local_day = now.astimezone().date().isoformat()
+        local_day = local_wall_time(now, city.name).date().isoformat()
         key = (pet.pet_id, city.name, local_day, bool(self.settings.worldcup_demo_enabled))
         cached = self._journey_plan_cache.get(key)
         if cached:
@@ -128,8 +129,8 @@ class JourneyEngineHelpersMixin:
         titles = "、".join(item.title for item in items[-4:])
         return f"我把 {titles} 收进小包里了。它们不会替我决定路线，但会在路上提醒我慢一点、记得回来。"
 
-    def _status_for(self, now: datetime) -> JourneyStatus:
-        local_now = now.astimezone()
+    def _status_for(self, now: datetime, city_name: str | None = None) -> JourneyStatus:
+        local_now = local_wall_time(now, city_name)
         minute_of_day = local_now.hour * 60 + local_now.minute
         if 0 <= minute_of_day < 420:
             return JourneyStatus.resting

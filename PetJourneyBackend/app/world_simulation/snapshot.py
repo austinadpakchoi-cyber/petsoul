@@ -37,7 +37,7 @@ class WorldSimulationSnapshotMixin:
         active_transport = self._active_transport(plan.scheduled_transport, now)
         timeline = self._timeline(plan, now)
         current_item = next((item for item in timeline if item.is_current), None)
-        next_stop = self._next_stop(plan.stops, now)
+        next_stop = self._next_stop(plan.stops, now, city_name=plan.city)
 
         activity = self._activity(
             pet=pet,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+from ..city_timezones import local_wall_time
 from ..schemas import AgentStatus, TravelMode, WorldSimulationSnapshot
 from .schemas import CommunicatorWorldSnapshot
 
@@ -27,7 +28,7 @@ class CommunicatorWorldSnapshotBuilder:
                 animation_hint,
             ] if part
         )
-        local_hour = world.generated_at.astimezone().hour
+        local_hour = local_wall_time(world.generated_at, world.city).hour
         is_flying = world.status.value == "flying" or mode == TravelMode.flight
         is_sleeping = animation_hint == "sleep" or "睡" in activity.title or "睡" in activity.detail
         is_in_transit = activity.kind == "transport" or mode in {

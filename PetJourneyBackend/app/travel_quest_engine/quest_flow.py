@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 import uuid
 
+from ..city_timezones import local_wall_time
 from ..config import Settings
 from ..providers import JourneyCity
 from ..schemas import (
@@ -51,7 +52,7 @@ class PetTravelQuestFlowMixin:
             current_city=current_city,
         )
         event_name = request.event_name or self._event_name_for(message, quest_type)
-        start_date = request.preferred_start_date or (now.astimezone().date() + timedelta(days=1))
+        start_date = request.preferred_start_date or (local_wall_time(now, destination).date() + timedelta(days=1))
         research = self.research_engine.research(
             owner_message=message,
             destination=destination,

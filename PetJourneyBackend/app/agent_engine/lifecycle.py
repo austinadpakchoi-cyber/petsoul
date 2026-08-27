@@ -143,7 +143,7 @@ class LifecycleMixin:
             now = utcnow()
             elapsed = (now - pet.created_at).total_seconds()
             city = self._city_for_elapsed(elapsed, now=now)
-            status = self._status_for(now)
+            status = self._status_for(now, city.name)
             self.event_generator.advance(
                 pet=pet,
                 city=city,

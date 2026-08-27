@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from math import cos, pi, sqrt
 
+from .city_timezones import local_wall_time
 from .schemas import JourneyStatus, PetNeedState, PlaceSignal, TravelMode, WorldActivity, WorldSimulationSnapshot
 from .storage import PetRecord
 
@@ -25,15 +26,16 @@ class PetEnergyModel:
 
     def evaluate(self, *, snapshot: WorldSimulationSnapshot, pet: PetRecord, now: datetime) -> PetNeedState:
         activity = snapshot.current_activity
-        minute = now.astimezone().hour * 60 + now.astimezone().minute
+        wall = local_wall_time(now, snapshot.city)
+        minute = wall.hour * 60 + wall.minute
         heat_stress = self._heat_stress(weather=snapshot.weather, minute=minute, activity=activity)
         sensory_load = self._sensory_load(activity)
         movement_cost = self._movement_cost(activity)
         rest_recovery = self._rest_recovery(activity)
 
         energy = self._clamp(snapshot.energy - movement_cost - heat_stress // 5 - sensory_load // 8 + rest_recovery, 5, 99)
-        hunger = self._clamp(self._meal_hunger(minute) + movement_cost // 2 + self._soft_wave(now.minute, 9), 5, 99)
-        thirst = self._clamp(38 + heat_stress + movement_cost + self._soft_wave(now.minute + 7, 12), 5, 99)
+        hunger = self._clamp(self._meal_hunger(minute) + movement_cost // 2 + self._soft_wave(wall.minute, 9), 5, 99)
+        thirst = self._clamp(38 + heat_stress + movement_cost + self._soft_wave(wall.minute + 7, 12), 5, 99)
         sleepiness = self._clamp(self._sleepiness(minute) + max(0, 42 - energy) + sensory_load // 8, 5, 99)
         comfort = self._clamp(
             self._base_comfort(pet) + rest_recovery // 2 - sensory_load // 3 - heat_stress // 4,
@@ -48,7 +50,7 @@ class PetEnergyModel:
             sleepiness=sleepiness,
             sensory_load=sensory_load,
             heat_stress=heat_stress,
-            social=self._clamp((72 if activity.can_send_postcard else 54) + self._soft_wave(now.minute + 3, 7), 5, 99),
+            social=self._clamp((72 if activity.can_send_postcard else 54) + self._soft_wave(wall.minute + 3, 7), 5, 99),
             curiosity=snapshot.curiosity,
             comfort=comfort,
             playfulness=playfulness,

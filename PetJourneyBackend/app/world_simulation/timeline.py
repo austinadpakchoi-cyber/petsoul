@@ -5,7 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 from math import cos, pi, sqrt
+from zoneinfo import ZoneInfo
 
+from ..city_timezones import timezone_for_city
 from ..schemas import (
     ItineraryStop,
     JourneyPlan,
@@ -28,7 +30,7 @@ class _StopWindow:
 
 class WorldSimulationTimelineMixin:
     def _timeline(self, plan: JourneyPlan, now: datetime) -> list[WorldTimelineItem]:
-        windows = self._stop_windows(plan.stops, now)
+        windows = self._stop_windows(plan.stops, now, city_name=plan.city)
         items: list[WorldTimelineItem] = []
         for index, window in enumerate(windows):
             current = window.start <= now < window.end
@@ -141,8 +143,10 @@ class WorldSimulationTimelineMixin:
             progress=leg.progress,
             is_current=leg.status in {TransportLegStatus.waiting, TransportLegStatus.boarding, TransportLegStatus.in_transit},
         )
-    def _stop_windows(self, stops: list[ItineraryStop], now: datetime) -> list[_StopWindow]:
-        local_now = now.astimezone()
+    def _stop_windows(self, stops: list[ItineraryStop], now: datetime, *, city_name: str | None = None) -> list[_StopWindow]:
+        # 行程窗口必须按「TA 所在城市」的墙上时间划分，而不是宿主机时区
+        # （CI 是 UTC、生产也是 UTC，裸 now.astimezone() 会让 TA 的活动漂移 8 小时）。
+        local_now = now.astimezone(ZoneInfo(timezone_for_city(city_name)))
         day = local_now.date()
         windows: list[_StopWindow] = []
         for index, stop in enumerate(stops):
@@ -157,8 +161,8 @@ class WorldSimulationTimelineMixin:
             except (TypeError, ValueError):
                 pass
         return datetime.combine(day, time(hour=8, minute=0), tzinfo=tzinfo) + timedelta(hours=index * 2)
-    def _next_stop(self, stops: list[ItineraryStop], now: datetime) -> ItineraryStop | None:
-        for window in self._stop_windows(stops, now):
+    def _next_stop(self, stops: list[ItineraryStop], now: datetime, *, city_name: str | None = None) -> ItineraryStop | None:
+        for window in self._stop_windows(stops, now, city_name=city_name):
             if window.start > now:
                 return window.stop
         return None

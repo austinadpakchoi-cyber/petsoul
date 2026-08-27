@@ -97,7 +97,7 @@ class JourneyEventGenerator:
         if elapsed >= 35 and not in_transit and self.storage.count_postcards(pet.pet_id) == 0:
             postcard = self._create_postcard(pet=pet, city=city, elapsed=elapsed, now=now)
             places = self.map_provider.places_for_city(city)
-            place = self._postcard_place(places, now=now)
+            place = self._postcard_place(places, now=now, city_name=city.name)
             if place:
                 self.storage.append_event(
                     pet.pet_id,
@@ -147,7 +147,7 @@ class JourneyEventGenerator:
     ) -> dict:
         happiness = self._clamp(82 + self._wave(elapsed + 4, 18, 1), 20, 99)
         places = self.map_provider.places_for_city(city)
-        place = mission.place if mission else self._postcard_place(places, now=now)
+        place = mission.place if mission else self._postcard_place(places, now=now, city_name=city.name)
         if mission is None:
             mission_places = [place] if place else places
             mission = self.place_interaction_engine.build_photo_mission(
@@ -178,11 +178,11 @@ class JourneyEventGenerator:
     def _clamp(self, value: int, minimum: int, maximum: int) -> int:
         return max(minimum, min(maximum, value))
 
-    def _postcard_place(self, places, *, now: datetime):
+    def _postcard_place(self, places, *, now: datetime, city_name: str | None = None):
         if not places:
             return None
         candidates = list(places)
-        if is_morning(now):
+        if is_morning(now, city_name):
             morning_places = [
                 place
                 for place in candidates
