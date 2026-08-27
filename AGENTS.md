@@ -37,6 +37,7 @@ schemas / utils / config 是公共底层：只允许 import schemas、标准库�
 
 - 新增引擎的形态规则：**单文件 ≤ 400 行且职责单一 → 平铺 `app/` 根目录；超过其一 → 建包**（`app/<name>/` 多文件），并参照 `app/storage.py` 的门面模式：`app/<name>.py` 保留历史导入面、注释交代拆分原因。
 - 工具模块（如 `http_utils.py`）不得 import 引擎层；领域解析归 `schemas`，路由辅助归 `routers`/`dependencies`，演示数据播种归启动路径。
+- **世界模拟的墙上时间（钟点）一律走 `app/city_timezones.py`，跟随「TA 所在城市」，禁止裸 `now.astimezone()` / `date.today()` 取宿主机时区**（CI 与生产都是 UTC，宿主机时区会让 TA 的活动、用餐、睡眠整体漂移；`meal_rules` 约定：无时区 datetime 表示墙上时间本身，带时区的 instant 需传城市名换算）。
 
 **iOS 类型归属**：
 
@@ -66,12 +67,12 @@ xcodebuild -project PetJourneyIOS.xcodeproj -scheme PetJourneyIOS \
 
 注意：模拟器测试偶发抽风失败，失败先重跑一次再排查。
 
-后端（用 unittest，不是 pytest）：
+后端（用 unittest，不是 pytest；**必须带 `TZ=UTC`**，与 CI 对齐——宿主机时区相关 bug 只在 UTC 下暴露）：
 
 ```bash
 cd PetJourneyBackend
 pip install -r requirements.txt   # 首次
-/opt/miniconda3/bin/python3.12 -m unittest discover -s tests
+TZ=UTC /opt/miniconda3/bin/python3.12 -m unittest discover -s tests
 ```
 
 ## 协作方式
