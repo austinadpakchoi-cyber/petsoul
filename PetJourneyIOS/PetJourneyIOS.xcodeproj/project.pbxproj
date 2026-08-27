@@ -118,6 +118,7 @@
 		A0000000000000000000028C /* PetCredentialModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018C /* PetCredentialModels.swift */; };
 		A0000000000000000000028D /* JourneyRouteSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018D /* JourneyRouteSupport.swift */; };
 		A0000000000000000000028E /* WorldLifeEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018E /* WorldLifeEvent.swift */; };
+		A0000000000000000000028F /* JourneyMapViewportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018F /* JourneyMapViewportModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -244,6 +245,7 @@
 		A0000000000000000000018C /* PetCredentialModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetCredentialModels.swift; sourceTree = "<group>"; };
 		A0000000000000000000018D /* JourneyRouteSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyRouteSupport.swift; sourceTree = "<group>"; };
 		A0000000000000000000018E /* WorldLifeEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldLifeEvent.swift; sourceTree = "<group>"; };
+		A0000000000000000000018F /* JourneyMapViewportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyMapViewportModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -395,6 +397,7 @@
 				A0000000000000000000018C /* PetCredentialModels.swift */,
 				A0000000000000000000018D /* JourneyRouteSupport.swift */,
 				A0000000000000000000018E /* WorldLifeEvent.swift */,
+				A0000000000000000000018F /* JourneyMapViewportModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -738,6 +741,7 @@
 				A0000000000000000000028C /* PetCredentialModels.swift in Sources */,
 				A0000000000000000000028D /* JourneyRouteSupport.swift in Sources */,
 				A0000000000000000000028E /* WorldLifeEvent.swift in Sources */,
+				A0000000000000000000028F /* JourneyMapViewportModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
