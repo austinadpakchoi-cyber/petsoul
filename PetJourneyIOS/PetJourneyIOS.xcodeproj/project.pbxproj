@@ -28,7 +28,6 @@
 		A00000000000000000000220 /* AppSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000120 /* AppSessionStoreTests.swift */; };
 		A00000000000000000000221 /* frenchie-profile.png in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000121 /* frenchie-profile.png */; };
 		A00000000000000000000222 /* frenchie-netcafe-postcard.png in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000122 /* frenchie-netcafe-postcard.png */; };
-		A00000000000000000000223 /* JourneyRouteSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000123 /* JourneyRouteSupport.swift */; };
 		A00000000000000000000224 /* PetPushNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000124 /* PetPushNotifications.swift */; };
 		A00000000000000000000225 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000125 /* Assets.xcassets */; };
 		A00000000000000000000226 /* PetSoulAssetIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000126 /* PetSoulAssetIcon.swift */; };
@@ -81,7 +80,6 @@
 		A00000000000000000000263 /* JourneyViewModel+Communication.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000163 /* JourneyViewModel+Communication.swift */; };
 		A00000000000000000000264 /* JourneyViewModel+Travel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000164 /* JourneyViewModel+Travel.swift */; };
 		A00000000000000000000265 /* JourneyViewModel+Souvenirs.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000165 /* JourneyViewModel+Souvenirs.swift */; };
-		A00000000000000000000266 /* WorldLifeEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000166 /* WorldLifeEvent.swift */; };
 		A00000000000000000000267 /* WorldAnimalViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000167 /* WorldAnimalViews.swift */; };
 		A00000000000000000000268 /* JourneyMapLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000168 /* JourneyMapLoading.swift */; };
 		A00000000000000000000269 /* JourneyMapViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000169 /* JourneyMapViewport.swift */; };
@@ -118,6 +116,8 @@
 		A0000000000000000000028A /* AccountSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018A /* AccountSheetView.swift */; };
 		A0000000000000000000028B /* JourneyMapModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018B /* JourneyMapModels.swift */; };
 		A0000000000000000000028C /* PetCredentialModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018C /* PetCredentialModels.swift */; };
+		A0000000000000000000028D /* JourneyRouteSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018D /* JourneyRouteSupport.swift */; };
+		A0000000000000000000028E /* WorldLifeEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000018E /* WorldLifeEvent.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -154,7 +154,6 @@
 		A00000000000000000000120 /* AppSessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionStoreTests.swift; sourceTree = "<group>"; };
 		A00000000000000000000121 /* frenchie-profile.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "frenchie-profile.png"; sourceTree = "<group>"; };
 		A00000000000000000000122 /* frenchie-netcafe-postcard.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "frenchie-netcafe-postcard.png"; sourceTree = "<group>"; };
-		A00000000000000000000123 /* JourneyRouteSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyRouteSupport.swift; sourceTree = "<group>"; };
 		A00000000000000000000124 /* PetPushNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPushNotifications.swift; sourceTree = "<group>"; };
 		A00000000000000000000125 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A00000000000000000000126 /* PetSoulAssetIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetSoulAssetIcon.swift; sourceTree = "<group>"; };
@@ -207,7 +206,6 @@
 		A00000000000000000000163 /* JourneyViewModel+Communication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JourneyViewModel+Communication.swift"; sourceTree = "<group>"; };
 		A00000000000000000000164 /* JourneyViewModel+Travel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JourneyViewModel+Travel.swift"; sourceTree = "<group>"; };
 		A00000000000000000000165 /* JourneyViewModel+Souvenirs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JourneyViewModel+Souvenirs.swift"; sourceTree = "<group>"; };
-		A00000000000000000000166 /* WorldLifeEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldLifeEvent.swift; sourceTree = "<group>"; };
 		A00000000000000000000167 /* WorldAnimalViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldAnimalViews.swift; sourceTree = "<group>"; };
 		A00000000000000000000168 /* JourneyMapLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyMapLoading.swift; sourceTree = "<group>"; };
 		A00000000000000000000169 /* JourneyMapViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyMapViewport.swift; sourceTree = "<group>"; };
@@ -244,6 +242,8 @@
 		A0000000000000000000018A /* AccountSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSheetView.swift; sourceTree = "<group>"; };
 		A0000000000000000000018B /* JourneyMapModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyMapModels.swift; sourceTree = "<group>"; };
 		A0000000000000000000018C /* PetCredentialModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetCredentialModels.swift; sourceTree = "<group>"; };
+		A0000000000000000000018D /* JourneyRouteSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyRouteSupport.swift; sourceTree = "<group>"; };
+		A0000000000000000000018E /* WorldLifeEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldLifeEvent.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -393,6 +393,8 @@
 				A00000000000000000000187 /* NPCSociety.swift */,
 				A0000000000000000000018B /* JourneyMapModels.swift */,
 				A0000000000000000000018C /* PetCredentialModels.swift */,
+				A0000000000000000000018D /* JourneyRouteSupport.swift */,
+				A0000000000000000000018E /* WorldLifeEvent.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -446,10 +448,8 @@
 				A00000000000000000000115 /* PetOnboardingView.swift */,
 				A00000000000000000000116 /* ConnectingView.swift */,
 				A00000000000000000000117 /* JourneyMapView.swift */,
-				A00000000000000000000123 /* JourneyRouteSupport.swift */,
 				A00000000000000000000127 /* CommunicatorViews.swift */,
 				A00000000000000000000118 /* SecondaryViews.swift */,
-				A00000000000000000000166 /* WorldLifeEvent.swift */,
 				A00000000000000000000167 /* WorldAnimalViews.swift */,
 				A00000000000000000000168 /* JourneyMapLoading.swift */,
 				A00000000000000000000169 /* JourneyMapViewport.swift */,
@@ -668,7 +668,6 @@
 				A00000000000000000000215 /* PetOnboardingView.swift in Sources */,
 				A00000000000000000000216 /* ConnectingView.swift in Sources */,
 				A00000000000000000000217 /* JourneyMapView.swift in Sources */,
-				A00000000000000000000223 /* JourneyRouteSupport.swift in Sources */,
 				A00000000000000000000227 /* CommunicatorViews.swift in Sources */,
 				A00000000000000000000218 /* SecondaryViews.swift in Sources */,
 				A00000000000000000000247 /* PetCoreModels.swift in Sources */,
@@ -702,7 +701,6 @@
 				A00000000000000000000263 /* JourneyViewModel+Communication.swift in Sources */,
 				A00000000000000000000264 /* JourneyViewModel+Travel.swift in Sources */,
 				A00000000000000000000265 /* JourneyViewModel+Souvenirs.swift in Sources */,
-				A00000000000000000000266 /* WorldLifeEvent.swift in Sources */,
 				A00000000000000000000267 /* WorldAnimalViews.swift in Sources */,
 				A00000000000000000000268 /* JourneyMapLoading.swift in Sources */,
 				A00000000000000000000269 /* JourneyMapViewport.swift in Sources */,
@@ -738,6 +736,8 @@
 				A0000000000000000000028A /* AccountSheetView.swift in Sources */,
 				A0000000000000000000028B /* JourneyMapModels.swift in Sources */,
 				A0000000000000000000028C /* PetCredentialModels.swift in Sources */,
+				A0000000000000000000028D /* JourneyRouteSupport.swift in Sources */,
+				A0000000000000000000028E /* WorldLifeEvent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
