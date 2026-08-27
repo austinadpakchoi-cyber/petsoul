@@ -1,79 +1,9 @@
+"""OpenAI 兼容照片任务大脑（架构审计 P1-2 包化）。"""
+
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
-from json import JSONDecodeError
-import json
-from typing import Protocol
-from urllib import error, request
-
-from .config import Settings
-from .schemas import PhotoPerspective, PlaceSignal, WorldActivity
-from .storage import PetRecord
-
-
-@dataclass(frozen=True, slots=True)
-class PhotoMissionContext:
-    pet: PetRecord
-    place: PlaceSignal
-    activity: WorldActivity | None
-    weather: str
-    now: datetime
-    time_of_day: str
-    worldcup_event: bool = False
-
-
-@dataclass(frozen=True, slots=True)
-class PhotoMissionDraft:
-    interaction_type: str
-    title: str
-    detail: str
-    pet_action: str
-    emotional_tone: str
-    dwell_minutes: int
-    camera_perspective: PhotoPerspective
-    scene_anchor: str
-    landmark_hints: list[str]
-    local_detail_hints: list[str]
-    crowd_hints: list[str]
-    image_prompt: str
-    postcard_text: str
-    safety_notes: list[str]
-    model: str
-    provider: str
-
-
-class PhotoMissionBrain(Protocol):
-    provider_name: str
-
-    def draft(self, context: PhotoMissionContext) -> PhotoMissionDraft | None:
-        ...
-
-    def config_snapshot(self) -> dict[str, str | bool | float]:
-        ...
-
-
-class MockPhotoMissionBrain:
-    provider_name = "mock-photo-mission-brain"
-
-    def __init__(self, settings: Settings):
-        self.settings = settings
-
-    def draft(self, context: PhotoMissionContext) -> PhotoMissionDraft | None:
-        return None
-
-    def config_snapshot(self) -> dict[str, str | bool | float]:
-        return {
-            "provider": self.provider_name,
-            "photo_mission_model": self.settings.photo_mission_model,
-            "remote_configured": False,
-            "remote_call_active": False,
-            "remote_call_enabled": False,
-            "last_remote_success": False,
-            "last_remote_error": "",
-            "timeout_seconds": self.settings.agent_timeout_seconds,
-        }
-
+from ..config import Settings
+from .protocol import PhotoMissionBrain
 
 class OpenAICompatiblePhotoMissionBrain:
     provider_name = "openai-compatible-photo-mission-brain"
@@ -445,9 +375,3 @@ class OpenAICompatiblePhotoMissionBrain:
         if self.settings.openai_api_key:
             return message.replace(self.settings.openai_api_key, "[REDACTED]")
         return message
-
-
-def build_photo_mission_brain(settings: Settings) -> PhotoMissionBrain:
-    if settings.llm_provider == "openai" and settings.openai_api_key:
-        return OpenAICompatiblePhotoMissionBrain(settings)
-    return MockPhotoMissionBrain(settings)
