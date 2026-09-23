@@ -1,0 +1,75 @@
+.ps-shell {
+  min-height: 100dvh;
+}
+.ps-ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: calc(var(--safe-top) + 4px) calc(var(--page-gutter) + var(--safe-right)) 4px calc(var(--page-gutter) + var(--safe-left));
+  font-size: 11.5px;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--c-ink-2);
+  background: var(--c-bg-soft);
+}
+.ps-ribbon--fixture {
+  display: block;
+  color: var(--c-sun);
+  background: var(--c-sun-soft);
+}
+.ps-ribbon--fixture summary { cursor: pointer; }
+.ps-ribbon--fixture p { margin: 6px auto; max-width: 400px; }
+.ps-ribbon--error {
+  color: var(--c-danger);
+  background: var(--c-danger-soft);
+}
+.ps-ribbon + .ps-page {
+  padding-top: 0;
+}
+.ps-ribbon + .ps-page .ps-topbar {
+  padding-top: 0;
+}
+
+.ps-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  height: calc(var(--tabbar-h) + var(--safe-bottom));
+  padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
+  background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+  backdrop-filter: saturate(1.4) blur(14px);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  border-top: 1px solid var(--c-surface-stroke);
+}
+.ps-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 44px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-ink-3);
+  text-decoration: none;
+}
+.ps-tab.is-active {
+  color: var(--c-leaf);
+}
+@media (min-width: 600px) {
+  .ps-tabbar {
+    left: 50%;
+    right: auto;
+    width: var(--page-max);
+    transform: translateX(-50%);
+    border-left: 1px solid var(--c-surface-stroke);
+    border-right: 1px solid var(--c-surface-stroke);
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+  }
+}

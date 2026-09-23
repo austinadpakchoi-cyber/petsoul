@@ -1,0 +1,40 @@
+# 0.4.0 真实体验的部署补充（与 compose.yml 一起使用，未在服务器上执行）：
+#   docker compose --env-file release.env -f compose.yml -f compose.real-experience.override.yml up -d
+#
+# - 世界由独立的任务进程推进（python -m app.web_worker）；API 进程里不再跑世界线程（PETJOURNEY_WEB_WORLD_RUNNER=worker）。
+#   两边都先拿数据库租约，同一时刻只有一个在推进世界；任务进程挂了，租约 90 秒后过期，重启后接着跑（所有任务幂等，不会重复发工资、扣钱或发消息）。
+# - SQLite 打开 WAL（数据库旁会有 -wal / -shm 文件，备份脚本用 sqlite3 .backup 已经能正确处理）。
+# - 正式环境没有演示线路（PETJOURNEY_WEB_DEMO_CATALOG 不设置）；环境标签 production 只用于状态报告。
+# - 供应商密钥仍只在 /opt/petsoul/config/backend.env（root 600），不进镜像、不进日志；开启与额度按已有授权。
+services:
+  backend:
+    environment:
+      PETJOURNEY_WEB_WORLD_RUNNER: worker
+      PETJOURNEY_SQLITE_WAL: "1"
+      PETJOURNEY_WEB_ENVIRONMENT: production
+  worker:
+    image: petsoul-backend:${PETSOUL_RELEASE:?set the verified release}
+    restart: unless-stopped
+    init: true
+    command: ["python", "-m", "app.web_worker"]
+    env_file: /opt/petsoul/config/backend.env
+    environment:
+      TZ: UTC
+      PYTHONDONTWRITEBYTECODE: "1"
+      PETJOURNEY_DB_PATH: /srv/petjourney/data/petjourney.sqlite3
+      PETJOURNEY_UPLOAD_DIR: /srv/petjourney/data/uploads
+      PETJOURNEY_WEB_PRIVATE_MEDIA_DIR: /srv/petjourney/data/web-private-media
+      PETJOURNEY_WEB_WORLD_RUNNER: worker
+      PETJOURNEY_SQLITE_WAL: "1"
+      PETJOURNEY_WEB_ENVIRONMENT: production
+    volumes:
+      - /opt/petsoul/data:/srv/petjourney/data
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      backend: {condition: service_healthy}  # 迁移由 API 启动时应用，任务进程在它之后启动
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}

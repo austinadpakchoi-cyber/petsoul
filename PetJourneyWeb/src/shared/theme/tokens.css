@@ -1,0 +1,114 @@
+/*
+ * PetSoul 设计令牌（沿用 iOS DesignTokens 语义）：
+ * - 日间瓷白、夜间“灯下暖夜”（深暖绿炭底），不是纯黑；
+ * - surface / surface-stroke 负责卡片与玻璃表面；deep-ink 负责承载白字的实心填充与所有阴影；
+ * - paper* 为固定色：明信片等纸质纪念物夜里也保持暖纸配深墨；
+ * - 卡片圆角（18）大于控件圆角（14）。
+ * 模块只使用这些变量，不写死颜色；新增令牌属于共享入口变更。
+ */
+:root {
+  color-scheme: light dark;
+
+  --c-bg: #f6f1e7;
+  --c-bg-soft: #efe7d8;
+  --c-surface: #fffcf6;
+  --c-surface-2: #f9f3e8;
+  --c-surface-stroke: rgba(74, 56, 34, 0.1);
+  --c-ink: #2b2620;
+  --c-ink-2: #6e6457;
+  --c-ink-3: #a1968a;
+  --c-deep-ink: #203129;
+  --c-on-deep: #fbf7ef;
+  --c-shadow: rgba(32, 49, 41, 0.14);
+
+  --c-leaf: #2f7d5e;
+  --c-leaf-soft: #d9ecdf;
+  --c-sun: #e9a53a;
+  --c-sun-soft: #fbead0;
+  --c-coral: #df6f55;
+  --c-coral-soft: #f8dcd3;
+  --c-sky: #6aa9dc;
+  --c-sky-soft: #d9ebf8;
+  --c-sea: #3f8fb1;
+  --c-danger: #c24b3a;
+  --c-danger-soft: #f6d8d2;
+  --c-signal: #3e8e9b;
+
+  --c-map-water: #cfe3ea;
+  --c-map-land: #eee6d3;
+  --c-map-grid: rgba(74, 56, 34, 0.06);
+  --c-route: #2f7d5e;
+
+  --paper: #f4ead5;
+  --paper-shade: #e6d6b6;
+  --paper-ink: #3b2f22;
+  --paper-secondary-ink: #7a6650;
+  --paper-accent: #b9553b;
+
+  --r-card: 18px;
+  --r-control: 14px;
+  --r-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei",
+    "Segoe UI", Roboto, sans-serif;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 17px;
+  --fs-xl: 21px;
+  --fs-2xl: 26px;
+
+  --tabbar-h: 64px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --page-gutter: 16px;
+  --page-max: 560px;
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 140ms;
+  --dur-med: 260ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --c-bg: #18201b;
+    --c-bg-soft: #1e2721;
+    --c-surface: #232d26;
+    --c-surface-2: #29342c;
+    --c-surface-stroke: rgba(255, 236, 206, 0.09);
+    --c-ink: #efe7d9;
+    --c-ink-2: #b7ad9e;
+    --c-ink-3: #857b6e;
+    --c-deep-ink: #0f1612;
+    --c-on-deep: #f6efe2;
+    --c-shadow: rgba(0, 0, 0, 0.4);
+
+    --c-leaf: #5fb48c;
+    --c-leaf-soft: #1f3a2d;
+    --c-sun: #f0b85a;
+    --c-sun-soft: #3b3020;
+    --c-coral: #ef8b72;
+    --c-coral-soft: #3d2620;
+    --c-sky: #86bde8;
+    --c-sky-soft: #1d3140;
+    --c-sea: #6fb1cf;
+    --c-danger: #ef7b69;
+    --c-danger-soft: #3c211c;
+    --c-signal: #6cbac6;
+
+    --c-map-water: #1b2e35;
+    --c-map-land: #26302a;
+    --c-map-grid: rgba(255, 236, 206, 0.05);
+    --c-route: #6fcf9f;
+  }
+}

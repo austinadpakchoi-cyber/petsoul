@@ -1,0 +1,48 @@
+name: petsoul-web
+services:
+  backend:
+    image: petsoul-backend:${PETSOUL_RELEASE:?set the verified release}
+    restart: unless-stopped
+    init: true
+    env_file: /opt/petsoul/config/backend.env
+    environment:
+      TZ: UTC
+      PYTHONDONTWRITEBYTECODE: "1"
+      PETJOURNEY_DB_PATH: /srv/petjourney/data/petjourney.sqlite3
+      PETJOURNEY_UPLOAD_DIR: /srv/petjourney/data/uploads
+      PETJOURNEY_WEB_PRIVATE_MEDIA_DIR: /srv/petjourney/data/web-private-media
+    volumes:
+      - /opt/petsoul/data:/srv/petjourney/data
+    expose: ["8000"]
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/web/meta', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+  caddy:
+    image: ${PETSOUL_CADDY_IMAGE:-caddy:2}
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes:
+      - /opt/petsoul/config/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /opt/petsoul/releases:/srv/releases:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      PETSOUL_WEB_ROOT: /srv/releases/${PETSOUL_RELEASE}/PetJourneyWeb/dist
+    depends_on:
+      backend: {condition: service_healthy}
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+volumes:
+  caddy-data:
+  caddy-config:

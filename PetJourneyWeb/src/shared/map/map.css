@@ -1,0 +1,75 @@
+.ps-map {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  overflow: hidden;
+  border-radius: var(--r-card);
+  background: var(--c-map-water);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.ps-map:active {
+  cursor: grabbing;
+}
+.ps-map__base {
+  position: absolute;
+  inset: 0;
+}
+.ps-map__overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ps-map__anchor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  will-change: transform;
+}
+.ps-map__anchor > * {
+  pointer-events: auto;
+}
+.ps-map__controls {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 5;
+}
+.ps-map__ctl {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid var(--c-surface-stroke);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  box-shadow: 0 4px 10px -6px var(--c-shadow);
+  cursor: pointer;
+}
+.ps-map__attribution {
+  position: absolute;
+  left: 8px;
+  bottom: 6px;
+  font-size: 11px;
+  color: var(--c-ink-2);
+  background: color-mix(in srgb, var(--c-surface) 80%, transparent);
+  padding: 1px 6px;
+  border-radius: 6px;
+  pointer-events: none;
+}
+.ps-map__basemap {
+  pointer-events: none;
+}
+/* 真实底图左下角是供应商标志与审图号：署名挪到右下角，不遮挡。 */
+.ps-map__attribution--right {
+  left: auto;
+  right: 8px;
+}

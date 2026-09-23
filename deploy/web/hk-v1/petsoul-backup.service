@@ -1,0 +1,11 @@
+[Unit]
+Description=PetSoul online SQLite and media backup
+After=docker.service
+
+[Service]
+Type=oneshot
+UMask=0077
+Environment=PETSOUL_DATA_DIR=/opt/petsoul/data
+ExecStart=/bin/bash /opt/petsoul/ops/backup.sh /opt/petsoul/backups
+Nice=10
+

@@ -1,0 +1,114 @@
+{
+  "_note": "全部为人工虚构输入，不含任何真实用户、真实宠物、真实照片或真实商户。pet/household/reference id 均为 fx- 前缀的假值，sha256 为固定假摘要。UI 样板宠物（小福）不得出现在这里。",
+  "pets": {
+    "fx-pet-amber": {
+      "pet_id": "fx-pet-amber",
+      "household_id": "fx-home-1",
+      "species": "cat",
+      "origin": "owner_original",
+      "reference_id": "fx-ref-amber-1",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "appearance_tags": ["orange_coat", "tabby_markings", "white_chest", "green_eyes"],
+      "dna": {
+        "personality": ["curious"],
+        "habits": ["head_tilt", "look_out_window"],
+        "interests": ["coffee_aroma", "rail_travel"],
+        "preferences": ["close_camera"]
+      }
+    },
+    "fx-pet-mochi": {
+      "pet_id": "fx-pet-mochi",
+      "household_id": "fx-home-1",
+      "species": "dog",
+      "origin": "original_companion",
+      "reference_id": "fx-ref-mochi-1",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "appearance_tags": ["brown_coat", "floppy_ears", "white_paws"],
+      "dna": {
+        "personality": ["calm"],
+        "habits": ["curl_up"],
+        "interests": ["home_comfort"],
+        "preferences": ["quiet_corner"]
+      }
+    }
+  },
+  "scenes": {
+    "cafe": {
+      "event_id": "fx-evt-cafe-1", "revision": 3, "scene": "cafe",
+      "captured_at": "2026-09-23T09:20:00+08:00",
+      "city": "香港", "place_id": "fx-place-cafe-1", "place_label": "西营盘的一家街角咖啡馆",
+      "narrative": "daily_life",
+      "facts": ["at_cafe", "coffee_cup", "weather_sunny"]
+    },
+    "train": {
+      "event_id": "fx-evt-train-1", "revision": 1, "scene": "train",
+      "captured_at": "2026-09-23T17:40:00+08:00",
+      "city": "京都", "place_id": "fx-place-train-1", "place_label": "开往北边的城际列车",
+      "narrative": "daily_life",
+      "facts": ["on_train", "train_seat", "train_window", "weather_cloudy"]
+    },
+    "home": {
+      "event_id": "fx-evt-home-1", "revision": 7, "scene": "home",
+      "captured_at": "2026-09-23T22:10:00+08:00",
+      "city": "香港", "place_id": "fx-place-home-1", "place_label": "海边片区的家",
+      "narrative": "daily_life",
+      "facts": ["at_home", "home_blanket", "weather_rainy"]
+    },
+    "courtyard": {
+      "event_id": "fx-evt-courtyard-1", "revision": 2, "scene": "courtyard",
+      "captured_at": "2026-09-23T16:05:00+08:00",
+      "city": "香港", "place_id": "fx-place-courtyard-1", "place_label": "家门口的小菜园",
+      "narrative": "daily_life",
+      "facts": ["at_courtyard", "harvested_crop", "garden_bed", "weather_sunny"]
+    },
+    "landmark": {
+      "event_id": "fx-evt-landmark-1", "revision": 4, "scene": "landmark",
+      "captured_at": "2026-09-23T20:30:00+08:00",
+      "city": "开罗", "place_id": "fx-place-landmark-1", "place_label": "沙漠里的金字塔观景区",
+      "narrative": "daily_life",
+      "facts": ["at_landmark", "landmark_in_view", "held_snack", "weather_cloudy"]
+    },
+    "gym": {
+      "event_id": "fx-evt-gym-1", "revision": 1, "scene": "gym",
+      "captured_at": "2026-09-23T08:15:00+08:00",
+      "city": "香港", "place_id": "fx-place-gym-1", "place_label": "楼下那间小健身房",
+      "narrative": "daily_life",
+      "facts": ["at_gym", "gym_mirror", "own_device", "headphones", "gym_bench"]
+    },
+    "workshop": {
+      "event_id": "fx-evt-workshop-1", "revision": 5, "scene": "workshop",
+      "captured_at": "2026-09-23T14:00:00+08:00",
+      "city": "香港", "place_id": "fx-place-workshop-1", "place_label": "街尾那家修车铺",
+      "narrative": "daily_life",
+      "facts": ["at_workshop", "parked_vehicle", "hand_tool", "work_outfit", "photographer_present"]
+    },
+    "flight_adventure": {
+      "event_id": "fx-evt-flight-1", "revision": 2, "scene": "flight_adventure",
+      "captured_at": "2026-09-23T12:05:00+08:00",
+      "city": "云上", "place_id": "fx-place-flight-1", "place_label": "一架虚构的小型飞行器",
+      "narrative": "fictional_adventure",
+      "facts": ["flight_adventure", "flight_helmet", "safety_harness", "weather_sunny"]
+    },
+    "ship_deck": {
+      "event_id": "fx-evt-ship-1", "revision": 1, "scene": "ship_deck",
+      "captured_at": "2026-09-23T18:20:00+08:00",
+      "city": "虚构海域", "place_id": "fx-place-ship-1", "place_label": "一艘虚构的三桅帆船",
+      "narrative": "film_scene",
+      "facts": ["on_ship_deck", "captain_hat", "ship_wheel", "weather_cloudy"]
+    },
+    "snow_field": {
+      "event_id": "fx-evt-snow-1", "revision": 3, "scene": "snow_field",
+      "captured_at": "2026-09-23T10:40:00+08:00",
+      "city": "虚构北境", "place_id": "fx-place-snow-1", "place_label": "任务里的那片雪原",
+      "narrative": "fictional_adventure",
+      "facts": ["in_snow_field", "winter_outfit", "photographer_present", "weather_snowy"]
+    },
+    "aurora_camp": {
+      "event_id": "fx-evt-aurora-1", "revision": 2, "scene": "aurora_camp",
+      "captured_at": "2026-09-23T23:15:00+08:00",
+      "city": "虚构北境", "place_id": "fx-place-aurora-1", "place_label": "湖边的夜间营地",
+      "narrative": "daily_life",
+      "facts": ["at_aurora_camp", "aurora_visible", "winter_outfit", "camp_light", "weather_sunny"]
+    }
+  }
+}

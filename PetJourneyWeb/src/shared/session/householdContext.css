@@ -1,0 +1,58 @@
+.ps-current-pet-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 7px 16px;
+  border-bottom: 1px solid #e9e2d7;
+  background: #fffaf2;
+}
+
+.ps-current-pet-bar > span {
+  flex: 0 1 84px;
+  color: #796a5e;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.ps-current-pet-bar > div {
+  display: flex;
+  flex: 1;
+  gap: 7px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ps-current-pet-bar > div::-webkit-scrollbar {
+  display: none;
+}
+
+.ps-current-pet-bar button {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  min-height: 38px;
+  padding: 3px 10px 3px 4px;
+  border: 1px solid #e2d7c8;
+  border-radius: 22px;
+  background: #fff;
+  color: #51483f;
+  cursor: pointer;
+}
+
+.ps-current-pet-bar button[aria-pressed="true"] {
+  border-color: #b99165;
+  background: #f2e3d0;
+}
+
+.ps-current-pet-bar button:focus-visible {
+  outline: 3px solid #dba258;
+  outline-offset: 2px;
+}
+
+.ps-current-pet-bar strong {
+  font-size: 11px;
+  white-space: nowrap;
+}

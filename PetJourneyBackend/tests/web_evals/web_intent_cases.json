@@ -1,0 +1,22 @@
+[
+  {"id": "refuse_photo", "text": "别再给我拍照了。", "expect": ["refuse"], "forbid": []},
+  {"id": "missing_only", "text": "好想你呀。", "expect": ["missing"], "forbid": ["constraint"]},
+  {"id": "history_and_constraint", "text": "它以前最喜欢去海边。今天别安排出门。", "expect": ["share", "constraint"], "forbid": []},
+  {"id": "wish_not_history", "text": "希望以后带它去看雪。", "expect": ["wish"], "forbid": ["share"]},
+  {"id": "private_part", "text": "我那天没忍住哭了，这件事别告诉它。", "expect": ["privacy_limit"], "forbid": []},
+  {"id": "neutral_weather", "text": "今天天气不错。", "expect": [], "forbid": ["refuse", "constraint", "privacy_limit", "revoke"]},
+  {"id": "quoted_refusal", "text": "它说“别拍啦”，哈哈。", "expect": [], "forbid_unquoted": ["refuse"], "forbid": []},
+  {"id": "hypothetical_outing", "text": "如果明天下雨，就别出门了。", "expect": [], "forbid": [], "forbid_current_command": ["constraint"]},
+  {"id": "revoke_note", "text": "之前说它怕打雷那条，别记了。", "expect": ["revoke"], "forbid": ["wish"]},
+  {"id": "childhood_habit", "text": "小时候它总爱钻纸箱。", "expect": ["share"], "forbid": ["wish", "constraint"]},
+  {"id": "future_boat", "text": "下次想带它去坐船。", "expect": ["wish"], "forbid": ["share"]},
+  {"id": "privacy_blanket", "text": "别告诉它我把它的旧毯子送人了。", "expect": ["privacy_limit"], "forbid": []},
+  {"id": "refuse_place", "text": "那家店别去了，太吵。", "expect": ["refuse"], "forbid": ["privacy_limit"]},
+  {"id": "stay_home_today", "text": "今天就在家待着吧，别出门。", "expect": ["constraint"], "forbid": ["refuse"]},
+  {"id": "thanks", "text": "谢谢你陪着它。", "expect": [], "forbid": ["refuse", "constraint", "privacy_limit", "revoke"]},
+  {"id": "missing_and_constraint", "text": "我好想它，但是今天还是别出门了。", "expect": ["missing", "constraint"], "forbid": []},
+  {"id": "habit_not_refusal", "text": "它不喜欢被抱，这个要记住。", "expect": ["share"], "forbid": ["refuse", "revoke"]},
+  {"id": "photos_welcome", "text": "拍照没关系，多拍点！", "expect": [], "forbid": ["refuse"]},
+  {"id": "dont_mention_lost", "text": "以后不要再提那次走丢的事了。", "expect": [], "forbid": ["wish"], "expect_any": ["privacy_limit", "revoke", "constraint"]},
+  {"id": "negated_missing", "text": "我不是不想你，只是最近太忙了。", "expect": ["missing"], "forbid": ["refuse"]}
+]

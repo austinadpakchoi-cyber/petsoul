@@ -1,0 +1,188 @@
+.ps-cafe {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 360 / 224;
+  margin-top: var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--c-coral) 28%, var(--c-surface-stroke));
+  border-radius: 27px 27px 18px 18px;
+  background: var(--c-sun-soft);
+  box-shadow: 0 18px 28px -24px var(--c-shadow);
+}
+.ps-cafe::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.26), transparent 36%, transparent 70%, rgba(85, 53, 39, 0.12));
+}
+.ps-cafe__art { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.ps-cafe svg { display: none; }
+.ps-cafe__pet {
+  position: absolute;
+  z-index: 2;
+  right: 17%;
+  bottom: 18%;
+  display: grid;
+  justify-items: center;
+  transition: right 620ms var(--ease-out), bottom 620ms var(--ease-out);
+}
+.ps-cafe.is-seated .ps-cafe__pet {
+  right: 31%;
+  bottom: 24%;
+}
+.ps-cafe__pet .ps-avatar {
+  position: relative;
+  z-index: 1;
+  border: 3px solid var(--c-surface);
+  box-shadow: 0 8px 14px -8px var(--c-shadow);
+  animation: ps-cafe-breathe 4.2s ease-in-out infinite;
+}
+.ps-cafe__pet-portrait { position: relative; z-index: 1; display: block; width: 82px; height: 104px; object-fit: cover; object-position: center 58%; mix-blend-mode: multiply; filter: brightness(1.15) contrast(1.1) saturate(1.08); -webkit-mask-image: radial-gradient(ellipse 55% 68% at 50% 45%, #000 52%, transparent 100%); mask-image: radial-gradient(ellipse 55% 68% at 50% 45%, #000 52%, transparent 100%); animation: ps-cafe-breathe 4.2s ease-in-out infinite; }
+.ps-cafe__pet-shadow {
+  position: absolute;
+  bottom: 5px;
+  width: 63px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(90, 54, 35, 0.22);
+}
+.ps-cafe__pet-name {
+  position: absolute;
+  top: calc(100% - 2px);
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  background: var(--c-deep-ink);
+  color: var(--c-on-deep);
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.ps-cafe__drink {
+  position: absolute;
+  z-index: 3;
+  left: 36%;
+  bottom: 32%;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  color: var(--c-ink);
+  font-size: 10px;
+  font-weight: 800;
+  animation: ps-cafe-appear 400ms var(--ease-out) both;
+}
+.ps-cafe__drink i {
+  position: relative;
+  width: 25px;
+  height: 29px;
+  border: 3px solid #fff4df;
+  border-radius: 5px 5px 9px 9px;
+  background: var(--c-coral);
+  box-shadow: inset 0 7px 0 rgba(255, 255, 255, 0.25), 0 5px 8px -5px var(--c-shadow);
+}
+.ps-cafe__drink i::after {
+  content: "";
+  position: absolute;
+  right: -10px;
+  top: 6px;
+  width: 8px;
+  height: 11px;
+  border: 3px solid #fff4df;
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
+}
+.ps-cafe__hello {
+  position: absolute;
+  z-index: 3;
+  right: 11%;
+  top: 36%;
+  padding: 5px 8px;
+  border-radius: 12px 12px 4px 12px;
+  background: var(--c-surface);
+  color: var(--c-ink);
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 6px 12px -8px var(--c-shadow);
+  animation: ps-cafe-appear 400ms var(--ease-out) both;
+}
+.ps-cafe__photo {
+  position: absolute;
+  z-index: 4;
+  right: 10px;
+  bottom: 28px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 4px;
+  padding: 9px 11px;
+  border: 3px solid var(--c-surface);
+  border-radius: 3px;
+  background: var(--c-sun-soft);
+  color: var(--c-ink);
+  font-size: 9px;
+  box-shadow: 0 8px 15px -9px var(--c-shadow);
+  transform: rotate(5deg);
+  animation: ps-cafe-appear 430ms var(--ease-out) both;
+}
+.ps-visit-memento-link { display: flex; align-items: center; gap: 7px; padding: 11px 13px; border: 1px solid #e4d7be; border-radius: 12px; background: #fff9ed; color: #315a43; font-size: 12px; font-weight: 700; text-decoration: none; }
+.ps-visit-memento-link svg:last-child { margin-left: auto; }
+.ps-cafe__tag {
+  position: absolute;
+  z-index: 4;
+  right: 8px;
+  bottom: 6px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--c-surface) 84%, transparent);
+  color: var(--c-ink-2);
+  font-size: 10px;
+}
+.ps-visit-state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.ps-visit-state__story {
+  color: var(--c-ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+.ps-visit-acts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.ps-visit-act {
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--c-surface) 84%, var(--c-sun-soft));
+}
+.ps-visit-act .ps-btn {
+  width: 100%;
+  font-size: var(--fs-sm);
+}
+.ps-visit-act p {
+  min-height: 2.6em;
+  margin: 5px 2px 1px;
+  font-size: var(--fs-xs);
+}
+@keyframes ps-cafe-appear {
+  from { opacity: 0; transform: translateY(7px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ps-cafe-breathe {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-3px) rotate(1deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ps-cafe__pet { transition: none; }
+  .ps-cafe__pet .ps-avatar, .ps-cafe__pet-portrait { animation: none; }
+  .ps-cafe__drink,
+  .ps-cafe__hello,
+  .ps-cafe__photo { animation: none; }
+}
+@media (max-width: 340px) {
+  .ps-visit-acts { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,51 @@
+# 网页 MVP 同源部署示例（未部署；不替换现有 deploy/docker-compose.yml）。
+# 用法（在服务器上，获得用户对域名/服务器/发布的授权之后）：
+#   cp backend.web.env.example backend.web.env   # 填入真实值，不进 git
+#   (cd ../../PetJourneyWeb && npm ci && VITE_PETSOUL_DATA_MODE=live VITE_PETSOUL_API_BASE=/api/v1/web npm run build)
+#   ./scripts/release.sh <版本标签>              # 把 dist 复制到 releases/<标签> 并切换 current
+#   docker compose -f docker-compose.web.example.yml up -d --build
+# 单实例 SQLite：不要为 backend 开多副本；调度器只在这一个实例开启。
+
+services:
+  backend:
+    build: ../../PetJourneyBackend
+    image: petsoul-backend:${PETSOUL_RELEASE:-local}
+    restart: unless-stopped
+    env_file:
+      - ./backend.web.env
+    environment:
+      TZ: UTC
+      PETJOURNEY_DB_PATH: /srv/petjourney/data/petjourney.sqlite3
+      PETJOURNEY_UPLOAD_DIR: /srv/petjourney/data/uploads
+      PETJOURNEY_WEB_PRIVATE_MEDIA_DIR: /srv/petjourney/data/web-private-media
+    volumes:
+      - petsoul-web-data:/srv/petjourney/data
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/web/meta', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile.web.example:/etc/caddy/Caddyfile:ro
+      # releases/current 是指向某个已构建 dist 的符号链接；回滚只需切换它（见 scripts/rollback.sh）
+      - ./releases:/srv/releases:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      PETSOUL_WEB_ROOT: /srv/releases/current
+    depends_on:
+      - backend
+
+volumes:
+  petsoul-web-data:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,114 @@
+{
+  "timetable_id": "turbojet-hk-macau-outer-2026-02-11",
+  "mode": "ferry",
+  "operator": "TurboJET（噴射飛航）",
+  "service_label": "港澳航线 上环 ⇄ 澳门外港",
+  "source": {
+    "url": "https://www.turbojet.com.hk/en/routing-sailing-schedule/hong-kong-macau/sailing-schedule-fares",
+    "fetched_at": "2026-09-22T12:55:41Z",
+    "raw_sha256": "3d9526bb3312cfe79c32f4060ef96caeb988179358520b55576e6b46ce56e196",
+    "effective_statement": "Below Sailing Schedule is effective since 11 February 2026",
+    "duration_statement": "Sailing Schedule (Approx. 60 mins)",
+    "boarding_statement": "Passengers are advised to board at least 30 minutes prior to the departure time in order to allow time for documents checking by our staff",
+    "verification": "官网原始页面逐行解析，并与第二次独立读取（页面摘要）逐项一致；未发现分日限制或脚注（外港航线）。现实参考资料，不是订票。",
+    "verified_by": "claude-20260922-014933-307b",
+    "verified_at": "2026-09-22T12:58:00Z"
+  },
+  "effective_from": "2026-02-11",
+  "effective_to": null,
+  "recheck_by": "2026-10-22",
+  "days": "daily",
+  "duration_minutes": 60,
+  "duration_basis": "operator_stated_approx",
+  "boarding_buffer_minutes": 30,
+  "directions": {
+    "hk_to_macau": {
+      "from_hub": "hk-macau-ferry-terminal",
+      "to_hub": "macau-outer-harbour-ferry-terminal",
+      "timezone": "Asia/Hong_Kong",
+      "departures": [
+        "07:30",
+        "08:00",
+        "08:30",
+        "09:00",
+        "09:30",
+        "10:00",
+        "10:30",
+        "11:00",
+        "11:30",
+        "12:00",
+        "12:30",
+        "13:00",
+        "14:00",
+        "14:30",
+        "15:00",
+        "15:30",
+        "16:00",
+        "16:30",
+        "17:30",
+        "18:30",
+        "19:30",
+        "20:30",
+        "21:30",
+        "23:00"
+      ],
+      "night_from": "18:30"
+    },
+    "macau_to_hk": {
+      "from_hub": "macau-outer-harbour-ferry-terminal",
+      "to_hub": "hk-macau-ferry-terminal",
+      "timezone": "Asia/Macau",
+      "departures": [
+        "07:30",
+        "08:30",
+        "09:00",
+        "09:30",
+        "10:00",
+        "10:30",
+        "11:00",
+        "11:30",
+        "12:00",
+        "12:30",
+        "13:00",
+        "14:00",
+        "14:30",
+        "15:00",
+        "15:30",
+        "16:00",
+        "16:30",
+        "17:00",
+        "18:00",
+        "19:00",
+        "20:00",
+        "21:00",
+        "22:00",
+        "23:00"
+      ],
+      "night_from": "19:00"
+    }
+  },
+  "reference_fares": {
+    "currency": "HKD",
+    "effective_from": "2023-09-15",
+    "statement": "Below fares effective from 15 Sep 2023 HK (Sheung Wan) <-> Macau: Super Class / Economy Class; Day Sailing (Weekdays) $365 / $175; Day Sailing (Weekends & Holidays) $395 / $190; Night Sailing (Weekdays, Weekends & Holidays) $415 / $220. The above fares are quoted in HK dollar and include Hong Kong departure tax.",
+    "classes": {
+      "economy": {
+        "label": "经济位",
+        "day_weekday": 175,
+        "day_weekend_holiday": 190,
+        "night": 220
+      },
+      "super": {
+        "label": "豪华位",
+        "day_weekday": 365,
+        "day_weekend_holiday": 395,
+        "night": 415
+      }
+    },
+    "notes": [
+      "成人票价，港币，含香港离境税；同一官网页面（与船期同一次抓取）",
+      "节假日按港澳公众假期适用节假日票价——系统没有接入假期日历，遇到节假日以运营方公布为准",
+      "这是现实参考资料，不是订票；TA 在星球上的旅费用星币另计，与现实票价无关"
+    ]
+  }
+}

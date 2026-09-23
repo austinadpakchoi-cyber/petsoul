@@ -1,0 +1,48 @@
+.ps-life-page { background: #f9f6f0; color: #2c3c35; }
+.ps-life-content { display: grid; gap: 25px; padding: 8px 16px 100px; }
+.ps-life-hero { position: relative; overflow: hidden; padding: 27px 22px; min-height: 168px; border-radius: 26px; background: linear-gradient(138deg,#e6e3d3,#d7e5de 64%,#b7cfca); }
+.ps-life-hero::after { content: "✧"; position: absolute; right: 20px; top: 22px; font: 100px Georgia,serif; color: #ffffff9b; }
+.ps-life-hero span, .ps-life-card > span { font: 10px Georgia,serif; letter-spacing: .18em; }
+.ps-life-hero h1 { position: relative; margin: 25px 0 9px; font: 600 28px/1.24 Georgia,"Noto Serif SC",serif; }
+.ps-life-hero p { position: relative; max-width: 240px; margin: 0; font-size: 12px; line-height: 1.5; }
+.ps-life-content section { min-width: 0; }
+.ps-life-section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 1px 12px; font-size: 14px; font-weight: 800; }
+.ps-life-section-title > :last-child { font-size: 11px; font-weight: 500; color: #758177; }
+.ps-life-section-title a, .ps-life-footer a { text-decoration: none; color: #426450; }
+.ps-life-jobs, .ps-life-credentials { display: grid; gap: 9px; }
+.ps-life-job { display: flex; justify-content: space-between; gap: 12px; padding: 15px !important; }
+.ps-life-job > div:first-child { display: grid; gap: 4px; }
+.ps-life-job small { color: #718a73; }
+.ps-life-job strong { font-size: 15px; }
+.ps-life-job span { font-size: 11px; color: #82877f; }
+.ps-life-job__pay { display: grid; align-content: end; justify-items: end; white-space: nowrap; }
+.ps-life-job__pay b { font: 600 23px Georgia,serif; }
+.ps-life-credential { min-height: 78px; display: grid; grid-template-columns: 42px 1fr 15px; align-items: center; gap: 12px; box-sizing: border-box; padding: 15px; border: 1px solid #e3e2d6; border-radius: 17px; background: #fffdf8; color: #283a32; text-decoration: none; box-shadow: 0 3px 10px #3d54300a; }
+.ps-life-credential--locked { opacity: .65; }
+.ps-life-credential__mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; color: #4b6c55; background: #e8efe5; font-size: 21px; }
+.ps-life-credential > span:nth-child(2) { min-width: 0; display: grid; gap: 3px; }
+.ps-life-credential small { font-size: 10px; color: #798477; }
+.ps-life-credential strong { font-size: 14px; }
+.ps-life-credential em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #888d84; font-size: 10px; font-style: normal; }
+.ps-life-credential b { color: #8ba392; font-size: 15px; }
+.ps-life-footer { border-top: 1px solid #e0e1d7; padding-top: 16px; }
+.ps-life-footer a { font-size: 14px; font-weight: 800; }
+.ps-life-footer p { margin: 6px 0 0; color: #858980; font-size: 11px; }
+.ps-life-card { display: grid; align-content: space-between; min-height: 176px; padding: 24px; border-radius: 23px; background: linear-gradient(125deg,#304d41,#2b3c3b 64%,#627164); color: #f6f4e8; box-shadow: 0 13px 24px #28452b24; }
+.ps-life-card--bank_card { background: linear-gradient(125deg,#32595a,#253f49 64%,#93805e); }
+.ps-life-card--passport { background: linear-gradient(125deg,#664f55,#44414e 64%,#857a5e); }
+.ps-life-card h1 { margin: 16px 0 2px; font: 600 27px Georgia,"Noto Serif SC",serif; }
+.ps-life-card p { margin: 0 0 21px; font-size: 13px; }
+.ps-life-card strong { font: 15px Georgia,serif; letter-spacing: .11em; }
+.ps-life-card small { margin-top: 8px; opacity: .75; }
+.ps-life-detail { display: grid; gap: 12px; padding: 19px; border: 1px solid #e9e8dc; border-radius: 19px; background: #fffefa; }
+.ps-life-detail h2 { margin: 0 0 3px; font-size: 16px; }
+.ps-life-detail h3 { margin: 9px 0 0; font-size: 13px; }
+.ps-life-detail > div:not(.ps-life-balance) { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid #eeeee6; padding-top: 9px; font-size: 12px; }
+.ps-life-detail > div span { color: #7c827a; }
+.ps-life-detail > div strong { text-align: right; }
+.ps-life-detail p { margin: 0; color: #798077; font-size: 12px; line-height: 1.55; }
+.ps-life-balance { font: 600 27px Georgia,serif; }
+.ps-life-ledger small { display: block; margin-top: 2px; font-size: 10px; }
+.ps-life-ledger strong { white-space: nowrap; font-size: 15px; }
+.ps-life-back { color: #41654e; text-decoration: none; font-size: 13px; font-weight: 700; }

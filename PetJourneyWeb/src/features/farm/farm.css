@@ -1,0 +1,236 @@
+.ps-garden-sheet,
+.ps-crop-sheet {
+  border: 1px solid #efe3c8;
+  background:
+    radial-gradient(circle at 12% 0%, #fffdf2 0, transparent 29%), #f8f3e8;
+}
+.ps-garden-sheet__body {
+  gap: 14px;
+}
+.ps-garden-moment {
+  display: grid;
+  grid-template-columns: 104px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 112px;
+  padding: 9px 11px 9px 5px;
+  border: 1px solid #e6d8b9;
+  border-radius: 18px;
+  background: #fffdf6;
+  box-shadow: inset 0 1px #fff;
+}
+.ps-garden-moment__art {
+  position: relative;
+  align-self: stretch;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #e7efd5;
+}
+.ps-garden-moment__art > img:first-child {
+  position: absolute;
+  width: 122%;
+  max-width: none;
+  bottom: -13px;
+  left: -11%;
+}
+.ps-garden-moment__crop {
+  position: absolute;
+  width: 82%;
+  bottom: 10px;
+  left: 10%;
+  transform-origin: 50% 100%;
+}
+.ps-garden-moment__crop.is-tomato {
+  width: 94%;
+  left: 3%;
+  bottom: 7px;
+}
+.ps-garden-moment__crop.is-moon_radish,
+.ps-garden-moment__crop.is-sakura_radish {
+  bottom: 5px;
+}
+.ps-garden-moment.is-growing .ps-garden-moment__crop {
+  animation: ps-garden-sway 4.8s ease-in-out infinite;
+}
+.ps-garden-moment.is-ripe .ps-garden-moment__crop {
+  animation: ps-garden-ready 2.4s ease-in-out infinite;
+}
+.ps-garden-moment__spark {
+  position: absolute;
+  inset: 16px 21px 18px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #fff3a868, transparent 67%);
+  animation: ps-garden-glow 2.2s ease-in-out infinite;
+}
+.ps-garden-moment__copy {
+  min-width: 0;
+}
+.ps-garden-moment__copy > span,
+.ps-garden-sheet__ledger > span {
+  color: #8b7654;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+}
+.ps-garden-moment h3 {
+  margin: 3px 0;
+  color: var(--paper-ink);
+  font-size: 16px;
+}
+.ps-garden-moment p,
+.ps-garden-sheet__ledger p {
+  margin: 0;
+  color: var(--c-ink-2);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.ps-garden-sheet__ledger {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #f1eadb;
+  border: 1px solid #e5d8bc;
+}
+.ps-garden-sheet__ledger .ps-row {
+  flex-wrap: wrap;
+}
+.ps-garden-sheet__links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ps-garden-sheet__links .ps-btn {
+  justify-content: center;
+}
+.ps-farm-receipt {
+  margin: 0;
+  padding: 9px 11px;
+  border: 1px solid #c7d7aa;
+  border-radius: 12px;
+  color: #405832;
+  background: #f4f9e9;
+  font-size: 12px;
+  line-height: 1.45;
+  animation: ps-farm-receipt-in 0.32s var(--ease-out) both;
+}
+@keyframes ps-garden-sway {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  40% {
+    transform: rotate(1.5deg) translateY(-1px);
+  }
+  72% {
+    transform: rotate(-1.2deg);
+  }
+}
+@keyframes ps-garden-ready {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.025);
+  }
+}
+@keyframes ps-garden-glow {
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+@keyframes ps-farm-receipt-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.ps-crop-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.ps-crop-list > li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 85px;
+  padding: 8px 10px;
+  border: 1px solid #e9dbc1;
+  border-radius: 15px;
+  background: #fffdf6;
+  box-shadow: 0 2px 8px #705b3910;
+}
+.ps-crop-list__art {
+  width: 62px;
+  height: 62px;
+  flex: 0 0 62px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 13px;
+  background: radial-gradient(circle at 45% 35%, #f5f7df, #e8ecd7);
+}
+.ps-crop-list__art img {
+  display: block;
+  width: 61px;
+  height: 61px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 3px #5e60482e);
+}
+.ps-crop-list > li > div strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--paper-ink);
+  font-size: 14px;
+}
+.ps-crop-list > li .ps-muted {
+  line-height: 1.45;
+  font-size: 11px;
+}
+.ps-neighbors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.ps-neighbor {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 64px;
+  padding: var(--space-3);
+  border-radius: var(--r-card, 16px);
+  background: var(--c-surface);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: 0 1px 0 var(--c-surface-stroke);
+}
+.ps-neighbor:focus-visible {
+  outline: 2px solid var(--c-leaf);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ps-garden-moment.is-growing .ps-garden-moment__crop,
+  .ps-garden-moment.is-ripe .ps-garden-moment__crop,
+  .ps-garden-moment__spark,
+  .ps-farm-receipt {
+    animation: none;
+  }
+}

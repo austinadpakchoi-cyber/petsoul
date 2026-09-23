@@ -82,6 +82,43 @@ class Settings:
     economy_admin_token: str | None = None
     economy_daily_coin_limit: int = 300
 
+    # 网页 R0（/api/v1/web）：只追加，不改变上面既有默认值
+    legacy_api_policy: str = "open"
+    web_cookie_secure: bool = True
+    web_session_ttl_seconds: int = 30 * 24 * 3600
+    web_private_media_dir: Path = BASE_DIR / "data" / "web-private-media"
+    intent_layer_mode: str = "off"
+    intent_layer_provider: str = "rule"
+    # 网页真实供应商总开关（默认关闭：测试与其他窗口的本地运行不会产生付费调用）；只在服务端使用密钥
+    web_providers_enabled: bool = False
+    web_llm_daily_cap: int = 300
+    web_image_daily_cap: int = 20
+    # 每只宠物每天的生图额度（**单位**，不是张数：没有参考照时一次请求要先画证件照再画正图，占 2 个单位）。
+    # 为什么要有这一条：`web_image_daily_cap` 是**全局**的，不分宠物也不分家庭——
+    # 一只宠物（或一个主人反复点"重画"）可以把整个部署当天的额度吃光，别人一张都画不成。
+    # 默认 6 ＝ 无参考照时约 3 张／天，有参考照时 6 张／天；它与全局那条**并列生效**，两条都不能超。
+    # 设成 0 表示不限（只剩全局那条）——那正是现在的状态，不建议保持。
+    web_image_per_pet_daily_cap: int = 6
+    web_map_daily_cap: int = 500
+    web_map_static_daily_cap: int = 200
+    web_world_tick_seconds: float = 30.0
+    web_image_model: str = "doubao-seedream-4-5-251128"
+    web_llm_timeout_seconds: float = 15.0
+    # 世界由谁推进：embedded＝API 进程内的后台线程（默认，本地开发）；worker＝独立任务进程（python -m app.web_worker），API 不跑；off＝都不跑
+    # 心跳策略（web_runtime）接入方式：off 不跑；shadow 只评估并记录，不执行也不调模型（默认）
+    web_heartbeat_mode: str = "shadow"
+    # 自主决策（web_agent.decision）接入方式：off 不跑、一次模型都不调用（默认）；shadow 调用但只记录；live 复核后真的执行
+    web_brain_mode: str = "off"
+    # 每只宠物每个 UTC 记账日最多几次自主决策（只收紧已有供应商上限，不扩大付费范围）
+    web_brain_daily_per_pet: int = 12
+    web_world_runner: str = "embedded"
+    # 运行环境标签（只用于状态报告与日志，不改变任何行为）：dev / demo / real-local / staging / production
+    web_environment: str = "dev"
+    # SQLite WAL（API 与独立任务进程同时读写时建议开启；会在数据库旁生成 -wal / -shm 文件，备份时一起带上）
+    sqlite_wal: bool = False
+    # 演示线路（海边咖啡馆 / 坐船去澳门 / 飞去东京的演示版与“示例”地点）：只在演示环境打开；正式与真实联调环境关闭
+    web_demo_catalog: bool = False
+
 
 def load_settings() -> Settings:
     load_env_file(BASE_DIR / ".env")
@@ -170,6 +207,25 @@ def load_settings() -> Settings:
         in {"1", "true", "yes", "on"},
         economy_admin_token=os.getenv("PETJOURNEY_ADMIN_TOKEN"),
         economy_daily_coin_limit=int(os.getenv("PETJOURNEY_ECONOMY_DAILY_COIN_LIMIT", "300")),
+        legacy_api_policy=os.getenv("PETJOURNEY_LEGACY_API_POLICY", "open").strip().lower(),
+        web_cookie_secure=os.getenv("PETJOURNEY_WEB_COOKIE_SECURE", "true").lower() in {"1", "true", "yes", "on"},
+        web_session_ttl_seconds=int(os.getenv("PETJOURNEY_WEB_SESSION_TTL_SECONDS", str(30 * 24 * 3600))),
+        web_private_media_dir=Path(os.getenv("PETJOURNEY_WEB_PRIVATE_MEDIA_DIR", str(BASE_DIR / "data" / "web-private-media"))),
+        intent_layer_mode=os.getenv("PETJOURNEY_INTENT_LAYER_MODE", "off").strip().lower(),
+        intent_layer_provider=os.getenv("PETJOURNEY_INTENT_LAYER_PROVIDER", "rule").strip().lower(),
+        web_providers_enabled=os.getenv("PETJOURNEY_WEB_PROVIDERS", "").lower() in {"1", "true", "yes", "on"},
+        web_llm_daily_cap=int(os.getenv("PETJOURNEY_WEB_LLM_DAILY_CAP", "300")),
+        web_image_daily_cap=int(os.getenv("PETJOURNEY_WEB_IMAGE_DAILY_CAP", "20")),
+        web_image_per_pet_daily_cap=int(os.getenv("PETJOURNEY_WEB_IMAGE_PER_PET_DAILY_CAP", "6")),
+        web_map_daily_cap=int(os.getenv("PETJOURNEY_WEB_MAP_DAILY_CAP", "500")),
+        web_map_static_daily_cap=int(os.getenv("PETJOURNEY_WEB_MAP_STATIC_DAILY_CAP", "200")),
+        web_world_runner=os.getenv("PETJOURNEY_WEB_WORLD_RUNNER", "embedded").strip().lower(),
+        web_environment=os.getenv("PETJOURNEY_WEB_ENVIRONMENT", "dev").strip().lower(),
+        sqlite_wal=os.getenv("PETJOURNEY_SQLITE_WAL", "").lower() in {"1", "true", "yes", "on"},
+        web_demo_catalog=os.getenv("PETJOURNEY_WEB_DEMO_CATALOG", "").lower() in {"1", "true", "yes", "on"},
+        web_world_tick_seconds=float(os.getenv("PETJOURNEY_WEB_WORLD_TICK_SECONDS", "30")),
+        web_image_model=os.getenv("PETJOURNEY_WEB_IMAGE_MODEL", "doubao-seedream-4-5-251128"),
+        web_llm_timeout_seconds=float(os.getenv("PETJOURNEY_WEB_LLM_TIMEOUT_SECONDS", "15")),
     )
 
 

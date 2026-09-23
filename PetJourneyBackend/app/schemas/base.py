@@ -87,6 +87,12 @@ class EconomyTransactionType(str, Enum):
     item_locked = "item_locked"
     item_unlocked = "item_unlocked"
     item_archived = "item_archived"
+    # 网页端（/api/v1/web）经 EconomyAdapter 写入同一账本；iOS 客户端不读取网页宠物账本。
+    web_farm_harvest = "web_farm_harvest"
+    web_farm_steal = "web_farm_steal"
+    web_travel_fee = "web_travel_fee"
+    web_reward = "web_reward"
+    web_job_income = "web_job_income"
 
 
 __all__ = [

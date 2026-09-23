@@ -1,0 +1,41 @@
+# 示例：同源网页 + API（未部署；域名为占位符）。不要直接覆盖现有 deploy/Caddyfile。
+# web.example.invalid 需替换为用户确认的真实域名；FastAPI 容器名/端口按实际编排调整。
+# 未经 `caddy validate` 与实际部署验证；handle 顺序与匹配规则上线前必须实测。
+
+web.example.invalid {
+	encode zstd gzip
+
+	# 只暴露新网页 API；旧 /api/v1/*、/docs、/openapi.json、/media 默认不对公网开放
+	handle /api/v1/web/* {
+		reverse_proxy backend:8000
+	}
+	handle /health {
+		reverse_proxy backend:8000
+	}
+	@blocked path /api/v1/* /docs* /openapi.json /media/*
+	handle @blocked {
+		respond "Not Found" 404
+	}
+
+	# 静态资源：带哈希的文件长缓存
+	handle /assets/* {
+		root * {$PETSOUL_WEB_ROOT:/srv/releases/current}
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	# SPA：其余路径回退 index.html，深链接可刷新
+	handle {
+		root * {$PETSOUL_WEB_ROOT:/srv/releases/current}
+		header Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), camera=(), microphone=()"
+	}
+}

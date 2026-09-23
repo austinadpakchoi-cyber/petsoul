@@ -1,0 +1,31 @@
+petsoul.games {
+    encode zstd gzip
+    handle /api/v1/web/* {
+        reverse_proxy backend:8000
+    }
+    handle /health {
+        reverse_proxy backend:8000
+    }
+    @blocked path /api/v1/* /docs* /redoc* /openapi.json /media /media/* /.env* /.git* /RELEASE-MANIFEST.json
+    handle @blocked {
+        respond "Not Found" 404
+    }
+    handle /assets/* {
+        root * {$PETSOUL_WEB_ROOT}
+        header Cache-Control "public, max-age=31536000, immutable"
+        file_server
+    }
+    handle {
+        root * {$PETSOUL_WEB_ROOT}
+        header Cache-Control "no-cache"
+        try_files {path} /index.html
+        file_server
+    }
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "geolocation=(), camera=(), microphone=()"
+    }
+}

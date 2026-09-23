@@ -30,12 +30,15 @@ from .place_interactions import PlaceInteractionEngine
 from .providers import build_content_provider, build_map_provider
 from .route_planner import build_route_planner
 from .routers import ALL_ROUTERS
+from .routers.web import WEB_ROUTERS
 from .scheduler import BackgroundAgentScheduler
 from .storage import JourneyStorage
 from .street_rank import PetStreetRankEngine
 from .transport_reality import build_transport_reality_provider
 from .travel_quest_engine import build_pet_travel_quest_engine
 from .weather_provider import build_weather_provider
+from .web_composition import build_web_services
+from .web_platform import install_web_platform
 from .world_simulation import build_world_simulation_engine
 
 
@@ -111,9 +114,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         await scheduler.start()
+        # 网页世界定时器与生图任务：runner=embedded 时在 API 进程里跑；runner=worker 时交给独立任务进程（python -m app.web_worker）；
+        # PETJOURNEY_WEB_WORLD_TICK_SECONDS=0 或 runner=off 时都不跑。多个进程之间靠数据库租约保证同一时刻只有一个在推进世界。
+        embedded = getattr(settings, "web_world_runner", "embedded") == "embedded"
+        web_worker = getattr(getattr(app.state, "web", None), "worker", None) if embedded else None
+        tickers = [t for name in ("ticker", "cognition") if (t := getattr(getattr(app.state, "web", None), name, None)) is not None] if embedded else []
+        if web_worker is not None:
+            web_worker.start()
+        for ticker in tickers:
+            ticker.start()
         try:
             yield
         finally:
+            for ticker in tickers:
+                ticker.stop()
+            if web_worker is not None:
+                web_worker.stop()
             await scheduler.stop()
 
     app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
@@ -160,6 +176,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.mount("/media", StaticFiles(directory=settings.upload_dir), name="media")
 
     for router in ALL_ROUTERS:
+        app.include_router(router)
+
+    # 网页 R0：/api/v1/web 门面（错误信封、会话、幂等、迁移、旧接口访问策略）。只追加，不改旧路由。
+    install_web_platform(app, storage=storage, settings=settings)
+    app.state.web = build_web_services(storage, settings, economy_engine)
+    app.state.web_session_revocation_check = app.state.web.identity.session_active
+    for router in WEB_ROUTERS:
         app.include_router(router)
 
     return app

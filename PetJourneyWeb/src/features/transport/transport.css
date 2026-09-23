@@ -1,0 +1,92 @@
+.ps-vehicle {
+  position: absolute;
+  left: -26px;
+  top: -26px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 3px solid var(--c-surface);
+  background: var(--c-deep-ink);
+  color: var(--c-on-deep);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 20px -7px var(--c-shadow), 0 0 0 5px color-mix(in srgb, var(--c-surface) 42%, transparent);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.ps-vehicle:active {
+  transform: scale(0.94);
+}
+.ps-vehicle--flight {
+  background: var(--c-coral);
+}
+.ps-vehicle--train {
+  background: var(--c-leaf);
+}
+.ps-vehicle--ferry {
+  background: var(--c-sea);
+}
+.ps-vehicle--drive {
+  background: var(--c-sun);
+}
+.ps-vehicle__icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+}
+.ps-vehicle__glow {
+  position: absolute;
+  inset: 7px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.32), transparent 55%);
+}
+.ps-vehicle::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  opacity: 0;
+  animation: ps-vehicle-pulse 2.4s ease-out infinite;
+  color: var(--c-deep-ink);
+}
+@keyframes ps-vehicle-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ps-vehicle::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+.ps-legcard {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--space-2);
+  align-items: center;
+}
+.ps-legcard__time {
+  font-size: var(--fs-xl);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+.ps-legcard__place {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+.ps-legcard__mid {
+  font-size: var(--fs-xs);
+  color: var(--c-ink-2);
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  border: 1px dashed var(--c-surface-stroke);
+}

@@ -34,7 +34,8 @@ class StorageBaseMixin:
     database_path: Path
 
     def connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.database_path, factory=_ClosingConnection)
+        # timeout：API 与独立任务进程同时写时，等对方的写事务结束（而不是立刻报 database is locked）
+        conn = sqlite3.connect(self.database_path, factory=_ClosingConnection, timeout=15)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
         return conn
