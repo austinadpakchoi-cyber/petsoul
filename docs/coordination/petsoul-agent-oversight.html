@@ -1,0 +1,414 @@
+<div id="petsoul-agent-oversight">
+  <style>
+    #petsoul-agent-oversight { color: var(--foreground); }
+    #petsoul-agent-oversight .board-stack { display: grid; gap: 16px; }
+    #petsoul-agent-oversight .board-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    #petsoul-agent-oversight .board-meta { overflow-wrap: anywhere; }
+    #petsoul-agent-oversight .work-list { display: grid; gap: 14px; }
+    #petsoul-agent-oversight .work-row { display: grid; grid-template-columns: 170px minmax(0, 1fr) 140px; align-items: center; gap: 12px; }
+    #petsoul-agent-oversight .work-copy { display: grid; gap: 4px; }
+    #petsoul-agent-oversight .status-mark { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-inline-end: 6px; background: var(--viz-series-2); }
+    #petsoul-agent-oversight .status-mark.observed { background: var(--viz-series-1); }
+    #petsoul-agent-oversight .gate-strip { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin: 12px 0; }
+    #petsoul-agent-oversight .gate-step { display: grid; gap: 6px; }
+    #petsoul-agent-oversight .gate-mark { height: 5px; background: var(--muted); }
+    #petsoul-agent-oversight .gate-mark.recorded { background: var(--viz-series-1); }
+    #petsoul-agent-oversight .detail-fields { display: grid; grid-template-columns: 72px minmax(0,1fr); gap: 10px 12px; margin: 0; }
+    #petsoul-agent-oversight .detail-fields dt { font-weight: 500; }
+    #petsoul-agent-oversight .detail-fields dd { margin: 0; overflow-wrap: anywhere; }
+    #petsoul-agent-oversight .source-list { overflow-wrap: anywhere; }
+    #petsoul-agent-oversight .evidence-list { display: grid; gap: 18px; }
+    #petsoul-agent-oversight .evidence-item { display: grid; gap: 6px; }
+    #petsoul-agent-oversight .sequence { display: grid; gap: 16px; margin: 0; padding-inline-start: 24px; }
+    #petsoul-agent-oversight .sequence li { padding-inline-start: 4px; }
+    #petsoul-agent-oversight .sequence-detail { margin-top: 4px; }
+    #petsoul-agent-oversight [hidden] { display: none !important; }
+    @media (max-width: 570px) {
+      #petsoul-agent-oversight .work-row { grid-template-columns: minmax(0,1fr); gap: 6px; }
+      #petsoul-agent-oversight .work-copy { padding-inline-start: 4px; }
+      #petsoul-agent-oversight .work-next { padding-inline-start: 4px; }
+      #petsoul-agent-oversight .gate-strip { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      #petsoul-agent-oversight .detail-fields { grid-template-columns: minmax(0,1fr); gap: 5px; }
+    }
+  </style>
+  <div class="board-stack">
+    <div class="board-head">
+      <div>
+        <h2>PetSoul · 协作监管</h2>
+        <div class="text-small text-muted board-meta">核验快照 <time datetime="2026-09-23T03:21:18+08:00">09.23 03:21 · 北京时间</time></div>
+      </div>
+      <button type="button" class="btn btn-primary" id="pso-refresh">重新核验黑板</button>
+    </div>
+    <div class="viz-row" aria-label="记录口径">
+      <span class="viz-badge">I：批次 1–8 已接入 · 0.4.1 本地运行</span>
+      <span>Q：独立合同 10 PASS / 1 FAIL（C3a，待当版复验）</span>
+      <span class="text-small text-muted">03:21 本地 ops · 非实时监控 · 公网未核验</span>
+    </div>
+    <div class="nav nav-pills" role="tablist" aria-label="监管视角">
+      <button class="nav-link active" id="pso-tab-work" role="tab" aria-controls="pso-work" aria-selected="true" type="button">工作包</button>
+      <button class="nav-link" id="pso-tab-handoff" role="tab" aria-controls="pso-handoff" aria-selected="false" type="button">交接卡点</button>
+      <button class="nav-link" id="pso-tab-evidence" role="tab" aria-controls="pso-evidence" aria-selected="false" type="button">证据与验收</button>
+    </div>
+    <div id="pso-work" role="tabpanel" aria-labelledby="pso-tab-work">
+      <div class="board-stack">
+        <div class="work-list" aria-label="各窗口最新登记的工作">
+          <div class="work-row">
+            <div><button type="button" class="btn" data-package="I" aria-pressed="true">I · 总集成</button></div>
+            <div class="work-copy"><span><span class="status-mark observed" aria-hidden="true"></span>批次 1–8 已接入 · 本地 0.4.1</span><span class="text-small text-muted">307b · I 仍持有集成范围</span></div>
+            <div class="work-next text-small">Q 当版复验<br>等待 E2 时点</div>
+          </div>
+          <div class="work-row">
+            <div><button type="button" class="btn" data-package="A" aria-pressed="false">A · 任务与额度</button></div>
+            <div class="work-copy"><span><span class="status-mark observed" aria-hidden="true"></span>首片已交接 · A 仍持有实现</span><span class="text-small text-muted">4bef · HANDOFF 00:43</span></div>
+            <div class="work-next text-small">修迁移后失效夹具<br>补回归与交接</div>
+          </div>
+          <div class="work-row">
+            <div><button type="button" class="btn" data-package="B" aria-pressed="false">B · 时钟与心跳</button></div>
+            <div class="work-copy"><span><span class="status-mark" aria-hidden="true"></span>已接入 shadow · 策略未接管</span><span class="text-small text-muted">fed3 · HANDOFF 00:26</span></div>
+            <div class="work-next text-small">21 项 FakeClock 自报<br>active 运行未验</div>
+          </div>
+          <div class="work-row">
+            <div><button type="button" class="btn" data-package="C" aria-pressed="false">C · DNA 与决策</button></div>
+            <div class="work-copy"><span><span class="status-mark" aria-hidden="true"></span>DeepSeek 单次 live 实跑已有记录</span><span class="text-small text-muted">I 于 03:13 补证 · 临时库 / 固定时钟</span></div>
+            <div class="work-next text-small">真实模型选择已成行<br>常驻自动运行未验</div>
+          </div>
+          <div class="work-row">
+            <div><button type="button" class="btn" data-package="Q" aria-pressed="false">Q · 独立验收</button></div>
+            <div class="work-copy"><span><span class="status-mark" aria-hidden="true"></span>独立合同 10/11 · C3a 待当版复验</span><span class="text-small text-muted">4d18 · 合同 01:25 / 日志 01:27</span></div>
+            <div class="work-next text-small">复跑 0.4.1 合同<br>验证 API 关联字段</div>
+          </div>
+        </div>
+        <div class="card" aria-label="所选工作包详情">
+          <div class="board-stack">
+            <div class="board-head"><span id="pso-detail-title" aria-live="polite">I · 总集成</span><span class="viz-badge" id="pso-detail-status">集成待验</span></div>
+            <div id="pso-gates" class="gate-strip" aria-label="所选工作包的证据关卡"></div>
+            <dl class="detail-fields" id="pso-detail-fields"></dl>
+            <details>
+              <summary>文件边界与来源</summary>
+              <div class="source-list text-small" id="pso-detail-source"></div>
+            </details>
+            <div class="viz-controls">
+              <button type="button" class="btn" id="pso-audit">核查所选任务</button>
+              <label class="form-check"><input type="checkbox" class="form-check-input" id="pso-watch"><span class="form-check-label">列入我们的关注项</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="text-small text-muted" id="pso-watch-summary" aria-live="polite">关注项：总集成</div>
+      </div>
+    </div>
+    <div id="pso-handoff" role="tabpanel" aria-labelledby="pso-tab-handoff" hidden>
+      <div class="board-stack">
+        <ol class="sequence">
+          <li><span class="viz-badge">归属与契约</span> I 部分释放；共享包现为 runtime-internal 0.1.1<div class="sequence-detail text-small">I 保留集成/组合根/迁移；A、B、C、Q 仍持有各自实现或验收路径。最新各窗口末尾均未 RELEASE；不从日志沉默推断窗口已停。</div></li>
+          <li><span class="viz-badge">已集成但有门控</span> B 心跳 shadow、C brain 默认 off<div class="sequence-detail text-small">I 报告两模块已进入组合根/worker；heartbeat 默认只比较不执行，brain 默认跳过模型步骤。常驻实例仍按默认门控运行；真实模型临时场景证据另列。</div></li>
+          <li><span class="viz-badge">当前代码回归卡点</span> A 夹具错误 + Q-C3a 待复验<div class="sequence-detail text-small">I 全量自报唯一错误在 A 的 BudgetWithoutMigrationTests：迁移 0050 会创建额度表。I 已报 C3a 修复且源码有 5 分钟回收占位，但 Q 最后一次独立测试仍 FAIL，未在当前代码上复跑。</div></li>
+          <li>API 关联字段与 E2 自然时间<div class="sequence-detail text-small">I 报 0.4.1 已下发 ref_kind/ref_id、source_event_id/reply_to；Q 尚未当版核验 API。E2 预计 06:21 出门、06:26 后判定，目前 PENDING；假时钟覆盖不能替代自然时间观察。</div></li>
+          <li>真实模型已有一次 live 证据；常驻与公网仍待验<div class="sequence-detail text-small">I 03:10/03:13 登记 shadow/live 各一次 DeepSeek 调用。已读取两份证据：live 生成行程，last_decision_by=model；环境是临时库与固定中午时钟。18763 默认 brain off；本轮未核验公网。</div></li>
+        </ol>
+        <hr>
+        <div class="evidence-item"><span>需要协调的另一项：前端领取记录</span><span class="text-small">r7k 的 unified-life-ui-photo-cat 有 15:53 RELEASE；日志物理顺序颠倒，后续窗口仍引用“未释放”。按任务 ID 与时间核对，不自动接管其他范围。</span></div>
+        <button type="button" class="btn" id="pso-coordination">整理给原 Claude 的协调消息</button>
+      </div>
+    </div>
+    <div id="pso-evidence" role="tabpanel" aria-labelledby="pso-tab-evidence" hidden>
+      <div class="evidence-list">
+        <div class="evidence-item"><span><span class="viz-badge">Q 独立合同 · 旧代码切片</span> 10 PASS / 1 FAIL（C3a）</span><span>通过：任务接管、待回复恢复、提交围栏、下游重试、家庭隔离、纯读 GET、世界线与认知线分离。</span><span class="text-small text-muted">合同 run_at 01:25:41 +08，网络尝试 0；真实供应商、自然时间、线上均未覆盖。I 后续集成尚未由 Q 复跑。</span></div>
+        <div class="evidence-item"><span><span class="viz-badge">当前最关键验收缺口</span> C3a 后续修复待独立复验</span><span>Q 原复现：同键在 0、1、61 分钟仍 409；当前源码已有超 5 分钟 in-progress 占位回收实现，I 报告已修。</span><span class="text-small text-muted">代码存在不证明恢复正确；最新独立合同记录仍是旧版本 FAIL，当前版本未有 Q PASS。</span></div>
+        <div class="evidence-item"><span><span class="viz-badge">窗口自报</span> 全量回归仍有 1 项错误</span><span>I 自报 462 项、1 ERROR、1 SKIP。错误在 A 的预算缺表夹具；I 另补的 2 项缺表测试不能代替修复该错误。</span><span class="text-small text-muted">B 21 项 FakeClock、C 31 项临时库/假模型测试均为各窗口自报；A/B/C 仍持有原范围。</span></div>
+        <div class="evidence-item"><span><span class="viz-badge">只读运行观测</span> 本机 18763 · web-mvp-0.4.1</span><span>03:21:18 +08 · worker PID 70908 · 世界线/认知线 lease_alive=true · 两线 last_error=null · 50 migrations · 到期/运行任务各 0。</span><span class="text-small text-muted">GET /ops/status；只证明本地实例当时的报告状态，不证明线上、公网或脑模型调用。</span></div>
+        <div class="evidence-item"><span><span class="viz-badge">自然时间门槛 · PENDING</span> 出门前按作息复核（E2）</span><span>预计 06:21 +08 出门；06:26 后由等待判定进程读取结果。I 已自报验证触发前提，当前时刻尚未到期。</span><span class="text-small text-muted">新增 3 项是假时钟确定性测试；不能代替这趟真实 local 行程实际改签或退款证据。</span></div>
+        <div class="evidence-item"><span><span class="viz-badge">真实供应商 · 隔离场景证据</span> DeepSeek：shadow / live 各一次</span><span>03:10 记录 proposed；03:13 记录 departed、行程存在、last_decision_by=model。两次均由 I 执行，证据文件已只读核对。</span><span class="text-small text-muted">脚本使用临时数据库及固定香港中午时钟；不证明常驻 worker 自然时间自主运行、批量稳定性或公网部署。本监管窗口供应商调用 0 次。</span></div>
+        <details><summary>审查来源与 Git 基线</summary><div class="source-list text-small">WINDOW-*.log.md（原 Claude、四个新 Claude、r7k、c84a、三份已完成审查窗口）<br>Q-INDEPENDENT-ACCEPTANCE-2026-09-22.md<br>BACKEND-PARALLEL-WORK-PACKAGES-2026-09-22.md<br>RUNTIME-PARALLEL-CONTRACT-v0.1.md<br>PARALLEL-INFRA-REVIEW-2026-09-22.md<br>PARALLEL-BRAIN-REVIEW-2026-09-22.md<br>PARALLEL-QA-REVIEW-2026-09-22.md<br>BACKEND-REAL-EXPERIENCE-ACCEPTANCE.md<br>HEAD 980feabc7710462a89c5df488c255d04e9e7de08<br>工作树有大量未提交/未跟踪改动；此快照不是可复现提交。来源含全部 WINDOW 最新记录、Q 报告、I 验收文档与本机 ops/status。</div></details>
+      </div>
+    </div>
+    <div id="pso-feedback" class="text-small" aria-live="polite"></div>
+    <div id="pso-fallback" hidden>
+      <label class="form-label" for="pso-prompt">可复制给 Codex 的核查请求</label>
+      <textarea class="form-control" id="pso-prompt" rows="5" readonly></textarea>
+    </div>
+  </div>
+  <script type="application/json" id="pso-data">
+{
+  "schemaVersion": 1,
+  "snapshotAt": "2026-09-23T03:21:18+08:00",
+  "repo": "E:/petsoul-audit/petsoul",
+  "head": "980feabc7710462a89c5df488c255d04e9e7de08",
+  "worktree": "dirty: shared working tree has extensive uncommitted and untracked project changes",
+  "scope": "人工核验快照；只读检查源日志、代码和既有本地 ops/status；不等于线上、供应商真实决策或整体验收通过",
+  "packages": [
+    {
+      "id": "I",
+      "name": "总集成",
+      "owner": "claude-20260922-014933-307b",
+      "status": "0.4.1 本地运行 · 集成待当版独立复验",
+      "gates": [
+        "共享契约已接受",
+        "I 批次 1–8 已接入",
+        "0.4.1 本地运行",
+        "最新改动待 Q 复验"
+      ],
+      "recorded": 3,
+      "doing": "I 已装配结算/outbox、纯读 GET、双线 worker、B 心跳 shadow 与 C brain。03:10、03:13 又登记 DeepSeek shadow/live 各一次实跑；读取的证据显示 live 在临时库中创建行程。共享包当前 0.1.1，网页契约 0.4.1。",
+      "next": "优先由 A 修正迁移 0050 后失效的自有测试夹具；Q 在当前代码与 0.4.1 API 复跑 C3a、全部合同和关联字段。E2 由 I 已登记等候流程于 06:26+08 后判定；常驻 brain 默认 off，公网未核验。",
+      "proof": "I 自报全量 462 项：1 项 A 所有测试错误、1 项既有跳过；02:40 本地 judge 自报 28 PASS / 1 PENDING（出门前复核）。DeepSeek 两份既有证据文件已读取：真实供应商、临时库、固定中午时钟，live 记录 departed 和 last_decision_by=model。03:21:18 本机 ops 观测 0.4.1、两线租约有效且无错误。不同证据层级不互相替代。",
+      "boundary": "I 保留总集成、迁移、组合根、共享契约和本地运行资源；23:55 部分 RELEASE 的 A/B/C/Q 路径仍由各自窗口持有。本窗口未替任何窗口释放。Git HEAD 为 980feabc7710462a89c5df488c255d04e9e7de08，工作树有大量未提交改动。",
+      "source": "WINDOW-claude-20260922-014933-307b.log.md；BACKEND-REAL-EXPERIENCE-ACCEPTANCE.md；app/web_platform/**",
+      "time": "最新有效事件为 03:13 ACCEPT（live），文件修改时间 03:15:12 +08；此前第 9/10 批的 03:0X、03:1X 是占位时间，不用于精确排序。当前任务 pkg-I-integration 仍未 RELEASE。"
+    },
+    {
+      "id": "A",
+      "name": "任务与额度",
+      "owner": "claude-20260922-234337-4bef",
+      "status": "首片已交接 · A 仍持有实现范围",
+      "gates": [
+        "首片 HANDOFF",
+        "49 项专属测试自报",
+        "集成后发现一项夹具错误",
+        "其余交接与回归待完成"
+      ],
+      "recorded": 2,
+      "doing": "A 00:43 首片 HANDOFF，自报 49 项聚焦测试通过；A 最新日志仍未 RELEASE。I 全量回归的唯一错误落在 A 的 BudgetWithoutMigrationTests：迁移 0050 会建表，原夹具假设不成立。",
+      "next": "由 A 在自己持有的测试文件内调整夹具并回归；再确认预算预占的旧调用方覆盖和准确接入说明。I 已另加迁移后删表的缺表保护测试，不代表 A 的夹具问题已关闭。",
+      "proof": "49 项为 A 自报；Q 的 C1a/C2 是此前对队列切片的独立隔离测试。I 自报 462 项回归中 1 项 A 测试错误、1 项旧跳过；本监管窗口未运行测试。",
+      "boundary": "A 仍持有 00:43 HANDOFF 所列的任务、围栏、额度相关实现与测试；I 不改 A 自有路径、不替 A 释放。日志静默不表示该窗口已停止。",
+      "source": "WINDOW-claude-20260922-234337-4bef.log.md；WINDOW-claude-20260922-014933-307b.log.md；Q-INDEPENDENT-ACCEPTANCE-2026-09-22.md",
+      "time": "A 最新日志修改时间 00:43:08 +08；其末尾仍声明不释放。"
+    },
+    {
+      "id": "B",
+      "name": "时钟与心跳",
+      "owner": "claude-20260922-234415-fed3",
+      "status": "策略已接入 shadow · 尚未掌管真实调度",
+      "gates": [
+        "模块已交接",
+        "21 项 FakeClock 自报",
+        "I 已装配 shadow",
+        "切为 active 未验证"
+      ],
+      "recorded": 3,
+      "doing": "B 交付的每宠心跳策略由 I 接入 worker shadow 评估；AGENTS 与 I 日志均说明 PETJOURNEY_WEB_HEARTBEAT_MODE 默认 shadow，只评估不执行，世界行为仍由现有规则推进。",
+      "next": "核对 B 与 I 的 shadow 比对结果；只有后续明确切换并通过运行验收，才可称新心跳策略接管世界。B 仍持有模块等待接入反馈。",
+      "proof": "21 项 FakeClock 为 B 自报；本地 ops 只证明 0.4.1 两条 worker lease 健康，不证明 heartbeat 进入 active 或策略改变了宠物行为。",
+      "boundary": "B 的 web_runtime 六个模块与专属测试仍归 B 持有；B 最新记录无 RELEASE。未根据日志沉默推断窗口停止。",
+      "source": "WINDOW-claude-20260922-234415-fed3.log.md；WINDOW-claude-20260922-014933-307b.log.md；AGENTS.md",
+      "time": "B HANDOFF 00:26，时间更正 00:28；日志末尾仍为“不释放”。"
+    },
+    {
+      "id": "C",
+      "name": "DNA 与决策",
+      "owner": "claude-20260922-234408-91f2",
+      "status": "真实 DeepSeek 单次 live 已有证据 · 常驻运行未验",
+      "gates": [
+        "31 项隔离测试自报",
+        "I 已装配门控步骤",
+        "真实模型临时场景实跑",
+        "常驻与独立复验待做"
+      ],
+      "recorded": 3,
+      "doing": "C 模块由 I 接入后，I 在两份临时数据库中分别运行真实 DeepSeek shadow 与 live。读取证据：shadow=proposed；live=departed、行程存在、last_decision_by=model。脚本固定时钟为香港 12:00；18763 常驻实例仍默认 brain off。",
+      "next": "保留单次真实供应商集成证据；由 Q 对当前装配复核，后续另验常驻 worker 在自然时间、更多 DNA 场景下的自主性与稳定性。一次成功不能代表全面质量。",
+      "proof": "已读取 I 的 24-brain-real-model.json 和 27-brain-real-model-live.json；均 DeepSeek、composed_by=model，各记录调用后次数 1。真实供应商加临时数据库/固定测试时钟；非正式用户持久库、非自然时间自主运行、非线上。本监管窗口未调用供应商。",
+      "boundary": "C 的 web_agent/decision/** 与专属测试仍由 C 持有；C 最新日志声明不释放。I 只接入自己的组合根，未接管 C 路径。",
+      "source": "WINDOW-claude-20260922-234408-91f2.log.md；WINDOW-claude-20260922-014933-307b.log.md；evidence/24-brain-real-model.json；evidence/27-brain-real-model-live.json；scripts/verify_brain_live.py",
+      "time": "C 00:36 HANDOFF、00:40 复核仍未释放；I 的真实供应商记录为 03:10 shadow 与 03:13 live。"
+    },
+    {
+      "id": "Q",
+      "name": "独立验收",
+      "owner": "claude-20260922-234631-4d18",
+      "status": "最新独立合同 10/11 · C3a 待当前代码复验",
+      "gates": [
+        "合同独立执行",
+        "10 项 PASS",
+        "旧代码切片 C3a FAIL",
+        "I 新修复待 Q 复跑"
+      ],
+      "recorded": 3,
+      "doing": "Q 最新隔离合同 run_at 2026-09-22T17:25:41Z（09-23 01:25:41 +08）：10 PASS / 1 FAIL（Q-C3a）。其 01:19 judge 整体 PASS 使用数据库导出的 linkage 证据；不等于当时接口字段已核验。",
+      "next": "Q 对 I 后续集成版本复跑 C3a，并在 0.4.1 API 核验 LedgerEntry 的 ref_kind/ref_id 与 MessageSummary 的 source_event_id/reply_to；未通过前 C3a 仍保留显式合同、不算默认回归通过。",
+      "proof": "Q 隔离合同 0 网络尝试，未覆盖真实供应商、自然时间、线上。报告中 C3a 在当时源码指纹下失败；当前代码包含 >5 分钟占位回收逻辑且 I 报告已修，但 Q 尚未对后续代码复测。接口字段可在当前源码中看到，尚无 Q 当版独立 API 证据。",
+      "boundary": "Q 持有判定器、合同 harness/cases、报告与证据目录，不改业务实现；Q 最新记录仍不释放。未因日志沉默推断其进程停止。",
+      "source": "WINDOW-claude-20260922-234631-4d18.log.md；Q-INDEPENDENT-ACCEPTANCE-2026-09-22.md；app/web_platform/idempotency.py；app/schemas/web/**",
+      "time": "Q 最新日志 01:27:38 +08；最新合同 run_at 01:25:41 +08，早于 I 最终集成与 02:31 重启。"
+    }
+  ],
+  "contractResults": {
+    "source": "Q-INDEPENDENT-ACCEPTANCE-2026-09-22.md + contracts-20260922T172457Z.json",
+    "observedAt": "2026-09-23T01:25:41+08:00",
+    "pass": [
+      "Q-C1a",
+      "Q-C1b",
+      "Q-C2",
+      "Q-C3b",
+      "Q-C4",
+      "Q-C5",
+      "Q-C6",
+      "Q-C7a",
+      "Q-C7b",
+      "Q-C7c"
+    ],
+    "fail": [
+      "Q-C3a"
+    ],
+    "networkAttempts": 0,
+    "coverageBoundary": "隔离 SQLite/测试客户端；非真实供应商、非自然时间、非线上。该运行早于 I 后续最终集成；当前 C3a 状态须 Q 对新代码复测。",
+    "overallJudge": "Q 01:19 judge 为 PASS，其中 E2 是交通扣款关联项，使用既有数据库导出的关联证据；它不是 I 当前 PENDING 的“出门前按作息复核 E2”。I 后续补入 0.4.1 API 字段；Q 尚未对当前版本重跑 API 关联判定。",
+    "tier": "独立隔离测试报告；本监管窗口只读文件，没有重跑合同。"
+  },
+  "integrationRegression": {
+    "source": "WINDOW-claude-20260922-014933-307b.log.md",
+    "observedAt": "2026-09-23T03:08:35+08:00",
+    "selfReportedTests": 462,
+    "errors": [
+      "A 所有：BudgetWithoutMigrationTests.test_missing_tables_are_reported_not_faked（迁移 0050 后夹具前提失效）"
+    ],
+    "skipped": 1,
+    "gateClaims": "arch/dependency 通过；契约 109 枚举 / 210 模型 / 115 路由对齐，均为 I 窗口自报",
+    "newIOnlyCoverage": "I 自报 test_web_ledger_missing_tables.py 2 项通过，覆盖迁移后显式删表；不关闭 A 原测试错误。"
+  },
+  "runtimeObservation": {
+    "observedAt": "2026-09-23T03:21:18+08:00",
+    "endpoint": "http://127.0.0.1:18763/api/v1/web/ops/status",
+    "version": "web-mvp-0.4.1",
+    "environment": "real-local",
+    "workerPid": 70908,
+    "worldLeaseAlive": true,
+    "worldLastOkAt": "2026-09-23T03:21:07.282013+08:00",
+    "worldLastError": null,
+    "worldTicks": 543,
+    "worldDueLagSeconds": 0,
+    "cognitionLeaseAlive": true,
+    "cognitionLastOkAt": "2026-09-23T03:20:52.654212+08:00",
+    "cognitionLastError": null,
+    "cognitionTicks": 156,
+    "appliedMigrations": 50,
+    "runningTasks": 0,
+    "dueTasks": 0,
+    "tier": "Codex 只读本机 ops/status；只证明该本地实例在观测时报告的运行状态，不证明公网部署、真实模型自主决策或全部功能验收。"
+  },
+  "naturalTimeGate": {
+    "expectedDepartureAt": "2026-09-23T06:21:00+08:00",
+    "judgeAfter": "2026-09-23T06:26:00+08:00",
+    "status": "PENDING",
+    "readiness": "I 最新记录自报并检查 E2 五个前提成立，新增 3 个假时钟确定性测试；自然时间旅程本身尚未到触发时刻，因此不能判 PASS。",
+    "requirement": "出门前 45 分钟按作息复核：改签或取消并退款一次。I 登记既有等候流程于 06:26+08 后只读判定；Q 另需独立复核。此 E2 与 Q 旧判定器的交通扣款 E2 不是同一检查。"
+  },
+  "onlineProof": {
+    "checked": false,
+    "status": "UNPROVEN",
+    "note": "本轮未检查 petsoul.games 或香港服务器；本地 18763 运行不证明公网版本。"
+  },
+  "realProviderEvidence": {
+    "sourceWindow": "claude-20260922-014933-307b",
+    "shadowRecord": "24-brain-real-model.json",
+    "liveRecord": "27-brain-real-model-live.json",
+    "provider": "DeepSeek",
+    "shadowStatus": "proposed",
+    "liveStatus": "departed",
+    "composedBy": "model",
+    "liveJourneyExists": true,
+    "lastDecisionBy": "model",
+    "callsAfterEachRun": 1,
+    "clock": "fixed: 2026-09-23T12:00:00+08:00",
+    "storage": "disposable temporary database",
+    "tier": "既有真实供应商隔离场景证据已只读检查；单次成功，非自然时间常驻运行、非线上；本监管窗口未发起调用。"
+  }
+}
+  </script>
+  <script>
+    (() => {
+      const root = document.getElementById('petsoul-agent-oversight');
+      const data = JSON.parse(document.getElementById('pso-data').textContent);
+      const byId = Object.fromEntries(data.packages.map(p => [p.id, p]));
+      let state = { selected: 'I', watched: ['I','Q'], tab: 'work' };
+      const el = id => document.getElementById('pso-' + id);
+      function restore(saved) {
+        const content = saved && saved.modelContent;
+        if (!content || content.board !== 'petsoul-agent-oversight') return;
+        state.selected = byId[content.selectedPackage] ? content.selectedPackage : 'I';
+        state.watched = Array.isArray(content.watchedPackages) ? content.watchedPackages.filter(id => byId[id]).slice(0,5) : ['I'];
+        const tab = saved.privateContent && saved.privateContent.tab;
+        state.tab = ['work','handoff','evidence'].includes(tab) ? tab : 'work';
+      }
+      function save() {
+        if (typeof window.openai?.setWidgetState !== 'function') return;
+        Promise.resolve(window.openai.setWidgetState({
+          modelContent: { board: 'petsoul-agent-oversight', snapshotAt: data.snapshotAt, selectedPackage: state.selected, owner: byId[state.selected].owner, watchedPackages: state.watched },
+          privateContent: { tab: state.tab }
+        })).catch(() => {});
+      }
+      function renderTabs() {
+        ['work','handoff','evidence'].forEach(name => {
+          const active = state.tab === name;
+          el('tab-' + name).classList.toggle('active',active);
+          el('tab-' + name).setAttribute('aria-selected',String(active));
+          el(name).hidden = !active;
+        });
+      }
+      function render() {
+        const p = byId[state.selected];
+        root.querySelectorAll('[data-package]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.package === p.id)));
+        el('detail-title').textContent = p.id + ' · ' + p.name;
+        el('detail-status').textContent = p.status;
+        el('gates').replaceChildren(...p.gates.map((label,i) => {
+          const step = document.createElement('div'); step.className = 'gate-step';
+          const mark = document.createElement('div'); mark.className = 'gate-mark' + (i < p.recorded ? ' recorded' : ''); mark.setAttribute('aria-hidden','true');
+          const text = document.createElement('span'); text.className = 'text-small'; text.textContent = label;
+          step.append(mark,text); return step;
+        }));
+        el('detail-fields').replaceChildren();
+        [['窗口',p.owner],['在做',p.doing],['下一关',p.next],['证据',p.proof]].forEach(([key,value]) => {
+          const term = document.createElement('dt'); term.textContent = key;
+          const definition = document.createElement('dd'); definition.textContent = value;
+          el('detail-fields').append(term,definition);
+        });
+        el('detail-source').replaceChildren();
+        [p.boundary,p.source,p.time].forEach(value => {
+          const paragraph = document.createElement('p'); paragraph.textContent = value; el('detail-source').append(paragraph);
+        });
+        el('watch').checked = state.watched.includes(p.id);
+        el('watch-summary').textContent = '关注项：' + (state.watched.length ? state.watched.map(id => id + ' ' + byId[id].name).join('、') : '未选择');
+      }
+      async function request(prompt,title) {
+        el('fallback').hidden = true;
+        el('feedback').textContent = '';
+        if (typeof window.openai?.sendFollowUpMessage === 'function') {
+          try {
+            await window.openai.sendFollowUpMessage({ prompt,title });
+            el('feedback').textContent = '已请求发起核查；是否提交与执行，请以随后对话中的状态为准。';
+            return;
+          } catch (_) { /* Keep the exact request available for manual submission. */ }
+        }
+        el('feedback').textContent = '当前预览不能直接发起对话；可复制下面的请求。';
+        el('prompt').value = prompt;
+        el('fallback').hidden = false;
+      }
+      root.querySelectorAll('[data-package]').forEach(button => button.addEventListener('click',() => {
+        state.selected = button.dataset.package; render(); save();
+      }));
+      root.querySelectorAll('[role="tab"]').forEach(button => button.addEventListener('click',() => {
+        state.tab = button.id.replace('pso-tab-',''); save();
+      }));
+      el('watch').addEventListener('change',() => {
+        state.watched = el('watch').checked ? [...new Set([...state.watched,state.selected])] : state.watched.filter(id => id !== state.selected);
+        render(); save();
+      });
+      el('refresh').addEventListener('click',() => request(
+        '请重新核验 PetSoul 协作黑板并更新本对话的监管看板。当前快照 ' + data.snapshotAt + '；关注包 ' + (state.watched.join('、') || '全部') + '。仓库 E:/petsoul-audit/petsoul。先读 AGENTS.md、各 WINDOW 日志最新记录及 PETSOUL-AGENT-OVERSIGHT.md；按任务 ID 与更正后的时间核对 CLAIM/RELEASE、共享契约、交付与验收证据。区分窗口自报、实际代码、隔离测试、本地运行和线上证明；不要仅从日志沉默推断进程停止。必要时只读既有 meta/ops 状态，不触发业务、供应商或真实数据库写入。只更新监管快照、内联看板和本窗口日志，不替其他窗口释放文件或宣布验收通过。请说明这次变化和最需要处理的卡点。',
+        '重新核验 PetSoul 协作进度'));
+      el('audit').addEventListener('click',() => {
+        const p = byId[state.selected];
+        request('请只读核查 PetSoul 工作包 ' + p.id + '（' + p.name + '），窗口 ' + p.owner + '。从 E:/petsoul-audit/petsoul/docs/coordination/' + p.source.split('；')[0] + ' 的最新记录开始；旧快照 ' + data.snapshotAt + ' 当前记为“' + p.status + '”。核对范围是否释放、实际交付、测试强度、是否接入主流程及未完成项。不要把文档或原型当作运行证明，不改其业务文件、不触发付费调用。更新监管看板并给出下一步。','核查 ' + p.id + ' · ' + p.name);
+      });
+      el('coordination').addEventListener('click',() => request(
+        '请只读核对 PetSoul 最新 WINDOW 日志与工作树：A 的迁移 0050 测试夹具是否修复；Q 是否已对 I 后续集成的 0.4.1 代码复跑 C3a、11 项合同和 API 关联字段；E2 是否已过 06:21 触发并由 06:26 后判定。按日志时间更正 CLAIM/RELEASE，不推断日志沉默等于进程停止；不改他人代码/日志、不替窗口释放、不触发供应商、业务或生产写入。只更新监管快照、内联看板和本窗口日志。',
+        '整理原 Claude 的交接协调消息'));
+      restore(window.openai?.widgetState);
+      render(); renderTabs();
+      window.addEventListener('openai:set_globals',event => {
+        if (!Object.prototype.hasOwnProperty.call(event.detail?.globals || {},'widgetState')) return;
+        restore(event.detail.globals.widgetState); render(); renderTabs();
+      });
+    })();
+  </script>
+</div>

@@ -1,0 +1,139 @@
+<div id="petsoul-delivery-20260922">
+  <style>
+    #petsoul-delivery-20260922 { color:var(--foreground); }
+    #petsoul-delivery-20260922 .snapshot { display:flex; flex-wrap:wrap; gap:8px 18px; margin:8px 0 18px; color:var(--muted-foreground); }
+    #petsoul-delivery-20260922 .milestones { display:flex; flex-wrap:wrap; gap:10px 24px; margin:16px 0; }
+    #petsoul-delivery-20260922 .milestone { display:flex; align-items:center; gap:8px; }
+    #petsoul-delivery-20260922 .dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--viz-series-1); flex-shrink:0; }
+    #petsoul-delivery-20260922 .dot.pending { background:var(--viz-series-2); }
+    #petsoul-delivery-20260922 .dot.wait { background:var(--viz-series-3); }
+    #petsoul-delivery-20260922 .lanes { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; margin-top:20px; }
+    #petsoul-delivery-20260922 .lane { min-width:0; }
+    #petsoul-delivery-20260922 .lane-head { display:flex; align-items:baseline; justify-content:space-between; gap:6px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+    #petsoul-delivery-20260922 h3 { margin:0; }
+    #petsoul-delivery-20260922 details { border-bottom:1px solid var(--border); padding:12px 0; }
+    #petsoul-delivery-20260922 summary { padding:4px 0; overflow-wrap:anywhere; }
+    #petsoul-delivery-20260922 summary::marker { color:var(--muted-foreground); }
+    #petsoul-delivery-20260922 .task-status { margin:5px 0 0 17px; color:var(--muted-foreground); }
+    #petsoul-delivery-20260922 .task-code { color:var(--muted-foreground); margin-right:6px; }
+    #petsoul-delivery-20260922 dl { margin:12px 0 4px; }
+    #petsoul-delivery-20260922 dt { font-weight:500; margin-top:10px; }
+    #petsoul-delivery-20260922 dd { margin:3px 0 0; overflow-wrap:anywhere; }
+    #petsoul-delivery-20260922 .foot { margin:16px 0 0; color:var(--muted-foreground); }
+    #petsoul-delivery-20260922 .evidence-row { display:grid; grid-template-columns:130px minmax(0,1fr); gap:14px; padding:13px 0; border-bottom:1px solid var(--border); }
+    #petsoul-delivery-20260922 .evidence-row > * { margin:0; overflow-wrap:anywhere; }
+    #petsoul-delivery-20260922 .panel-space { margin-top:18px; }
+    #petsoul-delivery-20260922 .plain-list { padding-left:20px; }
+    #petsoul-delivery-20260922 .plain-list li { margin:10px 0; }
+    #petsoul-delivery-20260922 [hidden] { display:none !important; }
+    @media(max-width:640px) {
+      #petsoul-delivery-20260922 .lanes { grid-template-columns:1fr; gap:24px; }
+      #petsoul-delivery-20260922 .evidence-row { grid-template-columns:1fr; gap:5px; }
+    }
+    @media(pointer:coarse) { #petsoul-delivery-20260922 summary { min-height:44px; } }
+  </style>
+  <h2>PetSoul · 距离比赛交付还差什么</h2>
+  <div class="snapshot text-small">
+    <span>核对 2026-09-22 12:45</span><span>Claude 交接 05:42</span><span>只读快照 · 非实时</span>
+  </div>
+  <div class="milestones" aria-label="交付阶段">
+    <div class="milestone"><span class="dot" aria-hidden="true"></span><span>本地 MVP · 已交付报告</span></div>
+    <div class="milestone"><span class="dot pending" aria-hidden="true"></span><span>真实体验 · 待补齐</span></div>
+    <div class="milestone"><span class="dot wait" aria-hidden="true"></span><span>公开上线 · 待验收</span></div>
+  </div>
+  <div class="nav nav-pills" role="tablist" aria-label="交付看板视图">
+    <button type="button" class="nav-link active" id="ps-tab-todo" role="tab" aria-controls="ps-todo" aria-selected="true">剩余任务</button>
+    <button type="button" class="nav-link" id="ps-tab-done" role="tab" aria-controls="ps-done" aria-selected="false">本地交付</button>
+    <button type="button" class="nav-link" id="ps-tab-later" role="tab" aria-controls="ps-later" aria-selected="false">后续扩展</button>
+    <button type="button" class="nav-link" id="ps-tab-proof" role="tab" aria-controls="ps-proof" aria-selected="false">证据协作</button>
+  </div>
+  <div id="ps-todo" role="tabpanel" aria-labelledby="ps-tab-todo">
+    <div class="lanes">
+      <section class="lane" aria-label="工程补强">
+        <div class="lane-head"><h3>01 工程补强</h3><span class="text-small">4 项 · 可先做</span></div>
+        <details open data-task="E1"><summary class="cursor-interaction"><span class="task-code">E1</span>公开入口与隐私</summary><div class="task-status text-small">P0 · 现在可本地做</div><dl><dt>已有</dt><dd>Web 私有媒体与用途规则。</dd><dt>还差</dt><dd>旧入口、媒体直链、上传重编码、撤回副本与举报处置的完整检查。</dd><dt>完成条件</dt><dd>A/B 账号隔离；旧 API 与 /media 无绕过；撤回后旧任务不能公开。</dd><dt>协作</dt><dd>配置/装配由共享维护者合入；共用 iOS 时另验兼容。</dd><dt>依据</dt><dd>当前 main/config/media 代码、MVP 交接 §3/5。</dd></dl></details>
+        <details data-task="E2"><summary class="cursor-interaction"><span class="task-code">E2</span>Linux 可重复构建</summary><div class="task-status text-small">P0 · 现在可本地做</div><dl><dt>缺口</dt><dd>本机 FastAPI/Pydantic 与固定依赖版本不一致。</dd><dt>完成条件</dt><dd>干净 Linux 环境按锁定依赖构建；测试、迁移和恢复通过并留证。</dd><dt>协作</dt><dd>依赖修改串行，沿用现有锁文件。</dd><dt>依据</dt><dd>MVP 交接 §6、部署 README。</dd></dl></details>
+        <details data-task="E3"><summary class="cursor-interaction"><span class="task-code">E3</span>无人在线也能推进</summary><div class="task-status text-small">P1 · 现在可本地做</div><dl><dt>当前</dt><dd>事件在读取时补齐；无常驻 worker，每批默认最多 200 段旅程。</dd><dt>完成条件</dt><dd>后台持续推进，重启不重复奖励/发帖，超过一批也不遗漏。</dd><dt>依赖</dt><dd>旅程与平台任务共享边界。</dd><dt>依据</dt><dd>当前 /meta、journey service/repository。</dd></dl></details>
+        <details data-task="E4"><summary class="cursor-interaction"><span class="task-code">E4</span>独立复验主循环</summary><div class="task-status text-small">P0 · 现在可本地做</div><dl><dt>已有</dt><dd>Claude 报告两账号完整流程与测试通过。</dd><dt>完成条件</dt><dd>独立数据/端口复验注册→归家；并发领养、扣款/偷菜重试、私有转公开与删除传播。</dd><dt>协作</dt><dd>不复用或停止 Claude 的服务。</dd><dt>依据</dt><dd>MVP 交接 §2；本轮未重跑业务测试。</dd></dl></details>
+      </section>
+      <section class="lane" aria-label="真实体验接入">
+        <div class="lane-head"><h3>02 真实体验</h3><span class="text-small">6 项 · 缺接入/资料</span></div>
+        <details data-task="X1"><summary class="cursor-interaction"><span class="task-code">X1</span>真实地图与商家</summary><div class="task-status text-small">P1 · 可先做适配</div><dl><dt>当前</dt><dd>示意地图、示例店；高德/Google 均未配置。</dd><dt>完成条件</dt><dd>先一城真实 POI/坐标/到店，再分别验国内外适配与来源。</dd><dt>依赖</dt><dd>实际调用所需凭据与范围；扫街榜不是前置承诺。</dd><dt>依据</dt><dd>/meta、catalog.py、MODULE-MAP。</dd></dl></details>
+        <details data-task="X2"><summary class="cursor-interaction"><span class="task-code">X2</span>真实交通与喵航</summary><div class="task-status text-small">P1 · 待核验数据</div><dl><dt>当前</dt><dd>墙钟正常推进，时长仍是演示设定。</dd><dt>完成条件</dt><dd>一条核验长途＋接驳；真实日期/节点/时区/时刻、稳定动物班次；改选后路线与耗时合理。</dd><dt>依赖</dt><dd>X1 接驳与可用时刻表来源；不加速正式旅程。</dd><dt>依据</dt><dd>catalog.py、/meta 的 verified_timetable 缺口。</dd></dl></details>
+        <details data-task="X3"><summary class="cursor-interaction"><span class="task-code">X3</span>真实寻味资料</summary><div class="task-status text-small">P1 · 待资料</div><dl><dt>已有</dt><dd>双偏好、筛选重排和反馈。</dd><dt>完成条件</dt><dd>一条路线，目标 3–5 店、每店 1–2 菜；保留依据、未知与分析权限。</dd><dt>依赖</dt><dd>X1/X2；资料不足就少列，不生成假口碑。</dd><dt>依据</dt><dd>/meta food.real_evidence、交接 §3。</dd></dl></details>
+        <details data-task="X4"><summary class="cursor-interaction"><span class="task-code">X4</span>接待与宠物对话</summary><div class="task-status text-small">P1 · 待模型验证</div><dl><dt>当前</dt><dd>引导便笺＋模板通讯。</dd><dt>完成条件</dt><dd>中文对话形成有依据的候选，确认后体现个性；私人内容不进入宠物上下文。</dd><dt>依赖</dt><dd>E1 与模型/预算；Jev 非前置，不可用时保留便笺。</dd><dt>依据</dt><dd>/meta reception.model_conversation、communicator.messages。</dd></dl></details>
+        <details data-task="X5"><summary class="cursor-interaction"><span class="task-code">X5</span>专属旅行照 / 英雄图</summary><div class="task-status text-small">P1 · 待生图接入</div><dl><dt>当前</dt><dd>原创 SVG 明信片、文字冒险和勋章。</dd><dt>完成条件</dt><dd>参考宠物→个性化照片，身份一致；异步失败恢复、费用与发布范围明确。</dd><dt>依赖</dt><dd>E1、生图供应商和预算；预制/现场生成分开。</dd><dt>依据</dt><dd>postcards.py、/meta adventure.hero_image。</dd></dl></details>
+        <details data-task="X6"><summary class="cursor-interaction"><span class="task-code">X6</span>可公开的音乐 / 短片</summary><div class="task-status text-small">P1 · 可准备自有作品</div><dl><dt>已有</dt><dd>播放会话与自制测试素材。</dd><dt>完成条件</dt><dd>一首音乐＋一段短片的版本/使用范围明确；可播放同步、到站恢复，驾驶禁视频。</dd><dt>依赖</dt><dd>不必等商业平台；R1 补真机验证。</dd><dt>依据</dt><dd>/meta companion_media.licensed_catalog。</dd></dl></details>
+      </section>
+      <section class="lane" aria-label="发布与验收">
+        <div class="lane-head"><h3>03 发布验收</h3><span class="text-small">4 项 · 尚未闭环</span></div>
+        <details data-task="R1"><summary class="cursor-interaction"><span class="task-code">R1</span>真机与视觉体验</summary><div class="task-status text-small">P0 · 待实测</div><dl><dt>当前</dt><dd>报告只有桌面模拟 320/390/430；美术与游戏感未独立验收。</dd><dt>完成条件</dt><dd>Safari/Android 扫码、上传、键盘、地图徽标、弱网与后台播放；家园/店内首屏审查。</dd><dt>依赖</dt><dd>本地先审页面，设备就绪后测试。</dd><dt>依据</dt><dd>MVP 交接 §2/5。</dd></dl></details>
+        <details data-task="R2"><summary class="cursor-interaction"><span class="task-code">R2</span>现场容量与加载</summary><div class="task-status text-small">P1 · 现在可准备</div><dl><dt>当前</dt><dd>单 SQLite；交接单包约 537 KB，容量未测。</dd><dt>完成条件</dt><dd>路由懒加载、资源优化、目标并发下登录/农场/社交/任务压测与故障恢复。</dd><dt>依赖</dt><dd>E2/E3；并发目标待明确。</dd><dt>依据</dt><dd>MVP 交接 §6。</dd></dl></details>
+        <details data-task="R3"><summary class="cursor-interaction"><span class="task-code">R3</span>香港服务器上线</summary><div class="task-status text-small">P0 · 待资源与发布授权</div><dl><dt>已有</dt><dd>部署、备份、恢复、回滚脚本。</dd><dt>完成条件</dt><dd>域名/HTTPS/持久卷；实测登录/媒体/重启/恢复/回滚与观众网络。</dd><dt>依赖</dt><dd>E1/E2/E4/R2，服务器配置和具体发布授权。</dd><dt>依据</dt><dd>部署 README、MVP 交接 §5。</dd></dl></details>
+        <details data-task="R4"><summary class="cursor-interaction"><span class="task-code">R4</span>版本冻结与现场预演</summary><div class="task-status text-small">P0 · 待整体验收</div><dl><dt>当前</dt><dd>MVP 未提交；演示脚本已写，截止时间未给定。</dd><dt>完成条件</dt><dd>指定窗口协调提交/版本清单；3–5 分钟故事、扫码体验、备用方案与预演。</dd><dt>依赖</dt><dd>收口首发必选项；长途用提前出发账号或明确回放，不压缩真实时间。</dd><dt>依据</dt><dd>当前 Git、DEMO-SCRIPT、总方案。</dd></dl></details>
+      </section>
+    </div>
+    <div class="foot text-small">P0：公开体验前门槛　P1：比赛主线特色 / 稳定性　·　负责人均待你分配</div>
+  </div>
+  <div id="ps-done" role="tabpanel" aria-labelledby="ps-tab-done" class="panel-space" hidden>
+    <div class="text-small text-muted">依据 Claude 最新交接；本轮抽查代码与 /meta，未独立重跑完整流程。</div>
+    <div class="evidence-row"><span>框架与契约</span><span>四入口、共享服务、契约 0.2、构建与类型检查。</span></div>
+    <div class="evidence-row"><span>账号与专属宠物</span><span>注册登录、吊销、独占领养、私有上传；邮件找回和重编码待补。</span></div>
+    <div class="evidence-row"><span>入住叮嘱</span><span>便笺、用途确认、更正/撤回、欢迎细节；自由对话未接。</span></div>
+    <div class="evidence-row"><span>家园与经营</span><span>种植、守护、巡院、跨户互偷、库存、旅费、NPC 订单。</span></div>
+    <div class="evidence-row"><span>演示旅行与听看</span><span>动物班次、地图音符/电视、服务端媒体会话；线路未核验。</span></div>
+    <div class="evidence-row"><span>寻味与店内</span><span>双偏好、筛选排序、改选与咖啡馆互动；资料是示例。</span></div>
+    <div class="evidence-row"><span>社交与故事</span><span>跨户动态评论、私密通讯、插画明信片、收藏与冒险勋章。</span></div>
+    <div class="evidence-row"><span>意图层边界</span><span>可替换接口、开关、离线规则样例；Jev 未接通，默认关闭。</span></div>
+    <div class="evidence-row"><span>部署准备</span><span>发布/回滚/备份/恢复脚本、演示说明；未部署公网。</span></div>
+  </div>
+  <div id="ps-later" role="tabpanel" aria-labelledby="ps-tab-later" class="panel-space" hidden>
+    <details><summary class="cursor-interaction">玩家固定价寄售</summary><dl><dt>前提</dt><dd>主线稳定后再评估；NPC 商店不等于玩家交易。</dd></dl></details>
+    <details><summary class="cursor-interaction">鱼塘、鸡舍、装修与更多城市</summary><dl><dt>首发取舍</dt><dd>先做好一套作物和一个家，再扩大内容。</dd></dl></details>
+    <details><summary class="cursor-interaction">声音与更丰富宠物表现</summary><dl><dt>前提</dt><dd>稳定角色身份、用途权限及实际可用的播放/生成能力。</dd></dl></details>
+    <details><summary class="cursor-interaction">Jev 中文实验</summary><dl><dt>顺序</dt><dd>人工样本对照→获准影子运行→按场景启用；不阻塞接待模型。</dd></dl></details>
+    <details><summary class="cursor-interaction">纪念公益、影视 IP 与文旅</summary><dl><dt>前提</dt><dd>核实来源、合作与授权；现阶段明确原创伙伴，不造公益案例。</dd></dl></details>
+    <details><summary class="cursor-interaction">邮件找回与持续运营</summary><dl><dt>首发取舍</dt><dd>比赛可先用户名账号；持续运营前补邮件、找回和用户支持。</dd></dl></details>
+  </div>
+  <div id="ps-proof" role="tabpanel" aria-labelledby="ps-tab-proof" class="panel-space" hidden>
+    <div class="evidence-row"><span>本轮实际读取</span><span>12:45：本地 Web HTTP 200；/meta 返回 web-mvp-0.2.0 / 契约 0.2.0。能力声明不代替功能验收。</span></div>
+    <div class="evidence-row"><span>Claude 报告</span><span>后端 159 项（1 跳过）、前端 26 项；两账号主循环、模拟尺寸、重启恢复。本轮未重跑。</span></div>
+    <div class="evidence-row"><span>当前代码核对</span><span>演示线路/商家；Jev 占位；旧媒体挂载与默认 open；Web 私有媒体另目录。</span></div>
+    <div class="evidence-row"><span>当前版本</span><span>980feabc · codex/petsoul-web-integration；MVP 未提交，SHA 不包含所有在建成果。</span></div>
+    <div class="evidence-row"><span>共同截止时间</span><span>T0 / 截止尚未记录；不按窗口开始时间重置 96 小时。</span></div>
+    <div class="evidence-row"><span>可分配范围</span><span>Claude 05:42 部分 RELEASE：业务模块可由你安排；本看板不自动认领。</span></div>
+    <div class="evidence-row"><span>仍由 Claude 保留</span><span>app/shared、依赖锁文件、后端装配/公共 DTO/平台、contracts。改共享项先写提议。</span></div>
+    <div class="evidence-row"><span>服务占用</span><span>18761 后端、5288 live、5287 fixture 按日志保留。本轮只读前两者，未停服或改账号数据。</span></div>
+    <div class="evidence-row"><span>依据文件</span><span>MVP-HANDOFF §2–6、WINDOW 日志、MODULE-MAP、总方案 v1.5、当前代码和 /meta。</span></div>
+  </div>
+  <div class="foot text-small" aria-live="polite" id="ps-view-status">14 项待完成 / 待验收任务包 · 不代表相同工时或整体完成率</div>
+  <script>
+  (() => {
+    const root = document.getElementById('petsoul-delivery-20260922');
+    const ids = ['todo','done','later','proof'];
+    const descriptions = {todo:'14 项待完成 / 待验收任务包 · 不代表相同工时或整体完成率',done:'9 组本地交付能力 · 交接报告不等于真实供应商或公开上线验收',later:'6 组后续扩展 · 不自动加入 96 小时必做范围',proof:'只读证据快照 · 任务和负责人由你安排'};
+    function show(id) {
+      if (!ids.includes(id)) id = 'todo';
+      for (const key of ids) {
+        const tab = root.querySelector('#ps-tab-' + key);
+        tab.setAttribute('aria-selected', String(key === id));
+        tab.classList.toggle('active', key === id);
+        root.querySelector('#ps-' + key).hidden = key !== id;
+      }
+      root.querySelector('#ps-view-status').textContent = descriptions[id];
+    }
+    function restore(state) { show(state?.privateContent?.tab ?? 'todo'); }
+    restore(window.openai?.widgetState);
+    root.querySelector('[role="tablist"]').addEventListener('click', event => {
+      const tab = event.target.closest('[role="tab"]');
+      if (!tab) return;
+      const id = tab.id.replace('ps-tab-', '');
+      show(id);
+      if (window.openai?.setWidgetState) window.openai.setWidgetState({modelContent:{view:id,snapshot:'2026-09-22T12:45:00+08:00'},privateContent:{tab:id}}).catch(() => {});
+    });
+    window.addEventListener('openai:set_globals', event => {
+      if (event.detail?.globals && Object.prototype.hasOwnProperty.call(event.detail.globals, 'widgetState')) restore(event.detail.globals.widgetState);
+    });
+  })();
+  </script>
+</div>

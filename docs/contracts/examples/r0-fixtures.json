@@ -1,0 +1,2217 @@
+[
+ {
+  "name": "home.snapshot",
+  "type": "HomeSnapshot",
+  "value": {
+   "home_id": "fx-home-001",
+   "server_time": "2026-09-21T19:56:34.770Z",
+   "version": 1,
+   "pet": {
+    "pet_id": "fx-pet-001",
+    "home_id": "fx-home-001",
+    "name": "团子",
+    "species": "cat",
+    "photo_url": null,
+    "origin": "own_pet",
+    "owner_title": null,
+    "presence": "in_transit"
+   },
+   "presence": "in_transit",
+   "guard": {
+    "guarding": true,
+    "basis": "owner_patrol"
+   },
+   "wallet": {
+    "currency": "travel_coin",
+    "balance": 120,
+    "updated_at": "2026-09-21T19:56:34.770Z"
+   },
+   "plots": [
+    {
+     "plot_id": "fx-plot-1",
+     "cycle_id": "fx-cycle-1",
+     "crop_key": "star_tomato",
+     "crop_label": "星星番茄",
+     "stage": "ripe",
+     "ripe_at": "2026-09-21T19:26:34.668Z",
+     "steal_total": 3,
+     "steal_remaining": 2
+    },
+    {
+     "plot_id": "fx-plot-2",
+     "cycle_id": "fx-cycle-2",
+     "crop_key": "moon_radish",
+     "crop_label": "月光萝卜",
+     "stage": "growing",
+     "ripe_at": "2026-09-21T21:31:34.668Z",
+     "steal_total": 3,
+     "steal_remaining": 3
+    },
+    {
+     "plot_id": "fx-plot-3",
+     "cycle_id": null,
+     "crop_key": null,
+     "crop_label": null,
+     "stage": "empty",
+     "ripe_at": null,
+     "steal_total": null,
+     "steal_remaining": null
+    }
+   ],
+   "journey": {
+    "journey_id": "fx-journey-001",
+    "itinerary_version": 1,
+    "headline": "TA 正在旅途中（演示行程）",
+    "current_visit_id": null,
+    "current_leg_id": "fx-leg-flight"
+   },
+   "welcome": null,
+   "unread": {
+    "messages": 2,
+    "circle": 3
+   },
+   "missing_capabilities": [],
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "transport.flight",
+  "type": "JourneyMapSnapshot",
+  "value": {
+   "journey_id": "fx-journey-001",
+   "pet_id": "fx-pet-001",
+   "itinerary_version": 1,
+   "server_time": "2026-09-21T19:56:34.770Z",
+   "legs": [
+    {
+     "leg_id": "fx-leg-flight",
+     "journey_id": "fx-journey-001",
+     "sequence": 1,
+     "kind": "main",
+     "mode": "flight",
+     "role": "passenger",
+     "world_service": {
+      "world_service_id": "fx-ws-cat222",
+      "carrier_name": "喵航",
+      "service_code": "Cat222",
+      "mode": "flight",
+      "vehicle_style": "橘色机尾",
+      "reference_id": null,
+      "mapping_version": 1
+     },
+     "origin": {
+      "node_id": "fx-node-hkg",
+      "name": "香港机场（示意）",
+      "kind": "airport",
+      "timezone": "Asia/Hong_Kong",
+      "lat": 22.308,
+      "lng": 113.918,
+      "verified": false
+     },
+     "destination": {
+      "node_id": "fx-node-hnd",
+      "name": "东京羽田（示意）",
+      "kind": "airport",
+      "timezone": "Asia/Tokyo",
+      "lat": 35.549,
+      "lng": 139.779,
+      "verified": false
+     },
+     "times": {
+      "origin_timezone": "Asia/Hong_Kong",
+      "destination_timezone": "Asia/Tokyo",
+      "planned_departure_utc": "2026-09-21T18:56:34.668Z",
+      "planned_arrival_utc": "2026-09-21T22:56:34.668Z",
+      "estimated_departure_utc": null,
+      "estimated_arrival_utc": null,
+      "actual_departure_utc": null,
+      "actual_arrival_utc": null
+     },
+     "time_basis": "demo_fixture",
+     "freshness": "unavailable",
+     "position_basis": "schematic",
+     "phase": "in_transit",
+     "itinerary_version": 1,
+     "route": [
+      {
+       "lat": 22.308,
+       "lng": 113.918
+      },
+      {
+       "lat": 23.75985153045161,
+       "lng": 115.5343125
+      },
+      {
+       "lat": 25.187711983568285,
+       "lng": 117.150625
+      },
+      {
+       "lat": 26.568512245662728,
+       "lng": 118.76693750000001
+      },
+      {
+       "lat": 27.88099169979695,
+       "lng": 120.38325
+      },
+      {
+       "lat": 29.106515259368145,
+       "lng": 121.9995625
+      },
+      {
+       "lat": 30.22978950403612,
+       "lng": 123.615875
+      },
+      {
+       "lat": 31.239450397290337,
+       "lng": 125.23218750000001
+      },
+      {
+       "lat": 32.1285,
+       "lng": 126.8485
+      },
+      {
+       "lat": 32.89457539729034,
+       "lng": 128.4648125
+      },
+      {
+       "lat": 33.540039504036116,
+       "lng": 130.081125
+      },
+      {
+       "lat": 34.071890259368146,
+       "lng": 131.6974375
+      },
+      {
+       "lat": 34.50149169979695,
+       "lng": 133.31375
+      },
+      {
+       "lat": 34.84413724566272,
+       "lng": 134.9300625
+      },
+      {
+       "lat": 35.11846198356829,
+       "lng": 136.546375
+      },
+      {
+       "lat": 35.345726530451614,
+       "lng": 138.1626875
+      },
+      {
+       "lat": 35.549,
+       "lng": 139.779
+      }
+     ],
+     "reference": {
+      "reference_id": null,
+      "time_basis": "demo_fixture",
+      "freshness": "unavailable",
+      "source_label": "演示行程，非真实班次",
+      "verified_at": null
+     },
+     "rescheduled_reason": null
+    }
+   ],
+   "current_leg_id": "fx-leg-flight",
+   "vehicle": null,
+   "activities": [
+    {
+     "activity_id": "fx-act-flight-music",
+     "leg_id": "fx-leg-flight",
+     "kind": "listening",
+     "state": "active",
+     "starts_at": "2026-09-21T19:36:34.668Z",
+     "ends_at": "2026-09-21T19:58:54.668Z",
+     "media_session_id": "fx-ms-flight",
+     "interruptible": true,
+     "version": 1
+    },
+    {
+     "activity_id": "fx-act-flight-rest",
+     "leg_id": "fx-leg-flight",
+     "kind": "resting",
+     "state": "active",
+     "starts_at": "2026-09-21T19:57:34.668Z",
+     "ends_at": null,
+     "media_session_id": null,
+     "interruptible": true,
+     "version": 1
+    }
+   ],
+   "activity_entries": [
+    {
+     "entry_id": "entry-fx-act-flight-music",
+     "leg_id": "fx-leg-flight",
+     "activity_id": "fx-act-flight-music",
+     "badge": "music",
+     "badge_state": "active",
+     "media_session_id": "fx-ms-flight",
+     "label": "TA 在听《窗边的小调》",
+     "actions": [
+      "join",
+      "solo",
+      "open_leg_card"
+     ]
+    }
+   ],
+   "arrival_context": null,
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "transport.train",
+  "type": "JourneyMapSnapshot",
+  "value": {
+   "journey_id": "fx-journey-001",
+   "pet_id": "fx-pet-001",
+   "itinerary_version": 1,
+   "server_time": "2026-09-21T19:56:34.770Z",
+   "legs": [
+    {
+     "leg_id": "fx-leg-train",
+     "journey_id": "fx-journey-001",
+     "sequence": 1,
+     "kind": "main",
+     "mode": "train",
+     "role": "passenger",
+     "world_service": {
+      "world_service_id": "fx-ws-paw318",
+      "carrier_name": "爪爪铁路",
+      "service_code": "Paw318",
+      "mode": "train",
+      "vehicle_style": "奶白车厢",
+      "reference_id": null,
+      "mapping_version": 1
+     },
+     "origin": {
+      "node_id": "fx-node-gzs",
+      "name": "广州南站（示意）",
+      "kind": "station",
+      "timezone": "Asia/Shanghai",
+      "lat": 22.99,
+      "lng": 113.269,
+      "verified": false
+     },
+     "destination": {
+      "node_id": "fx-node-wkl",
+      "name": "香港西九龙（示意）",
+      "kind": "station",
+      "timezone": "Asia/Hong_Kong",
+      "lat": 22.304,
+      "lng": 114.166,
+      "verified": false
+     },
+     "times": {
+      "origin_timezone": "Asia/Shanghai",
+      "destination_timezone": "Asia/Hong_Kong",
+      "planned_departure_utc": "2026-09-21T19:31:34.668Z",
+      "planned_arrival_utc": "2026-09-21T20:18:34.668Z",
+      "estimated_departure_utc": null,
+      "estimated_arrival_utc": null,
+      "actual_departure_utc": null,
+      "actual_arrival_utc": null
+     },
+     "time_basis": "demo_fixture",
+     "freshness": "unavailable",
+     "position_basis": "simulated_route",
+     "phase": "in_transit",
+     "itinerary_version": 1,
+     "route": [
+      {
+       "lat": 22.99,
+       "lng": 113.269
+      },
+      {
+       "lat": 22.83,
+       "lng": 113.5
+      },
+      {
+       "lat": 22.6,
+       "lng": 113.86
+      },
+      {
+       "lat": 22.45,
+       "lng": 114.05
+      },
+      {
+       "lat": 22.304,
+       "lng": 114.166
+      }
+     ],
+     "reference": {
+      "reference_id": null,
+      "time_basis": "demo_fixture",
+      "freshness": "unavailable",
+      "source_label": "演示行程，非真实班次",
+      "verified_at": null
+     },
+     "rescheduled_reason": null
+    }
+   ],
+   "current_leg_id": "fx-leg-train",
+   "vehicle": null,
+   "activities": [
+    {
+     "activity_id": "fx-act-train-video",
+     "leg_id": "fx-leg-train",
+     "kind": "watching",
+     "state": "active",
+     "starts_at": "2026-09-21T19:51:34.668Z",
+     "ends_at": "2026-09-21T19:57:59.668Z",
+     "media_session_id": "fx-ms-train",
+     "interruptible": true,
+     "version": 1
+    }
+   ],
+   "activity_entries": [
+    {
+     "entry_id": "entry-fx-act-train-video",
+     "leg_id": "fx-leg-train",
+     "activity_id": "fx-act-train-video",
+     "badge": "tv",
+     "badge_state": "active",
+     "media_session_id": "fx-ms-train",
+     "label": "TA 在看《云上色块》",
+     "actions": [
+      "join",
+      "solo",
+      "open_leg_card"
+     ]
+    }
+   ],
+   "arrival_context": {
+    "journey_id": "fx-journey-001",
+    "itinerary_version": 1,
+    "leg_id": "fx-leg-train",
+    "city": "香港",
+    "destination_timezone": "Asia/Hong_Kong",
+    "feasible_arrival_utc": "2026-09-21T20:38:34.668Z",
+    "stay_window_start_utc": "2026-09-21T20:48:34.668Z",
+    "stay_window_end_utc": "2026-09-21T22:48:34.668Z"
+   },
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "transport.ferry",
+  "type": "JourneyMapSnapshot",
+  "value": {
+   "journey_id": "fx-journey-001",
+   "pet_id": "fx-pet-001",
+   "itinerary_version": 1,
+   "server_time": "2026-09-21T19:56:34.770Z",
+   "legs": [
+    {
+     "leg_id": "fx-leg-ferry",
+     "journey_id": "fx-journey-001",
+     "sequence": 1,
+     "kind": "main",
+     "mode": "ferry",
+     "role": "passenger",
+     "world_service": {
+      "world_service_id": "fx-ws-otter08",
+      "carrier_name": "海獭轮渡",
+      "service_code": "Otter08",
+      "mode": "ferry",
+      "vehicle_style": "蓝白船身",
+      "reference_id": null,
+      "mapping_version": 1
+     },
+     "origin": {
+      "node_id": "fx-node-central",
+      "name": "中环码头（示意）",
+      "kind": "port",
+      "timezone": "Asia/Hong_Kong",
+      "lat": 22.287,
+      "lng": 114.157,
+      "verified": false
+     },
+     "destination": {
+      "node_id": "fx-node-macau",
+      "name": "澳门码头（示意）",
+      "kind": "port",
+      "timezone": "Asia/Macau",
+      "lat": 22.197,
+      "lng": 113.557,
+      "verified": false
+     },
+     "times": {
+      "origin_timezone": "Asia/Hong_Kong",
+      "destination_timezone": "Asia/Macau",
+      "planned_departure_utc": "2026-09-21T19:26:34.668Z",
+      "planned_arrival_utc": "2026-09-21T20:26:34.668Z",
+      "estimated_departure_utc": null,
+      "estimated_arrival_utc": null,
+      "actual_departure_utc": null,
+      "actual_arrival_utc": null
+     },
+     "time_basis": "demo_fixture",
+     "freshness": "unavailable",
+     "position_basis": "simulated_route",
+     "phase": "in_transit",
+     "itinerary_version": 1,
+     "route": [
+      {
+       "lat": 22.287,
+       "lng": 114.157
+      },
+      {
+       "lat": 22.26,
+       "lng": 113.98
+      },
+      {
+       "lat": 22.22,
+       "lng": 113.72
+      },
+      {
+       "lat": 22.197,
+       "lng": 113.557
+      }
+     ],
+     "reference": {
+      "reference_id": null,
+      "time_basis": "demo_fixture",
+      "freshness": "unavailable",
+      "source_label": "演示行程，非真实班次",
+      "verified_at": null
+     },
+     "rescheduled_reason": null
+    }
+   ],
+   "current_leg_id": "fx-leg-ferry",
+   "vehicle": null,
+   "activities": [
+    {
+     "activity_id": "fx-act-ferry-gaze",
+     "leg_id": "fx-leg-ferry",
+     "kind": "window_gazing",
+     "state": "active",
+     "starts_at": "2026-09-21T19:46:34.668Z",
+     "ends_at": null,
+     "media_session_id": null,
+     "interruptible": true,
+     "version": 1
+    }
+   ],
+   "activity_entries": [],
+   "arrival_context": {
+    "journey_id": "fx-journey-001",
+    "itinerary_version": 1,
+    "leg_id": "fx-leg-ferry",
+    "city": "澳门",
+    "destination_timezone": "Asia/Macau",
+    "feasible_arrival_utc": "2026-09-21T20:46:34.668Z",
+    "stay_window_start_utc": "2026-09-21T20:56:34.668Z",
+    "stay_window_end_utc": "2026-09-21T22:56:34.668Z"
+   },
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "transport.drive",
+  "type": "JourneyMapSnapshot",
+  "value": {
+   "journey_id": "fx-journey-001",
+   "pet_id": "fx-pet-001",
+   "itinerary_version": 1,
+   "server_time": "2026-09-21T19:56:34.770Z",
+   "legs": [
+    {
+     "leg_id": "fx-leg-drive",
+     "journey_id": "fx-journey-001",
+     "sequence": 1,
+     "kind": "main",
+     "mode": "drive",
+     "role": "driver",
+     "world_service": null,
+     "origin": {
+      "node_id": "fx-node-hk-city",
+      "name": "香港市区（示意）",
+      "kind": "road_point",
+      "timezone": "Asia/Hong_Kong",
+      "lat": 22.282,
+      "lng": 114.158,
+      "verified": false
+     },
+     "destination": {
+      "node_id": "fx-node-sz-bay",
+      "name": "深圳湾（示意）",
+      "kind": "road_point",
+      "timezone": "Asia/Shanghai",
+      "lat": 22.515,
+      "lng": 113.944,
+      "verified": false
+     },
+     "times": {
+      "origin_timezone": "Asia/Hong_Kong",
+      "destination_timezone": "Asia/Shanghai",
+      "planned_departure_utc": "2026-09-21T19:44:34.668Z",
+      "planned_arrival_utc": "2026-09-21T20:36:34.668Z",
+      "estimated_departure_utc": null,
+      "estimated_arrival_utc": null,
+      "actual_departure_utc": null,
+      "actual_arrival_utc": null
+     },
+     "time_basis": "demo_fixture",
+     "freshness": "unavailable",
+     "position_basis": "simulated_route",
+     "phase": "in_transit",
+     "itinerary_version": 1,
+     "route": [
+      {
+       "lat": 22.282,
+       "lng": 114.158
+      },
+      {
+       "lat": 22.33,
+       "lng": 114.1
+      },
+      {
+       "lat": 22.42,
+       "lng": 114.03
+      },
+      {
+       "lat": 22.48,
+       "lng": 113.98
+      },
+      {
+       "lat": 22.515,
+       "lng": 113.944
+      }
+     ],
+     "reference": {
+      "reference_id": null,
+      "time_basis": "demo_fixture",
+      "freshness": "unavailable",
+      "source_label": "演示行程，非真实班次",
+      "verified_at": null
+     },
+     "rescheduled_reason": null
+    }
+   ],
+   "current_leg_id": "fx-leg-drive",
+   "vehicle": null,
+   "activities": [
+    {
+     "activity_id": "fx-act-drive-music",
+     "leg_id": "fx-leg-drive",
+     "kind": "listening",
+     "state": "active",
+     "starts_at": "2026-09-21T19:56:29.668Z",
+     "ends_at": null,
+     "media_session_id": "fx-ms-drive",
+     "interruptible": true,
+     "version": 1
+    }
+   ],
+   "activity_entries": [
+    {
+     "entry_id": "entry-fx-act-drive-music",
+     "leg_id": "fx-leg-drive",
+     "activity_id": "fx-act-drive-music",
+     "badge": "music",
+     "badge_state": "active",
+     "media_session_id": "fx-ms-drive",
+     "label": "TA 边开车边听歌",
+     "actions": [
+      "join",
+      "solo",
+      "open_leg_card"
+     ]
+    }
+   ],
+   "arrival_context": null,
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "transport.paused",
+  "type": "JourneyMapSnapshot",
+  "value": {
+   "journey_id": "fx-journey-001",
+   "pet_id": "fx-pet-001",
+   "itinerary_version": 1,
+   "server_time": "2026-09-21T19:56:34.770Z",
+   "legs": [
+    {
+     "leg_id": "fx-leg-flight",
+     "journey_id": "fx-journey-001",
+     "sequence": 1,
+     "kind": "main",
+     "mode": "flight",
+     "role": "passenger",
+     "world_service": {
+      "world_service_id": "fx-ws-cat222",
+      "carrier_name": "喵航",
+      "service_code": "Cat222",
+      "mode": "flight",
+      "vehicle_style": "橘色机尾",
+      "reference_id": null,
+      "mapping_version": 1
+     },
+     "origin": {
+      "node_id": "fx-node-hkg",
+      "name": "香港机场（示意）",
+      "kind": "airport",
+      "timezone": "Asia/Hong_Kong",
+      "lat": 22.308,
+      "lng": 113.918,
+      "verified": false
+     },
+     "destination": {
+      "node_id": "fx-node-hnd",
+      "name": "东京羽田（示意）",
+      "kind": "airport",
+      "timezone": "Asia/Tokyo",
+      "lat": 35.549,
+      "lng": 139.779,
+      "verified": false
+     },
+     "times": {
+      "origin_timezone": "Asia/Hong_Kong",
+      "destination_timezone": "Asia/Tokyo",
+      "planned_departure_utc": "2026-09-21T18:56:34.668Z",
+      "planned_arrival_utc": "2026-09-21T22:56:34.668Z",
+      "estimated_departure_utc": null,
+      "estimated_arrival_utc": null,
+      "actual_departure_utc": null,
+      "actual_arrival_utc": null
+     },
+     "time_basis": "demo_fixture",
+     "freshness": "unavailable",
+     "position_basis": "schematic",
+     "phase": "in_transit",
+     "itinerary_version": 1,
+     "route": [
+      {
+       "lat": 22.308,
+       "lng": 113.918
+      },
+      {
+       "lat": 23.75985153045161,
+       "lng": 115.5343125
+      },
+      {
+       "lat": 25.187711983568285,
+       "lng": 117.150625
+      },
+      {
+       "lat": 26.568512245662728,
+       "lng": 118.76693750000001
+      },
+      {
+       "lat": 27.88099169979695,
+       "lng": 120.38325
+      },
+      {
+       "lat": 29.106515259368145,
+       "lng": 121.9995625
+      },
+      {
+       "lat": 30.22978950403612,
+       "lng": 123.615875
+      },
+      {
+       "lat": 31.239450397290337,
+       "lng": 125.23218750000001
+      },
+      {
+       "lat": 32.1285,
+       "lng": 126.8485
+      },
+      {
+       "lat": 32.89457539729034,
+       "lng": 128.4648125
+      },
+      {
+       "lat": 33.540039504036116,
+       "lng": 130.081125
+      },
+      {
+       "lat": 34.071890259368146,
+       "lng": 131.6974375
+      },
+      {
+       "lat": 34.50149169979695,
+       "lng": 133.31375
+      },
+      {
+       "lat": 34.84413724566272,
+       "lng": 134.9300625
+      },
+      {
+       "lat": 35.11846198356829,
+       "lng": 136.546375
+      },
+      {
+       "lat": 35.345726530451614,
+       "lng": 138.1626875
+      },
+      {
+       "lat": 35.549,
+       "lng": 139.779
+      }
+     ],
+     "reference": {
+      "reference_id": null,
+      "time_basis": "demo_fixture",
+      "freshness": "unavailable",
+      "source_label": "演示行程，非真实班次",
+      "verified_at": null
+     },
+     "rescheduled_reason": null
+    }
+   ],
+   "current_leg_id": "fx-leg-flight",
+   "vehicle": null,
+   "activities": [
+    {
+     "activity_id": "fx-act-paused-music",
+     "leg_id": "fx-leg-flight",
+     "kind": "listening",
+     "state": "paused",
+     "starts_at": "2026-09-21T19:46:34.668Z",
+     "ends_at": null,
+     "media_session_id": "fx-ms-paused",
+     "interruptible": true,
+     "version": 1
+    }
+   ],
+   "activity_entries": [
+    {
+     "entry_id": "entry-fx-act-paused-music",
+     "leg_id": "fx-leg-flight",
+     "activity_id": "fx-act-paused-music",
+     "badge": "music",
+     "badge_state": "paused",
+     "media_session_id": "fx-ms-paused",
+     "label": "和 TA 一起暂停了",
+     "actions": [
+      "join",
+      "solo",
+      "open_leg_card"
+     ]
+    }
+   ],
+   "arrival_context": null,
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "transport.failed",
+  "type": "JourneyMapSnapshot",
+  "value": {
+   "journey_id": "fx-journey-001",
+   "pet_id": "fx-pet-001",
+   "itinerary_version": 1,
+   "server_time": "2026-09-21T19:56:34.770Z",
+   "legs": [
+    {
+     "leg_id": "fx-leg-train",
+     "journey_id": "fx-journey-001",
+     "sequence": 1,
+     "kind": "main",
+     "mode": "train",
+     "role": "passenger",
+     "world_service": {
+      "world_service_id": "fx-ws-paw318",
+      "carrier_name": "爪爪铁路",
+      "service_code": "Paw318",
+      "mode": "train",
+      "vehicle_style": "奶白车厢",
+      "reference_id": null,
+      "mapping_version": 1
+     },
+     "origin": {
+      "node_id": "fx-node-gzs",
+      "name": "广州南站（示意）",
+      "kind": "station",
+      "timezone": "Asia/Shanghai",
+      "lat": 22.99,
+      "lng": 113.269,
+      "verified": false
+     },
+     "destination": {
+      "node_id": "fx-node-wkl",
+      "name": "香港西九龙（示意）",
+      "kind": "station",
+      "timezone": "Asia/Hong_Kong",
+      "lat": 22.304,
+      "lng": 114.166,
+      "verified": false
+     },
+     "times": {
+      "origin_timezone": "Asia/Shanghai",
+      "destination_timezone": "Asia/Hong_Kong",
+      "planned_departure_utc": "2026-09-21T19:31:34.668Z",
+      "planned_arrival_utc": "2026-09-21T20:18:34.668Z",
+      "estimated_departure_utc": null,
+      "estimated_arrival_utc": null,
+      "actual_departure_utc": null,
+      "actual_arrival_utc": null
+     },
+     "time_basis": "demo_fixture",
+     "freshness": "unavailable",
+     "position_basis": "simulated_route",
+     "phase": "in_transit",
+     "itinerary_version": 1,
+     "route": [
+      {
+       "lat": 22.99,
+       "lng": 113.269
+      },
+      {
+       "lat": 22.83,
+       "lng": 113.5
+      },
+      {
+       "lat": 22.6,
+       "lng": 113.86
+      },
+      {
+       "lat": 22.45,
+       "lng": 114.05
+      },
+      {
+       "lat": 22.304,
+       "lng": 114.166
+      }
+     ],
+     "reference": {
+      "reference_id": null,
+      "time_basis": "demo_fixture",
+      "freshness": "unavailable",
+      "source_label": "演示行程，非真实班次",
+      "verified_at": null
+     },
+     "rescheduled_reason": null
+    }
+   ],
+   "current_leg_id": "fx-leg-train",
+   "vehicle": null,
+   "activities": [
+    {
+     "activity_id": "fx-act-failed-video",
+     "leg_id": "fx-leg-train",
+     "kind": "watching",
+     "state": "active",
+     "starts_at": "2026-09-21T19:55:34.668Z",
+     "ends_at": null,
+     "media_session_id": "fx-ms-failed",
+     "interruptible": true,
+     "version": 1
+    }
+   ],
+   "activity_entries": [
+    {
+     "entry_id": "entry-fx-act-failed-video",
+     "leg_id": "fx-leg-train",
+     "activity_id": "fx-act-failed-video",
+     "badge": "tv",
+     "badge_state": "active",
+     "media_session_id": "fx-ms-failed",
+     "label": "TA 在看纪录片",
+     "actions": [
+      "join",
+      "solo",
+      "open_leg_card"
+     ]
+    }
+   ],
+   "arrival_context": {
+    "journey_id": "fx-journey-001",
+    "itinerary_version": 1,
+    "leg_id": "fx-leg-train",
+    "city": "香港",
+    "destination_timezone": "Asia/Hong_Kong",
+    "feasible_arrival_utc": "2026-09-21T20:38:34.668Z",
+    "stay_window_start_utc": "2026-09-21T20:48:34.668Z",
+    "stay_window_end_utc": "2026-09-21T22:48:34.668Z"
+   },
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "transport.arrived",
+  "type": "JourneyMapSnapshot",
+  "value": {
+   "journey_id": "fx-journey-001",
+   "pet_id": "fx-pet-001",
+   "itinerary_version": 1,
+   "server_time": "2026-09-21T19:56:34.770Z",
+   "legs": [
+    {
+     "leg_id": "fx-leg-ferry-arrived",
+     "journey_id": "fx-journey-001",
+     "sequence": 1,
+     "kind": "main",
+     "mode": "ferry",
+     "role": "passenger",
+     "world_service": {
+      "world_service_id": "fx-ws-otter08",
+      "carrier_name": "海獭轮渡",
+      "service_code": "Otter08",
+      "mode": "ferry",
+      "vehicle_style": "蓝白船身",
+      "reference_id": null,
+      "mapping_version": 1
+     },
+     "origin": {
+      "node_id": "fx-node-central",
+      "name": "中环码头（示意）",
+      "kind": "port",
+      "timezone": "Asia/Hong_Kong",
+      "lat": 22.287,
+      "lng": 114.157,
+      "verified": false
+     },
+     "destination": {
+      "node_id": "fx-node-macau",
+      "name": "澳门码头（示意）",
+      "kind": "port",
+      "timezone": "Asia/Macau",
+      "lat": 22.197,
+      "lng": 113.557,
+      "verified": false
+     },
+     "times": {
+      "origin_timezone": "Asia/Hong_Kong",
+      "destination_timezone": "Asia/Macau",
+      "planned_departure_utc": "2026-09-21T18:46:34.668Z",
+      "planned_arrival_utc": "2026-09-21T19:53:34.668Z",
+      "estimated_departure_utc": null,
+      "estimated_arrival_utc": null,
+      "actual_departure_utc": null,
+      "actual_arrival_utc": null
+     },
+     "time_basis": "demo_fixture",
+     "freshness": "unavailable",
+     "position_basis": "simulated_route",
+     "phase": "arrived",
+     "itinerary_version": 1,
+     "route": [
+      {
+       "lat": 22.287,
+       "lng": 114.157
+      },
+      {
+       "lat": 22.26,
+       "lng": 113.98
+      },
+      {
+       "lat": 22.22,
+       "lng": 113.72
+      },
+      {
+       "lat": 22.197,
+       "lng": 113.557
+      }
+     ],
+     "reference": {
+      "reference_id": null,
+      "time_basis": "demo_fixture",
+      "freshness": "unavailable",
+      "source_label": "演示行程，非真实班次",
+      "verified_at": null
+     },
+     "rescheduled_reason": null
+    }
+   ],
+   "current_leg_id": "fx-leg-ferry-arrived",
+   "vehicle": null,
+   "activities": [
+    {
+     "activity_id": "fx-act-arrived-video",
+     "leg_id": "fx-leg-ferry-arrived",
+     "kind": "watching",
+     "state": "interrupted",
+     "starts_at": "2026-09-21T19:16:34.668Z",
+     "ends_at": "2026-09-21T19:53:34.668Z",
+     "media_session_id": "fx-ms-arrived",
+     "interruptible": true,
+     "version": 1
+    }
+   ],
+   "activity_entries": [
+    {
+     "entry_id": "entry-fx-act-arrived-video",
+     "leg_id": "fx-leg-ferry-arrived",
+     "activity_id": "fx-act-arrived-video",
+     "badge": "tv",
+     "badge_state": "interrupted",
+     "media_session_id": "fx-ms-arrived",
+     "label": "到站了，这集晚上接着看",
+     "actions": [
+      "solo",
+      "open_leg_card"
+     ]
+    }
+   ],
+   "arrival_context": {
+    "journey_id": "fx-journey-001",
+    "itinerary_version": 1,
+    "leg_id": "fx-leg-ferry-arrived",
+    "city": "澳门",
+    "destination_timezone": "Asia/Macau",
+    "feasible_arrival_utc": "2026-09-21T20:13:34.668Z",
+    "stay_window_start_utc": "2026-09-21T20:23:34.668Z",
+    "stay_window_end_utc": "2026-09-21T22:23:34.668Z"
+   },
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "media.fx-ms-flight",
+  "type": "CompanionSession",
+  "value": {
+   "pet_id": "fx-pet-001",
+   "control": null,
+   "saved_progress_ms": null,
+   "interrupt_reason": null,
+   "data_origin": "fixture",
+   "session_id": "fx-ms-flight",
+   "activity_id": "fx-act-flight-music",
+   "media": {
+    "media_id": "fx-media-melody",
+    "kind": "audio",
+    "title": "窗边的小调（测试音频）",
+    "creator": "PetSoul 测试素材",
+    "edition": "fx-melody-v1",
+    "duration_ms": 150000,
+    "src_url": "/fixtures/media/fixture-melody.m4a",
+    "poster_url": null,
+    "external_url": null,
+    "availability": "in_app_sync",
+    "license": {
+     "status": "self_generated_test",
+     "allows_in_app_playback": true,
+     "allows_sync": false,
+     "public_release_allowed": false,
+     "regions": [],
+     "expires_at": null,
+     "note": "R0 自制合成测试素材，仅用于验证播放器与失败路径"
+    },
+    "data_origin": "fixture"
+   },
+   "state": "playing",
+   "revision": 3,
+   "resume_policy": "pet_continues",
+   "video_allowed": true,
+   "anchor": {
+    "position_ms": 6000,
+    "server_time": "2026-09-21T19:56:34.668Z",
+    "playback_rate": 1
+   }
+  }
+ },
+ {
+  "name": "media.fx-ms-train",
+  "type": "CompanionSession",
+  "value": {
+   "pet_id": "fx-pet-001",
+   "control": null,
+   "saved_progress_ms": null,
+   "interrupt_reason": null,
+   "data_origin": "fixture",
+   "session_id": "fx-ms-train",
+   "activity_id": "fx-act-train-video",
+   "media": {
+    "media_id": "fx-media-clip",
+    "kind": "video",
+    "title": "云上色块 第 1 集（测试短片）",
+    "creator": "PetSoul 测试素材",
+    "edition": "fx-clip-v1",
+    "duration_ms": 90000,
+    "src_url": "/fixtures/media/fixture-clip.mp4",
+    "poster_url": null,
+    "external_url": null,
+    "availability": "in_app_sync",
+    "license": {
+     "status": "self_generated_test",
+     "allows_in_app_playback": true,
+     "allows_sync": false,
+     "public_release_allowed": false,
+     "regions": [],
+     "expires_at": null,
+     "note": "R0 自制合成测试素材，仅用于验证播放器与失败路径"
+    },
+    "data_origin": "fixture"
+   },
+   "state": "playing",
+   "revision": 1,
+   "resume_policy": "save_shared_progress",
+   "video_allowed": true,
+   "anchor": {
+    "position_ms": 4000,
+    "server_time": "2026-09-21T19:56:34.668Z",
+    "playback_rate": 1
+   }
+  }
+ },
+ {
+  "name": "media.fx-ms-drive",
+  "type": "CompanionSession",
+  "value": {
+   "pet_id": "fx-pet-001",
+   "control": null,
+   "saved_progress_ms": null,
+   "interrupt_reason": null,
+   "data_origin": "fixture",
+   "session_id": "fx-ms-drive",
+   "activity_id": "fx-act-drive-music",
+   "media": {
+    "media_id": "fx-media-melody",
+    "kind": "audio",
+    "title": "窗边的小调（测试音频）",
+    "creator": "PetSoul 测试素材",
+    "edition": "fx-melody-v1",
+    "duration_ms": 150000,
+    "src_url": "/fixtures/media/fixture-melody.m4a",
+    "poster_url": null,
+    "external_url": null,
+    "availability": "in_app_sync",
+    "license": {
+     "status": "self_generated_test",
+     "allows_in_app_playback": true,
+     "allows_sync": false,
+     "public_release_allowed": false,
+     "regions": [],
+     "expires_at": null,
+     "note": "R0 自制合成测试素材，仅用于验证播放器与失败路径"
+    },
+    "data_origin": "fixture"
+   },
+   "state": "playing",
+   "revision": 2,
+   "resume_policy": "pet_continues",
+   "video_allowed": false,
+   "anchor": {
+    "position_ms": 0,
+    "server_time": "2026-09-21T19:56:29.668Z",
+    "playback_rate": 1
+   }
+  }
+ },
+ {
+  "name": "media.fx-ms-paused",
+  "type": "CompanionSession",
+  "value": {
+   "pet_id": "fx-pet-001",
+   "control": null,
+   "saved_progress_ms": null,
+   "interrupt_reason": "joint_pause",
+   "data_origin": "fixture",
+   "session_id": "fx-ms-paused",
+   "activity_id": "fx-act-paused-music",
+   "media": {
+    "media_id": "fx-media-melody",
+    "kind": "audio",
+    "title": "窗边的小调（测试音频）",
+    "creator": "PetSoul 测试素材",
+    "edition": "fx-melody-v1",
+    "duration_ms": 150000,
+    "src_url": "/fixtures/media/fixture-melody.m4a",
+    "poster_url": null,
+    "external_url": null,
+    "availability": "in_app_sync",
+    "license": {
+     "status": "self_generated_test",
+     "allows_in_app_playback": true,
+     "allows_sync": false,
+     "public_release_allowed": false,
+     "regions": [],
+     "expires_at": null,
+     "note": "R0 自制合成测试素材，仅用于验证播放器与失败路径"
+    },
+    "data_origin": "fixture"
+   },
+   "state": "paused",
+   "revision": 5,
+   "resume_policy": "pet_continues",
+   "video_allowed": true,
+   "anchor": {
+    "position_ms": 21000,
+    "server_time": "2026-09-21T19:55:54.668Z",
+    "playback_rate": 1
+   }
+  }
+ },
+ {
+  "name": "media.fx-ms-failed",
+  "type": "CompanionSession",
+  "value": {
+   "pet_id": "fx-pet-001",
+   "control": null,
+   "saved_progress_ms": null,
+   "interrupt_reason": null,
+   "data_origin": "fixture",
+   "session_id": "fx-ms-failed",
+   "activity_id": "fx-act-failed-video",
+   "media": {
+    "media_id": "fx-media-missing",
+    "kind": "video",
+    "title": "海上纪录片 第 2 集（测试：素材缺失）",
+    "creator": "PetSoul 测试素材",
+    "edition": "fx-missing-v1",
+    "duration_ms": 90000,
+    "src_url": "/fixtures/media/does-not-exist.mp4",
+    "poster_url": null,
+    "external_url": null,
+    "availability": "in_app_sync",
+    "license": {
+     "status": "self_generated_test",
+     "allows_in_app_playback": true,
+     "allows_sync": false,
+     "public_release_allowed": false,
+     "regions": [],
+     "expires_at": null,
+     "note": "R0 自制合成测试素材，仅用于验证播放器与失败路径"
+    },
+    "data_origin": "fixture"
+   },
+   "state": "playing",
+   "revision": 1,
+   "resume_policy": "save_shared_progress",
+   "video_allowed": true,
+   "anchor": {
+    "position_ms": 2000,
+    "server_time": "2026-09-21T19:56:34.668Z",
+    "playback_rate": 1
+   }
+  }
+ },
+ {
+  "name": "media.fx-ms-arrived",
+  "type": "CompanionSession",
+  "value": {
+   "pet_id": "fx-pet-001",
+   "control": null,
+   "saved_progress_ms": 18000,
+   "interrupt_reason": "arrival",
+   "data_origin": "fixture",
+   "session_id": "fx-ms-arrived",
+   "activity_id": "fx-act-arrived-video",
+   "media": {
+    "media_id": "fx-media-clip",
+    "kind": "video",
+    "title": "云上色块 第 1 集（测试短片）",
+    "creator": "PetSoul 测试素材",
+    "edition": "fx-clip-v1",
+    "duration_ms": 90000,
+    "src_url": "/fixtures/media/fixture-clip.mp4",
+    "poster_url": null,
+    "external_url": null,
+    "availability": "in_app_sync",
+    "license": {
+     "status": "self_generated_test",
+     "allows_in_app_playback": true,
+     "allows_sync": false,
+     "public_release_allowed": false,
+     "regions": [],
+     "expires_at": null,
+     "note": "R0 自制合成测试素材，仅用于验证播放器与失败路径"
+    },
+    "data_origin": "fixture"
+   },
+   "state": "interrupted",
+   "revision": 4,
+   "resume_policy": "save_shared_progress",
+   "video_allowed": true,
+   "anchor": {
+    "position_ms": 18000,
+    "server_time": "2026-09-21T19:54:34.668Z",
+    "playback_rate": 1
+   }
+  }
+ },
+ {
+  "name": "food.pet.light",
+  "type": "FoodRecommendationList",
+  "value": {
+   "mode": "pet_virtual_explore",
+   "preference": {
+    "preference_id": "fx-pref-pet-light",
+    "subject": "pet",
+    "pet_id": "fx-pet-001",
+    "version": 1,
+    "label": "清淡",
+    "taste": {
+     "sweet": 0,
+     "salty": -2,
+     "spicy": -1,
+     "oily": -2,
+     "aromatic_spice": -1,
+     "rich_broth": -1,
+     "crispy": null
+    },
+    "budget": {
+     "amount_minor": 30,
+     "currency": "travel_coin"
+    },
+    "max_wait_minutes": null,
+    "party_size": null,
+    "restrictions": [],
+    "source": "fixture",
+    "updated_at": "2026-09-21T19:56:34.771Z"
+   },
+   "items": [
+    {
+     "recommendation_id": "fx-rec-light-1",
+     "mode": "pet_virtual_explore",
+     "branch": {
+      "branch_id": "fixture:noodle-west",
+      "name": "示例·清汤面馆（西区店）",
+      "brand": "示例清汤面馆",
+      "place": {
+       "provider": "fixture",
+       "place_id": "fixture:noodle-west",
+       "name": "示例·清汤面馆",
+       "address": null,
+       "lat": 22.305,
+       "lng": 114.17,
+       "coord_system": "wgs84",
+       "category": "餐厅",
+       "source_updated_at": null,
+       "attribution": "演示资料",
+       "data_origin": "fixture"
+      },
+      "ratings": []
+     },
+     "dishes": [
+      {
+       "dish": {
+        "dish_id": "fixture:noodle-west:clear-noodle",
+        "branch_id": "fixture:noodle-west",
+        "name": "清汤细面（示例）",
+        "price": {
+         "amount_minor": 4800,
+         "currency": "HKD"
+        },
+        "flavor_traits": [
+         "汤底清",
+         "面有嚼劲"
+        ]
+       },
+       "why": "资料主要提到面条口感，汤底清；有一条偏咸反馈。",
+       "evidence": [
+        {
+         "evidence_id": "fx-ev-1",
+         "source_kind": "fixture",
+         "source_label": "演示资料",
+         "aspect": "面条口感",
+         "observation": "（演示）面有嚼劲",
+         "observed_at": null,
+         "sample_count": 0
+        },
+        {
+         "evidence_id": "fx-ev-2",
+         "source_kind": "fixture",
+         "source_label": "演示资料",
+         "aspect": "咸度",
+         "observation": "（演示）一位食客觉得汤略咸",
+         "observed_at": null,
+         "sample_count": 0
+        }
+       ]
+      }
+     ],
+     "scores": {
+      "quality": null,
+      "match": 0.82,
+      "value": 0.75,
+      "logistics": 0.9,
+      "uncertainty": 0.45
+     },
+     "eligibility": "eligible",
+     "group": "primary",
+     "rank": 1,
+     "reasons": [
+      "我记得你喜欢清淡。这家面馆在我落地后的路线上。",
+      "在停留窗口内能从容吃完（示例时间）。"
+     ],
+     "not_suitable_when": [
+      "对咸度敏感时不一定合适：有偏咸反馈。"
+     ],
+     "unknowns": [
+      "能否少盐需要问店家",
+      "当天供应与排队情况未知"
+     ],
+     "provenance": {
+      "fact_version": "fixture-facts-r0",
+      "rule_version": "fixture-no-algorithm",
+      "data_status": "fixture",
+      "coverage_note": "演示资料：3 家示例分店、每家 1–2 道示例菜；不是全城结果，也不是真实口碑。",
+      "generated_at": "2026-09-21T19:56:34.771Z",
+      "preference_version": 1
+     },
+     "freshness": "fresh",
+     "itinerary_version": 1,
+     "data_origin": "fixture"
+    },
+    {
+     "recommendation_id": "fx-rec-light-2",
+     "mode": "pet_virtual_explore",
+     "branch": {
+      "branch_id": "fixture:congee-harbour",
+      "name": "示例·海港粥铺",
+      "brand": null,
+      "place": {
+       "provider": "fixture",
+       "place_id": "fixture:congee-harbour",
+       "name": "示例·海港粥铺",
+       "address": null,
+       "lat": 22.301,
+       "lng": 114.172,
+       "coord_system": "wgs84",
+       "category": "餐厅",
+       "source_updated_at": null,
+       "attribution": "演示资料",
+       "data_origin": "fixture"
+      },
+      "ratings": []
+     },
+     "dishes": [
+      {
+       "dish": {
+        "dish_id": "fixture:congee-harbour:fish-congee",
+        "branch_id": "fixture:congee-harbour",
+        "name": "鱼片粥（示例）",
+        "price": null,
+        "flavor_traits": [
+         "清淡",
+         "绵"
+        ]
+       },
+       "why": "只有地点资料和菜名，缺少可分析的口味证据。",
+       "evidence": []
+      }
+     ],
+     "scores": {
+      "quality": null,
+      "match": null,
+      "value": null,
+      "logistics": 0.85,
+      "uncertainty": 0.85
+     },
+     "eligibility": "eligible",
+     "group": "explore",
+     "rank": null,
+     "reasons": [
+      "菜名看起来清淡，但证据不足，放在“可以试试”。"
+     ],
+     "not_suitable_when": [],
+     "unknowns": [
+      "没有菜品评价证据",
+      "价格未知",
+      "营业时间未核实"
+     ],
+     "provenance": {
+      "fact_version": "fixture-facts-r0",
+      "rule_version": "fixture-no-algorithm",
+      "data_status": "fixture",
+      "coverage_note": "演示资料：3 家示例分店、每家 1–2 道示例菜；不是全城结果，也不是真实口碑。",
+      "generated_at": "2026-09-21T19:56:34.771Z",
+      "preference_version": 1
+     },
+     "freshness": "fresh",
+     "itinerary_version": 1,
+     "data_origin": "fixture"
+    }
+   ],
+   "shortfall_note": "只有 2 家有可用资料，不硬凑三个推荐。",
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "food.owner.rich",
+  "type": "FoodRecommendationList",
+  "value": {
+   "mode": "owner_real_dining",
+   "preference": {
+    "preference_id": "fx-pref-owner-rich",
+    "subject": "owner",
+    "pet_id": "fx-pet-001",
+    "version": 2,
+    "label": "浓郁",
+    "taste": {
+     "sweet": 0,
+     "salty": 1,
+     "spicy": 1,
+     "oily": 1,
+     "aromatic_spice": 2,
+     "rich_broth": 2,
+     "crispy": null
+    },
+    "budget": {
+     "amount_minor": 8000,
+     "currency": "HKD"
+    },
+    "max_wait_minutes": 20,
+    "party_size": 2,
+    "restrictions": [
+     {
+      "kind": "avoid",
+      "label": "不吃香菜（仅自己可见）",
+      "private": true
+     }
+    ],
+    "source": "fixture",
+    "updated_at": "2026-09-21T19:56:34.771Z"
+   },
+   "items": [
+    {
+     "recommendation_id": "fx-rec-rich-1",
+     "mode": "owner_real_dining",
+     "branch": {
+      "branch_id": "fixture:curry-corner",
+      "name": "示例·街角咖喱小馆",
+      "brand": null,
+      "place": {
+       "provider": "fixture",
+       "place_id": "fixture:curry-corner",
+       "name": "示例·街角咖喱小馆",
+       "address": null,
+       "lat": 22.309,
+       "lng": 114.168,
+       "coord_system": "wgs84",
+       "category": "餐厅",
+       "source_updated_at": null,
+       "attribution": "演示资料",
+       "data_origin": "fixture"
+      },
+      "ratings": []
+     },
+     "dishes": [
+      {
+       "dish": {
+        "dish_id": "fixture:curry-corner:curry-beef",
+        "branch_id": "fixture:curry-corner",
+        "name": "咖喱牛腩饭（示例）",
+        "price": {
+         "amount_minor": 6800,
+         "currency": "HKD"
+        },
+        "flavor_traits": [
+         "浓郁",
+         "香料",
+         "微辣"
+        ]
+       },
+       "why": "资料提到香料层次明显、酱汁浓稠，符合“浓郁”偏好。",
+       "evidence": [
+        {
+         "evidence_id": "fx-ev-3",
+         "source_kind": "fixture",
+         "source_label": "演示资料",
+         "aspect": "风味",
+         "observation": "（演示）酱汁浓稠、香料明显",
+         "observed_at": null,
+         "sample_count": 0
+        }
+       ]
+      }
+     ],
+     "scores": {
+      "quality": null,
+      "match": 0.86,
+      "value": 0.7,
+      "logistics": 0.8,
+      "uncertainty": 0.5
+     },
+     "eligibility": "eligible",
+     "group": "primary",
+     "rank": 1,
+     "reasons": [
+      "符合你确认的“浓郁、能吃一点辣”。",
+      "离到站点步行约 10 分钟（示例距离）。"
+     ],
+     "not_suitable_when": [
+      "如果今天想吃清淡，这家不合适。",
+      "资料说偏辣，怕辣的同行人需要注意。"
+     ],
+     "unknowns": [
+      "当天是否营业需要核实",
+      "是否能调低辣度需要问店家"
+     ],
+     "provenance": {
+      "fact_version": "fixture-facts-r0",
+      "rule_version": "fixture-no-algorithm",
+      "data_status": "fixture",
+      "coverage_note": "演示资料：3 家示例分店、每家 1–2 道示例菜；不是全城结果，也不是真实口碑。",
+      "generated_at": "2026-09-21T19:56:34.771Z",
+      "preference_version": 2
+     },
+     "freshness": "fresh",
+     "itinerary_version": null,
+     "data_origin": "fixture"
+    },
+    {
+     "recommendation_id": "fx-rec-rich-2",
+     "mode": "owner_real_dining",
+     "branch": {
+      "branch_id": "fixture:noodle-west",
+      "name": "示例·清汤面馆（西区店）",
+      "brand": "示例清汤面馆",
+      "place": {
+       "provider": "fixture",
+       "place_id": "fixture:noodle-west",
+       "name": "示例·清汤面馆",
+       "address": null,
+       "lat": 22.305,
+       "lng": 114.17,
+       "coord_system": "wgs84",
+       "category": "餐厅",
+       "source_updated_at": null,
+       "attribution": "演示资料",
+       "data_origin": "fixture"
+      },
+      "ratings": []
+     },
+     "dishes": [
+      {
+       "dish": {
+        "dish_id": "fixture:noodle-west:rich-broth",
+        "branch_id": "fixture:noodle-west",
+        "name": "浓汤牛骨面（示例）",
+        "price": {
+         "amount_minor": 5800,
+         "currency": "HKD"
+        },
+        "flavor_traits": [
+         "汤底浓",
+         "油润"
+        ]
+       },
+       "why": "同一家面馆的浓汤款；资料只覆盖这一道。",
+       "evidence": [
+        {
+         "evidence_id": "fx-ev-4",
+         "source_kind": "fixture",
+         "source_label": "演示资料",
+         "aspect": "汤底",
+         "observation": "（演示）骨汤较浓",
+         "observed_at": null,
+         "sample_count": 0
+        }
+       ]
+      }
+     ],
+     "scores": {
+      "quality": null,
+      "match": 0.72,
+      "value": 0.6,
+      "logistics": 0.9,
+      "uncertainty": 0.55
+     },
+     "eligibility": "eligible",
+     "group": "alternative",
+     "rank": 2,
+     "reasons": [
+      "和清淡组是同一家分店，但推荐的菜不同。"
+     ],
+     "not_suitable_when": [
+      "赶时间时可能要等位（历史记录，不是实时队列）。"
+     ],
+     "unknowns": [
+      "价格日期未知",
+      "排队情况需要到店确认"
+     ],
+     "provenance": {
+      "fact_version": "fixture-facts-r0",
+      "rule_version": "fixture-no-algorithm",
+      "data_status": "fixture",
+      "coverage_note": "演示资料：3 家示例分店、每家 1–2 道示例菜；不是全城结果，也不是真实口碑。",
+      "generated_at": "2026-09-21T19:56:34.771Z",
+      "preference_version": 2
+     },
+     "freshness": "fresh",
+     "itinerary_version": null,
+     "data_origin": "fixture"
+    }
+   ],
+   "shortfall_note": "只有 2 家有可用资料，不硬凑三个推荐。",
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "reception.own_pet",
+  "type": "ReceptionSession",
+  "value": {
+   "session_id": "fx-rs-own_pet",
+   "pet_id": "fx-pet-001",
+   "branch": "own_pet",
+   "mode": "guided_notes",
+   "status": "active",
+   "host": {
+    "host_id": "fx-host-reception",
+    "display_name": "星球接待员",
+    "role_label": "PetSoul 的 AI 接待角色",
+    "avatar_url": null,
+    "is_ai": true,
+    "disclosure": "我是 PetSoul 的 AI 接待角色。你选择保存的内容，才会用来帮助塑造你的伙伴；不想说可以随时跳过。"
+   },
+   "turns": [
+    {
+     "turn_id": "t1",
+     "seq": 1,
+     "speaker": "host",
+     "text": "我正在给 示例伙伴 准备入住的小档案。有些只有你知道的小事——它怎么撒娇、习惯睡哪里、听到哪个小名会抬头——我也想替你带过去。有什么想特别交代的吗？一件小事也可以，我们不用一次说完。",
+     "created_at": "2026-09-21T19:56:34.771Z"
+    },
+    {
+     "turn_id": "t2",
+     "seq": 2,
+     "speaker": "owner",
+     "text": "它不喜欢别人抱，都是自己靠过来。我坐沙发的时候，它会把下巴搭在我腿上。",
+     "created_at": "2026-09-21T19:56:34.771Z"
+    },
+    {
+     "turn_id": "t3",
+     "seq": 3,
+     "speaker": "host",
+     "text": "那我先整理成一句叮嘱：别急着抱它，等它自己靠近。你想这样记下来吗？",
+     "created_at": "2026-09-21T19:56:34.771Z"
+    },
+    {
+     "turn_id": "t4",
+     "seq": 4,
+     "speaker": "owner",
+     "text": "它有一条蓝色小毯子，睡觉会叼着。还有，让它叫我姐姐就好。",
+     "created_at": "2026-09-21T19:56:34.771Z"
+    },
+    {
+     "turn_id": "t5",
+     "seq": 5,
+     "speaker": "owner",
+     "text": "其实我总觉得它最后在怪我。",
+     "created_at": "2026-09-21T19:56:34.771Z"
+    },
+    {
+     "turn_id": "t6",
+     "seq": 6,
+     "speaker": "host",
+     "text": "谢谢你愿意说。这句我先放在“只留在这里”，不会交给它，也不会出现在任何公开的地方。",
+     "created_at": "2026-09-21T19:56:34.771Z"
+    }
+   ],
+   "candidates": [
+    {
+     "needs_clarification": false,
+     "state": "unconfirmed",
+     "candidate_id": "c-own-1",
+     "kind": "habit",
+     "subject": "relationship",
+     "text": "别急着抱它，等它自己靠近；坐沙发时它会把下巴搭在主人腿上。",
+     "source_turn_id": "t2",
+     "source_excerpt": "它不喜欢别人抱，都是自己靠过来。我坐沙发的时候，它会把下巴搭在我腿上。",
+     "suggested_slot": "interaction_boundary",
+     "suggested_slot_value": null
+    },
+    {
+     "needs_clarification": false,
+     "state": "unconfirmed",
+     "candidate_id": "c-own-2",
+     "kind": "habit",
+     "subject": "pet",
+     "text": "睡觉时会叼着一条蓝色小毯子。",
+     "source_turn_id": "t4",
+     "source_excerpt": "它有一条蓝色小毯子，睡觉会叼着。",
+     "suggested_slot": "favorite_object",
+     "suggested_slot_value": "蓝色小毯子"
+    },
+    {
+     "needs_clarification": false,
+     "state": "unconfirmed",
+     "candidate_id": "c-own-3",
+     "kind": "habit",
+     "subject": "relationship",
+     "text": "称呼主人为“姐姐”。",
+     "source_turn_id": "t4",
+     "source_excerpt": "让它叫我姐姐就好。",
+     "suggested_slot": "owner_title",
+     "suggested_slot_value": "姐姐"
+    },
+    {
+     "needs_clarification": false,
+     "state": "unconfirmed",
+     "candidate_id": "c-own-4",
+     "kind": "owner_private",
+     "subject": "owner",
+     "text": "主人担心它最后在怪自己。",
+     "source_turn_id": "t5",
+     "source_excerpt": "其实我总觉得它最后在怪我。",
+     "suggested_slot": null,
+     "suggested_slot_value": null
+    },
+    {
+     "needs_clarification": true,
+     "state": "unconfirmed",
+     "candidate_id": "c-own-5",
+     "kind": "inference",
+     "subject": "pet",
+     "text": "（推测）它可能比较独立。",
+     "source_turn_id": "t2",
+     "source_excerpt": "它不喜欢别人抱",
+     "suggested_slot": null,
+     "suggested_slot_value": null
+    }
+   ],
+   "draft_revision": 1,
+   "draft_expires_at": "2026-09-22T19:56:34.771Z",
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "reception.adopted",
+  "type": "ReceptionSession",
+  "value": {
+   "session_id": "fx-rs-adopted",
+   "pet_id": "fx-adopt-pet",
+   "branch": "adopted",
+   "mode": "guided_notes",
+   "status": "active",
+   "host": {
+    "host_id": "fx-host-reception",
+    "display_name": "星球接待员",
+    "role_label": "PetSoul 的 AI 接待角色",
+    "avatar_url": null,
+    "is_ai": true,
+    "disclosure": "我是 PetSoul 的 AI 接待角色。你选择保存的内容，才会用来帮助塑造你的伙伴；不想说可以随时跳过。"
+   },
+   "turns": [
+    {
+     "turn_id": "a1",
+     "seq": 1,
+     "speaker": "host",
+     "text": "示例伙伴 第一次来到你家。你想怎样欢迎它？比如希望它怎么称呼你，或者给它准备了什么小角落。",
+     "created_at": "2026-09-21T19:56:34.771Z"
+    },
+    {
+     "turn_id": "a2",
+     "seq": 2,
+     "speaker": "owner",
+     "text": "希望它叫我阿姨。我在窗边给它放了一个软垫子。",
+     "created_at": "2026-09-21T19:56:34.771Z"
+    },
+    {
+     "turn_id": "a3",
+     "seq": 3,
+     "speaker": "owner",
+     "text": "以后想带它去看海。",
+     "created_at": "2026-09-21T19:56:34.771Z"
+    }
+   ],
+   "candidates": [
+    {
+     "needs_clarification": false,
+     "state": "unconfirmed",
+     "candidate_id": "c-ad-1",
+     "kind": "habit",
+     "subject": "relationship",
+     "text": "称呼主人为“阿姨”。",
+     "source_turn_id": "a2",
+     "source_excerpt": "希望它叫我阿姨。",
+     "suggested_slot": "owner_title",
+     "suggested_slot_value": "阿姨"
+    },
+    {
+     "needs_clarification": false,
+     "state": "unconfirmed",
+     "candidate_id": "c-ad-2",
+     "kind": "habit",
+     "subject": "pet",
+     "text": "窗边有一个为它准备的软垫子。",
+     "source_turn_id": "a2",
+     "source_excerpt": "我在窗边给它放了一个软垫子。",
+     "suggested_slot": "favorite_object",
+     "suggested_slot_value": "窗边软垫"
+    },
+    {
+     "needs_clarification": false,
+     "state": "unconfirmed",
+     "candidate_id": "c-ad-3",
+     "kind": "wish",
+     "subject": "relationship",
+     "text": "以后想一起去看海（未来愿望，不是过去经历）。",
+     "source_turn_id": "a3",
+     "source_excerpt": "以后想带它去看海。",
+     "suggested_slot": "wish_place",
+     "suggested_slot_value": "海边"
+    }
+   ],
+   "draft_revision": 1,
+   "draft_expires_at": "2026-09-22T19:56:34.771Z",
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "venue.visit",
+  "type": "Visit",
+  "value": {
+   "visit_id": "fx-visit-001",
+   "journey_id": "fx-journey-001",
+   "pet_id": "fx-pet-001",
+   "place": {
+    "provider": "fixture",
+    "place_id": "fixture:cafe-otter",
+    "name": "示例·海边咖啡馆（演示店）",
+    "address": null,
+    "lat": 22.2855,
+    "lng": 114.1577,
+    "coord_system": "wgs84",
+    "category": "咖啡馆",
+    "source_updated_at": null,
+    "attribution": "演示资料：不对应真实商家",
+    "data_origin": "fixture"
+   },
+   "state": "active",
+   "template": "cafe",
+   "planned_arrival_utc": "2026-09-21T19:41:34.668Z",
+   "arrived_at": "2026-09-21T19:44:34.668Z",
+   "leaving_at": "2026-09-21T20:36:34.668Z",
+   "recommendation_id": "fx-rec-light-1",
+   "activities": [
+    {
+     "activity_id": "fx-va-seat",
+     "kind": "choose_seat",
+     "label": "选个座位",
+     "state": "available",
+     "result_text": null
+    },
+    {
+     "activity_id": "fx-va-drink",
+     "kind": "order_drink",
+     "label": "点一杯游戏饮品",
+     "state": "available",
+     "result_text": null
+    },
+    {
+     "activity_id": "fx-va-photo",
+     "kind": "take_photo",
+     "label": "拍一张合影",
+     "state": "available",
+     "result_text": null
+    },
+    {
+     "activity_id": "fx-va-greet",
+     "kind": "greet_resident",
+     "label": "和店里的居民打招呼",
+     "state": "available",
+     "result_text": null
+    }
+   ],
+   "interior_is_original": true,
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "social.feed",
+  "type": "PostPage",
+  "value": {
+   "items": [
+    {
+     "post_id": "fx-post-1",
+     "author": {
+      "actor_kind": "pet",
+      "actor_id": "fx-pet-001",
+      "display_name": "团子",
+      "avatar_url": null,
+      "is_real_household": true
+     },
+     "text": "在海边咖啡馆挑了靠窗的位置，云朵奶泡上画的是一条鱼。",
+     "media": [
+      {
+       "media_id": "fx-img-1",
+       "kind": "image",
+       "url": null,
+       "alt": "咖啡馆窗边（演示，未生成图片）",
+       "generated": true
+      }
+     ],
+     "source_event_id": "fx-visit-001:photo",
+     "visit_id": "fx-visit-001",
+     "visibility": "public",
+     "created_at": "2026-09-21T19:16:34.668Z",
+     "reaction_count": 2,
+     "comment_count": 3,
+     "viewer_reacted": false,
+     "data_origin": "fixture"
+    },
+    {
+     "post_id": "fx-post-2",
+     "author": {
+      "actor_kind": "pet",
+      "actor_id": "fx-pet-002",
+      "display_name": "可可",
+      "avatar_url": null,
+      "is_real_household": true
+     },
+     "text": "今天守菜园，抓到一只来偷番茄的麻雀，放它走了。",
+     "media": [],
+     "source_event_id": "fx-farm-guard-7",
+     "visit_id": null,
+     "visibility": "public",
+     "created_at": "2026-09-21T16:56:34.668Z",
+     "reaction_count": 1,
+     "comment_count": 0,
+     "viewer_reacted": true,
+     "data_origin": "fixture"
+    }
+   ],
+   "next_cursor": null
+  }
+ },
+ {
+  "name": "social.profile",
+  "type": "PetPublicProfile",
+  "value": {
+   "pet_id": "fx-pet-001",
+   "display_name": "团子",
+   "species": "cat",
+   "avatar_url": null,
+   "bio": "在路上的小猫，喜欢靠窗的位置。",
+   "origin_label": "自己的宠物",
+   "visibility": "public",
+   "follower_count": 1,
+   "post_count": 1,
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "communicator.thread",
+  "type": "MessageThread",
+  "value": {
+   "pet_id": "fx-pet-001",
+   "items": [
+    {
+     "message_id": "fx-m-1",
+     "client_message_id": null,
+     "sender": "pet",
+     "text": "登机了，窗外的云像棉花糖。",
+     "state": "delivered",
+     "created_at": "2026-09-21T18:58:34.668Z",
+     "photo_url": null
+    },
+    {
+     "message_id": "fx-m-2",
+     "client_message_id": "fx-client-1",
+     "sender": "owner",
+     "text": "路上照顾好自己，到了告诉我。",
+     "state": "delivered",
+     "created_at": "2026-09-21T19:06:34.668Z",
+     "photo_url": null
+    },
+    {
+     "message_id": "fx-m-3",
+     "client_message_id": null,
+     "sender": "pet",
+     "text": "在听歌呢，晚点回你～",
+     "state": "awaiting_reply",
+     "created_at": "2026-09-21T19:07:34.668Z",
+     "photo_url": null
+    },
+    {
+     "message_id": "fx-m-4",
+     "client_message_id": "fx-client-2",
+     "sender": "owner",
+     "text": "拍张云给我看看？",
+     "state": "processing",
+     "created_at": "2026-09-21T19:46:34.668Z",
+     "photo_url": null
+    }
+   ],
+   "next_cursor": null,
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "adoption.fx-adopt-1",
+  "type": "AdoptionCandidate",
+  "value": {
+   "candidate_id": "fx-adopt-1",
+   "name": "小岚",
+   "species": "cat",
+   "personality": "慢热、爱在高处看风景",
+   "dream": "想去看一次真正的海",
+   "origin": "adopted_original",
+   "source_note": "PetSoul 原创伙伴（演示）",
+   "background_available": false,
+   "availability": "available",
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "adoption.fx-adopt-2",
+  "type": "AdoptionCandidate",
+  "value": {
+   "candidate_id": "fx-adopt-2",
+   "name": "栗子",
+   "species": "dog",
+   "personality": "热情、走路会蹦",
+   "dream": "想当一次小小飞行员",
+   "origin": "adopted_original",
+   "source_note": "PetSoul 原创伙伴（演示）",
+   "background_available": false,
+   "availability": "available",
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "adoption.fx-adopt-3",
+  "type": "AdoptionCandidate",
+  "value": {
+   "candidate_id": "fx-adopt-3",
+   "name": "阿绒",
+   "species": "rabbit",
+   "personality": "安静、喜欢收集叶子",
+   "dream": "开一家小小植物店",
+   "origin": "adopted_original",
+   "source_note": "PetSoul 原创伙伴（演示）",
+   "background_available": false,
+   "availability": "adopted",
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "collection.fx-i-1",
+  "type": "CollectionItem",
+  "value": {
+   "item_id": "fx-i-1",
+   "kind": "postcard",
+   "title": "海边咖啡馆明信片",
+   "obtained_at": "2026-09-20T19:56:34.668Z",
+   "tradable": false,
+   "bound_to_pet": true,
+   "source_event_id": "fx-visit-001",
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "collection.fx-i-2",
+  "type": "CollectionItem",
+  "value": {
+   "item_id": "fx-i-2",
+   "kind": "seed",
+   "title": "星星番茄种子 ×2",
+   "obtained_at": "2026-09-20T13:56:34.668Z",
+   "tradable": true,
+   "bound_to_pet": false,
+   "source_event_id": "fx-journey-000",
+   "data_origin": "fixture"
+  }
+ },
+ {
+  "name": "collection.fx-i-3",
+  "type": "CollectionItem",
+  "value": {
+   "item_id": "fx-i-3",
+   "kind": "badge",
+   "title": "第一次坐飞机",
+   "obtained_at": "2026-09-21T18:56:34.668Z",
+   "tradable": false,
+   "bound_to_pet": true,
+   "source_event_id": "fx-leg-flight",
+   "data_origin": "fixture"
+  }
+ }
+]

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>PetSoul · 协作黑板</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/board.css">
+  <script src="/board.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div><p class="eyebrow">PETSOUL / TEAM ROOM</p><h1>协作黑板<span class="live-label" id="connection">正在读取</span></h1>
+      <p class="lede">窗口写进黑板，进展就出现在这里。</p></div>
+      <div class="refresh-controls"><button id="refresh" type="button" class="primary">刷新进展</button>
+      <label class="switch"><input id="auto" type="checkbox" checked>每 15 秒刷新</label></div>
+    </header>
+    <div id="error" role="alert" hidden></div>
+    <div class="freshness" aria-live="polite"><span id="read-at">等待本地日志…</span><span id="review-at">人工核验时间待读取</span><span id="change-note"></span></div>
+    <div class="numbers" id="numbers"></div>
+    <main class="workspace">
+      <aside aria-label="窗口列表"><div class="section-heading"><h2>工作窗口</h2><span id="window-count"></span></div>
+        <button id="all-windows" class="window all selected" type="button" aria-pressed="true">全部窗口</button>
+        <div id="windows"></div>
+        <p class="aside-note">这里记录的是窗口留下的进展。没有新日志，不代表进程停止。</p>
+      </aside>
+      <div class="content">
+        <div class="content-head"><div><h2 id="selection-title">全部窗口的最新进展</h2><p id="selection-subtitle">直接读取本机协作日志，不经过模型总结。</p></div></div>
+        <nav aria-label="黑板视图" class="tabs"><button type="button" data-tab="activity" aria-pressed="true">最新记录</button><button type="button" data-tab="requests" aria-pressed="false">协作与更正</button><button type="button" data-tab="review" aria-pressed="false">人工核验快照</button></nav>
+        <div id="activity-tools" class="tools"><label for="search">筛选记录</label><input type="search" id="search" placeholder="任务 ID、C3a、E2、关键词…"><span id="event-count"></span></div>
+        <div id="view-note" class="view-note"></div>
+        <section id="records" aria-label="记录列表"></section>
+        <button id="more" type="button" hidden>再显示 30 条</button>
+        <section id="review" aria-label="人工核验快照" hidden></section>
+      </div>
+    </main>
+    <footer><span>只读本地协作记录 · 不改任务归属与验收结论</span><span id="revision"></span></footer>
+  </div>
+</body>
+</html>
