@@ -7,8 +7,9 @@ import { Link } from "react-router";
 import type { CeremonyResult } from "@/shared/contracts";
 import { toApiError } from "@/shared/api/errors";
 import { useServices } from "@/shared/services/registry";
+import { WorldGate } from "@/features/world_map/WorldGate";
 import { Button, Card, Chip, DataOriginBadge, LoadingState, Page, PetAvatar } from "@/shared/ui";
-import { useInvalidateSchool, usePet, useSchoolStatus } from "../hooks";
+import { useInvalidateSchool, usePet, useSchoolPetId, useSchoolStatus } from "../hooks";
 import { formatDateTime } from "../text";
 
 function PawStamp() {
@@ -86,12 +87,25 @@ function Ceremony({ result }: { result: CeremonyResult }) {
   );
 }
 
+/**
+ * 全屏页（bareRoutes）不在主布局里，没有家庭上下文：用 WorldGate 套一层（与“我的”等全屏页同一个守卫），
+ * 才知道当前是哪只宠物——一家有两只时，考局与领证的每条请求都要带上它（否则 409 pet_required）。
+ */
 export function CeremonyPage() {
+  return (
+    <WorldGate>
+      <CeremonyBody />
+    </WorldGate>
+  );
+}
+
+function CeremonyBody() {
   const { driving } = useServices();
   const status = useSchoolStatus();
   const invalidate = useInvalidateSchool();
   const { name } = usePet();
-  const run = useMutation({ mutationFn: () => driving.ceremony(), onSuccess: invalidate });
+  const petId = useSchoolPetId();
+  const run = useMutation({ mutationFn: () => driving.ceremony(petId), onSuccess: invalidate });
   if (status.isPending) {
     return (
       <Page bare>

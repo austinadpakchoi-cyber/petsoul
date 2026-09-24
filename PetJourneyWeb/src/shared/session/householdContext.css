@@ -1,16 +1,17 @@
+/* 切换当前宠物的一栏：颜色全部用主题变量，深色模式跟着换（原来写死浅色，深色下是一条亮条）。 */
 .ps-current-pet-bar {
   display: flex;
   align-items: center;
   gap: 12px;
   min-height: 58px;
   padding: 7px 16px;
-  border-bottom: 1px solid #e9e2d7;
-  background: #fffaf2;
+  border-bottom: 1px solid var(--c-surface-stroke);
+  background: var(--c-surface);
 }
 
 .ps-current-pet-bar > span {
   flex: 0 1 84px;
-  color: #796a5e;
+  color: var(--c-ink-2);
   font-size: 10px;
   line-height: 1.35;
 }
@@ -35,20 +36,20 @@
   gap: 5px;
   min-height: 38px;
   padding: 3px 10px 3px 4px;
-  border: 1px solid #e2d7c8;
+  border: 1px solid var(--c-surface-stroke);
   border-radius: 22px;
-  background: #fff;
-  color: #51483f;
+  background: var(--c-surface-2);
+  color: var(--c-ink);
   cursor: pointer;
 }
 
 .ps-current-pet-bar button[aria-pressed="true"] {
-  border-color: #b99165;
-  background: #f2e3d0;
+  border-color: var(--c-sun);
+  background: var(--c-sun-soft);
 }
 
 .ps-current-pet-bar button:focus-visible {
-  outline: 3px solid #dba258;
+  outline: 3px solid var(--c-sun);
   outline-offset: 2px;
 }
 

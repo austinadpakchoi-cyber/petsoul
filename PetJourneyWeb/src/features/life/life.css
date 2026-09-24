@@ -1,48 +1,1895 @@
-.ps-life-page { background: #f9f6f0; color: #2c3c35; }
-.ps-life-content { display: grid; gap: 25px; padding: 8px 16px 100px; }
-.ps-life-hero { position: relative; overflow: hidden; padding: 27px 22px; min-height: 168px; border-radius: 26px; background: linear-gradient(138deg,#e6e3d3,#d7e5de 64%,#b7cfca); }
-.ps-life-hero::after { content: "✧"; position: absolute; right: 20px; top: 22px; font: 100px Georgia,serif; color: #ffffff9b; }
-.ps-life-hero span, .ps-life-card > span { font: 10px Georgia,serif; letter-spacing: .18em; }
-.ps-life-hero h1 { position: relative; margin: 25px 0 9px; font: 600 28px/1.24 Georgia,"Noto Serif SC",serif; }
-.ps-life-hero p { position: relative; max-width: 240px; margin: 0; font-size: 12px; line-height: 1.5; }
-.ps-life-content section { min-width: 0; }
-.ps-life-section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 1px 12px; font-size: 14px; font-weight: 800; }
-.ps-life-section-title > :last-child { font-size: 11px; font-weight: 500; color: #758177; }
-.ps-life-section-title a, .ps-life-footer a { text-decoration: none; color: #426450; }
-.ps-life-jobs, .ps-life-credentials { display: grid; gap: 9px; }
-.ps-life-job { display: flex; justify-content: space-between; gap: 12px; padding: 15px !important; }
-.ps-life-job > div:first-child { display: grid; gap: 4px; }
-.ps-life-job small { color: #718a73; }
-.ps-life-job strong { font-size: 15px; }
-.ps-life-job span { font-size: 11px; color: #82877f; }
-.ps-life-job__pay { display: grid; align-content: end; justify-items: end; white-space: nowrap; }
-.ps-life-job__pay b { font: 600 23px Georgia,serif; }
-.ps-life-credential { min-height: 78px; display: grid; grid-template-columns: 42px 1fr 15px; align-items: center; gap: 12px; box-sizing: border-box; padding: 15px; border: 1px solid #e3e2d6; border-radius: 17px; background: #fffdf8; color: #283a32; text-decoration: none; box-shadow: 0 3px 10px #3d54300a; }
-.ps-life-credential--locked { opacity: .65; }
-.ps-life-credential__mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; color: #4b6c55; background: #e8efe5; font-size: 21px; }
-.ps-life-credential > span:nth-child(2) { min-width: 0; display: grid; gap: 3px; }
-.ps-life-credential small { font-size: 10px; color: #798477; }
-.ps-life-credential strong { font-size: 14px; }
-.ps-life-credential em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #888d84; font-size: 10px; font-style: normal; }
-.ps-life-credential b { color: #8ba392; font-size: 15px; }
-.ps-life-footer { border-top: 1px solid #e0e1d7; padding-top: 16px; }
-.ps-life-footer a { font-size: 14px; font-weight: 800; }
-.ps-life-footer p { margin: 6px 0 0; color: #858980; font-size: 11px; }
-.ps-life-card { display: grid; align-content: space-between; min-height: 176px; padding: 24px; border-radius: 23px; background: linear-gradient(125deg,#304d41,#2b3c3b 64%,#627164); color: #f6f4e8; box-shadow: 0 13px 24px #28452b24; }
-.ps-life-card--bank_card { background: linear-gradient(125deg,#32595a,#253f49 64%,#93805e); }
-.ps-life-card--passport { background: linear-gradient(125deg,#664f55,#44414e 64%,#857a5e); }
-.ps-life-card h1 { margin: 16px 0 2px; font: 600 27px Georgia,"Noto Serif SC",serif; }
-.ps-life-card p { margin: 0 0 21px; font-size: 13px; }
-.ps-life-card strong { font: 15px Georgia,serif; letter-spacing: .11em; }
-.ps-life-card small { margin-top: 8px; opacity: .75; }
-.ps-life-detail { display: grid; gap: 12px; padding: 19px; border: 1px solid #e9e8dc; border-radius: 19px; background: #fffefa; }
-.ps-life-detail h2 { margin: 0 0 3px; font-size: 16px; }
-.ps-life-detail h3 { margin: 9px 0 0; font-size: 13px; }
-.ps-life-detail > div:not(.ps-life-balance) { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid #eeeee6; padding-top: 9px; font-size: 12px; }
-.ps-life-detail > div span { color: #7c827a; }
-.ps-life-detail > div strong { text-align: right; }
-.ps-life-detail p { margin: 0; color: #798077; font-size: 12px; line-height: 1.55; }
-.ps-life-balance { font: 600 27px Georgia,serif; }
-.ps-life-ledger small { display: block; margin-top: 2px; font-size: 10px; }
-.ps-life-ledger strong { white-space: nowrap; font-size: 15px; }
-.ps-life-back { color: #41654e; text-decoration: none; font-size: 13px; font-weight: 700; }
+/*
+ * 证件卡包（/life、/credentials/:id）。颜色全部来自 tokens.css（深色模式自动跟随）；纸质物件（护照内页、票、照护档案）用固定的 paper 令牌。
+ *
+ * 素材钩子（UI-ASSET-005，文件放 public/ui-assets/UI-ASSET-005/v1/，到位后只改下面这些变量）：
+ *   --cred-art-front / --cred-art-back   各种证件的正面 / 背面底图（v1 已接：card-identity-front/back、card-bank-front、card-license-front/back）
+ *   --cred-art-cover                      护照封面（passport-cover.webp，未交）；资料页用 --cred-art-front（passport-page-data.webp，未交）
+ *   --cred-art-stamps                     护照盖章页（passport-page-stamps.webp，未交）
+ *   --wallet-cover-art                    卡包封面（v1 已接：wallet-cover.webp）
+ *   --photo-left / --photo-top / --photo-width / --photo-height   照片位对准底图自带的照片框（按实际图片量的，cqw = 卡宽的百分之一）
+ * 有底图的卡面都是浅色纸感：文字一律用固定深墨（paper-ink），深色模式下只加一层很淡的暗色遮罩（--cred-dim），不反色。
+ * 安全区（素材单）：卡类 1.586:1，标题条 0–20%，照片 x 6–34% / y 24–80%，字段 x 38–94% / y 24–86%；
+ *   登机牌 / 船票车票 2.2:1，左 72% 字段、右 28% 票根；护照封面、盖章页与档案夹为 900×1278 竖幅。
+ *   护照资料页按用户 2026-09-24 的参考样式改为横幅（约 1.42:1，内容多时长高）：抬头条、左侧照片框（右上角压章）、
+ *   右侧双语两栏字段、主人签名栏、底部两行代号——素材单里 passport-page-data 的尺寸与安全区需要按这个改（已在回报里提）。
+ */
+
+.ps-wallet-page,
+.ps-cred-page {
+  overflow-x: clip;
+}
+
+.ps-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- 证件种类：底色、墨色、纹样与素材钩子 ---------- */
+.ps-cred {
+  --cred-bg: var(--c-surface-2);
+  --cred-solid: var(--c-surface-2);
+  --cred-ink: var(--c-ink);
+  --cred-ink-2: var(--c-ink-2);
+  --cred-accent: var(--c-leaf);
+  --cred-band: transparent;
+  --cred-band-ink: var(--cred-ink);
+  --cred-pattern: none;
+  --cred-art-front: none;
+  --cred-art-back: none;
+  --cred-dim: transparent;
+}
+/* 星球居民证：UI-ASSET-005 v1 正反面底图；照片框实测 x 5.9–33.7%、y 23.1–83.1%（卡高 = 63.05cqw） */
+.ps-cred--identity_card {
+  --cred-art-front: url("/ui-assets/UI-ASSET-005/v1/card-identity-front.webp");
+  --cred-art-back: url("/ui-assets/UI-ASSET-005/v1/card-identity-back.webp");
+  --cred-bg: color-mix(in srgb, var(--c-sky) 14%, var(--paper));
+  --cred-solid: color-mix(in srgb, var(--c-sky) 14%, var(--paper));
+  --cred-ink: var(--paper-ink);
+  --cred-ink-2: var(--paper-secondary-ink);
+  /* 底图在深色模式下仍是浅色：强调色多掺纸墨色，两种主题下都够深（--c-sea 深色时会变浅） */
+  --cred-accent: color-mix(in srgb, var(--c-sea) 55%, var(--paper-ink));
+  --photo-left: 5.9cqw;
+  --photo-top: 14.56cqw;
+  --photo-width: 27.8cqw;
+  --photo-height: 37.83cqw;
+}
+/* 星球银行卡：v1 只交了正面底图（左侧芯片与叶子，没有照片框）；背面仍是 CSS，用同一套金绿纸色 */
+.ps-cred--bank_card {
+  --cred-art-front: url("/ui-assets/UI-ASSET-005/v1/card-bank-front.webp");
+  --cred-bg: linear-gradient(135deg, color-mix(in srgb, var(--c-sun) 26%, var(--paper)), color-mix(in srgb, var(--c-leaf) 20%, var(--paper)));
+  --cred-solid: color-mix(in srgb, var(--c-sun) 22%, var(--paper));
+  --cred-ink: var(--paper-ink);
+  --cred-ink-2: var(--paper-secondary-ink);
+  --cred-accent: color-mix(in srgb, var(--c-sun) 40%, var(--paper-ink));
+  --cred-pattern: radial-gradient(color-mix(in srgb, var(--paper-accent) 10%, transparent) 1.4px, transparent 1.6px) 0 0 / 12px 12px;
+}
+/* 爪爪驾驶证：v1 正面（照片框实测 x 6.3–33.5%、y 22.7–73.7%，右侧方向盘水印）与背面（四条横线 y 23.2/41.6/60.2/78.5%） */
+.ps-cred--driver_license {
+  --cred-art-front: url("/ui-assets/UI-ASSET-005/v1/card-license-front.webp");
+  --cred-art-back: url("/ui-assets/UI-ASSET-005/v1/card-license-back.webp");
+  --cred-bg: color-mix(in srgb, var(--c-leaf) 10%, var(--paper));
+  --cred-solid: color-mix(in srgb, var(--c-leaf) 10%, var(--paper));
+  --cred-ink: var(--paper-ink);
+  --cred-ink-2: var(--paper-secondary-ink);
+  --cred-accent: color-mix(in srgb, var(--c-leaf) 55%, var(--paper-ink));
+  --photo-left: 6.3cqw;
+  --photo-top: 14.31cqw;
+  --photo-width: 27.2cqw;
+  --photo-height: 32.16cqw;
+}
+/* 深色模式：有底图的卡面仍是浅色纸感、深墨字，只加一层很淡的暗色遮罩压一压亮度，不反色 */
+@media (prefers-color-scheme: dark) {
+  .ps-cred--identity_card,
+  .ps-cred--bank_card,
+  .ps-cred--driver_license {
+    --cred-dim: color-mix(in srgb, var(--c-deep-ink) 16%, transparent);
+  }
+}
+.ps-cred--hotel_key {
+  --cred-bg: var(--c-coral-soft);
+  --cred-solid: var(--c-coral-soft);
+  --cred-accent: var(--c-coral);
+  --cred-pattern: repeating-linear-gradient(90deg, color-mix(in srgb, var(--c-coral) 9%, transparent) 0 2px, transparent 2px 14px);
+}
+.ps-cred--care_profile {
+  --cred-bg: var(--paper);
+  --cred-solid: var(--paper);
+  --cred-ink: var(--paper-ink);
+  --cred-ink-2: var(--paper-secondary-ink);
+  --cred-accent: var(--paper-accent);
+  --cred-pattern: repeating-linear-gradient(0deg, color-mix(in srgb, var(--paper-shade) 60%, transparent) 0 1px, transparent 1px 24px);
+}
+.ps-cred--passport {
+  --cred-bg: var(--paper);
+  --cred-solid: var(--paper);
+  --cred-ink: var(--paper-ink);
+  --cred-ink-2: var(--paper-secondary-ink);
+  --cred-accent: var(--paper-accent);
+  --cred-art-cover: none;
+  --cred-art-stamps: none;
+  --cred-pattern: repeating-radial-gradient(circle at 50% 120%, color-mix(in srgb, var(--paper-accent) 7%, transparent) 0 1px, transparent 1px 7px);
+}
+.ps-cred--boarding_pass,
+.ps-cred--transport_ticket {
+  --cred-bg: var(--paper);
+  --cred-solid: var(--paper);
+  --cred-ink: var(--paper-ink);
+  --cred-ink-2: var(--paper-secondary-ink);
+  --cred-accent: var(--paper-accent);
+  --cred-band-ink: var(--c-on-deep);
+  --cred-scene: radial-gradient(22cqw 7cqw at 24% 28%, color-mix(in srgb, var(--paper) 88%, transparent) 0 60%, transparent 62%),
+    radial-gradient(16cqw 5cqw at 58% 20%, color-mix(in srgb, var(--paper) 80%, transparent) 0 60%, transparent 62%),
+    linear-gradient(168deg, transparent 58%, color-mix(in srgb, var(--c-sea) 26%, var(--paper)) 58.4% 70%, transparent 70.4%),
+    linear-gradient(196deg, transparent 64%, color-mix(in srgb, var(--c-leaf) 24%, var(--paper)) 64.4%),
+    linear-gradient(180deg, color-mix(in srgb, var(--c-sky) 42%, var(--paper)), var(--paper));
+}
+.ps-cred--boarding_pass {
+  --cred-band: color-mix(in srgb, var(--c-leaf) 32%, var(--c-deep-ink));
+}
+.ps-cred--transport_ticket {
+  --cred-band: color-mix(in srgb, var(--c-sea) 55%, var(--c-deep-ink));
+}
+
+/* 交付的线性图标：以遮罩着色，颜色跟随文字 */
+.ps-asset-icon {
+  display: inline-block;
+  flex: none;
+  background: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+}
+
+/* ---------- 证件照片位（永远是 TA 自己的样子） ---------- */
+.ps-idphoto {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--cred-accent, var(--c-leaf)) 16%, var(--cred-solid, var(--c-surface-2)));
+  color: color-mix(in srgb, var(--cred-accent, var(--c-leaf)) 70%, var(--cred-ink, var(--c-ink)));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-on-deep) 72%, transparent), 0 4px 10px -6px var(--c-shadow);
+}
+/* 证件照是 3:4 竖幅、头在上：裁切时顶部对齐，头部不被裁掉 */
+.ps-idphoto img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+.ps-idphoto__paw {
+  width: 46%;
+  height: auto;
+}
+.ps-idphoto__tag {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  background: color-mix(in srgb, var(--c-deep-ink) 74%, transparent);
+  color: var(--c-on-deep);
+}
+
+/*
+ * ---------- 服务端字段（原样） ----------
+ * 类名用 ps-credfield(s)：共享 ui.css 里的 .ps-field 是表单字段（竖排 flex、6px 间距），不能借用。
+ * 两栏版式用 dense 排：半宽字段会补进前面宽字段留下的空位，行数少、不把卡撑高（DOM 顺序仍是服务端顺序）。
+ */
+.ps-credfields {
+  display: grid;
+  gap: 1.8cqw 3cqw;
+  margin: 0;
+}
+.ps-credfields--grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: row dense;
+}
+.ps-credfields--ticket {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: row dense;
+}
+.ps-credfields--stack {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2.2cqw;
+}
+.ps-credfield {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-width: 0;
+}
+.ps-credfields--grid .ps-credfield.is-wide {
+  grid-column: 1 / -1;
+}
+.ps-credfields--ticket .ps-credfield.is-wide {
+  grid-column: span 2;
+}
+.ps-credfield dt {
+  font-size: clamp(10px, 2.7cqw, 12px);
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  color: var(--cred-ink-2);
+}
+.ps-credfield dd {
+  margin: 0;
+  font-size: clamp(12px, 3.6cqw, 15px);
+  font-weight: 650;
+  line-height: 1.3;
+  color: var(--cred-ink);
+  overflow-wrap: anywhere;
+  /* 折行时不让最后一行只剩一个字 */
+  text-wrap: pretty;
+}
+.ps-face-extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin: 0;
+  font-size: clamp(10.5px, 2.9cqw, 12.5px);
+  color: var(--cred-ink-2);
+}
+.ps-face-extras b {
+  color: var(--cred-ink);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 卡包页 ---------- */
+.ps-wallet {
+  display: grid;
+  gap: 18px;
+  padding: 6px 0 12px;
+}
+
+/*
+ * 卡包封面：UI-ASSET-005 v1 wallet-cover（1080×760 透明底；皮夹主体实测 x 7–93%、y 13–87%，扣带 x 52–61%、y 53–68%）。
+ * 上下各 13% 是透明边，用负外边距收紧和顶栏、切换条的间距；头像与名字压在翻盖上半条（y 18–42%）。
+ */
+.ps-wallet-cover {
+  --wallet-cover-art: url("/ui-assets/UI-ASSET-005/v1/wallet-cover.webp");
+  container-type: inline-size;
+  position: relative;
+  margin: -6cqw 0 -7cqw;
+}
+.ps-wallet-cover.ps-skeleton {
+  aspect-ratio: 1080 / 760;
+  margin: 0;
+  border-radius: 22px;
+}
+.ps-wallet-cover__art {
+  position: relative;
+  aspect-ratio: 1080 / 760;
+  background: var(--wallet-cover-art, none) center / contain no-repeat;
+  filter: drop-shadow(0 12px 14px var(--c-shadow));
+}
+.ps-wallet-cover__overlay {
+  position: absolute;
+  top: 20.5%;
+  right: 15%;
+  left: 15%;
+  height: 23%;
+  display: flex;
+  align-items: center;
+  gap: 3cqw;
+  color: var(--c-on-deep);
+  text-shadow: 0 1px 1px color-mix(in srgb, var(--c-deep-ink) 80%, transparent);
+}
+.ps-wallet-cover__portrait {
+  position: relative;
+  flex: none;
+  display: grid;
+  padding: 2px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--c-sun) 72%, transparent);
+  box-shadow: 0 3px 8px -3px var(--c-shadow);
+}
+.ps-wallet-cover__portrait .ps-pet-portrait {
+  width: clamp(34px, 12cqw, 48px) !important;
+  height: clamp(34px, 12cqw, 48px) !important;
+}
+/* 头像用的是 AI 生成的图（证件照裁出的头像，或服务端生成的形象）时，头像下沿压一个小标 */
+.ps-wallet-cover__ai {
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  padding: 0 4px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+  text-shadow: none;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, var(--c-deep-ink) 80%, transparent);
+  color: var(--c-on-deep);
+}
+.ps-wallet-cover__text {
+  min-width: 0;
+}
+.ps-wallet-cover__kicker {
+  display: block;
+  overflow: hidden;
+  font-size: clamp(9.5px, 2.9cqw, 11px);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: color-mix(in srgb, var(--c-on-deep) 76%, transparent);
+}
+.ps-wallet-cover__name {
+  margin: 1px 0;
+  overflow: hidden;
+  font-size: clamp(18px, 6.4cqw, 26px);
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ps-wallet-cover__count {
+  margin: 0;
+  font-size: clamp(11px, 3.4cqw, 13px);
+  color: color-mix(in srgb, var(--c-on-deep) 84%, transparent);
+}
+
+.ps-wallet-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-surface-stroke);
+}
+.ps-wallet-tabs button {
+  min-height: 40px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--c-ink-2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+.ps-wallet-tabs button[aria-selected="true"] {
+  background: var(--c-surface);
+  color: var(--c-ink);
+  box-shadow: 0 4px 12px -8px var(--c-shadow), 0 0 0 1px var(--c-surface-stroke);
+}
+.ps-wallet-tabs button:focus-visible {
+  outline: 2px solid var(--c-leaf);
+  outline-offset: 2px;
+}
+
+.ps-wallet-panel {
+  min-width: 0;
+}
+.ps-wallet-note {
+  margin: 0 2px 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--c-ink-2);
+}
+.ps-wallet-note a {
+  display: inline-block;
+  margin: -10px 0 -10px 6px;
+  padding: 10px 2px;
+  color: var(--c-leaf);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* 已有的证件：像从皮夹里抽出来一样叠放，每张露出标题条 */
+.ps-wallet-stack {
+  container-type: inline-size;
+  margin: 0;
+  padding: 0 0 4px;
+  list-style: none;
+}
+.ps-wallet-stack > li + li {
+  margin-top: calc(66px - 63.05cqw);
+}
+.ps-wallet-stack__link {
+  position: relative;
+  display: block;
+  border-radius: 4.2cqw;
+  color: inherit;
+  text-decoration: none;
+  transition: transform var(--dur-med) var(--ease-out);
+}
+.ps-wallet-stack__link:hover,
+.ps-wallet-stack__link:focus-visible {
+  transform: translateY(-8px);
+}
+.ps-wallet-stack__link:focus-visible {
+  outline: 3px solid var(--c-leaf);
+  outline-offset: 2px;
+}
+
+.ps-mini {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: 64px 1fr;
+  min-height: 63.05cqw;
+  overflow: hidden;
+  border-radius: 4.2cqw;
+  color: var(--cred-ink);
+  background: linear-gradient(var(--cred-dim, transparent), var(--cred-dim, transparent)), var(--cred-art-front, none) center top / 100% auto no-repeat,
+    var(--cred-pattern, none), var(--cred-bg);
+  box-shadow: 0 0 0 1px var(--c-surface-stroke), 0 -10px 22px -18px var(--c-shadow), 0 14px 26px -22px var(--c-shadow);
+}
+.ps-mini__band {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 0 5cqw;
+  background: var(--cred-band);
+  color: var(--cred-band-ink);
+}
+.ps-mini__mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--cred-accent) 18%, transparent);
+  color: var(--cred-accent);
+}
+.ps-mini__titles {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.ps-mini__titles strong {
+  font-size: 16px;
+  font-weight: 750;
+  line-height: 1.25;
+}
+.ps-mini__titles small {
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--cred-ink-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ps-mini__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--cred-ink) 10%, transparent);
+  color: var(--cred-ink);
+}
+.ps-mini__body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 3cqw 5cqw 5cqw;
+}
+.ps-mini__photo {
+  width: 22cqw;
+  height: 27.7cqw;
+}
+/* 有底图照片框的证件（星球居民证、驾照）：小卡面上的照片也对准底图的框（小卡面与卡面同比例，cqw 同样按卡宽算） */
+.ps-cred--identity_card .ps-mini__photo,
+.ps-cred--driver_license .ps-mini__photo {
+  position: absolute;
+  top: calc(var(--photo-top) + 0.9cqw);
+  left: calc(var(--photo-left) + 0.9cqw);
+  width: calc(var(--photo-width) - 1.8cqw);
+  height: calc(var(--photo-height) - 1.8cqw);
+  border-radius: 1.2cqw;
+  box-shadow: none;
+  /* 窄屏上底图照片框的上沿会落进 64px 的标题条（叠放时露出的那一截）：照片落在标题条里的部分不画，不盖住名称和编号 */
+  clip-path: inset(max(0px, calc(64px - var(--photo-top) - 0.9cqw)) 0 0 0 round 1.2cqw);
+}
+.ps-mini__issued {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--cred-ink-2);
+  text-align: right;
+}
+/* 有底图的小卡面：左上角种类图标压在插画上（金色叶子、海岛），垫一层淡纸色才看得清 */
+.ps-cred--identity_card .ps-mini__mark,
+.ps-cred--bank_card .ps-mini__mark,
+.ps-cred--driver_license .ps-mini__mark {
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+}
+/* 有底图的小卡面：右下角压在插画上（道路、叶子），垫一层淡纸色 */
+.ps-cred--identity_card .ps-mini__issued,
+.ps-cred--bank_card .ps-mini__issued,
+.ps-cred--driver_license .ps-mini__issued {
+  padding: 1px 6px;
+  border-radius: 6px;
+  color: var(--paper-ink);
+  background: color-mix(in srgb, var(--paper) 74%, transparent);
+}
+.ps-mini__ticketinfo {
+  display: grid;
+  gap: 6px;
+  max-width: 64%;
+  align-self: center;
+}
+.ps-mini__route {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.ps-mini__ticketinfo .ps-mini__issued {
+  margin-left: 0;
+  text-align: left;
+}
+.ps-mini__emblem {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  color: var(--c-sun);
+}
+.ps-mini__emblem svg:last-child {
+  position: absolute;
+}
+.ps-mini--ticket::after {
+  content: "";
+  position: absolute;
+  top: 64px;
+  bottom: 0;
+  left: 72%;
+  border-left: 2px dashed color-mix(in srgb, var(--cred-ink-2) 35%, transparent);
+}
+.ps-mini--ticket .ps-mini__mark {
+  background: color-mix(in srgb, var(--cred-band-ink) 16%, transparent);
+  color: var(--cred-band-ink);
+}
+.ps-mini--ticket .ps-mini__titles small {
+  color: color-mix(in srgb, var(--cred-band-ink) 78%, transparent);
+}
+.ps-mini--ticket .ps-mini__tag {
+  background: color-mix(in srgb, var(--cred-band-ink) 18%, transparent);
+  color: var(--cred-band-ink);
+}
+.ps-mini--passport {
+  --cred-ink: var(--c-on-deep);
+  --cred-ink-2: color-mix(in srgb, var(--c-on-deep) 74%, transparent);
+  --cred-band-ink: var(--c-on-deep);
+  color: var(--c-on-deep);
+  background: var(--cred-art-cover, none) center / cover no-repeat,
+    radial-gradient(130% 90% at 15% 0%, color-mix(in srgb, var(--c-leaf) 34%, transparent), transparent 60%),
+    radial-gradient(color-mix(in srgb, var(--c-on-deep) 6%, transparent) 0.6px, transparent 0.9px) 0 0 / 4px 4px, var(--c-deep-ink);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--c-sun) 30%, transparent), 0 -10px 22px -18px var(--c-shadow), 0 14px 26px -22px var(--c-shadow);
+}
+.ps-mini--passport .ps-mini__mark {
+  background: color-mix(in srgb, var(--c-sun) 20%, transparent);
+  color: var(--c-sun);
+}
+.ps-mini--passport .ps-mini__titles small,
+.ps-mini--passport .ps-mini__issued {
+  color: color-mix(in srgb, var(--c-on-deep) 74%, transparent);
+}
+.ps-mini--passport .ps-mini__tag {
+  background: color-mix(in srgb, var(--c-on-deep) 16%, transparent);
+  color: var(--c-on-deep);
+}
+
+/* 还没有的证件：虚线空卡位，只写怎样获得 */
+.ps-wallet-missing {
+  margin-top: 22px;
+}
+.ps-wallet-missing h2 {
+  margin: 0 2px 10px;
+  font-size: 15px;
+  font-weight: 750;
+}
+.ps-wallet-missing ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ps-wallet-slot {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 14px;
+  border: 1.5px dashed color-mix(in srgb, var(--c-ink-3) 70%, transparent);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--c-surface) 45%, transparent);
+}
+.ps-wallet-slot__frame {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 30px;
+  margin-top: 2px;
+  border: 1.5px dashed color-mix(in srgb, var(--c-ink-3) 80%, transparent);
+  border-radius: 6px;
+  color: var(--c-ink-3);
+}
+.ps-wallet-slot__text {
+  min-width: 0;
+}
+.ps-wallet-slot__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: 0;
+}
+.ps-wallet-slot__head strong {
+  font-size: 15px;
+}
+.ps-wallet-slot__head span {
+  font-size: 12px;
+  color: var(--c-ink-3);
+}
+.ps-wallet-slot__how {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--c-ink-2);
+}
+.ps-wallet-slot__go {
+  min-height: 40px;
+  margin-top: 10px;
+}
+/* 驾照学车中：整块空卡位点进驾校；四科各一个小标签（文字只取驾校服务的字段） */
+.ps-wallet-slot--school {
+  display: block;
+  padding: 0;
+}
+.ps-wallet-slot__link {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: inherit;
+  color: inherit;
+  text-decoration: none;
+}
+.ps-wallet-slot__link:focus-visible {
+  outline: 3px solid var(--c-leaf);
+  outline-offset: 2px;
+}
+.ps-school-progress {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+.ps-school-progress__tags {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ps-school-tag {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  padding: 6px 9px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 10px;
+  background: var(--c-surface-2);
+}
+.ps-school-tag b {
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--c-ink);
+}
+.ps-school-tag span:last-child {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--c-ink-2);
+  overflow-wrap: anywhere;
+}
+.ps-school-tag.is-passed {
+  border-color: transparent;
+  background: var(--c-leaf-soft);
+}
+.ps-school-tag.is-passed span:last-child {
+  color: var(--c-leaf);
+  font-weight: 700;
+}
+.ps-school-tag.is-available {
+  border-color: transparent;
+  background: var(--c-sun-soft);
+}
+.ps-school-tag.is-available span:last-child {
+  color: var(--c-ink);
+  font-weight: 700;
+}
+.ps-school-tag.is-in_exam {
+  border-color: transparent;
+  background: var(--c-sky-soft);
+}
+.ps-school-tag.is-in_exam span:last-child {
+  color: var(--c-sea);
+  font-weight: 700;
+}
+.ps-school-progress__line {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.55;
+  color: var(--c-ink);
+}
+.ps-school-progress__go {
+  justify-self: start;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-leaf);
+}
+.ps-school-progress__go::after {
+  content: " ›";
+}
+
+/* 打工记录 */
+.ps-jobs {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ps-job {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-card);
+  background: var(--c-surface);
+  box-shadow: 0 10px 24px -20px var(--c-shadow);
+}
+.ps-job__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+}
+.ps-job__status {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--c-surface-2);
+  color: var(--c-ink-2);
+}
+.ps-job--going .ps-job__status {
+  background: var(--c-sky-soft);
+  color: var(--c-sea);
+}
+.ps-job--working .ps-job__status {
+  background: var(--c-leaf-soft);
+  color: var(--c-leaf);
+}
+.ps-job time {
+  font-size: 12px;
+  color: var(--c-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.ps-job__title {
+  font-size: 16px;
+  font-weight: 750;
+}
+.ps-job__place {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--c-ink-2);
+}
+.ps-job__pay {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--c-surface-stroke);
+  font-size: 13px;
+  color: var(--c-ink-2);
+}
+.ps-job__pay b {
+  font-size: 20px;
+  color: var(--c-ink);
+  font-variant-numeric: tabular-nums;
+}
+.ps-job__pay em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--c-ink-3);
+}
+.ps-job[data-paid="true"] .ps-job__pay em {
+  color: var(--c-leaf);
+}
+
+/* ---------- 单张证件 ---------- */
+.ps-cred-content {
+  display: grid;
+  gap: 16px;
+  padding: 8px 0 12px;
+}
+.ps-cred-stage {
+  container-type: inline-size;
+  width: 100%;
+  max-width: 440px;
+  margin: 4px auto 0;
+  perspective: 1200px;
+}
+.ps-cred-stage--ticket {
+  max-width: 480px;
+}
+.ps-cred-stage--folder {
+  max-width: 300px;
+}
+.ps-cred-stage--ticket .ps-cred-flip {
+  filter: drop-shadow(0 12px 14px var(--c-shadow));
+}
+.ps-cred-flip {
+  transform-origin: 50% 50%;
+  transition: transform 170ms cubic-bezier(0.55, 0, 0.85, 0.35);
+}
+.ps-cred-stage[data-phase="out"] .ps-cred-flip {
+  transform: rotateY(90deg);
+}
+.ps-cred-stage[data-phase="in"] .ps-cred-flip {
+  animation: ps-cred-flip-in 230ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+@keyframes ps-cred-flip-in {
+  from {
+    transform: rotateY(-90deg);
+  }
+  to {
+    transform: rotateY(0deg);
+  }
+}
+.ps-cred-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 12px;
+}
+.ps-cred-actions__hint {
+  font-size: 12px;
+  color: var(--c-ink-3);
+}
+.ps-cred-links {
+  padding: 16px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-card);
+  background: var(--c-surface);
+}
+.ps-cred-links h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+.ps-cred-links ul {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ps-cred-links li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 0;
+  border-top: 1px dashed var(--c-surface-stroke);
+}
+.ps-cred-links li:first-child {
+  border-top: 0;
+}
+.ps-cred-links a {
+  display: inline-block;
+  justify-self: start;
+  margin: -9px 0;
+  padding: 9px 0;
+  color: var(--c-leaf);
+  font-weight: 700;
+  text-decoration: none;
+}
+.ps-cred-links span {
+  font-weight: 650;
+}
+.ps-cred-links small {
+  font-size: 12px;
+  color: var(--c-ink-3);
+}
+.ps-cred-foot {
+  margin: 0;
+  font-size: 12px;
+  text-align: center;
+  color: var(--c-ink-3);
+}
+
+/*
+ * ID-1 卡（星球居民证、银行卡、驾驶证、房卡）：底图按卡宽铺满、顶端对齐（不按高度缩放），照片位用 cqw 对准底图的照片框——
+ * 万一字段把卡撑高，底图和照片框仍然对齐，只是底部多出一截底色；字段本身不裁。
+ */
+.ps-idcard {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 6cqw 28cqw 4cqw minmax(0, 1fr) 6cqw;
+  grid-template-rows: 12.6cqw 2.5cqw minmax(39.1cqw, auto) minmax(8.8cqw, auto);
+  width: 100%;
+  min-height: 63.05cqw;
+  overflow: hidden;
+  border-radius: 4.2cqw;
+  color: var(--cred-ink);
+  background: linear-gradient(var(--cred-dim, transparent), var(--cred-dim, transparent)), var(--cred-art-front, none) center top / 100% auto no-repeat,
+    var(--cred-pattern, none), var(--cred-bg);
+  box-shadow: 0 0 0 1px var(--c-surface-stroke), 0 18px 32px -24px var(--c-shadow);
+}
+.ps-idcard--back {
+  background: linear-gradient(var(--cred-dim, transparent), var(--cred-dim, transparent)), var(--cred-art-back, none) center top / 100% auto no-repeat,
+    var(--cred-pattern, none), var(--cred-bg);
+}
+.ps-idcard__band {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 6cqw;
+}
+.ps-idcard__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: clamp(13px, 4.1cqw, 17px);
+  font-weight: 750;
+}
+.ps-idcard__label svg,
+.ps-idcard__label .ps-asset-icon {
+  color: var(--cred-accent);
+}
+.ps-idcard__brand {
+  font-size: clamp(10px, 2.7cqw, 12px);
+  letter-spacing: 0.12em;
+  color: var(--cred-ink-2);
+  white-space: nowrap;
+}
+/* 照片位：对准底图自带的照片框（各证件的 --photo-* 在上面的种类变量里；没有底图时是素材单的安全区）。有底图时往里缩一点，露出底图的框线 */
+.ps-idcard__photo {
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--photo-top, 15.13cqw) + var(--photo-inset, 0cqw));
+  left: calc(var(--photo-left, 6cqw) + var(--photo-inset, 0cqw));
+  width: calc(var(--photo-width, 28cqw) - 2 * var(--photo-inset, 0cqw));
+  height: calc(var(--photo-height, 35.31cqw) - 2 * var(--photo-inset, 0cqw));
+}
+.ps-cred--identity_card .ps-idcard__photo,
+.ps-cred--driver_license .ps-idcard__photo {
+  --photo-inset: 0.9cqw;
+  border-radius: 1.2cqw;
+  box-shadow: none;
+}
+/* 银行卡：底图左侧是芯片，证件照放在标题条右侧的小圆框里 */
+.ps-idcard__bandphoto {
+  flex: none;
+  width: clamp(28px, 9cqw, 38px);
+  height: clamp(28px, 9cqw, 38px);
+  border-radius: 50%;
+}
+.ps-idcard__fields {
+  grid-column: 4;
+  grid-row: 3;
+  align-self: start;
+  min-width: 0;
+}
+.ps-idcard__foot {
+  grid-column: 2 / 5;
+  grid-row: 4;
+  align-self: center;
+  min-width: 0;
+  padding: 1.5cqw 0;
+}
+/* 编号、日期都已写在字段里时页脚是空的：不占位，免得把卡撑得比底图高 */
+.ps-idcard__foot:empty {
+  display: none;
+}
+.ps-idcard__stripe {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  align-self: end;
+  height: 9cqw;
+  background: color-mix(in srgb, var(--c-deep-ink) 86%, var(--cred-accent));
+}
+.ps-idcard__backinfo {
+  position: relative;
+  z-index: 1;
+  grid-column: 2 / 5;
+  grid-row: 3 / 5;
+  align-self: end;
+  justify-self: start;
+  display: grid;
+  justify-items: start;
+  gap: 3px;
+  margin-bottom: 4cqw;
+  padding: 2.4cqw 3.2cqw;
+  border-radius: 2.4cqw;
+  background: color-mix(in srgb, var(--cred-solid) 86%, transparent);
+}
+.ps-idcard__backlabel {
+  font-size: 13px;
+  font-weight: 750;
+}
+.ps-idcard__backinfo b {
+  font-size: 13px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.ps-idcard__backinfo small {
+  font-size: 11.5px;
+  color: var(--cred-ink-2);
+}
+/* 星球居民证背面：底图左侧是小镇和芯片，编号与签发日期放在右下海面的低对比处 */
+.ps-idcard__backpanel {
+  position: relative;
+  z-index: 1;
+  grid-column: 4 / 5;
+  grid-row: 3 / 5;
+  align-self: end;
+  justify-self: end;
+  display: grid;
+  gap: 2cqw;
+  max-width: 100%;
+  margin-bottom: 4cqw;
+  padding: 2.4cqw 3.2cqw;
+  border-radius: 2.4cqw;
+  background: color-mix(in srgb, var(--paper) 84%, transparent);
+}
+.ps-idcard__backpanel .ps-idcard__backinfo {
+  margin: 0;
+  padding: 0;
+  background: none;
+}
+/* 驾驶证背面：四条横线（实测 y 23.2 / 41.6 / 60.2 / 78.5%，卡高 63.05cqw）；字段写在每两条线之间、贴着下面那条线 */
+.ps-idcard--ruled .ps-credfields--ruled {
+  position: absolute;
+  z-index: 1;
+  top: 14.63cqw;
+  right: 6cqw;
+  left: 6cqw;
+  grid-auto-rows: minmax(11.6cqw, auto);
+  gap: 0;
+}
+.ps-credfields--ruled .ps-credfield {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 3cqw;
+  padding: 0 1cqw 1.2cqw;
+}
+/* 左边是标签（中文在上、英文小字在下），右边是内容；比双语标签的横排规则权重高 */
+.ps-credfields--ruled .ps-credfield dt {
+  display: grid;
+  flex: none;
+  gap: 0;
+  min-width: 15cqw;
+}
+.ps-credfields--ruled .ps-credfield dd {
+  flex: 1;
+  min-width: 0;
+  font-size: clamp(11px, 3.3cqw, 14px);
+}
+.ps-idcard--ruled .ps-idcard__backinfo {
+  position: absolute;
+  top: 16cqw;
+  left: 6cqw;
+  margin: 0;
+  background: none;
+}
+
+/* 银行卡背面：余额 + 收支记录（收据） */
+.ps-bankback {
+  display: grid;
+}
+.ps-bankback__balance {
+  grid-column: 2 / 5;
+  grid-row: 3;
+  align-self: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+.ps-bankback__balance small {
+  width: 100%;
+  font-size: 12px;
+  color: var(--cred-ink-2);
+}
+.ps-bankback__balance strong {
+  font-size: clamp(28px, 10cqw, 44px);
+  font-weight: 800;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.ps-bankback__balance span {
+  font-size: 14px;
+  font-weight: 700;
+}
+.ps-bankback__same {
+  grid-column: 2 / 5;
+  grid-row: 4;
+  align-self: center;
+  margin: 0;
+  font-size: 12px;
+  color: var(--cred-ink-2);
+}
+.ps-receipt {
+  margin-top: 14px;
+  padding: 16px 16px 24px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  background: var(--c-surface);
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 8px) no-repeat,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 12px 8px repeat-x;
+  mask: linear-gradient(#000 0 0) top / 100% calc(100% - 8px) no-repeat,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 12px 8px repeat-x;
+}
+.ps-receipt h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+.ps-receipt ul {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ps-receipt li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px dashed var(--c-surface-stroke);
+}
+.ps-receipt li:first-child {
+  border-top: 0;
+}
+.ps-receipt li > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.ps-receipt b {
+  font-size: 14px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.ps-receipt small {
+  font-size: 12px;
+  color: var(--c-ink-3);
+}
+.ps-receipt strong {
+  flex: none;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-ink-2);
+}
+.ps-receipt li.is-in strong {
+  color: var(--c-leaf);
+}
+.ps-receipt__empty {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--c-ink-3);
+}
+
+/* 登机牌 / 船票车票：左 72% 票面、右 28% 票根，撕线处有半圆缺口 */
+.ps-ticketcard,
+.ps-ticketface {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 72fr) minmax(0, 28fr);
+  min-height: 45.45cqw;
+  overflow: hidden;
+  border-radius: 3.2cqw;
+  color: var(--cred-ink);
+  -webkit-mask: radial-gradient(circle 9px at 72% 0, #0000 97%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle 9px at 72% 100%, #0000 97%, #000) bottom / 100% 51% no-repeat;
+  mask: radial-gradient(circle 9px at 72% 0, #0000 97%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle 9px at 72% 100%, #0000 97%, #000) bottom / 100% 51% no-repeat;
+}
+.ps-ticketcard {
+  grid-template-rows: 40px 1fr;
+  background: var(--cred-art-front, none) center / cover no-repeat, var(--cred-pattern, none), var(--cred-bg);
+}
+.ps-ticketcard__band {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 3cqw 0 4cqw;
+  background: var(--cred-band);
+  color: var(--cred-band-ink);
+}
+.ps-ticketcard__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: clamp(13px, 3.6cqw, 16px);
+  font-weight: 750;
+  white-space: nowrap;
+}
+.ps-ticketcard__who {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ps-ticketcard__who > span:last-child {
+  display: grid;
+  min-width: 0;
+  line-height: 1.15;
+}
+.ps-ticketcard__who small {
+  font-size: 10px;
+  opacity: 0.8;
+}
+.ps-ticketcard__who b {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ps-ticketcard__photo {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+}
+.ps-ticketcard__fields {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+  padding: 3cqw 3.5cqw 3.5cqw 4cqw;
+}
+.ps-ticketcard__stub {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  min-width: 0;
+  padding: calc(40px + 3cqw) 3cqw 3cqw;
+  border-left: 2px dashed color-mix(in srgb, var(--cred-ink-2) 40%, transparent);
+  background: linear-gradient(var(--cred-band) 0 40px, transparent 40px);
+}
+.ps-ticketcard__stub .ps-face-extras {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+.ps-ticketcard__stub .ps-face-extras span {
+  display: grid;
+  gap: 1px;
+}
+.ps-ticketface {
+  background: var(--cred-bg);
+}
+.ps-ticketface__main {
+  display: grid;
+  align-content: space-between;
+  justify-items: start;
+  gap: 6px;
+  min-width: 0;
+  padding: 4cqw;
+  background: var(--cred-art-back, none) center / cover no-repeat, var(--cred-scene, none);
+}
+.ps-ticketface__label,
+.ps-ticketface__main small {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--paper) 84%, transparent);
+}
+.ps-ticketface__route {
+  max-width: 100%;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: clamp(14px, 4cqw, 18px);
+  font-weight: 750;
+  line-height: 1.35;
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  overflow-wrap: anywhere;
+}
+.ps-ticketface__stub {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 3cqw;
+  border-left: 2px dashed color-mix(in srgb, var(--cred-ink-2) 40%, transparent);
+  text-align: center;
+}
+.ps-ticketface__stub small {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--cred-ink-2);
+}
+.ps-ticketface__stub b {
+  font-size: clamp(10.5px, 2.9cqw, 12.5px);
+  overflow-wrap: anywhere;
+}
+.ps-ticketface__mark {
+  padding: 3px 8px;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  color: var(--cred-ink-2);
+  transform: rotate(-8deg);
+}
+.ps-ticketface__mark.is-used {
+  color: var(--paper-accent);
+}
+
+/* 照护档案：竖幅档案夹（私密） */
+.ps-folder {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 4cqw;
+  width: 100%;
+  aspect-ratio: 900 / 1278;
+  padding: 17cqw 8cqw 8cqw;
+  border-radius: 4cqw;
+  color: var(--cred-ink);
+  background: var(--cred-art-front, none) center / cover no-repeat, var(--cred-pattern, none), var(--cred-bg);
+  box-shadow: 0 0 0 1px var(--paper-shade), 0 18px 32px -24px var(--c-shadow);
+}
+.ps-folder__tab {
+  position: absolute;
+  top: 0;
+  left: 7cqw;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px 8px;
+  border-radius: 0 0 12px 12px;
+  font-size: 14px;
+  font-weight: 750;
+  background: var(--paper-accent);
+  color: var(--c-on-deep);
+}
+.ps-folder__private {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--paper-accent);
+}
+.ps-folder__photo {
+  width: 40cqw;
+  aspect-ratio: 28 / 35.3;
+}
+.ps-folder .ps-credfields {
+  justify-self: stretch;
+}
+.ps-folder .ps-face-extras {
+  justify-self: stretch;
+}
+
+.ps-careback {
+  padding: 18px 18px 22px;
+  border-radius: var(--r-card);
+  color: var(--cred-ink);
+  background: var(--cred-bg);
+  box-shadow: 0 0 0 1px var(--paper-shade), 0 18px 32px -24px var(--c-shadow);
+}
+.ps-careback__private {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  background: color-mix(in srgb, var(--paper-accent) 12%, var(--paper));
+}
+.ps-careback__private svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--paper-accent);
+}
+.ps-careback__notes {
+  display: grid;
+  margin: 0;
+  padding: 0 0 0 1.4em;
+}
+.ps-careback__notes li {
+  padding: 9px 0;
+  border-bottom: 1px dashed var(--paper-shade);
+  font-size: 15px;
+  line-height: 1.55;
+}
+.ps-careback__notes b {
+  color: var(--paper-accent);
+  font-weight: 750;
+}
+.ps-careback__empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--cred-ink-2);
+}
+
+/* ---------- 同一家族证件：虚构声明框、抬头条（星球居民证、驾驶证） ---------- */
+.ps-fiction-box {
+  justify-self: start;
+  display: inline-block;
+  padding: 0 5px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--cred-ink-2);
+  /* 底图角上有叶子等装饰：垫一层淡纸色，字不和图案打架（纸色是固定色，深色模式也一样） */
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+}
+/* 底图顶部 0–20% 自带色带：抬头条直接叠字，跨到照片框上沿之前（15.1cqw）；字段区可以用到原页脚的空间，卡不被撑高 */
+.ps-idcard--family {
+  grid-template-rows: minmax(12.6cqw, auto) 2.5cqw minmax(47.9cqw, auto) auto;
+}
+.ps-idcard__band--family {
+  grid-row: 1 / 3;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 2px;
+  padding: 1cqw 5cqw;
+}
+.ps-idcard__bandtop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ps-idcard__republic {
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: clamp(8.5px, 2.4cqw, 10.5px);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  color: var(--cred-accent);
+  background: color-mix(in srgb, var(--paper) 62%, transparent);
+}
+.ps-idcard__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 6px;
+  min-width: 0;
+}
+.ps-idcard__title svg,
+.ps-idcard__title .ps-asset-icon {
+  align-self: center;
+  color: var(--cred-accent);
+}
+.ps-idcard__title strong {
+  font-size: clamp(13px, 4cqw, 17px);
+  font-weight: 800;
+}
+.ps-idcard__title small {
+  font-size: clamp(8.5px, 2.4cqw, 10.5px);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  color: var(--cred-ink-2);
+}
+.ps-credfields--bilingual dt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 4px;
+}
+.ps-credfields--bilingual dt small {
+  font-size: 0.86em;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+
+/* ---------- 护照 ---------- */
+.ps-cred-stage--passport {
+  max-width: 440px;
+}
+/* 资料页（参考样式）：玫瑰粉 + 米白纸、防伪细纹；横幅，内容多时长高不裁字 */
+.ps-passport-data {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-content: start;
+  gap: 2.4cqw;
+  width: 100%;
+  min-height: 70.4cqw;
+  overflow: hidden;
+  padding: 3cqw 4cqw 3.4cqw;
+  border-radius: 3cqw;
+  color: var(--paper-ink);
+  --cred-ink: var(--paper-ink);
+  --cred-ink-2: var(--paper-secondary-ink);
+  --cred-accent: var(--paper-accent);
+  --cred-solid: color-mix(in srgb, var(--paper-accent) 10%, var(--paper));
+  background: var(--cred-art-front, none) center / cover no-repeat,
+    repeating-linear-gradient(115deg, color-mix(in srgb, var(--paper-accent) 7%, transparent) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(65deg, color-mix(in srgb, var(--paper-accent) 6%, transparent) 0 1px, transparent 1px 6px),
+    repeating-radial-gradient(circle at 16% 118%, color-mix(in srgb, var(--paper-accent) 9%, transparent) 0 1px, transparent 1px 5px),
+    linear-gradient(160deg, color-mix(in srgb, var(--paper-accent) 18%, var(--paper)), var(--paper) 55%, color-mix(in srgb, var(--paper-accent) 13%, var(--paper)));
+  box-shadow: 0 0 0 1px var(--paper-shade), 0 18px 32px -24px var(--c-shadow);
+}
+.ps-passport-data__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.8fr) minmax(0, 1.25fr);
+  align-items: center;
+  gap: 2cqw;
+  padding: 2cqw 2.6cqw;
+  border-radius: 2cqw;
+  background: color-mix(in srgb, var(--paper-accent) 20%, var(--paper));
+}
+.ps-passport-data__title strong {
+  display: block;
+  font-size: clamp(12px, 3.7cqw, 16px);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+.ps-passport-data__title small {
+  display: block;
+  font-size: clamp(8.5px, 2.3cqw, 10.5px);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--paper-secondary-ink);
+}
+.ps-passport-data__republic {
+  font-size: clamp(8.5px, 2.5cqw, 11px);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--paper-accent);
+}
+.ps-passport-data__meta {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+  margin: 0;
+  text-align: right;
+}
+.ps-passport-data__meta > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0 4px;
+}
+.ps-passport-data__meta > .is-number {
+  display: grid;
+  justify-items: end;
+}
+.ps-passport-data__meta dt {
+  font-size: clamp(8.5px, 2.3cqw, 10px);
+  color: var(--paper-secondary-ink);
+}
+.ps-passport-data__meta dt small {
+  font-size: 0.9em;
+}
+.ps-passport-data__meta dd {
+  margin: 0;
+  font-size: clamp(10px, 2.9cqw, 12.5px);
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+.ps-passport-data__body {
+  display: grid;
+  grid-template-columns: 30cqw minmax(0, 1fr);
+  align-items: start;
+  gap: 4cqw;
+  padding-top: 1cqw;
+}
+.ps-passport-data__photo {
+  position: relative;
+}
+.ps-passport-data__photo .ps-idphoto {
+  width: 100%;
+  aspect-ratio: 28 / 35.3;
+}
+.ps-passport-data__seal {
+  position: absolute;
+  top: -3.5cqw;
+  right: -3.5cqw;
+  width: 15cqw;
+  min-width: 46px;
+  color: var(--stamp-ink);
+  opacity: 0.86;
+  mix-blend-mode: multiply;
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+.ps-passport-data__seal svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.ps-passport-data__sign {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: 3cqw;
+  font-size: clamp(9.5px, 2.6cqw, 11px);
+  color: var(--paper-secondary-ink);
+}
+.ps-passport-data__sign small {
+  margin-left: 3px;
+}
+.ps-passport-data__sign i {
+  display: block;
+  height: 1px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--paper-ink) 42%, transparent);
+}
+.ps-passport-data__mrz {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding-top: 2cqw;
+  overflow: hidden;
+  border-top: 1px dashed color-mix(in srgb, var(--paper-accent) 32%, transparent);
+  font-size: clamp(9.5px, 3cqw, 13px);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  color: var(--paper-ink);
+}
+
+.ps-passport-book {
+  container-type: inline-size;
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
+.ps-passport-book__sheet {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 900 / 1278;
+  transform-origin: left center;
+}
+.ps-passport-book__sheet.is-turn-next {
+  animation: ps-page-next 320ms var(--ease-out);
+}
+.ps-passport-book__sheet.is-turn-prev {
+  transform-origin: right center;
+  animation: ps-page-prev 320ms var(--ease-out);
+}
+@keyframes ps-page-next {
+  from {
+    transform: perspective(900px) rotateY(-22deg);
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes ps-page-prev {
+  from {
+    transform: perspective(900px) rotateY(22deg);
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.ps-passport-book__nav {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 6px;
+}
+.ps-passport-book__nav > :first-child {
+  justify-self: start;
+}
+.ps-passport-book__nav > :last-child {
+  justify-self: end;
+}
+.ps-passport-book__nav > span {
+  font-size: 13px;
+  color: var(--c-ink-2);
+  white-space: nowrap;
+}
+.ps-passport-book__nav .ps-btn {
+  min-height: 40px;
+}
+.ps-passport-cover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 7cqw;
+  border-radius: 2.5cqw 4cqw 4cqw 2.5cqw;
+  color: var(--c-sun);
+  background: var(--cred-art-cover, none) center / cover no-repeat,
+    radial-gradient(120% 80% at 30% 0%, color-mix(in srgb, var(--c-leaf) 32%, transparent), transparent 62%),
+    radial-gradient(color-mix(in srgb, var(--c-on-deep) 6%, transparent) 0.6px, transparent 0.9px) 0 0 / 4px 4px, var(--c-deep-ink);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--c-sun) 30%, transparent), inset 4cqw 0 5cqw -5cqw color-mix(in srgb, var(--c-on-deep) 14%, transparent),
+    0 18px 32px -24px var(--c-shadow);
+}
+.ps-passport-cover__title {
+  padding: 0 6cqw;
+  font-size: 17px;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-align: center;
+}
+.ps-passport-cover__emblem {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.ps-passport-cover__emblem svg:last-child {
+  position: absolute;
+}
+.ps-passport-cover__hint {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--c-on-deep) 72%, transparent);
+}
+.ps-stamp-page {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  padding: 6cqw;
+  border-radius: 4cqw 2.5cqw 2.5cqw 4cqw;
+  color: var(--paper-ink);
+  background: var(--cred-art-stamps, none) center / cover no-repeat,
+    repeating-radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--paper-shade) 40%, transparent) 0 1px, transparent 1px 9px), var(--paper);
+  box-shadow: 0 0 0 1px var(--paper-shade), inset -6cqw 0 6cqw -6cqw color-mix(in srgb, var(--paper-ink) 16%, transparent),
+    0 18px 32px -24px var(--c-shadow);
+}
+.ps-stamp-page__head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--paper-secondary-ink);
+}
+.ps-stamp-page__empty {
+  margin: 30% 4cqw 0;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--paper-secondary-ink);
+}
+.ps-stamp {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 42%;
+  margin: 0;
+}
+.ps-stamp svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  color: var(--stamp-ink);
+  transform: rotate(var(--stamp-rotate, 0deg));
+  mix-blend-mode: multiply;
+  opacity: 0.92;
+}
+.ps-stamp--red {
+  --stamp-ink: var(--paper-accent);
+}
+.ps-stamp--blue {
+  --stamp-ink: color-mix(in srgb, var(--c-sea) 68%, var(--paper-ink));
+}
+.ps-stamp--green {
+  --stamp-ink: color-mix(in srgb, var(--c-leaf) 68%, var(--paper-ink));
+}
+.ps-stamp__city {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  fill: currentColor;
+}
+.ps-stamp__date {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  fill: currentColor;
+  font-variant-numeric: tabular-nums;
+}
+.ps-stamp figcaption {
+  max-width: 100%;
+  font-size: 10.5px;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--paper-secondary-ink);
+}
+
+/*
+ * 窄卡片（320 宽屏幕，卡宽约 288px）：星球居民证、驾照正面的字段区只有约 160px 宽、138px 高，
+ * 半栏里“入住日期 Moved in”会折成两行、把卡撑得比底图高——英文小标签先收起来（抬头条仍有中英证件名），行距收紧。
+ */
+@container (max-width: 320px) {
+  .ps-idcard--family .ps-credfields {
+    row-gap: 1cqw;
+  }
+  .ps-idcard--family .ps-credfields--bilingual dt small {
+    display: none;
+  }
+}
+
+/* 窄卡片（320 宽屏幕）：票面字段改两栏；票根上的“已使用”章收小，不折行 */
+@container (max-width: 340px) {
+  .ps-credfields--ticket {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ps-credfields--ticket .ps-credfield.is-wide {
+    grid-column: 1 / -1;
+  }
+  .ps-ticketface__mark {
+    padding: 2px 5px;
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-cred-flip {
+    transition: none;
+  }
+  .ps-cred-stage[data-phase] .ps-cred-flip {
+    transform: none;
+    animation: none;
+  }
+  .ps-passport-book__sheet.is-turn-next,
+  .ps-passport-book__sheet.is-turn-prev {
+    animation: none;
+  }
+  .ps-wallet-stack__link {
+    transition: none;
+  }
+}

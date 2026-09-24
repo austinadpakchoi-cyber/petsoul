@@ -88,7 +88,7 @@ export function FoodDiscoveryPage() {
 
   return (
     <Page>
-      <TopBar title="让 TA 挑一家" subtitle="寻味：它有自己的口味，也记得你的喜好" back="/journey" />
+      <TopBar title="让 TA 挑一家" subtitle="寻味：它有自己的口味，也记得你的喜好" back="/map" />
       <div className="ps-row" role="group" aria-label="模式">
         <ToggleChip pressed={mode === "pet_virtual_explore"} onToggle={() => setParam("mode", "pet")}>
           TA 的旅途探索
@@ -148,7 +148,7 @@ export function FoodDiscoveryPage() {
               </select>
             </div>
             <div className="ps-muted">
-              <Icon name="lock" size={12} /> 你的饮食限制只用于给你推荐，不会出现在星球圈或别人的评论里。
+              <Icon name="lock" size={12} /> 你的饮食限制只用于给你推荐，不会出现在朋友圈或别人的评论里。
             </div>
           </Card>
         )}

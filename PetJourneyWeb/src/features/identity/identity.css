@@ -24,14 +24,25 @@
 }
 
 .ps-welcome-film {
-  z-index: -1;
+  z-index: 0;
   overflow: hidden;
+  pointer-events: none;
+}
+
+/* Keep every entry above the composited video, including on iOS Safari. */
+.ps-welcome-top,
+.ps-welcome-bottom {
+  position: relative;
+  z-index: 1;
 }
 
 .ps-welcome-film img,
 .ps-welcome-film video {
   object-fit: cover;
   object-position: center;
+  /* The supplied film has a baked-in dark header. Crop it so the animal enters the first screen. */
+  transform: scale(1.18);
+  transform-origin: center bottom;
 }
 
 .ps-welcome-film video {
@@ -40,31 +51,15 @@
 
 .ps-welcome-film::after {
   content: "";
-  background: linear-gradient(180deg, rgba(22, 18, 17, 0.99) 0%, rgba(22, 18, 17, 0.94) 27%, rgba(22, 18, 17, 0.08) 42%, rgba(22, 18, 17, 0.08) 48%, rgba(22, 18, 17, 0.58) 67%, rgba(22, 18, 17, 0.98) 100%);
+  background: linear-gradient(180deg, rgba(22, 18, 17, 0.66) 0%, rgba(22, 18, 17, 0.28) 17%, rgba(22, 18, 17, 0.04) 36%, rgba(22, 18, 17, 0.1) 49%, rgba(22, 18, 17, 0.58) 69%, rgba(22, 18, 17, 0.97) 100%);
 }
 
 .ps-welcome-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   padding: 24px 24px 0;
-}
-
-.ps-welcome-wordmark {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: -0.06em;
-  line-height: 1;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
-}
-
-.ps-welcome-wordmark__star {
-  margin-left: 4px;
-  color: #ebc479;
-  font-family: sans-serif;
-  font-size: 16px;
-  vertical-align: top;
 }
 
 .ps-welcome-pause {
@@ -72,6 +67,7 @@
   place-items: center;
   width: 44px;
   height: 44px;
+  flex: 0 0 44px;
   padding: 0;
   border: 1px solid rgba(255, 250, 241, 0.48);
   border-radius: 50%;
@@ -154,9 +150,14 @@
   backdrop-filter: blur(14px);
 }
 
+/* 点按区至少 44px 高（原来只有字高 20px）：多出的高度上下各 12px，外边距相应收紧，文字位置与原来一样。 */
 .ps-welcome-login {
+  display: inline-flex;
+  align-items: center;
   align-self: center;
-  margin-top: 16px;
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 0 12px;
   color: #fffaf1;
   font-size: 13px;
   text-underline-offset: 4px;
@@ -165,7 +166,7 @@
 .ps-welcome-disclosure {
   align-self: center;
   max-width: 28em;
-  margin-top: 18px;
+  margin-top: 6px;
   color: rgba(255, 250, 241, 0.64);
   font-size: 10px;
   line-height: 1.4;
@@ -180,6 +181,219 @@
 
 .ps-entry-page {
   background: #fffbf5;
+}
+
+.ps-auth-page {
+  padding: 0 !important;
+  overflow: hidden;
+  background: #f8f1e6;
+}
+
+.ps-auth-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: clamp(260px, 38dvh, 350px);
+  isolation: isolate;
+  overflow: hidden;
+  background: #f7ead8 url("./assets/entry-parallel-world-v1.webp") 50% 72% / cover no-repeat;
+  color: #193c2d;
+}
+
+.ps-auth-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(90deg, rgba(255, 249, 239, 0.85), rgba(255, 249, 239, 0.44) 42%, transparent 73%);
+  pointer-events: none;
+}
+
+.ps-auth-hero .ps-topbar {
+  position: relative;
+  top: auto;
+  z-index: 1;
+  margin: 0;
+  padding: max(12px, var(--safe-top)) 21px 0;
+  background: transparent;
+  color: #193c2d;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.ps-auth-hero .ps-topbar .ps-btn {
+  border: 1px solid rgba(25, 60, 45, 0.18);
+  background: rgba(255, 251, 244, 0.78);
+  color: #193c2d;
+  backdrop-filter: blur(8px);
+}
+
+.ps-auth-hero__caption {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+  max-width: 230px;
+  padding: 14px 25px 0;
+}
+
+.ps-auth-hero__caption .ps-brand-logo {
+  width: 145px;
+  margin-bottom: 1px;
+}
+
+.ps-auth-hero__caption strong {
+  font-family: Georgia, "Noto Serif SC", serif;
+  font-size: clamp(16px, 4.5vw, 19px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.34;
+}
+
+.ps-auth-sheet {
+  position: relative;
+  z-index: 1;
+  min-height: calc(61dvh + 28px);
+  margin-top: -28px;
+  padding: 24px 24px max(34px, calc(var(--safe-bottom) + 26px));
+  border-radius: 28px 28px 0 0;
+  background: #fffbf5;
+  box-shadow: 0 -14px 32px -28px rgba(23, 40, 33, 0.5);
+}
+
+.ps-auth-sheet .ps-entry-heading {
+  margin: 0 0 20px;
+  padding: 0;
+}
+
+.ps-auth-sheet .ps-entry-heading__top {
+  margin-bottom: 12px;
+}
+
+.ps-auth-sheet .ps-brand-logo {
+  display: none;
+}
+
+.ps-auth-sheet .ps-entry-heading__kicker {
+  margin-left: 0;
+  text-align: left;
+}
+
+.ps-auth-sheet .ps-entry-heading h1 {
+  margin-bottom: 5px;
+  font-size: clamp(27px, 7.5vw, 34px);
+}
+
+.ps-auth-sheet .ps-entry-heading p {
+  font-size: 13px;
+}
+
+.ps-auth-sheet .ps-entry-heading__steps {
+  margin-top: 17px;
+}
+
+.ps-auth-form {
+  gap: 15px;
+}
+
+.ps-auth-form .ps-field {
+  gap: 7px;
+}
+
+.ps-auth-form .ps-field label {
+  color: #3f4036;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ps-auth-form .ps-input {
+  min-height: 52px;
+  padding: 12px 15px;
+  border-color: #ddd5c8;
+  border-radius: 13px;
+  background: #fffdf9;
+  color: #2a332d;
+}
+
+.ps-auth-form .ps-input::placeholder {
+  color: #9d998f;
+}
+
+.ps-auth-form .ps-input:focus-visible,
+.ps-auth-password__toggle:focus-visible,
+.ps-auth-switch a:focus-visible {
+  outline: 3px solid #cc9c5e;
+  outline-offset: 2px;
+}
+
+.ps-auth-password {
+  position: relative;
+}
+
+.ps-auth-password .ps-input {
+  padding-right: 65px;
+}
+
+.ps-auth-password__toggle {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 49px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #506c58;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ps-auth-field-note {
+  color: #78776e;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.ps-auth-page .ps-auth-form .ps-btn--primary {
+  min-height: 53px;
+  margin-top: 4px;
+  border-radius: 14px;
+  border-color: #2c513b;
+  background: #305d43;
+  color: #fffdf5;
+  box-shadow: 0 12px 23px -18px #153323;
+}
+
+.ps-auth-page .ps-auth-form .ps-btn--primary:hover:not(:disabled) {
+  background: #254e36;
+}
+
+.ps-auth-sheet .ps-entry-support {
+  margin: 13px 2px 0;
+  font-size: 11px;
+}
+
+.ps-auth-sheet .ps-auth-switch {
+  margin-top: 21px;
+  padding-top: 14px;
+  border-top: 1px solid #e9e0d2;
+  color: #696b60;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* 点按区至少 44px 高（原来 19px）：上下负外边距把多出的高度收进行内，这一行的版面不变。 */
+.ps-auth-switch a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: -12px 0 -12px 4px;
+  padding: 0 4px;
+  color: #315e42;
+  font-weight: 700;
+  text-underline-offset: 4px;
 }
 
 .ps-entry-page .ps-btn--primary {
@@ -201,27 +415,15 @@
 
 .ps-entry-heading__top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 19px;
 }
 
-.ps-entry-heading__brand {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.05em;
-}
-
-.ps-entry-heading__brand span {
-  color: #dcaa62;
-  font-family: sans-serif;
-  font-size: 10px;
-  vertical-align: top;
-}
-
 .ps-entry-heading__kicker {
+  margin-left: auto;
   color: #a47a55;
   font-size: 10px;
   font-weight: 700;
@@ -321,75 +523,359 @@
   text-underline-offset: 3px;
 }
 
-.ps-movein-portrait {
+/* 入住准备各页共用的底部行动条：主行动常驻可见，内容在它上方滚动（含安全区）。 */
+.ps-entry-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 15;
+  display: grid;
+  gap: 8px;
+  margin: 18px calc(-1 * var(--page-gutter)) calc(-1 * (var(--safe-bottom) + var(--space-6)));
+  padding: 16px calc(var(--page-gutter) + var(--safe-right)) calc(var(--safe-bottom) + 14px) calc(var(--page-gutter) + var(--safe-left));
+  background: linear-gradient(180deg, rgba(255, 251, 245, 0) 0, rgba(255, 251, 245, 0.94) 22px, #fffbf5 40px);
+}
+
+.ps-entry-dock > .ps-btn {
+  min-height: 52px;
+  border-radius: 15px;
+}
+
+/* 正在输入时（安卓键盘会顶起布局视口）行动条回到文档流，不盖住输入框和“交代这一句”。 */
+.ps-entry-page:has(textarea:focus, input[type="text"]:focus, input:not([type]):focus) .ps-entry-dock {
+  position: static;
+}
+
+.ps-entry-dock__hint {
+  margin: 0 2px;
+  color: #7b7065;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.ps-entry-dock__error {
+  display: grid;
+  gap: 2px;
+  margin: 0 2px;
+  line-height: 1.5;
+}
+
+.ps-entry-dock__error span {
+  color: #8d5b52;
+  font-size: 12px;
+}
+
+/* 入住（04/04）：头图就是入住后第一屏的家园庭院，TA 站在门廊；只用真实照片或“暂无照片”。 */
+.ps-movein-page {
+  background: #fbf6ec;
+}
+
+.ps-movein-hero {
+  position: relative;
+  overflow: hidden;
+  margin: 8px 0 22px;
+  border: 1px solid #e6dac7;
+  border-radius: 26px;
+  background: #fffdf8;
+  color: #2a2926;
+  box-shadow: 0 18px 36px -28px rgba(76, 54, 34, 0.55);
+}
+
+.ps-movein-hero__scene {
+  display: block;
+  width: 100%;
+  height: clamp(180px, 56vw, 290px);
+  object-fit: cover;
+  object-position: center 41%;
+}
+
+.ps-movein-hero__pet {
+  position: absolute;
+  top: calc(clamp(180px, 56vw, 290px) * 0.5);
+  left: 50%;
   display: grid;
   place-items: center;
-  flex: 0 0 58px;
-  width: 58px;
-  height: 58px;
+  width: clamp(78px, 23vw, 112px);
+  aspect-ratio: 1;
   overflow: hidden;
-  border: 3px solid #fff;
-  border-radius: 18px;
-  background: #f1e5d2;
-  color: #85644b;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 25px;
-  box-shadow: 0 6px 16px -11px rgba(67, 46, 25, 0.6);
+  border: 4px solid #fff9eb;
+  border-radius: 20px;
+  background: #f1e5d5;
+  color: #795d49;
+  box-shadow: 0 14px 22px -12px rgba(79, 58, 43, 0.75);
+  transform: translate(-50%, -50%);
 }
-.ps-movein-portrait img {
+
+.ps-movein-hero__pet img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.ps-place-note {
-  margin: 3px 0 13px;
+.ps-movein-hero__pet strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 34px;
+  line-height: 1;
 }
 
-.ps-place-options {
+.ps-movein-hero__pet small {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 3px 2px;
+  background: rgba(255, 250, 242, 0.9);
+  color: #413b35;
+  font-size: 9px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ps-movein-hero__caption {
+  padding: 15px 18px 18px;
+}
+
+.ps-movein-hero__kicker {
+  color: #a47a55;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.ps-movein-hero h1 {
+  margin: 5px 0 4px;
+  font-size: clamp(27px, 7.6vw, 34px);
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+
+.ps-movein-hero p {
+  margin: 0;
+  color: #7e756d;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ps-movein-hero .ps-entry-heading__steps {
+  margin-top: 15px;
+}
+
+.ps-movein-section {
+  margin: 0 0 20px;
+  color: #2f2b27;
+}
+
+.ps-movein-section h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+.ps-movein-note {
+  margin: 0 0 12px;
+  color: #6f665d;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ps-movein-closed {
+  margin: 10px 2px 0;
+  color: #93897e;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* 住处明信片：插画未交付时是中性色块 + 线性记号，不是示意画。 */
+.ps-habitat-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px;
+  gap: 12px;
 }
 
-.ps-place-option {
+.ps-habitat-card {
   display: grid;
-  gap: 4px;
-  min-height: 70px;
-  padding: 12px;
-  border: 1px solid #e8dfd2;
-  border-radius: 15px;
-  background: #fffaf2;
-  color: #3a332d;
+  align-content: start;
+  gap: 3px;
+  min-width: 0;
+  padding: 7px 7px 11px;
+  border: 1px solid #e3d8c7;
+  border-radius: 18px;
+  background: #fffdf8;
+  color: #2f2b27;
   text-align: left;
   cursor: pointer;
+  box-shadow: 0 12px 24px -22px rgba(76, 54, 34, 0.6);
+  transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast), box-shadow var(--dur-fast);
 }
 
-.ps-place-option.is-selected {
-  border-color: #b88751;
-  background: #f9e9d3;
-  box-shadow: inset 0 0 0 1px #b88751;
+.ps-habitat-card:active {
+  transform: scale(0.98);
 }
 
-.ps-place-option:focus-visible {
+.ps-habitat-card:focus-visible {
   outline: 3px solid #dba258;
   outline-offset: 2px;
 }
 
-.ps-place-option strong {
-  font-size: 14px;
+.ps-habitat-card.is-selected {
+  border-color: #3f6b4f;
+  box-shadow: inset 0 0 0 1px #3f6b4f, 0 14px 26px -20px rgba(34, 70, 48, 0.6);
 }
 
-.ps-place-option small {
+.ps-habitat-card__art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  margin-bottom: 7px;
+  border-radius: 13px;
+  background: linear-gradient(180deg, #efe6d6, #e3d6c0);
+  color: rgba(74, 60, 44, 0.55);
+}
+
+.ps-habitat-card.is-seaside .ps-habitat-card__art,
+.ps-habitat-card.is-lakeside .ps-habitat-card__art {
+  background: linear-gradient(180deg, #e6eef0 0%, #cfe0e4 58%, #eadfca 100%);
+  color: rgba(47, 94, 112, 0.6);
+}
+
+.ps-habitat-card.is-city .ps-habitat-card__art {
+  background: linear-gradient(180deg, #f1e6da 0%, #e6d6c6 60%, #d9cbbb 100%);
+  color: rgba(104, 76, 56, 0.6);
+}
+
+.ps-habitat-card__art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ps-habitat-card__check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #3f6b4f;
+  color: #fffdf6;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity var(--dur-fast), transform var(--dur-fast) var(--ease-out);
+}
+
+.ps-habitat-card.is-selected .ps-habitat-card__check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.ps-habitat-card strong {
+  padding: 0 4px;
+  font-size: 15px;
+}
+
+.ps-habitat-card small {
+  padding: 0 4px;
   color: #82766b;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.4;
 }
 
-.ps-place-unavailable {
-  display: block;
-  margin-top: 10px;
+/* 一行开关：文字在左、开关在右，整行都是点击区 */
+.ps-switch-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 13px 14px;
+  border: 1px solid #e6dccd;
+  border-radius: 16px;
+  background: #fffdf8;
+  cursor: pointer;
+}
+
+.ps-switch-row > span {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ps-switch-row strong {
+  color: #2f2b27;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.ps-switch-row small {
+  color: #7f766c;
   font-size: 11px;
+  line-height: 1.5;
+}
+
+.ps-switch {
+  position: relative;
+  flex: none;
+  width: 48px;
+  height: 28px;
+  margin: 0;
+  border-radius: 999px;
+  background: #d9cfc1;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background var(--dur-fast);
+}
+
+.ps-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fffdf8;
+  box-shadow: 0 2px 5px rgba(46, 36, 25, 0.28);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.ps-switch:checked {
+  background: #3f6b4f;
+}
+
+.ps-switch:checked::after {
+  transform: translateX(20px);
+}
+
+.ps-switch:focus-visible {
+  outline: 3px solid #dba258;
+  outline-offset: 2px;
+}
+
+.ps-movein-away {
+  display: grid;
+  gap: 2px;
+  padding: 11px 13px;
+  border: 1px solid #e3cfa9;
+  border-radius: 14px;
+  background: #fbf0dc;
+  color: #6c5433;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ps-movein-away strong {
+  color: #4f3b20;
+  font-size: 14px;
 }
 
 .ps-entry-support {
@@ -410,5 +896,20 @@
 
   .ps-welcome-action {
     transition: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .ps-auth-hero {
+    min-height: 275px;
+  }
+
+  .ps-auth-hero__caption {
+    padding-bottom: 48px;
+  }
+
+  .ps-auth-sheet {
+    padding-right: 18px;
+    padding-left: 18px;
   }
 }

@@ -44,6 +44,8 @@ const env = {
   PETJOURNEY_LEGACY_API_POLICY: process.env.PETJOURNEY_LEGACY_API_POLICY ?? "open",
   OPENAI_API_KEY: "",
   AMAP_API_KEY: "",
+  AMAP_JS_KEY: "",
+  AMAP_JS_SECURITY_CODE: "",
   GOOGLE_MAPS_API_KEY: "",
   DOUBAO_API_KEY: "",
   PETJOURNEY_IMAGE_API_KEY: "",
@@ -56,6 +58,8 @@ const env = {
 const PROVIDER_KEYS = [
   "OPENAI_API_KEY", "PETJOURNEY_LLM_PROVIDER", "PETJOURNEY_OPENAI_BASE_URL", "PETJOURNEY_AGENT_MODEL",
   "AMAP_API_KEY", "GOOGLE_MAPS_API_KEY", "PETJOURNEY_MAP_TIMEOUT_SECONDS",
+  // 高德 Web 端（JS API）两把：JS Key 按设计公开下发给浏览器，安全密钥**只在后端**、只由 /_AMapService 代理使用。
+  "AMAP_JS_KEY", "AMAP_JS_SECURITY_CODE",
   "DOUBAO_API_KEY", "PETJOURNEY_DOUBAO_BASE_URL", "PETJOURNEY_IMAGE_PROVIDER", "PETJOURNEY_VOLCENGINE_IMAGE_MODEL", "PETJOURNEY_IMAGE_TIMEOUT_SECONDS",
 ];
 const providersOpt = process.env.PETSOUL_DEV_PROVIDERS;
@@ -74,7 +78,11 @@ if (providersOpt && providersOpt !== "0") {
     }
   }
   env.PETJOURNEY_WEB_PROVIDERS = "1";
-  console.log(`[dev-backend] 真实供应商已开启（仅服务端）：${loaded.filter((k) => !/KEY/.test(k)).join(", ")}；密钥 ${loaded.filter((k) => /KEY/.test(k)).length} 个（不显示）`);
+  // 哪些算「密钥」只报个数、不报名字：**不能只看 KEY**——`AMAP_JS_SECURITY_CODE` 名字里没有 KEY，
+  // 只按 /KEY/ 分会把它列进「普通配置」那一半。现在打印的都只是**变量名**（值一直没打印），
+  // 所以分错类不会泄露；但哪天有人改这段去打印值，分类就成了那道闸，所以现在就把它分对。
+  const SECRETISH = /KEY|SECRET|CODE|TOKEN|PASSWORD/;
+  console.log(`[dev-backend] 真实供应商已开启（仅服务端）：${loaded.filter((k) => !SECRETISH.test(k)).join(", ")}；密钥 ${loaded.filter((k) => SECRETISH.test(k)).length} 个（不显示）`);
 }
 
 const python = process.env.PETSOUL_PYTHON ?? "python";

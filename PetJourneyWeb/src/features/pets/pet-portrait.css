@@ -1,0 +1,20 @@
+/* 宠物头像（PetPortrait）：圆形，照片铺满；没有照片时是中性的爪印占位。 */
+.ps-pet-portrait {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--c-surface-2);
+  color: var(--c-ink-3);
+}
+.ps-pet-portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ps-pet-portrait.is-placeholder {
+  background: var(--c-leaf-soft);
+  color: var(--c-leaf);
+}

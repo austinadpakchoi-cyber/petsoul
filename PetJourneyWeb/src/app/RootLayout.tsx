@@ -8,12 +8,15 @@ import { HouseholdProvider } from "@/shared/session/householdContext";
 import { ErrorState, Icon, LoadingState, Page, type IconName } from "@/shared/ui";
 import "./layout.css";
 
-/** 四个固定主入口（总方案 §4）；模块不能新增底部 Tab。 */
+/**
+ * 三个固定主入口（地图首页方案 v2，用户 2026-09-24 确认）：地图 · 通讯器 · 回忆；“我的”在地图右上角头像。
+ * 旧的“家 / 旅途 / 星球 / 通讯”四栏已退役：小窝、旅途、星球圈变成从地图或通讯器进入的二级页，深链照常可用。
+ * 模块不能新增底部 Tab。
+ */
 const TABS: Array<{ to: string; label: string; icon: IconName }> = [
-  { to: "/home", label: "家", icon: "home" },
-  { to: "/journey", label: "旅途", icon: "journey" },
-  { to: "/circle", label: "星球", icon: "planet" },
-  { to: "/communicator", label: "通讯", icon: "chat" },
+  { to: "/map", label: "地图", icon: "pin" },
+  { to: "/communicator", label: "通讯器", icon: "chat" },
+  { to: "/memories", label: "回忆", icon: "bookmark" },
 ];
 
 function ModeRibbon() {
@@ -69,27 +72,38 @@ function SessionGate() {
   return <HouseholdProvider userId={session.data.user?.user_id ?? null}><Outlet /></HouseholdProvider>;
 }
 
+/** 只有三个标签页显示底栏；二级页（小窝、菜园、朋友圈、收藏、设置……）全屏、不显示底栏（方案 2.2）。 */
+function isTabPath(pathname: string): boolean {
+  return TABS.some((tab) => pathname === tab.to || pathname.startsWith(`${tab.to}/`));
+}
+
 export function RootLayout() {
+  const { pathname } = useLocation();
+  const showTabs = isTabPath(pathname);
   return (
-    <div className="ps-shell">
+    <div className={`ps-shell${showTabs ? "" : " ps-shell--no-tabs"}`}>
       <ModeRibbon />
       <SessionGate />
-      <nav className="ps-tabbar" aria-label="主导航">
-        {TABS.map((tab) => (
-          <NavLink key={tab.to} to={tab.to} className={({ isActive }) => `ps-tab${isActive ? " is-active" : ""}`}>
-            <Icon name={tab.icon} size={22} />
-            <span>{tab.label}</span>
-          </NavLink>
-        ))}
-      </nav>
+      {showTabs ? (
+        <nav className="ps-tabbar" aria-label="主导航">
+          {TABS.map((tab) => (
+            <NavLink key={tab.to} to={tab.to} className={({ isActive }) => `ps-tab${isActive ? " is-active" : ""}`}>
+              <Icon name={tab.icon} size={22} />
+              <span>{tab.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      ) : null}
       <ScrollRestoration />
     </div>
   );
 }
 
 export function BareLayout() {
+  const { pathname } = useLocation();
+  // 全屏页里只有地图、回忆自带新版底栏，要留出底栏高度；其余全屏页（卡包、我的、档案……）底栏高度按 0 算。
   return (
-    <div className="ps-shell ps-shell--bare">
+    <div className={`ps-shell ps-shell--bare${isTabPath(pathname) ? "" : " ps-shell--no-tabs"}`}>
       <ModeRibbon />
       <Outlet />
       <ScrollRestoration />

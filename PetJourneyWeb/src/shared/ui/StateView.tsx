@@ -42,6 +42,35 @@ export function DisabledState({ title, children }: { title: string; children?: R
   );
 }
 
+/**
+ * 错误码、request_id、能力名是给开发和客服看的，玩家页面默认收起（用户 2026-09-24 同意）：
+ * 平时只见一句人话，需要反馈问题时展开“技术信息”再看。
+ */
+function TechDetails({ items }: { items: Array<string | null | undefined> }) {
+  const text = items.filter(Boolean).join(" · ");
+  if (!text) return null;
+  return (
+    <details className="ps-state__tech">
+      <summary>技术信息</summary>
+      <div className="ps-state__meta">{text}</div>
+    </details>
+  );
+}
+
+/**
+ * 有的拒绝原因，后端原话里写着参数名（pet_required：“……请指明是哪一只（pet_id）。”）。按原因码换成人话，
+ * 原话与原因码收进“技术信息”；后端把原话改好以后这里照样按原因码，不妨碍。
+ */
+const REASON_TEXT: Record<string, string> = {
+  pet_required: "家里有不止一只伙伴，先选一只再看。",
+};
+
+function plainReason(err: ReturnType<typeof toApiError>): { reason: string; text: string } | null {
+  const reason = typeof err.details?.reason === "string" ? err.details.reason : null;
+  if (!reason || !Object.prototype.hasOwnProperty.call(REASON_TEXT, reason)) return null;
+  return { reason, text: REASON_TEXT[reason] };
+}
+
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const err = toApiError(error);
   if (err.isCapabilityUnavailable) {
@@ -49,7 +78,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
     return (
       <DisabledState title="这里还在搭建中">
         <p style={{ margin: 0 }}>这项能力尚未接入，接入后会在这里出现。</p>
-        {capability ? <div className="ps-state__meta">{capability}</div> : null}
+        <TechDetails items={[capability]} />
       </DisabledState>
     );
   }
@@ -64,26 +93,24 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
         <Link className="ps-btn ps-btn--primary" to="/login">
           去登录
         </Link>
-        {err.requestId ? <div className="ps-state__meta">request_id {err.requestId}</div> : null}
+        <TechDetails items={[err.requestId ? `request_id ${err.requestId}` : null]} />
       </div>
     );
   }
+  const plain = plainReason(err);
   return (
     <div className="ps-state ps-state--error" role="alert">
       <div className="ps-state__icon">
         <Icon name="alert" />
       </div>
       <div className="ps-state__title">{err.kind === "network" || err.kind === "timeout" || err.code === "UPSTREAM_UNAVAILABLE" ? "信号暂时中断" : "没能完成这一步"}</div>
-      <div>{err.message}</div>
+      <div>{plain ? plain.text : err.message}</div>
       {onRetry ? (
         <Button variant="primary" icon="refresh" onClick={onRetry}>
           重试
         </Button>
       ) : null}
-      <div className="ps-state__meta">
-        {err.code}
-        {err.requestId ? ` · request_id ${err.requestId}` : ""}
-      </div>
+      <TechDetails items={[err.code, plain?.reason, plain ? err.message : null, err.requestId ? `request_id ${err.requestId}` : null]} />
     </div>
   );
 }

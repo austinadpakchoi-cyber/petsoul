@@ -55,11 +55,12 @@ class ConsumerContractCases:
 
         **预占条数不等于发送次数**：一次尝试可以发出多次（没有主人照片时先画证件照再画场景图）。
         发送次数按 `_render` 前后替身 `dispatched` 的差额记到具体任务名下，见 `counting_render`。"""
-        rows = self._sql("SELECT status, attempts FROM web_tasks WHERE task_id = ?", (task_id,))
+        rows = self._sql("SELECT status, attempts, last_error FROM web_tasks WHERE task_id = ?", (task_id,))
         art = self._sql("SELECT status FROM web_illustrations WHERE task_id = ?", (task_id,))
         sent = self._sql("SELECT operation_id, status, outcome, actual_units FROM web_budget_reservations "
                          "WHERE operation_id LIKE ? ORDER BY rowid", (f"illustration:{task_id}:%",))
         return {"task_status": rows[0][0] if rows else None, "attempts": rows[0][1] if rows else None,
+                "last_error": rows[0][2] if rows else None,  # 重试时这里会说明是哪种失效（例如领取过期）
                 "illustration": art[0][0] if art else None, "reservations": len(sent),
                 "reservation_rows": [dict(zip(("operation_id", "status", "outcome", "actual_units"), r)) for r in sent]}
 
@@ -214,8 +215,20 @@ class ConsumerContractCases:
                                   reason="Q 合同船票", source="q.contract")
                 assert owner.post("/journey/depart", {"destination_key": "macau_ferry"}).status_code == 200
                 for minutes in (180, 180, 180):
+                    # **不变量**：推时钟之前，不许有 worker 线程还握着领取。
+                    # 光靠"记得在循环里 join"是记忆，写成断言才是检查——这一条一旦破，
+                    # 症状是别处的 attempts=2（领取过期后重试），排查要绕一大圈才回到这里。
+                    assert state.get("thread") is None or not state["thread"].is_alive(),                         "推时钟前仍有 worker 线程在跑：它的领取会被这一跳推过期（租约 120 秒走注入时钟）"
                     clock.advance(minutes=minutes)
                     self.run_background(clock.now)
+                    # **worker 线程必须在推下一次时钟之前收干净。** 任务领取的租约是 120 秒
+                    # （`DEFAULT_LEASE_SECONDS`，走的是注入的时钟），而这里一跳就是 180 分钟——
+                    # 线程若还卡在写锁上跨过这一跳，它的领取当场过期、这一次尝试被判失效并重试：
+                    # 于是同一个任务出现 attempts=2、两笔各自成功的预占。那是**测试推时钟造成的**，
+                    # 不是产品重复计费。只在满载进程里偶发（线程慢一点就撞上），单独跑往往看不见。
+                    if state.get("thread") is not None and state["thread"].is_alive():
+                        state["proceed"].set()
+                        state["thread"].join(timeout=20)
                 if state.get("thread") is not None:
                     state["proceed"].set()
                     state["thread"].join(timeout=20)

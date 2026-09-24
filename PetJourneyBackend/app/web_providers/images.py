@@ -94,29 +94,45 @@ def failure_reason(exc: BaseException) -> str:
 
 
 class Illustrator(Protocol):
+    """`background` 是**可选的、按调用传的**：只有世界角色要透明底，旅行自拍与手账页照常有背景。
+
+    `requests_transparent_background` 是能力标记：实现**真的会把这个参数发出去**才为真。
+    调用方据此分辨"拿回来的不透明是**没请求**还是**请求了没给**"——两者处置完全不同
+    （前者改参数或核实中转，后者报能力缺失）。**默认假**：不声明就是不支持，不猜。
+    """
+
     available: bool
     provider_label: str
+    requests_transparent_background: bool
 
-    def render(self, prompt: str, reference: tuple[bytes, str] | None = None, size: str = "2048x2048") -> GeneratedImage: ...
+    def render(self, prompt: str, reference: tuple[bytes, str] | None = None, size: str = "2048x2048",
+               background: str | None = None) -> GeneratedImage: ...
 
 
 class NoIllustrator:
     available = False
     provider_label = "未配置"
+    requests_transparent_background = False
 
-    def render(self, prompt: str, reference: tuple[bytes, str] | None = None, size: str = "2048x2048") -> GeneratedImage:
+    def render(self, prompt: str, reference: tuple[bytes, str] | None = None, size: str = "2048x2048",
+               background: str | None = None) -> GeneratedImage:
         raise ImageUnavailable("not_configured")
 
 
 class SeedreamIllustrator:
     available = True
     provider_label = "火山方舟 Seedream"
+    # 方舟的参数表里**没有** `background`（P 2026-09-23 只读核实，规范 §6-3）。
+    # 所以这里收下这个参数**但不发出去**，并如实标记为假——
+    # 静默丢弃且标记为真，会让调用方把"接口不支持"误判成"请求了没给"，修错地方。
+    requests_transparent_background = False
 
     def __init__(self, provider, meter: ProviderMeter) -> None:  # provider: DoubaoSeedreamImageProvider
         self._provider = provider
         self.meter = meter
 
-    def render(self, prompt: str, reference: tuple[bytes, str] | None = None, size: str = "2048x2048") -> GeneratedImage:
+    def render(self, prompt: str, reference: tuple[bytes, str] | None = None, size: str = "2048x2048",
+               background: str | None = None) -> GeneratedImage:
         if not self.meter.allow("image"):
             raise ImageUnavailable("daily_cap")
         refs = [ImageReference(image_bytes=reference[0], mime_type=reference[1], filename="pet-reference", role="pet_identity")] if reference else []

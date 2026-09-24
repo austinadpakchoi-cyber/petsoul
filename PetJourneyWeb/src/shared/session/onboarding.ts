@@ -14,7 +14,8 @@ export function onboardingRoute(state: OnboardingState | null | undefined): stri
     case "ready_to_move_in":
       return "/onboarding/move-in";
     default:
-      return "/home";
+      // 已入住：进地图首页（2026-09-24 新导航；小窝是地图下的二级页）。
+      return "/map";
   }
 }
 

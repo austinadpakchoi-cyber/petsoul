@@ -30,6 +30,7 @@ from .place_interactions import PlaceInteractionEngine
 from .providers import build_content_provider, build_map_provider
 from .route_planner import build_route_planner
 from .routers import ALL_ROUTERS
+from .routers.amap_service import router as amap_service_router
 from .routers.web import WEB_ROUTERS
 from .scheduler import BackgroundAgentScheduler
 from .storage import JourneyStorage
@@ -37,6 +38,7 @@ from .street_rank import PetStreetRankEngine
 from .transport_reality import build_transport_reality_provider
 from .travel_quest_engine import build_pet_travel_quest_engine
 from .weather_provider import build_weather_provider
+from .web_admin import install_admin_platform
 from .web_composition import build_web_services
 from .web_platform import install_web_platform
 from .world_simulation import build_world_simulation_engine
@@ -184,6 +186,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.web_session_revocation_check = app.state.web.identity.session_active
     for router in WEB_ROUTERS:
         app.include_router(router)
+
+    # 高德 JS API 安全代理。**挂在站点根、不带业务前缀**：高德要求安全代理以 `_AMapService`
+    # 作一级路由，放到 `/api/v1/web` 下会被 JS API 拒绝（6c2b 实测，本窗口未复算）。
+    # 只放行三条渲染类路径并补安全密钥，服务类一律 403——见 `app/routers/amap_service.py`。
+    app.include_router(amap_service_router)
+
+    # 平台运营后台：/api/v1/admin（独立员工身份与会话）。必须在 app.state.web 装配之后，
+    # 因为它复用既有领域服务，并在这里装上"冻结账号"与"暂停新增调用"两个执行点（app/web_admin/enforcement.py）。
+    install_admin_platform(app, storage=storage, settings=settings)
 
     return app
 

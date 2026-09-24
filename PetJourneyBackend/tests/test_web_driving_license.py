@@ -60,7 +60,12 @@ class LicenseFlowTests(LicenseTestBase):
         titles = [i["title"] for i in self.owner.get("/timeline").json()]
         self.assertIn("报名了爪爪驾校", titles)
         self.assertIn("科目四考试通过", titles)
-        self.assertIn("拿到驾驶证", titles)
+        # 标题写死中文、不读 `CATALOG`：读同一份就成了 `CATALOG == CATALOG`，改名改错也照样绿。
+        # 2026-09-24 由「拿到驾驶证」改成这个：`timeline.py` 改成「动词 ＋ CATALOG.label」拼接后，
+        # 实际标题是「拿到爪爪驾驶证」。`CATALOG` 的 label 一直写着「爪爪驾驶证」，timeline 里硬编码的
+        # 却是「驾驶证」——**早就漂了、没人报过**，而这条用例是全仓唯一会因此变红的地方。
+        # **它红是它在干活**，不是缺陷；改名时连它一起改。
+        self.assertIn("拿到爪爪驾驶证", titles)
         self.assertIn("和你一起领了驾照", titles)
 
     def test_voucher_waives_the_first_drive_rental_once(self) -> None:

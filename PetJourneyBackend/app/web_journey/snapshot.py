@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from typing import Callable
 
@@ -47,6 +48,37 @@ ACTIVITY_TEXT = {"listening": "在听歌", "watching": "在看剧", "resting": "
 
 def window_of(leg: LegRecord) -> LegWindow:
     return LegWindow(leg.leg_id, leg.kind, leg.mode, leg.role, leg.starts_at, leg.ends_at)
+
+
+def leg_in_progress(legs: Sequence[LegRecord], now: datetime) -> LegRecord | None:
+    """此刻**正在走**的那一段。换乘间隙、还没出发、已经到了，都是 None。"""
+    return next((leg for leg in legs if leg.starts_at <= now < leg.ends_at), None)
+
+
+def current_leg(legs: Sequence[LegRecord], now: datetime) -> LegRecord | None:
+    """TA 现在**算在哪一段**：地图把位置点画在哪条线上、显示成什么交通方式，都按这个。
+
+    回退顺序是**产品判断**，不是各写各的实现细节：
+      · 正在走的那一段；
+      · 换乘间隙（打车到了机场、飞机还没起飞）算**刚过去那一段**——TA 人还在那个地方；
+      · 一段都还没开始（出发时间还没到）算第一段。
+
+    这三条一旦有第二份副本，地图上「TA 在哪一段」和行程详情页就会各说一套，
+    **而这种不一致不会报错，只会显示错**。所以只留一份，`map_snapshot` 自己也调它。
+
+    多段行程（打车→飞机→火车）里取"主段"是错的：TA 还在打车去机场，
+    主段却是飞机，位置点会被画到航线上。
+
+    前提：`legs` 按 `sequence` 排好序传进来（`JourneyRepository.legs()` 就是这个顺序）。
+    纯计算，不碰连接、不写任何东西。
+    """
+    in_progress = leg_in_progress(legs, now)
+    if in_progress is not None:
+        return in_progress
+    passed = [leg for leg in legs if leg.ends_at <= now]
+    if passed:
+        return passed[-1]
+    return legs[0] if legs else None
 
 
 def _node(data: dict) -> TransportNode:
@@ -126,9 +158,9 @@ class JourneySnapshotBuilder:
     def map_snapshot(self, journey: JourneyRecord, legs: list[LegRecord], visit: VisitRecord | None, now: datetime | None = None) -> JourneyMapSnapshot:
         now = now or utcnow()
         quiet = self.quiet_of(journey.pet_id)
-        current = next((l for l in legs if l.starts_at <= now < l.ends_at), None)
+        current = leg_in_progress(legs, now)
         passed = [l for l in legs if l.ends_at <= now]
-        focus = current or (passed[-1] if passed else legs[0])
+        focus = current_leg(legs, now)
         activities: list[TravelActivity] = []
         entries: list[MapActivityEntry] = []
         if current is not None:
@@ -182,7 +214,7 @@ class JourneySnapshotBuilder:
         )
 
     def brief(self, journey: JourneyRecord, legs: list[LegRecord], visit: VisitRecord | None, now: datetime) -> JourneyBrief:
-        current = next((l for l in legs if l.starts_at <= now < l.ends_at), None)
+        current = leg_in_progress(legs, now)
         if visit and visit.starts_at <= now < visit.ends_at:
             headline = f"TA 在{visit.place['name']}"
         elif current is not None:

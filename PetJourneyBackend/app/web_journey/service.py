@@ -15,6 +15,7 @@ import hashlib
 import sqlite3
 import threading
 import uuid
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Callable
 from zoneinfo import ZoneInfo
@@ -43,6 +44,26 @@ from .planning import REAL_TRIPS, JourneyPlanningMixin, Resolved
 from ..web_transport.daytrip import PlanUnavailable, plan_macau_day_trip
 from .repository import JourneyRecord, JourneyRepository, LegRecord, VisitRecord
 from .settlement import FAST, JourneySettlementMixin
+
+
+@dataclass(frozen=True)
+class PlanChoice:
+    """按哪一版预研计划出发。**两个一起给，或者都不给。**
+
+    先前这是 `depart` 上两个各自可选的参数，于是「给了 `plan_id`、忘了 `expected_plan_revision`」
+    是写得出来的——而那一漏，版本闸会**整个跳过**（`if expected_plan_revision is not None` 才比），
+    **跳过时什么都不报**：出发照样成功，只是绑的可能已经是另一版计划了。
+    并成一个值之后，**那个错写不出来**——比"写错了会被挡住"更彻底（B 提的改法，这是它那条原则的更强版本）。
+
+    没有"只认编号、不管版本"的正当用法：调用方读到计划到真正出发之间，A 随时可能重查、改版，
+    **而"我不会漏传"正是这类规则失效的典型前提**。
+
+    两个字段都来自调用方**事务外**那一次读（用来"选"）；
+    到底能不能用，由 `depart` 在写事务里拿同一个 `conn` 重新核一遍。
+    """
+
+    plan_id: str
+    plan_revision: int
 
 
 def stable_journey_id(user_id: str, pet_id: str, operation_key: str) -> str:
@@ -88,6 +109,17 @@ class WebJourneyService(JourneyPlanningMixin, JourneySettlementMixin):
         self.wishes_of: Callable[[str, str], list[str]] = lambda user_id, pet_id: []
         # 纸质卡片：也用调用方写事务的那个连接写（CR-C11）。captured_at＝按下那一刻，日期按 TA 当时所在地换算。
         self.postcard_maker: Callable[..., str] | None = None
+        # 预研计划（TRV-02，合同 4.2）：两个都必须用调用方写事务的那个连接。
+        # `ready_plan_in` 纯读；`link_journey_in` 条件更新（版本不符或状态非 ready 就抛，整笔回滚）。
+        # 没装配时**不静默放行**：调用方传了 plan_id 却没有绑定端口 → 在动业务数据之前拒绝，
+        # 否则会建出一趟没有计划归属的行程（和 CR-C9／CR-C12 同一类残留）。
+        self.ready_plan_in: Callable[..., tuple | None] | None = None
+        self.link_journey_in: Callable[..., None] | None = None
+        self.stale_facts_in: Callable[..., tuple[str, ...]] | None = None
+        # 承诺闸（TRV-02，合同 15 节）：`active_commitment_in(conn, pet_id, now) -> Commitment | None`。
+        # 数据源是 `communicator.owner_asked_stay_home` 的同事务版（归 A）。
+        # **只在调用方显式要闸时才问**——`depart` 三个调用方里有"主人自己点出发"那一条，无差别的闸会把主人也拦掉。
+        self.active_commitment_in: Callable[..., object | None] | None = None
         # 写实照片（主人开启“生成照片”且供应商可用时）：返回生图任务号；不可用时退回纸质卡片
         # 拍照登记：**必须用调用方写事务的那个连接**，和 visit 更新、photo_taken 事件同生共死（COORD-C-ATOMIC 方案 B）。
         # captured_at＝主人按下"拍一张"的那一刻（不是到店时刻，也不是任务执行时刻）；
@@ -128,7 +160,8 @@ class WebJourneyService(JourneyPlanningMixin, JourneySettlementMixin):
 
     # ---- 出发站 ----
     def depart(self, user_id: str, pet_id: str, home_id: str, destination_key: str, now: datetime | None = None,
-               operation_key: str | None = None, expected_versions=None, valid_until: datetime | None = None) -> JourneyRecord:
+               operation_key: str | None = None, expected_versions=None, valid_until: datetime | None = None,
+               plan: PlanChoice | None = None, honor_commitments: bool = False) -> JourneyRecord:
         """operation_key：这次“出发”请求的稳定标识（HTTP 层的 Idempotency-Key）。
 
         给了它，行程编号就由它算出来，而不是每次现生成——同一次请求无论重试几次、什么时候重试，
@@ -141,6 +174,14 @@ class WebJourneyService(JourneyPlanningMixin, JourneySettlementMixin):
 
         这趟的钱也在**同一个写事务**里结清（CR-C9）：核销一张券或者扣旅费，和行程、代数一起成功或一起回滚。
         分两段写的话，进程死在中间就会留下一趟没付钱的行程，或者券已经核销而行程没建。
+
+        plan（`PlanChoice`，编号＋版本一起）：这趟来自一份预研计划（TRV-02）。计划绑定与行程、旅费**同一个事务**；
+        版本对不上就整笔不做。**不传就完全不走这条路**——今天的旅程本来就没有计划，老路径一个字不受影响。
+        并成一个值是有意的：分开两个可选参数时，漏传版本号会让版本闸整个跳过**而且不报**（见 `PlanChoice`）。
+
+        honor_commitments：要不要问"主人有没有说过今天待在家"。**默认不问**：这个方法同时服务
+        `routers/web/journey.py`（主人自己点出发）、`brain_life`（自主）与 `life`（规则生活）三条路；
+        主人自己说了待在家又自己点出发，那是改主意，拦他没道理。自主那两条由调用方显式传 True（合同 15 节）。
         """
         now = now or utcnow()
         journey_id = f"jn-{uuid.uuid4().hex[:12]}"
@@ -169,14 +210,25 @@ class WebJourneyService(JourneyPlanningMixin, JourneySettlementMixin):
             raise JourneyError("waiver_unavailable", "借车券这会儿用不了，稍后再试。", destination_key=destination_key)
         if balance < dest.fee and not waivable:
             raise JourneyError("insufficient_funds", "旅费还不够，先去菜园收获一些吧。", balance=balance, fee=dest.fee)
+        if plan is not None and self.link_journey_in is None:
+            # 计划绑定必须和行程同事务。端口没接上就宁可不出发——否则会留下一趟没有计划归属的行程（同 CR-C9 的形态）
+            raise JourneyError("plan_link_unavailable", "这份计划这会儿用不了，稍后再试。", plan_id=plan.plan_id)
+        if honor_commitments and self.active_commitment_in is None:
+            # 调用方**明确要闸**却没有闸可用：拒绝，不能当作"没有承诺"放行。静默跳过保护比拒绝危险得多
+            raise JourneyError("commitment_gate_unavailable", "这会儿查不到家里的约定，稍后再试。")
         journey, legs, visit = self._materialize(journey_id, user_id, pet_id, home_id, resolved.final, now, resolved.geo_plan,
                                                  template=resolved.template, real_place=resolved.real_place, trip=trip, basis=resolved.basis)
         try:
             with unit_of_work(self.storage) as conn:  # 后台线的进程租约围栏也在这里生效（CR-A4）
-                self._assert_still_valid(conn, pet_id, expected_versions, valid_until)
+                self._assert_still_valid(conn, pet_id, expected_versions, valid_until, honor_commitments=honor_commitments, now=now)
+                # 先结钱、再写行程：**用没用券要等核销那一下的返回值才知道**（事务外算出来的 `waivable`
+                # 只是"看起来能用"，券可能已经被别处用掉），而这个事实要跟着行程一起落库（m1701）。
+                # 两件事仍在同一个事务里，先后不改变"一起成功或一起回滚"。
+                journey.fare_waived = self._settle_fare(conn, journey_id, pet_id, destination_key, dest, waivable, now)
                 self.repo.insert(conn, journey, legs, visit, now)
                 bump_in(conn, pet_id, "activity_epoch", now)  # 定了新行程：旧的提案与表达要按新版本复核
-                self._settle_fare(conn, journey_id, pet_id, destination_key, dest, waivable, now)
+                if plan is not None:
+                    self._link_plan(conn, plan, pet_id, journey_id, destination_key, now)
         except InsufficientFunds as exc:  # 整笔已经回滚：行程没写进去，券没核销，钱也没扣，不需要事后 cancel
             raise JourneyError("insufficient_funds", "旅费还不够，先去菜园收获一些吧。", balance=exc.balance, fee=dest.fee) from exc
         except sqlite3.IntegrityError as exc:
@@ -187,8 +239,76 @@ class WebJourneyService(JourneyPlanningMixin, JourneySettlementMixin):
         self._apply_due(journey, now)
         return journey
 
-    def _settle_fare(self, conn, journey_id: str, pet_id: str, destination_key: str, dest: Destination, waivable: bool, now: datetime) -> None:
-        """这趟的钱在**写行程的同一个写事务里**结清：核销一张券，或者扣旅费。
+    def _link_plan(self, conn, chosen: PlanChoice, pet_id: str, journey_id: str,
+                   destination_key: str, now: datetime) -> None:
+        """把这趟行程绑到那份预研计划上，**就在写行程的同一个事务里**（合同 4.2）。
+
+        版本在事务内读、在事务内写：先 `ready_plan_in(conn, pet_id)` 读出此刻的 plan/wish 版本，
+        对不上调用方报的就整笔不做；对得上再 `link_journey_in(conn, …)` 条件更新。
+        **不在事务外先读一遍**——那样读到的是事务开始前的旧快照，等于没核（这批 0.1 节那条硬约束）。
+
+        `chosen` 是调用方事务外那次读的结果（编号＋版本一起，`PlanChoice` 保证不会只给一半）。
+        """
+        plan_id = chosen.plan_id
+        plan = self.ready_plan_in(conn, pet_id) if self.ready_plan_in is not None else None
+        # 按**字段名**取，不按位置解：A 的 `PlanRef` 比合同 4.2 的元组多一个 `pet_id`、有效期也拆成了两个字段，
+        # 按位置第 6 位拿到的会是 `destination_key`。字段名是稳定的，位置不是。
+        if plan is None or plan.plan_id != plan_id:
+            raise JourneyError("plan_not_ready", "这份计划现在不能用了，重新看一遍再决定。", plan_id=plan_id)
+        if plan.plan_revision != chosen.plan_revision:
+            raise JourneyError("plan_revision_changed", "这段时间里这份计划又改过，重新看一遍再出发。",
+                               plan_id=plan_id, current_revision=plan.plan_revision)
+        if plan.destination_key != destination_key:
+            # 这份计划是去**别处**的。不核的话，一份「去浅水湾」的计划会被绑到一趟去咖啡馆的旅程上，
+            # 旅程结束时那个心愿落定为 completed——**手账上出现一次根本没去过的旅行**，
+            # 而且没有任何东西会报错：两个编号都是真的、版本也都对得上。
+            raise JourneyError("plan_destination_mismatch", "这份计划不是去这儿的，换一份再出发。",
+                               plan_id=plan_id, plan_destination_key=plan.destination_key)
+        self._assert_facts_fresh(plan, now)
+        self._assert_preconditions_fresh(conn, plan, now)
+        self.link_journey_in(conn, plan_id, plan.plan_revision, plan.wish_id, plan.wish_revision, journey_id, now)
+
+    def _assert_preconditions_fresh(self, conn, plan, now: datetime) -> None:
+        """逐条前置事实的有效期：**用出发事务里的这个连接**问 A 的端口（合同 0.1、4.2）。
+
+        `plan.valid_window` 是**这版计划**的边界；真正会过期的是它依据的那些事实
+        （几点关门、今天有没有活动、票还有没有），各有各的有效期，住在 A 的 `web_travel_facts` 里。
+        **旅程包不读别人的表**，只拿 fact_id 去问。
+
+        没有前置事实就不问——端口缺席也照常出发：否则「缺端口就拒绝」会把没有事实要核的计划一起拦掉，
+        那是把一道保护扩大成一道故障。
+        有前置事实却没有端口时**拒绝**，不当作"都还新鲜"放行：静默跳过保护之后，
+        没有任何东西会提示这次根本没核过（同 `waiver_unavailable` / `plan_link_unavailable`）。
+        """
+        if not plan.preconditions:
+            return
+        if self.stale_facts_in is None:
+            raise JourneyError("fact_check_unavailable", "这会儿核不了攻略里的资料，稍后再试。", plan_id=plan.plan_id)
+        stale = self.stale_facts_in(conn, plan.preconditions, now)
+        if stale:
+            raise JourneyError("fact_stale", "这份攻略里有资料过期了，重新查一遍再出发。",
+                               plan_id=plan.plan_id, fact_ids=",".join(stale))
+
+    @staticmethod
+    def _assert_facts_fresh(plan, now: datetime) -> None:
+        """资料有效期：等钱那段时间里资料可能已经过期，**出发这一刻**按 `now` 再判一次（TRV-02 工作单第 63 行）。
+
+        读 `PlanRef.valid_window`＝`(valid_from, valid_until)`，两个都是 **ISO 字符串、都可能是 None**
+        （没核验到带时效的关键事实时，这版计划就没有有效期边界——A 不会编一个出来）。
+        判定只用 `ready_plan_in` 在**同一个写事务里**读出来的值，不另查库。
+        原因码用合同 5.2 全集里的 `fact_stale`，不新增码。
+
+        **逐条事实的有效期不在这里查**：`plan.preconditions` 是 A 那边 `web_travel_facts` 的 fact_id，
+        旅程包不去读别人的表；要逐条看得由 A 给一个 `*_in(conn, …)` 的端口（已去信）。
+        """
+        valid_from, valid_until = plan.valid_window
+        if valid_until is not None and now >= parse_dt(valid_until):
+            raise JourneyError("fact_stale", "这份攻略的资料过期了，重新查一遍再出发。", plan_id=plan.plan_id, valid_until=valid_until)
+        if valid_from is not None and now < parse_dt(valid_from):
+            raise JourneyError("fact_stale", "这份攻略还没到能用的时候。", plan_id=plan.plan_id, valid_from=valid_from)
+
+    def _settle_fare(self, conn, journey_id: str, pet_id: str, destination_key: str, dest: Destination, waivable: bool, now: datetime) -> bool:
+        """这趟的钱在**写行程的同一个写事务里**结清：核销一张券，或者扣旅费。回传**这趟是不是用券抵掉的**。
 
         分两个事务写的话，进程在两步之间死掉就会留下一趟没付钱的行程，或者券已经核销而行程没建——
         幂等键能防“扣两次”，防不了“根本没扣”。这里抛任何异常，行程、代数、券、扣费一起回滚。
@@ -196,15 +316,28 @@ class WebJourneyService(JourneyPlanningMixin, JourneySettlementMixin):
         券在这中间被别处用掉了 → 返回 False → 照既定费用规则付钱；付不起就整笔回滚。
         幂等键绑定行程编号：同一次操作重试指向同一趟、同一笔，不会扣两次。
         不花钱的出门（散步、打工）不在银行卡流水里记一笔 0。
+
+        回传的这个布尔要落进 `web_journeys.fare_waived`：账本里**没有那一笔**既可能是用了券，
+        也可能是散步本来就不花钱，两者在流水上分不开（m1701）。
         """
         if waivable and self.fee_waiver_in(conn, pet_id, destination_key):
-            return  # 驾校借车券：第一次自驾不用租车费（用一次）
+            return True  # 驾校借车券：第一次自驾不用租车费（用一次）
         if dest.fee > 0:
             self.economy.apply_in(conn, pet_id, -dest.fee, EconomyTransactionType.web_travel_fee, f"web:travel_fee:{journey_id}",
                                   reason=f"「{dest.title}」的旅费", source="web.journey.depart", now=now)
+        return False
 
-    def _assert_still_valid(self, conn, pet_id: str, expected_versions, valid_until: datetime | None) -> None:
-        """在写事务内、写业务之前的最后一道复核。用的是事务里的这个连接，不另开（另开会读到旧快照，还会和自己争锁）。"""
+    def _assert_still_valid(self, conn, pet_id: str, expected_versions, valid_until: datetime | None,
+                            *, honor_commitments: bool = False, now: datetime | None = None) -> None:
+        """在写事务内、写业务之前的最后一道复核。用的是事务里的这个连接，不另开（另开会读到旧快照，还会和自己争锁）。
+
+        `honor_commitments` 为真时多问一句"主人有没有说过今天待在家"。**默认不问**：
+        主人自己点出发也走这条路，无差别的闸会把他自己拦掉（合同 15 节）。
+        """
+        if honor_commitments:
+            blocking = self.active_commitment_in(conn, pet_id, now or utcnow())
+            if blocking is not None:
+                raise JourneyError("commitment_active", "家里说好今天待在家，这次就不出门了。", commitment=str(blocking))
         if expected_versions is not None:
             stale = expected_versions.stale_fields(versions_in(conn, pet_id))
             if stale:

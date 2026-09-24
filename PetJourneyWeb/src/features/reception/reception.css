@@ -1,19 +1,26 @@
-.ps-reception-page {
-  background: #fffbf5;
+/*
+ * 颜色一律走主题变量（2026-09-24 CSS 巡检：深色下这里写死的浅色页面配上跟主题走的文字，
+ * 次要按钮“先去地图看看”对比度只有 2.15）。浅色下与原来的暖白几乎一样，深色下跟着主题变成暖夜。
+ * 仍然写死的只有两类，深浅两种下都是同一对颜色，对比度不随主题变：
+ * 盖在插画和照片上的小牌（场景标签、头像名条），以及“纸质”的叮嘱卡（--paper* 本来就是固定色）。
+ * 带色的小字用 color-mix 往正文色里调：浅色下变深、深色下变浅，色相不变，对比度往够的方向走。
+ */
+.ps-entry-page.ps-reception-page {
+  background: var(--c-surface);
 }
 .ps-reception-hero {
   position: relative;
   overflow: hidden;
   margin: 10px 0 19px;
-  border: 1px solid #e9dfd4;
+  border: 1px solid var(--c-surface-stroke);
   border-radius: 26px;
-  background: #fffdf8;
-  box-shadow: 0 16px 36px -26px rgba(76, 54, 34, 0.35);
+  background: var(--c-surface);
+  box-shadow: 0 16px 36px -26px var(--c-shadow);
 }
 .ps-reception-hero__scene {
   display: block;
   width: 100%;
-  height: clamp(190px, 58vw, 290px);
+  height: clamp(176px, 52vw, 280px);
   object-fit: cover;
   object-position: center 42%;
 }
@@ -38,24 +45,36 @@
   min-height: 103px;
   padding: 14px 17px 18px;
 }
+.ps-reception-hero__caption > div {
+  /* 右侧留给头像卡，标题不被压住 */
+  max-width: calc(100% - clamp(104px, 31vw, 128px) - 6px);
+}
 .ps-reception-hero__eyebrow {
-  color: #b47c37;
+  color: color-mix(in srgb, #b47c37 68%, var(--c-ink));
   font-size: 10px;
   font-weight: 750;
   letter-spacing: 0.11em;
 }
 .ps-reception-hero h1 {
   margin: 4px 0 2px;
-  color: #252629;
+  color: var(--c-ink);
   font-size: clamp(25px, 7vw, 32px);
   line-height: 1.13;
   letter-spacing: -0.04em;
 }
 .ps-reception-hero p {
   margin: 0;
-  color: #81776f;
+  color: var(--c-ink-2);
   font-size: 11px;
   line-height: 1.4;
+}
+.ps-reception-hero__steps {
+  margin-top: 12px;
+}
+/* 步骤条（identity.css 写死了浅色底）：没走到的那几段跟着主题 */
+.ps-reception-hero .ps-entry-heading__steps span:not(.is-active),
+.ps-notes-page .ps-entry-heading__steps span:not(.is-active) {
+  background: color-mix(in srgb, var(--c-ink) 12%, transparent);
 }
 .ps-reception-portrait {
   position: absolute;
@@ -68,7 +87,7 @@
   justify-content: center;
   width: clamp(104px, 31vw, 128px);
   height: clamp(119px, 35vw, 144px);
-  border: 5px solid #fffdf8;
+  border: 5px solid var(--c-surface);
   border-radius: 18px;
   background: #e8dcbf;
   box-shadow: 0 10px 28px -11px rgba(53, 39, 25, 0.64);
@@ -99,77 +118,110 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.ps-reception-body {
+  gap: 16px;
+}
 .ps-host {
   display: flex;
   align-items: flex-start;
   gap: 11px;
-  padding: 13px;
-  border: 1px solid #ece6e0;
+  padding: 12px 13px;
+  border: 1px solid var(--c-surface-stroke);
   border-radius: 17px;
-  background: #fff;
+  background: var(--c-surface);
+  color: var(--c-ink);
 }
 .ps-host__body {
   min-width: 0;
   flex: 1;
 }
 .ps-host__avatar {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   flex: none;
-  border-radius: 13px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
-  background: #f4e9fb;
-  color: #785894;
+  background: color-mix(in srgb, #b07cff 13%, var(--c-surface));
+  color: color-mix(in srgb, #785894 78%, var(--c-ink));
 }
 .ps-host__title {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 7px;
-  color: #27252b;
+  gap: 2px 7px;
+  color: var(--c-ink);
   font-size: 13px;
 }
 .ps-host__title span {
-  color: #928a8e;
+  color: var(--c-ink-2);
   font-size: 11px;
 }
-.ps-host__disclosure {
-  margin: 3px 0 0;
-  color: #796f70;
+.ps-host__about {
+  margin-top: 2px;
+  color: var(--c-ink-2);
   font-size: 11px;
-  line-height: 1.45;
+}
+/* 展开项是一个点按目标：至少 40px 高（巡检：原来只有 32px） */
+.ps-host__about summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  color: color-mix(in srgb, #8a6a4a 60%, var(--c-ink));
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.ps-host__about summary::-webkit-details-marker {
+  display: none;
+}
+.ps-host__about summary::after {
+  content: "›";
+  margin-left: 5px;
+  transition: transform var(--dur-fast);
+}
+.ps-host__about[open] summary::after {
+  transform: rotate(90deg);
+}
+.ps-host__about summary:focus-visible {
+  outline: 3px solid #dba258;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.ps-host__disclosure {
+  margin: 0;
+  color: var(--c-ink-2);
+  font-size: 11px;
+  line-height: 1.5;
 }
 .ps-host__mode {
   margin: 8px 0 0;
   padding: 7px 9px;
   border-radius: 9px;
-  background: #fff5e6;
-  color: #8c6339;
+  background: color-mix(in srgb, var(--c-sun) 12%, var(--c-surface));
+  color: color-mix(in srgb, #8c6339 70%, var(--c-ink));
   font-size: 10px;
   line-height: 1.45;
+}
+.ps-reception-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 .ps-reception-section-title {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  margin: 4px 1px -6px;
-  color: #2d2a28;
+  margin: 2px 1px -2px;
+  color: var(--c-ink);
   font-size: 17px;
   font-weight: 750;
 }
 .ps-reception-section-title small {
-  color: #918780;
+  color: var(--c-ink-2);
   font-size: 10px;
   font-weight: 500;
-}
-.ps-reception-privacy {
-  margin: 0;
-  padding: 0 5px;
-  color: #8b8178;
-  font-size: 11px;
-  line-height: 1.5;
 }
 .ps-turns {
   list-style: none;
@@ -184,20 +236,120 @@
   max-width: 88%;
   padding: 10px 14px;
   border-radius: 18px 18px 18px 7px;
+  color: var(--c-ink);
   font-size: 14px;
   line-height: 1.55;
 }
 .ps-turn--host {
   align-self: flex-start;
-  background: #f3eef7;
-  border: 1px solid #eee7f3;
+  background: color-mix(in srgb, #b07cff 12%, var(--c-surface));
+  border: 1px solid var(--c-surface-stroke);
   border-bottom-left-radius: 4px;
 }
 .ps-turn--owner {
   align-self: flex-end;
-  background: #fff1d8;
-  border: 1px solid #f3e2c5;
+  background: color-mix(in srgb, var(--c-sun) 16%, var(--c-surface));
+  border: 1px solid var(--c-surface-stroke);
   border-radius: 18px 18px 6px 18px;
+}
+/* 输入说明留在对话末尾（输入框本身在贴底区里，读屏由 aria-describedby 连上） */
+.ps-reception-hint {
+  margin: -2px 2px 0;
+  color: var(--c-ink-2);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+/*
+ * 贴底区：输入框在上、主行动在下（2026-09-24 巡检 P1：输入框原来在正文末尾，首屏正好压在贴底按钮下面，
+ * 320×568 上更是整个在首屏以外）。输入框一行起步、随内容长到约 5 行；发送键在输入框右侧，任何时候都露在外面。
+ */
+.ps-reception-dock {
+  gap: 10px;
+}
+/* 贴底区的渐变底（identity.css 写死了浅色）：接待页和整理页跟着主题 */
+.ps-reception-page .ps-entry-dock,
+.ps-notes-page .ps-entry-dock {
+  background: linear-gradient(180deg, transparent 0, color-mix(in srgb, var(--c-surface) 94%, transparent) 22px, var(--c-surface) 40px);
+}
+.ps-reception-page .ps-entry-dock__hint,
+.ps-notes-page .ps-entry-dock__hint,
+.ps-reception-page .ps-entry-dock__error span,
+.ps-notes-page .ps-entry-dock__error span {
+  color: var(--c-ink-2);
+}
+/* 通用规则（identity.css：正在输入时 .ps-entry-dock 回到文档流）是为了“贴底按钮别盖住正文里的输入框”；
+   这里输入框本身就在贴底区里，回到文档流反而会让它跳到页尾、离开视线，所以接待页保持贴底。 */
+.ps-entry-page.ps-reception-page:has(textarea:focus, input[type="text"]:focus, input:not([type]):focus) .ps-entry-dock.ps-reception-dock {
+  position: sticky;
+}
+.ps-reception-dock__actions {
+  display: grid;
+  gap: 8px;
+}
+.ps-reception-dock__actions > .ps-btn {
+  min-height: 52px;
+  border-radius: 15px;
+}
+.ps-reception-dock__actions > .ps-btn--ghost {
+  min-height: 44px;
+}
+
+/* 输入框与“交代这一句”是一个整体，和下面的主行动分开 */
+.ps-composer {
+  display: grid;
+  border: 1px solid color-mix(in srgb, var(--c-ink) 16%, transparent);
+  border-radius: 18px;
+  background: var(--c-surface-2);
+  box-shadow: 0 10px 22px -18px var(--c-shadow);
+}
+.ps-composer:focus-within {
+  border-color: #cfa46f;
+  box-shadow: 0 0 0 3px rgba(219, 162, 88, 0.22);
+}
+.ps-composer__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 4px 5px 4px 4px;
+}
+.ps-composer__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  max-height: 132px;
+  padding: 10px 10px 9px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--c-ink);
+  font-size: 16px; /* 避免 iOS 聚焦放大 */
+  line-height: 1.55;
+  resize: none;
+  overflow-y: auto;
+}
+.ps-composer__input:focus {
+  outline: none;
+}
+.ps-composer__input::placeholder {
+  color: var(--c-ink-2);
+  opacity: 1;
+}
+.ps-composer__note {
+  min-width: 0;
+  padding: 0 14px 9px;
+  color: var(--c-ink-2);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.ps-composer__note.is-error {
+  color: var(--c-danger);
+  font-weight: 700;
+}
+.ps-composer .ps-btn {
+  flex: none;
+  min-height: 44px;
+  border-radius: 13px;
 }
 .ps-reception-actions {
   display: flex;
@@ -207,6 +359,63 @@
 }
 .ps-reception-actions > .ps-btn {
   min-height: 50px;
+}
+
+/* 生活叮嘱（整理页）：与接待同一场景的窄幅图，接住上一页的画面 */
+.ps-entry-page.ps-notes-page {
+  background: var(--c-surface);
+}
+.ps-notes-band {
+  overflow: hidden;
+  margin: 8px 0 0;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 22px;
+  background: var(--c-surface-2);
+}
+.ps-notes-band img {
+  display: block;
+  width: 100%;
+  height: clamp(84px, 26vw, 128px);
+  object-fit: cover;
+  object-position: center 58%;
+}
+.ps-notes-page .ps-entry-heading {
+  margin-top: 14px;
+}
+.ps-notes-page .ps-entry-heading .ps-brand-logo {
+  display: none;
+}
+.ps-notes-page .ps-entry-heading__top {
+  margin-bottom: 10px;
+}
+.ps-notes-page .ps-entry-heading__kicker {
+  margin-left: 0;
+  text-align: left;
+}
+/* 标题区（identity.css 写死了深色字）：整理页跟着主题 */
+.ps-notes-page .ps-entry-heading {
+  color: var(--c-ink);
+}
+.ps-notes-page .ps-entry-heading__kicker {
+  color: color-mix(in srgb, #a47a55 66%, var(--c-ink));
+}
+.ps-notes-page .ps-entry-heading p {
+  color: var(--c-ink-2);
+}
+.ps-notes-legend {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 14px;
+  background: var(--c-surface-2);
+  color: var(--c-ink-2);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.ps-notes-legend strong {
+  margin-right: 5px;
+  color: var(--c-ink);
 }
 .ps-note {
   display: flex;
@@ -261,17 +470,84 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px 8px;
+  min-width: 0;
+  margin: 2px 0 0;
+  padding: 9px 10px 6px;
+  border: 1px dashed var(--paper-shade);
+  border-radius: 12px;
+  color: var(--paper-ink);
   font-size: var(--fs-sm);
+}
+.ps-note__purposes legend {
+  padding: 0 4px;
+  color: var(--paper-secondary-ink);
+  font-size: 11px;
+  font-weight: 700;
 }
 .ps-note__purpose {
   display: flex;
   gap: 6px;
   align-items: center;
-  min-height: 32px;
+  min-height: 36px;
+}
+.ps-note__purpose input {
+  width: 18px;
+  height: 18px;
+  accent-color: #5d7c4a;
 }
 .ps-save-error {
   border-color: var(--c-danger);
   background: var(--c-danger-soft);
+}
+.ps-notes-saved,
+.ps-notes-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 24px 18px 20px;
+  border: 1px solid #eadfcd;
+  border-radius: 22px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  text-align: center;
+  box-shadow: 0 16px 32px -28px rgba(76, 54, 34, 0.55);
+}
+.ps-notes-saved h2,
+.ps-notes-empty h2 {
+  margin: 4px 0 0;
+  font-size: 21px;
+  letter-spacing: -0.02em;
+}
+.ps-notes-saved p,
+.ps-notes-empty p {
+  max-width: 24em;
+  margin: 0 0 8px;
+  color: var(--paper-secondary-ink);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.ps-notes-saved__seal,
+.ps-notes-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #e5ecd9;
+  color: #4d6b3c;
+}
+.ps-notes-saved.is-failed .ps-notes-saved__seal {
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+}
+.ps-notes-empty__icon {
+  background: #f1e3cc;
+  color: #9a6b3c;
+}
+.ps-notes-empty__actions {
+  display: grid;
+  gap: 8px;
+  width: 100%;
 }
 @media (max-width: 340px) {
   .ps-note__purposes {

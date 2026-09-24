@@ -1,0 +1,202 @@
+/*
+ * 通讯器 · 公告：通讯器顶上的细条 + 公告页。只用主题令牌，深色模式跟着令牌变。
+ * 级别颜色走三个局部变量：--ann-soft（底色）、--ann-accent（色条与圆点）、--ann-ink（级别字，混进墨色保证浅色下对比度够）。
+ */
+.ps-announce--info {
+  --ann-soft: var(--c-sky-soft);
+  --ann-accent: var(--c-sea);
+  --ann-ink: color-mix(in srgb, var(--c-sea) 65%, var(--c-ink));
+}
+.ps-announce--notice {
+  --ann-soft: var(--c-sun-soft);
+  --ann-accent: var(--c-sun);
+  --ann-ink: color-mix(in srgb, var(--c-sun) 45%, var(--c-ink));
+}
+.ps-announce--maintenance {
+  --ann-soft: var(--c-coral-soft);
+  --ann-accent: var(--c-coral);
+  --ann-ink: color-mix(in srgb, var(--c-coral) 55%, var(--c-ink));
+}
+
+/* 级别小标签：细条与公告页共用。 */
+.ps-announce-tag {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--ann-accent) 14%, var(--c-surface));
+  color: var(--ann-ink);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+/* ---- 通讯器顶上的细条：一整行宽，只占高度、不和标题栏或分段抢横向空间；标题一行，放不下就省略。 ---- */
+.ps-announce-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 38px;
+  margin-top: 4px;
+  padding: 6px 10px 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--ann-accent) 30%, var(--c-surface-stroke));
+  border-left: 3px solid var(--ann-accent);
+  border-radius: 12px;
+  background: var(--ann-soft);
+  color: var(--c-ink);
+  text-decoration: none;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.ps-announce-strip:active {
+  transform: scale(0.985);
+}
+.ps-announce-strip__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  line-height: 1.35;
+}
+.ps-announce-strip__dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ann-accent);
+}
+.ps-announce-strip__go {
+  flex: 0 0 auto;
+  color: var(--c-ink-3);
+}
+/* 全都读过：同一个位置收成安静的一行（不上级别底色、字变淡、矮一点），仍可点进去重看。 */
+.ps-announce-strip--read {
+  --ann-soft: transparent;
+  --ann-accent: var(--c-ink-3);
+  --ann-ink: var(--c-ink-2);
+  min-height: 34px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-color: var(--c-surface-stroke);
+  border-left-width: 1px;
+}
+.ps-announce-strip--read .ps-announce-tag {
+  background: var(--c-bg-soft);
+}
+.ps-announce-strip--read .ps-announce-strip__title {
+  color: var(--c-ink-2);
+  font-weight: 500;
+}
+
+/* ---- 公告页 ---- */
+.ps-announcements {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ps-announcement {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--c-surface-stroke);
+  border-left: 4px solid var(--ann-accent);
+  border-radius: var(--r-card);
+  background: var(--c-surface);
+  box-shadow: 0 10px 22px -20px var(--c-shadow);
+  color: var(--c-ink);
+}
+.ps-announcement__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-ink-2);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+.ps-announcement__meta time {
+  margin-left: auto;
+}
+.ps-announcement__new {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: var(--c-leaf-soft);
+  color: color-mix(in srgb, var(--c-leaf) 75%, var(--c-ink));
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.ps-announcement__title {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+/* 正文按原文排：保留运营写的换行与空行；纯文本，长网址也能折行。 */
+.ps-announcement__body {
+  margin: 0;
+  color: var(--c-ink);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ps-announcement__figure {
+  margin: 2px 0 0;
+}
+/* 配图整张显示、不裁切；太高的图限高，按比例缩在框里。 */
+.ps-announcement__figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 360px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: var(--c-surface-2);
+}
+.ps-announcement__link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--r-control);
+  background: var(--ann-soft);
+  color: var(--ann-ink);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  text-decoration: none;
+}
+.ps-announcement__external {
+  flex: 0 0 auto;
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.ps-announcement__host {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

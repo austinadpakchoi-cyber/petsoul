@@ -7,7 +7,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+
+from ..content_overlay import OverlayCatalog
 
 HOME_NODE = {"node_id": "node-home", "name": "家", "kind": "place", "timezone": "Asia/Hong_Kong", "lat": 22.2819, "lng": 114.1581, "verified": False}
 
@@ -75,7 +77,21 @@ HND = node("node-hnd", "东京机场（示意）", "airport", "Asia/Tokyo", 35.5
 TOKYO_STATION = node("node-tokyo-city", "东京市区站（示意）", "station", "Asia/Tokyo", 35.681, 139.767)
 TOKYO_CAFE = node("node-tokyo-cafe", "示例·巷口咖啡馆（东京）", "place", "Asia/Tokyo", 35.6812, 139.7707)
 
-DESTINATIONS: dict[str, Destination] = {
+DESTINATION_CONTENT_TYPE = "destination"
+# 可发布的字段**只有这四项**，每一项都在出发那一刻被读走并落库：
+# `web_journeys` 行里存着这趟的 title / city / fee，`web_journey_legs` 与 `web_visits` 存着各段时间。
+# 所以改它们只影响**此后新出发**的行程，已经在路上的和已经走完的一个字都不变。
+# **不可发布**：outbound / venue / inbound / wish_keywords / food_area。
+# 那些是路线、坐标、承运人与场所身份——属于世界事实，不是文案；运营改它等于伪造一段行程。
+DESTINATION_PUBLISHABLE_FIELDS = ("title", "city", "summary", "fee")
+
+
+def merge_destination(base: "Destination", body: dict) -> "Destination":
+    update = {field_name: body[field_name] for field_name in DESTINATION_PUBLISHABLE_FIELDS if body.get(field_name) is not None}
+    return replace(base, **update) if update else base
+
+
+DESTINATIONS: dict[str, Destination] = OverlayCatalog(DESTINATION_CONTENT_TYPE, merge_destination, {
     "harbour_cafe": Destination(
         key="harbour_cafe",
         title="海边咖啡馆",
@@ -134,4 +150,6 @@ DESTINATIONS: dict[str, Destination] = {
         wish_keywords=("飞", "东京", "日本", "飞机"),
         food_area="tokyo-alley",
     ),
-}
+})
+
+BUILT_IN_DESTINATIONS = frozenset(dict.keys(DESTINATIONS))

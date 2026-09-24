@@ -22,6 +22,7 @@ from ..storage import JourneyStorage
 from ..utils import iso, parse_dt, utcnow
 from ..web_platform.tasks import redraw_ticket
 from ..web_platform.uow import execute_in, unit_of_work
+from ..web_travel import store as travel_store  # TRV-03 T08：出发时已有预研计划就只关联复用
 from .photo_display import settled_photo
 from .geo_plan import region_of
 from .illustrations import SPECIES_CN
@@ -129,6 +130,9 @@ class TravelGuideService:
         with self.storage.connect() as conn:
             if conn.execute("SELECT 1 FROM web_travel_guides WHERE journey_id = ?", (journey.journey_id,)).fetchone():
                 return None
+            planned = travel_store.plan_for_journey_in(conn, journey.journey_id)
+        if planned is not None:
+            return self._from_plan(journey, planned, now)
         destination = visit.place["name"]
         draft, composed = None, "template"
         persona = self.persona_of(journey.user_id, journey.pet_id)
@@ -162,6 +166,31 @@ class TravelGuideService:
             ).rowcount
         if inserted:
             self.on_created(journey, draft["title"])
+            return guide_id
+        return None
+
+    def _from_plan(self, journey, plan, now: datetime) -> str | None:
+        """TRV-03 T08：这趟旅程在出发事务里关联了预研计划 → 按计划派生一份攻略（`composed_by="plan"`）。
+        **不调模型、不请求新手账图**：图就是计划那一版的手账图（同一个插画任务，展示状态照旧由插画回调更新）。
+        事件重放、进程恢复都撞在上面那条 journey_id 去重上，同一个结果。"""
+        stops = [{"name": s["name"], "label": s["name"], "time": "", "why": s.get("why", ""), "tip": s.get("tip", ""), "role": s.get("role"),
+                  "verified": bool(s.get("verified")), "address": None, "lat": s.get("lat"), "lng": s.get("lng"),
+                  "attribution": "出发前已核验" if s.get("verified") else "出发前没能核验"} for s in json.loads(plan["stops_json"])]
+        tips = [tip["text"] for tip in json.loads(plan["owner_tips_json"])]
+        guide_id = f"gd-{uuid.uuid4().hex[:12]}"
+        with unit_of_work(self.storage) as conn:
+            journal = travel_store.journal_for_plan_in(conn, plan["plan_id"], plan["plan_revision"])
+            task_id = journal["image_task_id"] if journal is not None else None
+            settled = settled_photo(conn, task_id, self.image_outcome_in) if task_id else None
+            status, url = settled if settled is not None else ("processing" if task_id else None, None)
+            inserted = conn.execute(
+                "INSERT OR IGNORE INTO web_travel_guides (guide_id, user_id, pet_id, journey_id, city, destination_title, title, summary, stops_json, owner_tips_json, "
+                "composed_by, image_status, image_task_id, created_at, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'plan', ?, ?, ?, ?)",
+                (guide_id, journey.user_id, journey.pet_id, journey.journey_id, journey.city, journey.title, plan["title"], plan["summary"],
+                 json.dumps(stops, ensure_ascii=False), json.dumps(tips, ensure_ascii=False), status, task_id, iso(now), url),
+            ).rowcount
+        if inserted:
+            self.on_created(journey, plan["title"])
             return guide_id
         return None
 

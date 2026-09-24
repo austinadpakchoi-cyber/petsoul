@@ -41,7 +41,6 @@ class PhotoAtomicRegistrationTests(unittest.TestCase):
         self.queue = WebTaskQueue(self.storage)
         self.illustrations = IllustrationService(self.storage, root / "media", self.queue)
         self.illustrations.illustrator = FakeIllustrator()
-        self.illustrations.opted_in = lambda user_id, pet_id=None: True
         with self.storage.connect() as conn:  # 替身“业务写入”：调用方在同一个事务里写的东西
             conn.execute("CREATE TABLE probe_visit (visit_id TEXT PRIMARY KEY)")
 
@@ -149,34 +148,29 @@ class PhotoAtomicRegistrationTests(unittest.TestCase):
             task_id = self.register(conn, captured_at=None)
         self.assertNotIn("captured_at", self.payload_of(task_id))
 
-    # ---- 授权必须在调用方那个连接上读 ----
-    def test_permission_is_read_on_the_callers_connection_not_a_fresh_one(self) -> None:
-        """调用方事务里刚撤权（还没提交）时，登记就必须被挡下。
+    # ---- 登记时的授权闸已摘除：钉住这件事，别让它悄悄回来 ----
+    def test_neither_consent_hook_is_consulted_at_registration(self) -> None:
+        """这里原先有两条用例，测的是"登记时必须查授权、而且必须在调用方那个连接上查"
+        （`test_permission_is_read_on_the_callers_connection_not_a_fresh_one` 与
+        `test_without_permission_nothing_is_registered`）。
 
-        另开连接的 `opted_in` 读到的是事务开始前的快照，这一刻还是"允许"——
-        用它做判断，等于在一个已经决定要撤权的事务里又排了一张要花钱的照片。
-        同连接的 `consent_in` 读得到本事务的未提交改动，所以必须用它。
+        **那道闸已被产品决定摘除**：用户 2026-09-23 直接决定取消逐次授权询问，
+        计划文档改成「上传处说明照片会用于准备专属形象；按图片服务的新策略自动处理，不另设家庭生图许可」。
+
+        所以现在钉反向事实：挂两个与旧接线口同名的钩子、都设成"一律不允许"，登记照常发生。
+        `opted_in` / `consent_in` 两个属性已于 2026-09-24 从服务里删除，这里的赋值**有意只写不读**——
+        谁以原名把登记时的检查加回来，这条当场红（内存变异实测过）；换个名字加回它抓不到，
+        详见 `test_web_consent_boundary.test_no_consent_hook_is_consulted_anywhere_in_the_attempt`。
+        **原先那条"必须同连接读"的教训没有作废**——它只是不再适用于授权；
+        同事务登记本身（任务与记录同生共死）由本文件其余用例照常钉着。
         """
-        with self.storage.connect() as conn:
-            conn.execute("CREATE TABLE probe_consent (pet_id TEXT PRIMARY KEY, enabled INTEGER NOT NULL)")
-            conn.execute("INSERT INTO probe_consent (pet_id, enabled) VALUES (?, 1)", (PET,))
-        # opted_in 故意停在"允许"——它代表另开连接读到的旧快照
-        self.illustrations.opted_in = lambda user_id, pet_id=None: True
-        self.illustrations.consent_in = lambda conn, user_id, pet_id: bool(
-            conn.execute("SELECT enabled FROM probe_consent WHERE pet_id = ?", (pet_id,)).fetchone()["enabled"])
-
-        with unit_of_work(self.storage) as conn:
-            conn.execute("UPDATE probe_consent SET enabled = 0 WHERE pet_id = ?", (PET,))  # 同一个事务里撤权，尚未提交
-            self.assertIsNone(self.register(conn), "同连接已经读得到撤权，不该再登记")
-
-        self.assertEqual((self.count("web_tasks"), self.count("web_illustrations")), (0, 0))
-
-    # ---- 没授权就什么都不写 ----
-    def test_without_permission_nothing_is_registered(self) -> None:
         self.illustrations.opted_in = lambda user_id, pet_id=None: False
+        self.illustrations.consent_in = lambda conn, user_id, pet_id: False
+
         with unit_of_work(self.storage) as conn:
-            self.assertIsNone(self.register(conn))
-        self.assertEqual((self.count("web_tasks"), self.count("web_illustrations")), (0, 0))
+            self.assertIsNotNone(self.register(conn), "钩子说不行也不算数——登记这一步不再读它们")
+
+        self.assertEqual((self.count("web_tasks"), self.count("web_illustrations")), (1, 1))
 
 
 if __name__ == "__main__":

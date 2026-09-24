@@ -148,7 +148,8 @@
   }
 }
 
-.ps-family-page { background: #f8f5ef; color: #30372f; }
+/* 我们的家：页面底色与字色跟主题走。原来写死浅底深字，深色下顶栏标题（继承深字）和空状态（主题浅字）都几乎看不见 */
+.ps-family-page { background: color-mix(in srgb, var(--c-surface) 50%, var(--c-bg)); color: var(--c-ink); }
 .ps-family-content { display: grid; gap: 14px; padding: 8px 16px 96px; }
 .ps-family-hero { position: relative; overflow: hidden; min-height: 142px; padding: 23px 22px; border-radius: 27px; color: #fffaf0; background: linear-gradient(128deg,#3b594c,#253d38 62%,#806349); box-shadow: 0 15px 25px #52625420; }
 .ps-family-hero::after { content: "✦"; position: absolute; right: 24px; top: 12px; color: #e7d2a4; font-size: 71px; opacity: .27; }
@@ -158,7 +159,8 @@
 .ps-family-card { display: grid; gap: 10px; padding: 19px !important; border-radius: 22px !important; }
 .ps-family-card h2 { margin: 0 0 2px; font-size: 16px; letter-spacing: .02em; }
 .ps-family-card p { margin: 0; font-size: 13px; line-height: 1.55; color: #667064; }
-.ps-family-card a { color: #355d48; font-size: 13px; text-decoration: none; font-weight: 700; }
+/* 点按区至少 40px 高（“回家看看 →”原来 20px）：上下 -10px 外边距把多出的高度收进卡片行距，卡片高度不变。 */
+.ps-family-card a { display: flex; align-items: center; min-height: 40px; margin: -10px 0; color: #355d48; font-size: 13px; text-decoration: none; font-weight: 700; }
 .ps-family-pets { display: flex; flex-wrap: wrap; gap: 17px; }
 .ps-family-pets > div { display: grid; justify-items: center; gap: 4px; font-size: 12px; }
 .ps-family-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 0; border-top: 1px solid #e8e6da; }
@@ -167,12 +169,13 @@
 .ps-family-row small { color: #7d8478; font-size: 11px; }
 .ps-family-card label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; }
 .ps-family-card input:not([type="checkbox"]) { box-sizing: border-box; width: 100%; min-height: 41px; padding: 9px 12px; border: 1px solid #deded0; border-radius: 11px; background: #fcfbf7; color: #263c32; font: inherit; font-weight: 400; }
-.ps-family-card button { justify-self: start; min-height: 38px; padding: 7px 14px; border: 0; border-radius: 12px; background: #315540; color: white; font-weight: 700; }
+.ps-family-card button { justify-self: start; min-height: 40px; padding: 7px 14px; border: 0; border-radius: 12px; background: #315540; color: white; font-weight: 700; }
 .ps-family-card button:disabled { opacity: .49; }
 .ps-family-card .ps-family-fine { color: #8a8b80; font-size: 11px; }
-.ps-family-switches { display: grid; gap: 10px; padding-top: 3px; }
-.ps-family-switches label { display: flex; align-items: start; gap: 9px; line-height: 1.45; font-weight: 500; }
-.ps-family-switches input { accent-color: #4b7659; margin-top: 3px; }
+.ps-family-switches { display: grid; gap: 0; padding-top: 3px; }
+/* 复选框：整行（label）就是点按区，至少 44px 高；框本身放大到 20px，和文字垂直居中。 */
+.ps-family-switches label { display: flex; align-items: center; gap: 10px; min-height: 44px; line-height: 1.45; font-weight: 500; }
+.ps-family-switches input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: #4b7659; }
 .ps-family-created { display: grid; gap: 8px; padding: 12px; border-radius: 15px; background: #eff5ed; }
 .ps-family-card [role="alert"] { color: #9a3f33; }
 .ps-family-photo-consent { border-color: #d9ddcf !important; background: linear-gradient(145deg,#fffdf8,#f1f4ed) !important; }

@@ -1,0 +1,584 @@
+/*
+ * 旅行计划页与攻略手账列表里的“想去 / 准备中”（TRV-06 第①期）。只在这里写样式，不改 journey.css / guide.css。
+ * 颜色一律用主题变量（tokens.css），深色模式跟着主题走；手账留白是“纸”，按设计系统用固定的 paper 色（夜里也保持暖纸）。
+ * 小字标签的前景色与墨色混一点：浅色下 sun / sea 直接压在对应的浅底上对比不够，混墨后深浅两种模式都读得清。
+ */
+
+.ps-plan-page {
+  background: color-mix(in srgb, var(--c-surface) 45%, var(--c-bg));
+}
+/* 顶栏标题可以折成两行：320 宽下“TA 从 香港的海边咖啡馆 回来了”一行放不下，只留一行时省略号会吃掉“回来了”；再长才截断。 */
+.ps-plan-title {
+  display: -webkit-box;
+  margin: 0;
+  font: inherit;
+  line-height: 1.3;
+  white-space: normal;
+  /* 两行时尽量等长，别把一个“了”单独甩到第二行。 */
+  text-wrap: balance;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.ps-plan {
+  display: grid;
+  gap: 22px;
+  padding: 12px 0 28px;
+}
+.ps-plan-section h2 {
+  margin: 0 0 10px;
+  font: 700 17px/1.35 Georgia, "Songti SC", "Noto Serif SC", serif;
+  color: var(--c-ink);
+}
+.ps-plan-muted {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--c-ink-2);
+}
+.ps-plan-note {
+  margin: -4px 0 10px;
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  color: var(--c-ink-2);
+}
+
+/* 页头：状态、目的地、一句话。 */
+.ps-plan-hero {
+  display: grid;
+  gap: 8px;
+  padding: 18px 18px 16px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-card);
+  background: var(--c-surface);
+  box-shadow: 0 10px 24px -20px var(--c-shadow);
+}
+.ps-plan-hero__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.ps-plan-hero__dest {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  font: 700 24px/1.25 Georgia, "Songti SC", "Noto Serif SC", serif;
+  color: var(--c-ink);
+  overflow-wrap: anywhere;
+}
+.ps-plan-hero__dest svg {
+  flex: none;
+  color: var(--c-leaf);
+}
+/* 这一版计划的标题（TravelPlanRevision.title），跟在目的地下面。 */
+.ps-plan-hero__plan {
+  margin: -2px 0 0;
+  font: 15px/1.5 Georgia, "Songti SC", "Noto Serif SC", serif;
+  color: var(--c-ink);
+  overflow-wrap: anywhere;
+}
+.ps-plan-hero__summary {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--c-ink-2);
+}
+.ps-plan-hero .ps-chip--sun,
+.ps-plan-card .ps-chip--sun {
+  color: color-mix(in srgb, var(--c-sun) 55%, var(--c-ink));
+}
+.ps-plan-hero .ps-chip--sky,
+.ps-plan-card .ps-chip--sky {
+  color: color-mix(in srgb, var(--c-sea) 70%, var(--c-ink));
+}
+
+/* 我为什么想去：TA 的原话。 */
+.ps-plan-quote {
+  margin: 0;
+  padding: 14px 16px 12px;
+  border-left: 3px solid var(--c-leaf);
+  border-radius: 4px var(--r-control) var(--r-control) 4px;
+  background: var(--c-surface-2);
+}
+.ps-plan-quote p {
+  margin: 0;
+  font: 16px/1.75 Georgia, "Songti SC", "Noto Serif SC", serif;
+  color: var(--c-ink);
+}
+.ps-plan-quote footer {
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  color: var(--c-ink-3);
+}
+
+/* 还差什么。 */
+.ps-plan-waiting {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ps-plan-waiting li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 12px 14px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-control);
+  background: var(--c-surface);
+}
+.ps-plan-waiting__icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--c-sun-soft);
+  color: color-mix(in srgb, var(--c-sun) 55%, var(--c-ink));
+}
+.ps-plan-waiting strong {
+  display: block;
+  font-size: var(--fs-md);
+  line-height: 1.45;
+}
+.ps-plan-waiting small {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  color: var(--c-ink-2);
+}
+
+/* 地点：主目的地实线卡；顺路建议虚线、透明底，一眼看得出只是建议。 */
+.ps-plan-places {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ps-plan-place {
+  display: grid;
+  gap: 6px;
+  padding: 14px 14px 8px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-control);
+  background: var(--c-surface);
+}
+/* 类名跟着 TravelStopRole（main / suggested）；第②期换成生成类型时这里还写着旧名 suggestion，虚线一度没生效（第②b 期补上）。 */
+.ps-plan-place--suggested {
+  border: 1.5px dashed color-mix(in srgb, var(--c-ink-3) 55%, transparent);
+  background: transparent;
+}
+.ps-plan-place__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+.ps-plan-place__head strong {
+  font-size: var(--fs-md);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.ps-plan-place p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--c-ink-2);
+}
+.ps-plan-place p.ps-plan-place__tip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--c-surface-2);
+  font-size: var(--fs-xs);
+}
+.ps-plan-place__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 12px;
+  min-height: 36px;
+}
+.ps-plan-place__foot small {
+  font-size: var(--fs-xs);
+  color: var(--c-ink-3);
+}
+.ps-plan-place__foot a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--c-leaf);
+  text-decoration: none;
+}
+
+/* 小标签：顺路建议 / 待确认 / 已核对。 */
+.ps-plan-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.6;
+  white-space: nowrap;
+  background: var(--c-sky-soft);
+  color: color-mix(in srgb, var(--c-sea) 70%, var(--c-ink));
+}
+.ps-plan-tag--pending {
+  background: var(--c-sun-soft);
+  color: color-mix(in srgb, var(--c-sun) 55%, var(--c-ink));
+}
+.ps-plan-tag--ok {
+  background: var(--c-leaf-soft);
+  color: var(--c-leaf);
+}
+
+/* 到访章只给真实事件；“下次”是虚线的空章。 */
+.ps-plan-stamp {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 9px;
+  border-radius: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.ps-plan-stamp--visited {
+  border: 1.5px solid var(--c-coral);
+  color: var(--c-coral);
+  transform: rotate(-3deg);
+}
+.ps-plan-stamp--next {
+  border: 1.5px dashed var(--c-ink-3);
+  color: var(--c-ink-2);
+}
+
+/* 行动安排 / 提醒 / 雨天备选。 */
+.ps-plan-arrangement {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--r-control);
+  background: var(--c-surface);
+  border: 1px solid var(--c-surface-stroke);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+}
+.ps-plan-lines {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0 0 0 20px;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+.ps-plan-lines li > span:first-child {
+  margin-right: 6px;
+}
+.ps-plan-lines--steps li::marker {
+  color: var(--c-leaf);
+  font-weight: 700;
+}
+.ps-plan-rain {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--r-control);
+  background: var(--c-sky-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+/* 出发前会再确认：有效期是小字，待确认是标签。 */
+.ps-plan-pre small {
+  font-size: var(--fs-xs);
+  color: var(--c-ink-3);
+  white-space: nowrap;
+}
+
+/* 花费：星币与现实参考分成两块，不放在同一行。 */
+.ps-plan-money {
+  display: grid;
+  gap: 10px;
+}
+.ps-plan-money__item {
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-control);
+  background: var(--c-surface);
+}
+.ps-plan-money__item--coins {
+  border-left: 3px solid var(--c-sun);
+}
+.ps-plan-money__item--real {
+  border-left: 3px solid var(--c-sky);
+}
+.ps-plan-money__kind {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--c-ink-2);
+}
+.ps-plan-money__item strong {
+  font-size: var(--fs-md);
+}
+.ps-plan-money__item small {
+  font-size: var(--fs-xs);
+  color: var(--c-ink-2);
+}
+.ps-plan-money__list {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.ps-plan-money__list li {
+  display: grid;
+  gap: 1px;
+}
+.ps-plan-money__list strong {
+  font-size: var(--fs-sm);
+}
+.ps-plan-money + .ps-plan-note {
+  margin: 8px 0 0;
+}
+
+/* 手账：图外是文字；没有图时是一块纸的留白。 */
+.ps-plan-journal {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.ps-plan-journal img {
+  width: 100%;
+  border-radius: var(--r-control);
+}
+.ps-plan-journal__blank {
+  display: grid;
+  place-items: center;
+  /* 宽度写死满格：只有 aspect-ratio + max-height 时，高度被封顶后宽度会跟着缩（390 宽实测缩到 330）。 */
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  max-height: 220px;
+  border: 1.5px dashed var(--paper-shade);
+  border-radius: var(--r-control);
+  background: var(--paper) url("../assets/schematic-paper-v1.webp") center / cover no-repeat;
+  color: var(--paper-secondary-ink);
+}
+.ps-plan-journal--failed .ps-plan-journal__blank,
+.ps-plan-journal--unknown .ps-plan-journal__blank {
+  filter: grayscale(0.5);
+  opacity: 0.85;
+}
+.ps-plan-journal figcaption {
+  display: grid;
+  gap: 2px;
+  font-size: var(--fs-sm);
+  color: var(--c-ink);
+}
+.ps-plan-journal figcaption span {
+  font-size: var(--fs-xs);
+  color: var(--c-ink-2);
+}
+.ps-plan-journal figcaption span.ps-plan-journal__stale {
+  color: color-mix(in srgb, var(--c-sun) 55%, var(--c-ink));
+}
+/* 重画：路由还没建，只是一句说明，不做成按钮。 */
+.ps-plan-journal__redraw {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  color: var(--c-ink-2);
+}
+.ps-plan-journal__redraw svg {
+  flex: none;
+}
+/* 手账这一页上写的字：图外照常可读（TRV-07），和上面的计划正文分开一块。 */
+.ps-plan-journal__page {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--c-surface-stroke);
+  border-left: 3px solid var(--paper-shade);
+  border-radius: var(--r-control);
+  background: var(--c-surface);
+}
+.ps-plan-journal__page > p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--c-ink-2);
+}
+.ps-plan-journal__page > p.ps-plan-journal__kicker {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--c-ink-3);
+}
+.ps-plan-journal__page h3 {
+  margin: 0;
+  font: 700 16px/1.4 Georgia, "Songti SC", "Noto Serif SC", serif;
+  color: var(--c-ink);
+  overflow-wrap: anywhere;
+}
+.ps-plan-journal__stations {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0 0 0 20px;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+.ps-plan-journal__stations li > span:first-child {
+  margin-right: 6px;
+}
+.ps-plan-journal__stations li .ps-plan-tag,
+.ps-plan-journal__stations li .ps-plan-stamp {
+  margin-right: 4px;
+}
+
+/* 资料来源。 */
+.ps-plan-sources {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ps-plan-sources li {
+  display: grid;
+  gap: 3px;
+  padding: 12px 0;
+  border-top: 1px solid var(--c-surface-stroke);
+}
+.ps-plan-sources__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+.ps-plan-sources p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--c-ink-2);
+  overflow-wrap: anywhere;
+}
+.ps-plan-sources p.ps-plan-sources__value {
+  color: var(--c-ink);
+}
+.ps-plan-sources a {
+  color: var(--c-leaf);
+  font-weight: 600;
+}
+.ps-plan-sources small {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--c-ink-3);
+}
+.ps-plan-sources__ref {
+  display: grid;
+  gap: 1px;
+}
+
+/* 攻略手账列表：“想去 / 准备中”与“去过的”。 */
+.ps-plan-shelf {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 24px;
+}
+.ps-plan-shelf__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 10px;
+}
+.ps-plan-shelf__head h2 {
+  margin: 0;
+  font: 700 19px/1.3 Georgia, "Songti SC", "Noto Serif SC", serif;
+  color: var(--c-ink);
+}
+.ps-plan-shelf__note {
+  margin: 0;
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  color: var(--c-ink-2);
+}
+.ps-plan-shelf__sub {
+  margin: 10px 0 0;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--c-ink-2);
+}
+.ps-plan-cards {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ps-plan-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px 12px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-card);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  text-decoration: none;
+  box-shadow: 0 10px 24px -20px var(--c-shadow);
+}
+.ps-plan-card__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.ps-plan-card__title {
+  font: 700 18px/1.3 Georgia, "Songti SC", "Noto Serif SC", serif;
+  overflow-wrap: anywhere;
+}
+.ps-plan-card__line {
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--c-ink-2);
+}
+.ps-plan-card__open {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--c-leaf);
+}
+.ps-plan-cards--after .ps-plan-card {
+  padding: 12px 14px 10px;
+  background: transparent;
+  box-shadow: none;
+}
+.ps-plan-cards--after .ps-plan-card__title {
+  font-size: 16px;
+}

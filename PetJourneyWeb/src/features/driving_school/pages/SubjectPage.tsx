@@ -11,7 +11,7 @@ import { toApiError } from "@/shared/api/errors";
 import { useServices } from "@/shared/services/registry";
 import { useNow } from "@/shared/time/clock";
 import { Button, Card, Chip, LoadingState, Page, Sheet, TopBar } from "@/shared/ui";
-import { useCurriculum, useInvalidateSchool, useSchoolStatus } from "../hooks";
+import { useCurriculum, useInvalidateSchool, useSchoolPetId, useSchoolStatus } from "../hooks";
 import { attemptText, formatDateTime, formatWait, isSubject, STATE_TEXT, STATE_TONE, SUBJECT_SHORT } from "../text";
 
 function Lessons({ info }: { info: SubjectCurriculum }) {
@@ -69,9 +69,10 @@ function ExamConfirm({ subject, info, cooldownHours, onClose }: { subject: Subje
   const { driving } = useServices();
   const navigate = useNavigate();
   const invalidate = useInvalidateSchool();
+  const petId = useSchoolPetId();
   const keyRef = useRef(newIdempotencyKey("school-exam"));
   const create = useMutation({
-    mutationFn: () => driving.createSession({ subject: subject.subject, mode: "formal", item: null }, keyRef.current),
+    mutationFn: () => driving.createSession({ subject: subject.subject, mode: "formal", item: null }, keyRef.current, petId),
     onSuccess: (session) => {
       keyRef.current = newIdempotencyKey("school-exam");
       invalidate();
@@ -113,11 +114,12 @@ function ExamConfirm({ subject, info, cooldownHours, onClose }: { subject: Subje
 function Practice({ subject, info }: { subject: SchoolSubject; info: SubjectCurriculum }) {
   const { driving } = useServices();
   const navigate = useNavigate();
+  const petId = useSchoolPetId();
   const keyRef = useRef(newIdempotencyKey("school-practice"));
   const start = useMutation({
     mutationFn: (item: string | null) => {
       const body: SessionCreateRequest = { subject, mode: "practice", item };
-      return driving.createSession(body, keyRef.current);
+      return driving.createSession(body, keyRef.current, petId);
     },
     onSuccess: (session) => {
       keyRef.current = newIdempotencyKey("school-practice");

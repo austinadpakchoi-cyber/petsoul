@@ -123,7 +123,7 @@ def input_gap(payload: dict, *, reference, origin, current, current_revision) ->
 
 
 def photo_inputs(payload: dict, *, species: str, reference: tuple[bytes, str] | None, origin: str | None,
-                 can_access: bool, generated_photos: bool, current, current_revision: int | None = None) -> tuple[PhotoContext, PhotoAccess] | None:
+                 can_access: bool, current, current_revision: int | None = None) -> tuple[PhotoContext, PhotoAccess] | None:
     """构造导演的输入；**必需事实缺任何一项就返回 None**（调用方据此 hold，0 预占 0 发送）。
 
     参考照的 `sha256` **由实收的 bytes 现算**，不信任外部传来的摘要——这样"指令里锁的那张脸"
@@ -164,10 +164,20 @@ def photo_inputs(payload: dict, *, species: str, reference: tuple[bytes, str] | 
                                  privacy=int(current.privacy_epoch), activity=int(current.activity_epoch))
     # 事件代数同理：上下文用登记那一刻采到的，`PhotoAccess` 用**执行这一刻**重新读到的。
     # 两边都回读 payload 的话这道闸永远不触发——那是伪装的围栏，所以 `current_revision` 是必需的。
+    # 三个用途开关一律为真：用户 2026-09-23 决定**取消逐次授权询问**（角色与生活/旅行两类都取消），
+    # 并明确 `photo_dna` 跟着新的图片政策走、不单独留开关。计划文档：「上传处说明照片会用于准备专属形象；
+    # 按图片服务的新策略自动处理，不另设家庭生图许可」。
+    #
+    # 它们原先**三个全绑在同一个 `generated_photos` 上**（P 在读我这份桥接时点出来的）：
+    # 退场那个字段却还读旧值的话，旧账号库里是 false / NULL→回落 false，
+    # 导演会以 `authorisation:generated_photos` / `:photo_dna` / `:reference_use` 三种原因
+    # **把每一张照片都 hold 住——不报错、不崩，就是全部不生成**。所以这里是写死真，不是读旧值。
+    #
+    # **`can_access` 不在此列**：那是成员关系/访问权，不是用途授权，一个字没动。
     access = PhotoAccess(pet_id=pet_id, household_id=household_id, versions=now_versions,
                          event_revision=int(current_revision), can_access=can_access,
-                         generated_photos=generated_photos, photo_dna=generated_photos,
-                         reference_use=generated_photos, text_director=False, companion_photos=False)
+                         generated_photos=True, photo_dna=True,
+                         reference_use=True, text_director=False, companion_photos=False)
     return context, access
 
 

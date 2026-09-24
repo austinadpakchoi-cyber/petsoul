@@ -25,7 +25,10 @@ from runtime_contract_boundary import CONTRACTS as BOUNDARY_CONTRACTS, BoundaryC
 from runtime_contract_consumers import CONTRACTS as CONSUMER_CONTRACTS, ConsumerContractCases
 from runtime_contract_director import CONTRACTS as DIRECTOR_CONTRACTS, DirectorContractCases
 from runtime_contract_media import CONTRACTS as MEDIA_CONTRACTS, MediaContractCases
+from runtime_contract_memory import MemoryPurposeContractCases
+from runtime_contract_metering import MeteringContractCases
 from runtime_contract_photo import CONTRACTS as PHOTO_CONTRACTS, PhotoContractCases
+from runtime_contract_reclaim import ReclaimContractCases
 from runtime_contract_recovery import CONTRACTS as RECOVERY_CONTRACTS, RecoveryContractCases
 from runtime_contract_reliability import ReliabilityContractCases
 from runtime_contract_schedule import CONTRACTS as SCHEDULE_CONTRACTS, ScheduleContractCases
@@ -52,7 +55,7 @@ class CrashChat:
         raise SimulatedCrash()
 
 
-class RuntimeContractCases(BoundaryContractCases, MediaContractCases, PhotoContractCases, DirectorContractCases, ConsumerContractCases, ScheduleContractCases, RecoveryContractCases,
+class RuntimeContractCases(BoundaryContractCases, MediaContractCases, PhotoContractCases, DirectorContractCases, ConsumerContractCases, MeteringContractCases, MemoryPurposeContractCases, ReclaimContractCases, ScheduleContractCases, RecoveryContractCases,
                            ReliabilityContractCases):
     """与 web_base.WebPlatformTestBase 组合使用（self.app / self.web / self.settings / self.user）。
     可靠性合同（缺表前提、额度与付费调用边界）在 runtime_contract_reliability.py 里，一起组合进来。"""
@@ -622,4 +625,4 @@ class RuntimeContractCases(BoundaryContractCases, MediaContractCases, PhotoContr
 CONTRACTS = ("c1a_queue_takeover", "c1b_reply_claim_crash", "c2_stale_results", "c3a_receipt_lost", "c3b_salary_sink_failure",
              "c4_household_isolation", "c5_revoke_in_flight", "c6_get_is_pure", "c7a_arrival_waits_for_model", "c7b_model_down_still_settles",
              "c7c_worker_blocked_by_model", "c3c_key_across_lifecycle", "c3d_takeover_race", "c8_api_link_fields",
-             "c9_budget_without_tables", "c30_budget_reconcile_after_clarification", "c20_fence_stacking", "c21_voucher_same_transaction", *BOUNDARY_CONTRACTS, *MEDIA_CONTRACTS, *SCHEDULE_CONTRACTS, *RECOVERY_CONTRACTS, *PHOTO_CONTRACTS, *DIRECTOR_CONTRACTS, *CONSUMER_CONTRACTS)
+             "c9_budget_without_tables", "c30_budget_reconcile_after_clarification", "c20_fence_stacking", "c21_voucher_same_transaction", *BOUNDARY_CONTRACTS, *MEDIA_CONTRACTS, *SCHEDULE_CONTRACTS, *RECOVERY_CONTRACTS, *PHOTO_CONTRACTS, *DIRECTOR_CONTRACTS, *CONSUMER_CONTRACTS, "c31_unknown_counts_actual_sends", "c32_note_purposes_do_not_leak", "c33_late_changes_and_legacy_payloads", "c35_paid_result_is_reclaimed_on_retry", "c36_reclaim_edge_cases", "c37_character_reclaim_edges", "c38_id_photo_reclaim_and_unknown")

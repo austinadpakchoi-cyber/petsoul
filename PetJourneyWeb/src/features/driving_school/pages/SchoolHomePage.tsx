@@ -7,7 +7,7 @@ import { useNow } from "@/shared/time/clock";
 import { useServices } from "@/shared/services/registry";
 import { Button, Card, Chip, DataOriginBadge, Icon, Page, PetAvatar, QueryView, TopBar } from "@/shared/ui";
 import { env } from "@/shared/config/env";
-import { useCurriculum, useInvalidateSchool, usePet, useSchoolHistory, useSchoolStatus } from "../hooks";
+import { useCurriculum, useInvalidateSchool, usePet, useSchoolHistory, useSchoolPetId, useSchoolStatus } from "../hooks";
 import { attemptText, formatDateTime, formatWait, STATE_TEXT, STATE_TONE, SUBJECT_SHORT } from "../text";
 
 function SubjectLine({ subject, now }: { subject: SubjectStatus; now: number }) {
@@ -33,7 +33,8 @@ function Enroll({ status }: { status: DrivingSchoolStatus }) {
   const { driving } = useServices();
   const invalidate = useInvalidateSchool();
   const { name } = usePet();
-  const enroll = useMutation({ mutationFn: () => driving.enroll(), onSuccess: invalidate });
+  const petId = useSchoolPetId();
+  const enroll = useMutation({ mutationFn: () => driving.enroll(petId), onSuccess: invalidate });
   return (
     <Card paper className="ps-stack">
       <strong className="ps-h2">{status.wish_text ? `${name}想学开车` : `陪${name}学开车`}</strong>
@@ -174,7 +175,7 @@ export function SchoolHomePage() {
   const curriculum = useCurriculum();
   return (
     <Page>
-      <TopBar title="爪爪驾校" subtitle="主人陪考，宠物拿证" back="/circle" right={env.dataMode === "fixture" ? <DataOriginBadge origin="fixture" /> : undefined} />
+      <TopBar title="爪爪驾校" subtitle="主人陪考，宠物拿证" back="/map" right={env.dataMode === "fixture" ? <DataOriginBadge origin="fixture" /> : undefined} />
       <QueryView query={status}>{(data) => <Overview status={data} curriculum={curriculum.data} />}</QueryView>
     </Page>
   );

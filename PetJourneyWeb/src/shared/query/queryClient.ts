@@ -42,13 +42,22 @@ export const queryKeys = {
   publicPet: (petId: string) => ["public", "pet", petId] as const,
   publicPetPosts: (petId: string, cursor?: string) => ["public", "pet-posts", petId, cursor ?? "first"] as const,
   photoRequestsFor: (userId: string, petId: string) => ["pets", "photo-requests", userId, petId] as const,
+  characterFor: (userId: string, petId: string) => ["pets", "character", userId, petId] as const,
   invitePreview: (token: string) => ["households", "invite-preview", token] as const,
   households: (userId: string) => ["households", "list", userId] as const,
   householdDetail: (userId: string, householdId: string) => ["households", "detail", userId, householdId] as const,
   householdInvites: (userId: string, householdId: string) => ["households", "invites", userId, householdId] as const,
   householdRelationship: (userId: string, petId: string) => ["households", "relationship", userId, petId] as const,
   jobsFor: (userId: string, petId: string) => ["life", "jobs", userId, petId] as const,
-  credentialsFor: (userId: string, petId: string) => ["life", "credentials", userId, petId] as const,
+  // 2026-09-24 删掉 credentialsFor（["life","credentials",…]）：回忆页改读卡包的 `credentials` 前缀之后，
+  // 全仓只剩这一行定义、零引用。**删比留安全**——留着的话，谁拿它去失效缓存都会
+  // **静默地什么都不失效**（没有任何数据存在那个键下），而那种失败不报错。
+  /** TA 在外面遇到的朋友（关系，不是位置）。 */
+  friendsFor: (userId: string, petId: string) => ["social", "friends", userId, petId] as const,
+  /** TA 的 DNA：只按宠物分键；保存时的 expected_version 是并发凭据，不进 key。 */
+  dnaFor: (userId: string, petId: string) => ["pets", "dna", userId, petId] as const,
+  /** 统一世界状态（W1）：按请求者分键（返回的是这个人家里的全部宠物）。 */
+  worldStateFor: (userId: string) => ["world", "state", userId] as const,
   credentialFor: (userId: string, petId: string, credentialId: string) => ["life", "credential", userId, petId, credentialId] as const,
   crops: ["farm", "crops"] as const,
   neighbors: ["farm", "neighbors"] as const,

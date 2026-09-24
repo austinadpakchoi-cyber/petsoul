@@ -1,0 +1,5 @@
+# 本工程的构建产物与本地运行状态（node_modules 已由仓库根 .gitignore 覆盖）
+dist/
+*.tsbuildinfo
+.runtime/
+output/

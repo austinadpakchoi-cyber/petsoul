@@ -75,7 +75,7 @@ def capabilities(settings) -> list[Capability]:
         cap("pet.autonomy", "journey", CapabilityStatus.available,
             "TA 自己决定出不出门、去哪（白天，按 DNA 的节奏与银行卡余额）；主人的建议会被认真考虑；可打工赚钱"),
         cap("adventure.hero_image", "adventure", CapabilityStatus.available if image_ready(settings) else CapabilityStatus.not_configured,
-            "主人在设置里开启后，冒险事件由生图服务（火山方舟 Seedream）画一张插画" if image_ready(settings) else "生图供应商未配置；以文字故事与原创徽章呈现"),
+            "主人在设置里开启后，冒险事件由已配置的生图服务画一张插画" if image_ready(settings) else "生图供应商未配置；以文字故事与原创徽章呈现"),
         cap("map.amap", "map", CapabilityStatus.available if amap_ready(settings) else CapabilityStatus.not_configured,
             "服务端真实地点（港澳咖啡店）与步行/驾车估时" if amap_ready(settings) else "高德 key 未配置"),
         cap("map.basemap", "map", CapabilityStatus.available if amap_ready(settings) else CapabilityStatus.not_configured,

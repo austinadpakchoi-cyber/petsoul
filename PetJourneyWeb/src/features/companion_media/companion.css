@@ -93,9 +93,9 @@
   gap: 14px;
   align-items: center;
   padding: 10px;
-  border: 1px solid #e7dcc5;
+  border: 1px solid color-mix(in srgb, var(--c-sun) 18%, var(--c-surface-stroke));
   border-radius: 18px;
-  background: #fffdf7;
+  background: var(--c-surface);
 }
 .ps-media-heading > div:last-child {
   min-width: 0;
@@ -112,23 +112,32 @@
   display: grid;
   gap: 7px;
   padding: 10px;
-  border: 1px solid #e7dcc5;
+  border: 1px solid color-mix(in srgb, var(--c-sun) 18%, var(--c-surface-stroke));
   border-radius: 16px;
-  background: #fffdf7;
+  background: var(--c-surface);
 }
 .ps-media-actions > .ps-row {
   justify-content: space-between;
+}
+/* “自己从头听/看”是小号按钮（36px），这里放大到 40px 点按区 */
+.ps-media-actions .ps-btn--sm {
+  min-height: 40px;
 }
 .ps-media-caption {
   font-size: 11px;
   line-height: 1.5;
   color: var(--c-ink-2);
 }
+/* 面板底色跟主题走：原来写死浅纸色，深色下标题、曲目名等继承来的浅色字几乎看不见 */
 .ps-media-sheet {
   max-height: 58dvh;
-  border: 1px solid #efe3c8;
+  border: 1px solid color-mix(in srgb, var(--c-sun) 18%, var(--c-surface-stroke));
   background:
-    radial-gradient(circle at 12% 0%, #fffdf2 0, transparent 29%), #f8f3e8;
+    radial-gradient(circle at 12% 0%, var(--c-surface) 0, transparent 29%), var(--c-surface-2);
+}
+/* 进度条轨道默认是 --c-surface-2，和面板底色一样会看不见：面板里给轨道掺一点墨色 */
+.ps-media-progress .ps-progress {
+  background: color-mix(in srgb, var(--c-ink) 12%, var(--c-surface-2));
 }
 .ps-media-body {
   gap: 14px;

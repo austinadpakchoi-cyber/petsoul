@@ -26,15 +26,24 @@ AGENT_WIRING_SRC = "app/web_agent_wiring.py"
 class PhotoContractCases:
     """与 web_base.WebPlatformTestBase 组合使用（`_sql` 由 RuntimeContractCases 提供）。"""
 
-    def _photo_visit(self, label: str, clock, *, generated_photos: bool):
-        """一位主人 ＋ 一只宠物到店，返回 (主人, visit_id, 拍照活动号, journey_id)。生图供应商换成替身。"""
+    def _photo_visit(self, label: str, clock, *, generating: bool):
+        """一位主人 ＋ 一只宠物到店，返回 (主人, visit_id, 拍照活动号, journey_id)。生图供应商换成替身。
+
+        `generating`＝这一次到底生不生成照片。**触发它的东西换过一次**：
+        用户 2026-09-23 取消 AI 生图的逐次授权询问后，`web_agent_wiring.py` 的
+        `photo_generation_on` 只剩 `bool(illustrations.available())`，**不再读家庭设置 `generated_photos`**。
+        所以这里改成拨**供应商可用性**——**钉的规则没变**（不生成时留纸质卡片、不排队、不写插画），
+        变的只是把它关掉的那个开关。继续用 `generated_photos=False` 只会得到一个**什么都没关掉**的空转用例。
+        """
         from runtime_contract_media import StagedIllustrator
 
         owner = self.user(label)
         owner.upload_pet("年糕", "cat")
         owner.move_in()
-        assert owner.patch("/settings", {"generated_photos": generated_photos}).status_code == 200
-        art = self._use_illustrator(None, None)  # 供应商可用；是否真的生成由家庭设置决定
+        # 这个设置现在不再决定生不生成；保持打开，免得看起来像它仍在承重
+        assert owner.patch("/settings", {"generated_photos": True}).status_code == 200
+        art = self._use_illustrator(None, None)
+        art.available = generating  # 现在决定生不生成的是"供应商可不可用"
         journey_id = owner.post("/journey/depart", {"destination_key": "local:cafe"}).json()["journey_id"]
         clock.advance(minutes=20)
         self.run_background(clock.now)
@@ -74,7 +83,7 @@ class PhotoContractCases:
                   "photo_generation_on_is_callable": callable(getattr(journeys, "photo_generation_on", None))}
 
         # 一、正常生成分支：四者一起出现
-        owner, visit_id, activity_id, journey_id, art = self._photo_visit("q-c24-normal", clock, generated_photos=True)
+        owner, visit_id, activity_id, journey_id, art = self._photo_visit("q-c24-normal", clock, generating=True)
         clicked_at = clock.now
         generating = bool(journeys.photo_generation_on(journeys.repo.visit(visit_id), journeys.repo.get(journey_id)))
         response = owner.post(f"/visits/{visit_id}/actions", {"activity_id": activity_id})
@@ -90,7 +99,7 @@ class PhotoContractCases:
         normal["event_occurred_at_after_worker"] = self._photo_state(journey_id, visit_id)["event_occurred_at"]
 
         # 二、注入：提交活动时版本冲突 → 四者一起回滚
-        owner2, visit2, activity2, journey2, _ = self._photo_visit("q-c24-rollback", clock, generated_photos=True)
+        owner2, visit2, activity2, journey2, _ = self._photo_visit("q-c24-rollback", clock, generating=True)
         real_update = journeys.repo.update_visit
         journeys.repo.update_visit = lambda visit, expected_version, conn=None: False  # 事务内造版本冲突，不争锁
         try:
@@ -102,14 +111,14 @@ class PhotoContractCases:
             journeys.repo.update_visit = real_update
         rolled_back = {"http": status, "activity": self._activity_state(owner2, visit2, activity2), **self._photo_state(journey2, visit2)}
 
-        # 三、纸卡片分支：没开"生成照片" → 不排队、不写插画，但要留下卡片与事件
-        owner3, visit3, activity3, journey3, _ = self._photo_visit("q-c24-postcard", clock, generated_photos=False)
+        # 三、纸卡片分支：这一次不生成（**现在由供应商不可用触发**，见 `_photo_visit`）→ 不排队、不写插画，但要留下卡片与事件
+        owner3, visit3, activity3, journey3, _ = self._photo_visit("q-c24-postcard", clock, generating=False)
         card = owner3.post(f"/visits/{visit3}/actions", {"activity_id": activity3})
         postcard = {"http": card.status_code, "activity": self._activity_state(owner3, visit3, activity3),
                     **self._photo_state(journey3, visit3)}
 
         # 四、守卫：该生成却没有同事务登记可用时，必须在动任何业务数据之前拒绝（进程内摘掉一层，不是补回调）
-        owner4, visit4, activity4, journey4, _ = self._photo_visit("q-c24-guard", clock, generated_photos=True)
+        owner4, visit4, activity4, journey4, _ = self._photo_visit("q-c24-guard", clock, generating=True)
         keep = journeys.photo_request_in
         journeys.photo_request_in = None
         try:
@@ -235,13 +244,33 @@ class PhotoContractCases:
                      "b_usage": self._image_usage(f"pet:{pet_b}:illustration", clock)}
 
         # 五、全局上限也独立生效：把全局计数占满之后，一只**每宠额度还没动过**的新宠物同样被拒
+        #
+        # 需要几只宠物**由两条上限算出来**，不写死次数：全局上限一改（2026-09-24 从 20 调到 500），
+        # 写死的次数就填不满，于是这一步根本没走到全局层——而失败会出现在**下面那条断言**上，
+        # 看起来像"全局层不生效"。**填不满要当场说出来，不能默默少填。**
+        # 每只宠物最多占到它自己的上限，所以填一次用 `per_pet_cap` 个单位。
+        step = max(1, per_pet_cap)
+        remaining = max(0, global_cap - self._image_usage("provider:image:daily", clock)["inflight"])
+        need = -(-remaining // step)  # 向上取整
+        pet_budget = 150  # 安全上限：配额若被调得极大，不要把一轮跑成几分钟——够不着就让前提断言红
         filled, index = [], 0
-        while self._image_usage("provider:image:daily", clock)["inflight"] + 2 <= global_cap and index < 40:
+        while (self._image_usage("provider:image:daily", clock)["inflight"] + step <= global_cap
+               and index < min(need + 2, pet_budget)):
             index += 1
-            filled.append(type(reserve(new_pet(f"q-c27-fill{index}"), f"fill{index}")).__name__)
+            filled.append(type(reserve(new_pet(f"q-c27-fill{index}"), f"fill{index}", units=step)).__name__)
+        # 粗填按每宠上限走，最后必然剩下不足一整份的零头（实测 494/500）——**零头也要填掉**，
+        # 否则还留着能塞下一笔 2 个单位的空间，"被全局层挡住"就无从谈起。
+        # 零头一定小于 `step`（循环就是因此退出的），所以一只新宠物装得下。
+        tail = max(0, global_cap - self._image_usage("provider:image:daily", clock)["inflight"])
+        if tail:
+            filled.append(type(reserve(new_pet("q-c27-filltail"), "filltail", units=tail)).__name__)
+        after_fill = self._image_usage("provider:image:daily", clock)
         fresh = new_pet("q-c27-fresh")
         global_denied = reserve(fresh, "fresh")
-        global_layer = {"filled": len(filled), "usage": self._image_usage("provider:image:daily", clock),
+        global_layer = {"filled": len(filled), "needed": need, "pet_budget": pet_budget, "step": step,
+                        "usage_after_fill": after_fill, "usage": self._image_usage("provider:image:daily", clock),
+                        # 前提：占满了才谈得上"全局层把新宠物挡住"；没占满时下面那条断言说明不了任何事
+                        "really_full": after_fill["inflight"] + 2 > global_cap,
                         "denied_type": type(global_denied).__name__, "denied_scope": getattr(global_denied, "scope", None),
                         "fresh_pet_usage": self._image_usage(f"pet:{fresh}:illustration", clock)}
 
@@ -258,6 +287,9 @@ class PhotoContractCases:
             "被拒时一次都不发、如实显示没画成": blocked["dispatched"] == 0 and blocked["rows_added"] == 0
                 and blocked["illustration"] == "failed",
             "一只打满不吃掉别的宠物": isolation["type"] == "BudgetReservation" and isolation["reserved_units"] == 2,
+            # 前提：占满了才谈得上"全局层把新宠物挡住"。没占满时下面那条什么也说明不了——
+            # 2026-09-24 全局上限从 20 调到 500，写死 40 次的填法当场填不满，而红出现在**下面那条**上。
+            "前提：全局计数**确实被占满**了": global_layer["really_full"],
             "全局上限独立生效：每宠额度没动过的新宠物照样被拒": global_layer["denied_type"] == "BudgetDenied"
                 and global_layer["denied_scope"] == "provider:image:daily"
                 and global_layer["fresh_pet_usage"] == {"used": 0, "inflight": 0},
@@ -615,6 +647,125 @@ class PhotoContractCases:
                            "app/web_photo_director/compiler.py", "app/web_photo_director/readiness.py"),
             len(GUARD.attempts) - guard0)
 
+
+    # ---- Q-C34：旧 Q-C23 的继任者（访问边界那一层） ----
+    def contract_c34_access_boundary_in_flight(self) -> ContractResult:
+        """Q-C34：生图在途时把一位家人移出家庭——图照常发布给仍有权的人，**被移出的那位取不到**；已发出的费用照留。
+
+        **这是旧 Q-C23 的继任者，不是它的修订版。** 旧 C23 钉的是"主人关掉『生成照片』→ 在途撤权 → 旧结果不得发布"；
+        用户 2026-09-23 取消逐次授权询问后，**那条规则本身不存在了**（`photo_generation_on` 只剩
+        `bool(illustrations.available())`），所以不是换个触发条件接着钉（那是 Q-C24 的情形），而是**按现规则另写一条**。
+        旧 C23 的证据保留原指纹并标历史，**本合同不复用它的编号**。
+
+        **仍然适用、由本合同接手的那一半**：授权在途发生变化时，**结果不得给已经失去访问权的人**。
+        现在承载它的是**取图那一刻的访问边界**（`illustrations.file_for` → `can_view_pet` → `pets.is_member`），
+        而不是发布期的一道闸——所以断言落在"谁取得到"，不是"发没发布"。
+        """
+        guard0 = len(GUARD.attempts)
+        clock = FakeClock(LUNCH_UTC).install(self)
+        web = self.web
+
+        def trip(label: str, *, remove_at: str | None):
+            """一位主人＋一位受邀家人，宠物坐船出门一趟；`remove_at` 决定在替身发送的哪个时点把家人移出。"""
+            from app.schemas import EconomyTransactionType
+
+            box: list = []
+            removed: list = []
+
+            def hook(index: int, at: str) -> None:
+                if remove_at is not None and at == remove_at and box and not removed:
+                    owner, carer, household_id = box[0]
+                    done = owner.delete(f"/households/{household_id}/members/{carer.user_id}")
+                    removed.append(done.status_code)
+
+            art = self._use_illustrator(None, None)
+            art.on_call = hook
+            owner = self.user(f"q-c34-{label}")
+            owner.upload_pet("年糕", "cat")
+            owner.move_in()
+            household_id = owner.get("/households").json()[0]["household_id"]
+            token = owner.post(f"/households/{household_id}/invites",
+                               {"role": "caregiver", "relation_hint": "妈妈", "ttl_hours": 24}).json()["token"]
+            carer = self._register(f"q-c34-{label}-carer", {"kind": "invite", "invite_token": token})
+            assert carer.post("/invites/accept", {"token": token}).status_code == 200
+            box.append((owner, carer, household_id))
+
+            web.economy.apply(owner.pet_id, 300, EconomyTransactionType.web_reward, f"q-c34:{owner.pet_id}",
+                              reason="Q 合同船票", source="q.contract")
+            assert owner.post("/journey/depart", {"destination_key": "macau_ferry"}).status_code == 200
+            clock.advance(hours=3)
+            self.run_background(clock.now)
+            rows = self._sql("SELECT task_id FROM web_tasks WHERE kind = 'illustration' AND dedupe_key LIKE ? "
+                             "AND payload_json LIKE ?", ("%:adventure:%", f"%{owner.pet_id}%"))
+            assert rows, "坐船那趟应当排出一张冒险插画"
+            task_id = rows[0][0]
+            self._park_other_tasks(task_id)  # 只看这一张，别让同趟别的图混进计数与额度
+            web.illustrations.run_pending()
+
+            art_rows = self._sql("SELECT illustration_id, status FROM web_illustrations WHERE task_id = ?", (task_id,))
+            illustration_id = art_rows[0][0] if art_rows else "-"
+            fetch = f"/media/illustrations/{illustration_id}"
+            reservations = [dict(zip(("status", "outcome", "actual_units"), r)) for r in self._sql(
+                "SELECT status, outcome, actual_units FROM web_budget_reservations WHERE operation_id LIKE ?",
+                (f"illustration:{task_id}:%",))]
+            return {"removed_http": removed[0] if removed else None,
+                    "illustration": art_rows[0][1] if art_rows else "-",
+                    "task": (self._sql("SELECT status, attempts FROM web_tasks WHERE task_id = ?", (task_id,))
+                             or [(None, None)])[0],
+                    "owner_fetch": owner.get(fetch).status_code, "carer_fetch": carer.get(fetch).status_code,
+                    "reservations": reservations, "dispatched": art.dispatched,
+                    "carer_still_member": carer.get("/households").status_code == 200
+                    and bool(carer.get("/households").json())}
+
+        mid_render = trip("midrender", remove_at="enter")
+        before_publish = trip("beforepublish", remove_at="exit")
+        normal = trip("normal", remove_at=None)
+        cases = {"mid_render": mid_render, "before_publish": before_publish, "normal": normal}
+
+        def settled(case: dict) -> bool:
+            return bool(case["reservations"]) and all(r["status"] in ("settled", "unknown") for r in case["reservations"])
+
+        checks = {
+            "正常对照：没人被移出时，主人与家人**都取得到**这张图":
+                normal["owner_fetch"] == 200 and normal["carer_fetch"] == 200,
+            "正常对照：照常出图": normal["illustration"] == "ready" and normal["dispatched"] >= 1,
+            "发送进行中被移出：那位家人**取不到**（不是 200）": mid_render["carer_fetch"] != 200,
+            "发送进行中被移出：仍有权的主人照常取得到": mid_render["owner_fetch"] == 200,
+            "响应已返回、写事务之前被移出：那位家人取不到": before_publish["carer_fetch"] != 200,
+            "响应已返回、写事务之前被移出：主人照常取得到": before_publish["owner_fetch"] == 200,
+            "两个时点的移出都真的生效了（不是请求没打出去）":
+                mid_render["removed_http"] in (200, 204) and before_publish["removed_http"] in (200, 204)
+                and not mid_render["carer_still_member"] and not before_publish["carer_still_member"],
+            "移出之后图仍然走到终态，不留永久处理中":
+                all(case["task"][0] in ("succeeded", "failed") for case in (mid_render, before_publish)),
+            "已经发出的那次照实结算，不因为有人被移出就抹掉":
+                all(settled(case) for case in cases.values()),
+            "三档都真的发出过调用（不是因为没发所以取不到）":
+                all(case["dispatched"] >= 1 for case in cases.values()),
+            "全程没有一次出网": len(GUARD.attempts) - guard0 == 0,
+        }
+        return ContractResult(
+            "Q-C34", "生图在途时家人被移出：图照常发布给仍有权的人，被移出的那位取不到；已发出的费用照留",
+            "旧 Q-C23 的继任者（CR-IMAGE-MEMORY-PURPOSE-2026-09-24 第 33 行）", LEVEL_INTEGRATION,
+            "I（访问边界装配 can_view_pet）＋ A（发送与结算边界）",
+            PASS if all(checks.values()) else FAIL,
+            "没人被移出时主人与家人都取得到；在 render 进行中与响应返回后各移出一次，"
+            "被移出的那位取不到而主人照常取得到；图仍走到终态、已发出的预占照实结算",
+            {"checks": checks, "cases": cases,
+             "note": "**不再断言「撤权即停图」**——用户 2026-09-23 取消逐次授权询问后那条规则不存在了。"
+                     "本合同接手的是仍然适用的那一半：结果不得给已失去访问权的人。"},
+            ["一位主人建家庭、发邀请，另一位注册后接受邀请成为 caregiver；宠物坐船去澳门跑一趟排出冒险插画",
+             "**park 掉同趟别的插画任务**，这样计数与额度只属于被观察的那一张",
+             "**两个时点各移出一次**：替身 `render` **进行中**（enter）与**响应已返回、写事务之前**（exit），"
+             "走正式入口 `DELETE /households/{hid}/members/{uid}`",
+             "跑完后两个人各自 `GET /media/illustrations/{id}`：主人应当 200，被移出那位应当不是 200",
+             "每档都核：移出请求确实成功且该用户确实不再是成员、任务终态、预占结算、**确实发出过调用**",
+             "**未覆盖**：远端已发出的调用无法撤销（本合同不要求）；发布期没有独立的一道闸，"
+             "承载这条性质的是**取图那一刻**的 `can_view_pet`"],
+            source_digests(ILLUS_SRC, "app/web_composition.py", "app/routers/web/pets.py",
+                           "app/routers/web/households.py", "app/web_pets/service.py"),
+            len(GUARD.attempts) - guard0)
+
 CONTRACTS = ("c24_photo_is_atomic",
              "c26_photo_command_facts_and_idempotency",
-             "c27_image_quota_two_layers", "c28_photo_requests_are_visible")
+             "c27_image_quota_two_layers", "c28_photo_requests_are_visible", "c34_access_boundary_in_flight")

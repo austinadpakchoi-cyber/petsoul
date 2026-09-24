@@ -1,0 +1,119 @@
+/*
+ * 菜园地块 GardenBed（由 GardenScene.tsx 引入）：UI-ASSET-006 v1 开垦土块 + 作物“种在地里”。
+ *
+ * farm.css 里早先给木框写的 .ps-garden-bed* 规则还在（另一个分身在做 CSS 巡检，这里不动它）。
+ * 这里一律用 .ps-garden-bed.is-tilled 前缀，比那边高一级，把几何覆盖掉——不靠样式表的先后顺序。
+ * 摇摆、成熟上下拱、刚种下冒芽、光晕呼吸这些动画，以及“减少动态效果”时全部停掉，仍用 farm.css 那一套，这里不加动画。
+ *
+ * 数据从两处来，都是 CSS 变量：
+ * - 土块与种植点：slotStyle() 写在地块外层——--bed-soil（哪张土块图）、--plant-x / --plant-y（垄沟里的种植点，% of 土块图）；
+ *   场景外溢出的地块没有 slot，用 a 图和它的种植点。
+ * - 作物几何：GardenBed 写在 .ps-garden-bed 上——--crop-w（作物图宽，% of 土块图宽）、--crop-ax / --crop-ay（入土点，0–1）、
+ *   --crop-ring（入土处半宽，0–1）、--crop-top / --crop-l / --crop-r（可见内容包围盒，0–1）。
+ * 土块图 720×440：高 = 宽 × 440/720，所以宽 w% 的方形作物图在高度方向是 w × 720/440 %。
+ * 土块的俯视角：a 图近似圆形的土面画成 624×272，扁度约 0.44；入土那一圈、接地阴影都按这个扁度画。
+ *
+ * 颜色一律写死：插画是白天的实物，不随深色模式变，不用主题变量，所以深色模式下土和菜不会发灰。
+ * 这是 tokens.css“模块只用令牌、不写死颜色”的例外：接地阴影 rgba(48, 30, 14, …) 与成熟光 #fff8dc / #ffe27ab3
+ * 是画在插画上的光影，属于插画本身，和 home.css 的“场景插画本身是白天，不随主题变”同一个理由；界面本身（木牌、泡泡、按钮）不在此列。
+ */
+.ps-garden-bed.is-tilled {
+  --px: var(--plant-x, 50);
+  --py: var(--plant-y, 40.9);
+  --soil: var(--bed-soil, url("/ui-assets/UI-ASSET-006/v1/plot-tilled-a.webp"));
+  aspect-ratio: 720 / 440;
+}
+
+/* 土块与前景土层：同一张土块图、同一个位置、同样的铺法，像素完全一样。 */
+.ps-garden-bed.is-tilled .ps-garden-bed__soil,
+.ps-garden-bed.is-tilled .ps-garden-bed__front {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--soil) center / 100% 100% no-repeat;
+  /* 开垦地是贴着地面的，不像木框那样投影 */
+  filter: none;
+  pointer-events: none;
+}
+
+/*
+ * 前景土层：叠在作物前面，只露种植线以下（前沿）那一截——萝卜的下半个球根、番茄豌豆的茎基和外露小根都“在土里”。
+ * 入土那一圈俯视是个扁椭圆（半宽 --crop-ring），椭圆里不盖：成熟萝卜在入土线以下还露出前面那一弯，像坐在土窝里。
+ * 两个遮罩取交集：入土线以下 ∩ 椭圆之外。
+ * 除了挡住作物的那一截，它和下面的土块一模一样，看不出多了一层；入土线是固定的，作物摇摆、拱起时土不动。
+ */
+.ps-garden-bed.is-tilled .ps-garden-bed__front {
+  --ring-x: calc(var(--crop-w) * var(--crop-ring) * 1%);
+  --ring-y: calc(var(--crop-w) * var(--crop-ring) * 0.44 * 720 / 440 * 1%);
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent calc(var(--py) * 1% - 1%), #000 calc(var(--py) * 1% + 0.6%)),
+    radial-gradient(var(--ring-x) var(--ring-y) at calc(var(--px) * 1%) calc(var(--py) * 1%), transparent 86%, #000 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent calc(var(--py) * 1% - 1%), #000 calc(var(--py) * 1% + 0.6%)),
+    radial-gradient(var(--ring-x) var(--ring-y) at calc(var(--px) * 1%) calc(var(--py) * 1%), transparent 86%, #000 100%);
+  mask-composite: intersect;
+}
+
+/* 接地阴影：茎基 / 球根周围土面上一小团暗影，入土线以下那半被前景土层盖住，只留身后一圈。 */
+.ps-garden-bed.is-tilled .ps-garden-bed__shade {
+  --shade-x: calc(var(--crop-w) * (var(--crop-ring) + 0.08));
+  position: absolute;
+  left: calc((var(--px) - var(--shade-x)) * 1%);
+  width: calc(var(--shade-x) * 2 * 1%);
+  top: calc((var(--py) - var(--shade-x) * 0.44 * 720 / 440) * 1%);
+  height: calc(var(--shade-x) * 0.44 * 720 / 440 * 2 * 1%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(48, 30, 14, 0.42), rgba(48, 30, 14, 0.16) 60%, rgba(48, 30, 14, 0));
+  pointer-events: none;
+}
+
+/* 作物：入土点（--crop-ax, --crop-ay）对准种植点（--px, --py）。摇摆、拱起都以入土点为轴。 */
+.ps-garden-bed.is-tilled .ps-garden-bed__crop {
+  left: calc((var(--px) - var(--crop-w) * var(--crop-ax)) * 1%);
+  bottom: calc((100 - var(--py) - var(--crop-w) * (1 - var(--crop-ay)) * 720 / 440) * 1%);
+  width: calc(var(--crop-w) * 1%);
+  height: auto;
+  aspect-ratio: 1;
+  transform-origin: calc(var(--crop-ax) * 100%) calc(var(--crop-ay) * 100%);
+  /*
+   * 入土点往下只留到入土那一圈的前弧再多一小截，再往下整张图不画：土块前沿之外（前景土层盖不到的透明边）也不会露出根。
+   * 多留的一小截比“熟了拱一拱”（farm.css 的 ps-garden-ready 上移 3px）长，拱起来时入土线下面不会空。
+   */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc((var(--crop-ay) + var(--crop-ring) * 0.44 + 0.045) * 100%), transparent calc((var(--crop-ay) + var(--crop-ring) * 0.44 + 0.06) * 100%));
+  mask-image: linear-gradient(to bottom, #000 calc((var(--crop-ay) + var(--crop-ring) * 0.44 + 0.045) * 100%), transparent calc((var(--crop-ay) + var(--crop-ring) * 0.44 + 0.06) * 100%));
+}
+
+/* 成熟：素材里没有光圈，光由代码加——作物身后一团暖光（呼吸动画在 farm.css）＋贴着轮廓的一圈亮边。只在成熟时有。 */
+.ps-garden-bed.is-tilled .ps-garden-bed__crop.is-ripe {
+  filter: drop-shadow(0 0 1.5px #fff8dc) drop-shadow(0 0 5px #ffe27ab3);
+}
+/* 光晕抬在入土线上方，照着作物，不把茎基旁的土照成一片雾 */
+.ps-garden-bed.is-tilled .ps-garden-bed__glow {
+  left: calc((var(--px) - var(--crop-w) * 0.42) * 1%);
+  right: auto;
+  width: calc(var(--crop-w) * 0.84 * 1%);
+  bottom: calc((100 - var(--py) + 4) * 1%);
+  height: calc(var(--crop-w) * (var(--crop-ay) - var(--crop-top)) * 720 / 440 * 0.95 * 1%);
+}
+
+/*
+ * 点按延伸：作物大半露在土块上方，按钮（土块那一块）够不着。这一块盖住作物露在地面以上的可见部分（左右各收 4%），
+ * 放在按钮里面，点它就是点这块地；本身透明、不画东西。
+ * 裁成椭圆（点击判定跟着裁剪走）：去掉包围盒四个透明角，前排高个作物不会把后排地块前沿的点击抢走。
+ */
+.ps-garden-bed.is-tilled .ps-garden-bed__reach {
+  position: absolute;
+  left: calc((var(--px) - var(--crop-w) * (var(--crop-ax) - var(--crop-l) - 0.04)) * 1%);
+  width: calc(var(--crop-w) * (var(--crop-r) - var(--crop-l) - 0.08) * 1%);
+  bottom: calc((100 - var(--py)) * 1%);
+  height: calc(var(--crop-w) * (var(--crop-ay) - var(--crop-top)) * 720 / 440 * 1%);
+  clip-path: ellipse(50% 50% at 50% 50%);
+  pointer-events: auto;
+}
+
+/* 场景外溢出的地块排成一行：给露在上方的作物留出位置，不压到上面的内容。 */
+.ps-garden-slot.is-static .ps-garden-bed.is-tilled.has-plant {
+  margin-top: 36%;
+}

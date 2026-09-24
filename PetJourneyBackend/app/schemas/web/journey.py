@@ -112,7 +112,7 @@ class DestinationOption(WebModel):
     title: str
     city: str
     summary: str
-    fee: int = Field(description="旅费（travel_coin），出发时从统一账本扣除")
+    fee: int = Field(description="这趟的星币标价。**出发时从统一账本扣除，但持驾校借车券的首次自驾不扣**——所以「账本里没有这一行」有两种含义（用了券／本来免费），不要据此推断花了多少；实际扣没扣见行程的 fare_waived（m1701）")
     total_minutes: int = Field(description="门到门往返总时长（真实经过时间，不压缩）")
     modes: list[str] = Field(default_factory=list)
     time_basis: str

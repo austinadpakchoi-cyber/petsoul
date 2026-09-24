@@ -1,118 +1,90 @@
-.ps-garden-sheet,
+/* 选种面板底色跟主题走：原来写死浅纸色，深色下面板标题“种点什么”几乎看不见 */
 .ps-crop-sheet {
-  border: 1px solid #efe3c8;
+  border: 1px solid color-mix(in srgb, var(--c-sun) 18%, var(--c-surface-stroke));
   background:
-    radial-gradient(circle at 12% 0%, #fffdf2 0, transparent 29%), #f8f3e8;
+    radial-gradient(circle at 12% 0%, var(--c-surface) 0, transparent 29%), var(--c-surface-2);
 }
-.ps-garden-sheet__body {
-  gap: 14px;
-}
-.ps-garden-moment {
-  display: grid;
-  grid-template-columns: 104px 1fr auto;
-  gap: 12px;
+/* ---------- 菜园（二级页 /garden）：顶栏旅费、场景里的仓库篮子与计数、刚种下、去处 ---------- */
+/* 顶栏旅费：跟主题走（原来写死浅色，深色顶栏里是一块亮斑）；点按区 40px */
+.ps-garden-wallet {
+  display: inline-flex;
   align-items: center;
-  min-height: 112px;
-  padding: 9px 11px 9px 5px;
-  border: 1px solid #e6d8b9;
-  border-radius: 18px;
-  background: #fffdf6;
-  box-shadow: inset 0 1px #fff;
+  gap: 5px;
+  min-height: 40px;
+  padding: 4px 11px;
+  border: 1px solid color-mix(in srgb, var(--c-sun) 35%, var(--c-surface-stroke));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-sun-soft) 45%, var(--c-surface));
+  color: color-mix(in srgb, var(--c-sun) 40%, var(--c-ink));
+  font-size: 14px;
+  text-decoration: none;
 }
-.ps-garden-moment__art {
-  position: relative;
-  align-self: stretch;
-  overflow: hidden;
+.ps-garden-scene__basket.is-link {
+  display: block;
+  -webkit-tap-highlight-color: transparent;
+}
+.ps-garden-scene__basket.is-link:focus-visible {
+  outline: 3px solid #fff3b0;
+  outline-offset: 2px;
   border-radius: 14px;
-  background: #e7efd5;
 }
-.ps-garden-moment__art > img:first-child {
+.ps-garden-scene__count {
   position: absolute;
-  width: 122%;
-  max-width: none;
-  bottom: -13px;
-  left: -11%;
+  z-index: 2;
+  right: -6px;
+  bottom: -4px;
+  min-width: 22px;
+  padding: 1px 6px;
+  border: 1px solid #e5ebac;
+  border-radius: 999px;
+  background: #55713a;
+  color: #fff9e6;
+  font-size: 12px;
+  text-align: center;
+  box-shadow: 0 2px 6px #3d342440;
 }
-.ps-garden-moment__crop {
+/*
+ * 刚种下：种子袋在种植点右上方倾倒，种子落进垄沟里。
+ * 按地块外层的种植点定位（--plant-x / --plant-y，由 slotStyle 写；场景外溢出的地块没有，用 a 图的种植点）：
+ * 种子从袋口（框内 x≈8–15px、y 8px）往下落 42px，停在框底往上约 9px 处，所以框底放在种植线下面 9px；
+ * 几粒种子的中心在框内 x≈13px，所以框的左边放在种植点左边 13px，种子正好落在种植点上（袋子在它右上方）。
+ * 地块在外层的底部（外层高 = 土块图高，溢出行多一截上边距），所以从底边量：土块图高 = 宽 × 440/720，
+ * margin 的百分比按宽度算，(100 − y) × 0.61111% 就是种植线到土块底边的距离。
+ */
+.ps-garden-slot__pour {
   position: absolute;
-  width: 82%;
-  bottom: 10px;
-  left: 10%;
-  transform-origin: 50% 100%;
+  z-index: 3;
+  bottom: 0;
+  left: calc(var(--plant-x, 50) * 1% - 13px);
+  margin-bottom: calc((100 - var(--plant-y, 40.9)) * 0.61111% - 9px);
+  pointer-events: none;
 }
-.ps-garden-moment__crop.is-tomato {
-  width: 94%;
-  left: 3%;
-  bottom: 7px;
+/* 点正在长的地：木框上方冒出“还要多久”的小泡泡 */
+.ps-garden-slot .ps-garden-bubble.is-peek {
+  left: 50%;
+  top: -6px;
+  max-width: 220px;
 }
-.ps-garden-moment__crop.is-moon_radish,
-.ps-garden-moment__crop.is-sakura_radish {
-  bottom: 5px;
+/*
+ * 刚种下：先倒种子、再出苗（时间都从种子袋出现算）——袋子 0–1.3s 倾倒，几粒种子 0.45–1.19s 落进垄沟，
+ * 整组倒种子 1.1–1.35s 淡出；作物从挂上来起先等 1.4s 再冒芽。正常流程下作物比种子袋晚挂上（要等种下成功、重新读到这块地），
+ * 所以冒芽时袋子已经不在；万一后台刷新先读到这块地，苗会先出现，袋子出现时随之隐去，倒完再冒出来。
+ * 冒芽 0.8s，接着摇摆；页面 2.6s 后撤掉 is-just-planted：演示数据下作物晚 0.22s 挂上，冒芽在那之前做完；
+ * 接口慢于约 0.4s 时冒芽会被提前收尾（直接显示完整的苗），也不会和袋子叠在一起。
+ * 比 .ps-garden-bed.is-growing 的摇摆规则多一级，才能先冒芽再摇摆。“减少动态效果”时不等，直接显示（见文件末尾）。
+ */
+.ps-garden-slot .ps-garden-bed.is-just-planted .ps-garden-bed__crop {
+  animation:
+    ps-crop-pop 800ms var(--ease-out) 1400ms both,
+    ps-garden-sway 4.8s ease-in-out 2200ms infinite;
 }
-.ps-garden-moment.is-growing .ps-garden-moment__crop {
-  animation: ps-garden-sway 4.8s ease-in-out infinite;
-}
-.ps-garden-moment.is-ripe .ps-garden-moment__crop {
-  animation: ps-garden-ready 2.4s ease-in-out infinite;
-}
-.ps-garden-moment__spark {
-  position: absolute;
-  inset: 16px 21px 18px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, #fff3a868, transparent 67%);
-  animation: ps-garden-glow 2.2s ease-in-out infinite;
-}
-.ps-garden-moment__copy {
-  min-width: 0;
-}
-.ps-garden-moment__copy > span,
-.ps-garden-sheet__ledger > span {
-  color: #8b7654;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.11em;
-}
-.ps-garden-moment h3 {
-  margin: 3px 0;
-  color: var(--paper-ink);
-  font-size: 16px;
-}
-.ps-garden-moment p,
-.ps-garden-sheet__ledger p {
-  margin: 0;
-  color: var(--c-ink-2);
-  font-size: 11px;
-  line-height: 1.5;
-}
-.ps-garden-sheet__ledger {
-  display: grid;
-  gap: 7px;
-  padding: 12px;
-  border-radius: 14px;
-  background: #f1eadb;
-  border: 1px solid #e5d8bc;
-}
-.ps-garden-sheet__ledger .ps-row {
-  flex-wrap: wrap;
-}
-.ps-garden-sheet__links {
+.ps-garden-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
-.ps-garden-sheet__links .ps-btn {
+.ps-garden-actions .ps-btn {
   justify-content: center;
-}
-.ps-farm-receipt {
-  margin: 0;
-  padding: 9px 11px;
-  border: 1px solid #c7d7aa;
-  border-radius: 12px;
-  color: #405832;
-  background: #f4f9e9;
-  font-size: 12px;
-  line-height: 1.45;
-  animation: ps-farm-receipt-in 0.32s var(--ease-out) both;
 }
 @keyframes ps-garden-sway {
   0%,
@@ -170,10 +142,14 @@
   gap: 10px;
   min-height: 85px;
   padding: 8px 10px;
-  border: 1px solid #e9dbc1;
+  border: 1px solid color-mix(in srgb, var(--c-sun) 22%, var(--c-surface-stroke));
   border-radius: 15px;
-  background: #fffdf6;
-  box-shadow: 0 2px 8px #705b3910;
+  background: var(--c-surface);
+  box-shadow: 0 2px 8px -3px var(--c-shadow);
+}
+/* “种下”是小号按钮（36px），放大到 40px 点按区 */
+.ps-crop-list > li .ps-btn--sm {
+  min-height: 40px;
 }
 .ps-crop-list__art {
   width: 62px;
@@ -195,7 +171,8 @@
 .ps-crop-list > li > div strong {
   display: block;
   margin-bottom: 3px;
-  color: var(--paper-ink);
+  /* 卡面已跟主题走，作物名不再用固定的纸墨，否则深色下是深字压深底 */
+  color: var(--c-ink);
   font-size: 14px;
 }
 .ps-crop-list > li .ps-muted {
@@ -226,11 +203,709 @@
   outline: 2px solid var(--c-leaf);
   outline-offset: 2px;
 }
+/* ---------- 菜园动效（服务端确认成功后才出现）：收成落篮、种子袋倾倒 ---------- */
+.ps-basket-catch,
+.ps-seed-pour {
+  position: relative;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 62px;
+}
+.ps-basket-catch__basket {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 58px;
+  height: auto;
+  transform-origin: 50% 100%;
+  animation: ps-basket-catch 1.1s ease-out both;
+}
+/* 篮口裁切框：下边缘在前篮沿（篮子图高度约 55% 处），作物落到这里以下的部分被截掉 */
+.ps-basket-catch__mouth {
+  position: absolute;
+  z-index: 1;
+  top: -34px;
+  left: 7px;
+  right: 7px;
+  height: 68px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ps-basket-catch__drop {
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  width: 38px;
+  height: auto;
+  margin-left: -19px;
+  animation: ps-basket-drop 1.1s cubic-bezier(0.45, 0, 0.7, 0.35) both;
+}
+.ps-basket-catch__count {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #fff8dc;
+  color: #6b5220;
+  font-size: 12px;
+  box-shadow: 0 2px 6px #6b522033;
+  animation: ps-basket-count 1.4s var(--ease-out) both;
+}
+/*
+ * SeedPour 的外框是 span：内联时上面的 58×62 不生效，框是 0 宽，袋子图的 max-width: 100%（全局 img 规则）
+ * 跟着变成 0 宽，整只袋子看不见。改成块级，袋子图再单独放开 max-width。
+ */
+.ps-seed-pour {
+  display: block;
+  /* 倒完就收：1.1s 起 0.25s 淡出（种子 1.19s 前都已落地），作物 1.4s 后才冒芽 */
+  animation: ps-seed-pour-out 250ms ease-in 1.1s both;
+}
+.ps-seed-pour::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  right: 16px;
+  bottom: 3px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 40%, #8a6743, #5b3f27);
+}
+.ps-seed-pour__bag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  max-width: none;
+  height: auto;
+  transform-origin: 25% 90%;
+  animation: ps-seed-tilt 1.3s ease-in-out both;
+}
+/* 种子从倾斜后的袋口（左上角）落下，落进下面那一小块土 */
+.ps-seed-pour i {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  width: 5px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7d5c33;
+  box-shadow: 0 0 0 1px #fff6e0aa;
+  opacity: 0;
+  animation: ps-seed-fall 0.5s ease-in 0.45s both;
+}
+.ps-seed-pour i:nth-child(3) { left: 8px; animation-delay: 0.53s; }
+.ps-seed-pour i:nth-child(4) { left: 15px; animation-delay: 0.61s; }
+.ps-seed-pour i:nth-child(5) { left: 10px; animation-delay: 0.69s; }
+
+/* ---------- 串门：QQ 农场式菜园场景（底图 + 三块地 + 门边泡泡 + 右下篮子） ---------- */
+.ps-steal-page {
+  gap: 12px;
+}
+/* “去院子里巡一圈”是小号按钮（36px），放大到 40px 点按区 */
+.ps-steal-page > .ps-row > .ps-btn--sm {
+  min-height: 40px;
+}
+.ps-garden-scene {
+  position: relative;
+  margin: 0 calc(-1 * var(--page-gutter));
+  background: #9fbb6e;
+}
+/*
+ * 舞台铺满宽度、按底图比例排高；矮屏由 max-height 截短，只裁掉底部（UI-ASSET-003 底部 86–100% 是安静草地）。
+ * 画布始终是完整底图比例，坑位 / 门边泡泡按底图百分比定位；门牌与篮子钉在舞台角上，裁切时也在。
+ * clip 而不是 hidden：hidden 的容器会被“滚到可见”（点击 / 键盘聚焦）悄悄滚动，画布错位。
+ */
+.ps-garden-scene__stage {
+  /* 首屏可用高度 = 视口 − 顶栏(56) − 底部导航(--tabbar-h) − 上下安全区；右下篮子不能被底部导航挡住 */
+  --scene-room: calc(100vh - var(--safe-top) - 56px - var(--tabbar-h) - var(--safe-bottom) - 8px);
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--scene-aspect);
+  max-height: max(360px, var(--scene-room));
+  overflow: hidden;
+  overflow: clip;
+}
+@supports (height: 100dvh) {
+  .ps-garden-scene__stage {
+    --scene-room: calc(100dvh - var(--safe-top) - 56px - var(--tabbar-h) - var(--safe-bottom) - 8px);
+  }
+}
+.ps-garden-scene__canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  aspect-ratio: var(--scene-aspect);
+}
+.ps-garden-scene__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ps-garden-scene__sign {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 20px);
+  padding: 4px 10px 4px 4px;
+  border: 1px solid #efe2c4;
+  border-radius: 999px;
+  background: #fffbeff0;
+  box-shadow: 0 4px 14px #3d342426;
+}
+.ps-garden-scene__sign > span {
+  min-width: 0;
+}
+.ps-garden-scene__sign strong,
+.ps-garden-scene__sign small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ps-garden-scene__sign strong {
+  color: var(--paper-ink);
+  font-size: 13px;
+}
+/* 门牌底色是固定的暖纸色，字也用纸质固定色：主题色 --c-ink-2 在深色下变浅，在这块浅底上对比度只有约 2（CSS 巡检转来） */
+.ps-garden-scene__sign small {
+  color: var(--paper-secondary-ink);
+  font-size: 11px;
+}
+/* 门边的状态泡泡：锚点在门口，泡泡浮在锚点上方 */
+.ps-garden-bubble {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  width: max-content;
+  max-width: min(66%, 250px);
+  margin: 0;
+  padding: 7px 10px;
+  border: 1px solid #c7d7aa;
+  border-radius: 14px;
+  background: #fafdf1f2;
+  color: #405832;
+  font-size: 12px;
+  line-height: 1.45;
+  box-shadow: 0 6px 16px #3d342430;
+  transform: translate(-50%, -100%);
+  animation: ps-bubble-float 3.6s ease-in-out infinite;
+}
+.ps-garden-bubble > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+.ps-garden-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 10px;
+  height: 10px;
+  border-right: 1px solid;
+  border-bottom: 1px solid;
+  border-color: inherit;
+  background: inherit;
+  transform: translateX(-50%) rotate(45deg);
+}
+.ps-garden-bubble.is-careful {
+  border-color: #ecd39c;
+  background: #fff8e6f2;
+  color: #7a5a24;
+}
+.ps-garden-bubble.is-alert {
+  border-color: #ecc2b1;
+  background: #fdf1ebf2;
+  color: #8a4a38;
+}
+.ps-garden-bubble.is-caught {
+  border-color: #e39a82;
+  background: #fbe1d6;
+  animation: ps-bubble-caught 0.45s ease-in-out 2;
+}
+/* 门边泡泡：贴在门的右侧、上下居中，尾巴朝左指着门（UI-ASSET-003 的门在左上） */
+.ps-garden-bubble.is-door {
+  max-width: min(60%, 250px);
+  transform: translate(0, -50%);
+  animation-name: ps-door-bubble-float;
+}
+.ps-garden-bubble.is-door::after {
+  top: 50%;
+  bottom: auto;
+  left: -6px;
+  border: 0;
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+  border-color: inherit;
+  transform: translateY(-50%) rotate(45deg);
+}
+.ps-garden-bubble.is-door.is-caught {
+  animation: ps-door-bubble-caught 0.45s ease-in-out 2;
+}
+/* 一块地：定位在底图上；熟了能摘时整块是按钮。
+   不设 z-index（不单独成层），木牌才能统一压在所有地块之上，前排的地不会盖住后排的牌子。 */
+.ps-garden-slot {
+  position: absolute;
+}
+.ps-garden-slot.is-static {
+  position: relative;
+  width: min(44%, 170px);
+}
+.ps-garden-slot__hit {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+button.ps-garden-slot__hit {
+  cursor: pointer;
+}
+button.ps-garden-slot__hit:focus-visible {
+  outline: 3px solid #fff3b0;
+  outline-offset: 2px;
+  border-radius: 16px;
+}
+button.ps-garden-slot__hit:active .ps-garden-bed {
+  transform: scale(0.97);
+}
+.ps-garden-bed {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 640 / 466;
+  transition: transform 120ms ease;
+}
+.ps-garden-bed__soil {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 6px 5px #3d342438);
+}
+/* 作物底边落在土面上（与家园院子里菜地的比例一致），高的作物向上长出木框 */
+.ps-garden-bed__crop {
+  position: absolute;
+  left: 13.5%;
+  bottom: 20%;
+  width: 73%;
+  height: auto;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+.ps-garden-bed__crop.is-star_tomato {
+  left: 10%;
+  bottom: 22%;
+  width: 80%;
+}
+.ps-garden-bed__crop.is-moon_radish,
+.ps-garden-bed__crop.is-sakura_radish {
+  bottom: 17%;
+}
+.ps-garden-bed.is-growing .ps-garden-bed__crop {
+  animation: ps-garden-sway 4.8s ease-in-out infinite;
+}
+.ps-garden-bed.is-ripe .ps-garden-bed__crop {
+  animation: ps-garden-ready 2.4s ease-in-out infinite;
+}
+.ps-garden-bed__glow {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 22%;
+  height: 80%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #fff4b890, transparent 68%);
+  animation: ps-garden-glow 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+/* 请求在路上：菜被拽着晃 */
+.ps-garden-slot.is-pending .ps-garden-bed__crop {
+  animation: ps-crop-tug 0.42s ease-in-out infinite;
+}
+.ps-garden-slot.is-caught {
+  animation: ps-caught-shake 560ms ease-in-out;
+}
+/* 木框前面的小木牌：作物 · 状态 */
+.ps-garden-slot__tag {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: -6%;
+  padding: 2px 8px;
+  border: 1px solid #d9c8a4;
+  border-radius: 8px;
+  background: #fff8e8f0;
+  color: #5a4d3a;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px #3d342430;
+  transform: translateX(-50%);
+}
+.ps-garden-slot__tag.is-ripe {
+  border-color: #e5ebac;
+  background: #55713a;
+  color: #fff9e6;
+  animation: ps-tag-pulse 1.9s ease-in-out infinite;
+}
+.ps-garden-slot__tag.is-done {
+  background: #f1ebe0ee;
+  color: #8b7d68;
+}
+/* 右下角的篮子：钉在舞台角上（邻居页 = 这次摘到的；自家 = 仓库），矮屏裁掉底部草地时也在 */
+.ps-garden-scene__basket {
+  position: absolute;
+  z-index: 3;
+  right: 12px;
+  bottom: 12px;
+  width: 62px;
+  height: 64px;
+}
+/* 摘菜爪：请求在路上时从右上方伸向作物、来回拽（成功后由飞进篮子的那一颗接上） */
+.ps-garden-slot__paw {
+  position: absolute;
+  z-index: 4;
+  right: 6%;
+  bottom: 52%;
+  width: 34%;
+  max-width: 64px;
+  height: auto;
+  transform-origin: 85% 15%;
+  filter: drop-shadow(0 4px 4px #3d342440);
+  animation:
+    ps-paw-in 220ms var(--ease-out) both,
+    ps-paw-tug 520ms ease-in-out 220ms infinite alternate;
+  pointer-events: none;
+}
+.ps-garden-scene__basket > img {
+  position: absolute;
+  left: 2px;
+  bottom: 0;
+  width: 58px;
+  height: auto;
+  filter: drop-shadow(0 6px 6px #3d342440);
+}
+.ps-garden-scene__basket .ps-basket-catch {
+  position: absolute;
+  left: 2px;
+  bottom: 0;
+  filter: drop-shadow(0 6px 6px #3d342440);
+}
+.ps-basket-catch.is-delayed .ps-basket-catch__basket,
+.ps-basket-catch.is-delayed .ps-basket-catch__drop,
+.ps-basket-catch.is-delayed .ps-basket-catch__count {
+  animation-delay: 0.5s;
+}
+/* 摘到的一颗：从地里弹起，沿弧线飞进篮子（横向匀速、纵向先上后下） */
+.ps-garden-flyer {
+  position: absolute;
+  z-index: 4;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  animation: ps-fly-x 700ms linear both;
+}
+/* 外框是 0×0 的定位点：全局 img 规则的 max-width: 100% 会把这颗菜压成 0 宽，所以单独放开 */
+.ps-garden-flyer img {
+  position: absolute;
+  left: -24px;
+  top: -24px;
+  width: 48px;
+  max-width: none;
+  height: auto;
+  animation: ps-fly-y 700ms linear both;
+}
+.ps-garden-overflow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+.ps-steal-receipt,
+.ps-steal-problem {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  animation: ps-farm-receipt-in 0.32s var(--ease-out) both;
+}
+.ps-steal-receipt {
+  border-color: #c7d7aa;
+  background: #f4f9e9;
+  color: #405832;
+}
+.ps-steal-problem {
+  border-color: #efc9c4;
+  background: #fbeeee;
+  color: var(--c-danger);
+}
+.ps-steal-problem.is-caught {
+  border-color: #ecc2b1;
+  background: #fdf1eb;
+  color: #8a4a38;
+}
+@keyframes ps-crop-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.2);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes ps-basket-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-40px) rotate(-10deg);
+  }
+  25% {
+    opacity: 1;
+  }
+  62% {
+    transform: translateY(2px) rotate(4deg);
+  }
+  78% {
+    transform: translateY(-3px) rotate(0);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes ps-basket-catch {
+  0%,
+  55% {
+    transform: none;
+  }
+  66% {
+    transform: scale(1.06, 0.9);
+  }
+  82% {
+    transform: scale(0.98, 1.03);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes ps-basket-count {
+  0%,
+  50% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.8);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes ps-seed-tilt {
+  0% {
+    transform: rotate(0);
+  }
+  35%,
+  70% {
+    transform: rotate(-40deg) translate(-4px, 2px);
+  }
+  100% {
+    transform: rotate(-8deg);
+  }
+}
+@keyframes ps-seed-pour-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes ps-seed-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(42px);
+  }
+}
+@keyframes ps-fly-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--dx));
+  }
+}
+/* 纵向：先弹起到最高点，再加速落向篮口；最后一段淡出，交给篮子里的落篮动画接上 */
+@keyframes ps-fly-y {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.6);
+    animation-timing-function: ease-out;
+  }
+  12% {
+    opacity: 1;
+  }
+  40% {
+    transform: translateY(calc(min(var(--dy), 0px) - 70px)) scale(0.95) rotate(-8deg);
+    animation-timing-function: ease-in;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(var(--dy)) scale(0.55) rotate(10deg);
+  }
+}
+@keyframes ps-crop-tug {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04, 0.9) translateY(2px);
+  }
+}
+@keyframes ps-tag-pulse {
+  0%,
+  100% {
+    box-shadow: 0 2px 6px #3d342430;
+  }
+  50% {
+    box-shadow: 0 2px 6px #3d342430, 0 0 0 4px #e9f1b855;
+  }
+}
+@keyframes ps-bubble-float {
+  0%,
+  100% {
+    transform: translate(-50%, -100%);
+  }
+  50% {
+    transform: translate(-50%, calc(-100% - 3px));
+  }
+}
+@keyframes ps-door-bubble-float {
+  0%,
+  100% {
+    transform: translate(0, -50%);
+  }
+  50% {
+    transform: translate(0, calc(-50% - 3px));
+  }
+}
+@keyframes ps-door-bubble-caught {
+  0%,
+  100% {
+    transform: translate(0, -50%) scale(1);
+  }
+  50% {
+    transform: translate(0, -50%) scale(1.08);
+  }
+}
+@keyframes ps-paw-in {
+  from {
+    opacity: 0;
+    transform: translate(18px, -22px) rotate(12deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+@keyframes ps-paw-tug {
+  from {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  to {
+    transform: translate(5px, -7px) rotate(7deg);
+  }
+}
+@keyframes ps-bubble-caught {
+  0%,
+  100% {
+    transform: translate(-50%, -100%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -100%) scale(1.08);
+  }
+}
+@keyframes ps-caught-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(-7px) rotate(-1deg);
+  }
+  30% {
+    transform: translateX(6px) rotate(1deg);
+  }
+  45% {
+    transform: translateX(-5px);
+  }
+  60% {
+    transform: translateX(4px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  .ps-garden-moment.is-growing .ps-garden-moment__crop,
-  .ps-garden-moment.is-ripe .ps-garden-moment__crop,
-  .ps-garden-moment__spark,
-  .ps-farm-receipt {
+  .ps-garden-slot .ps-garden-bed.is-just-planted .ps-garden-bed__crop,
+  .ps-basket-catch__basket,
+  .ps-basket-catch__drop,
+  .ps-basket-catch__count,
+  .ps-seed-pour__bag,
+  .ps-steal-receipt,
+  .ps-steal-problem,
+  .ps-garden-bubble,
+  .ps-garden-bubble.is-caught,
+  .ps-garden-bubble.is-door,
+  .ps-garden-bubble.is-door.is-caught,
+  .ps-garden-slot__paw,
+  .ps-garden-slot.is-caught,
+  .ps-garden-slot__tag.is-ripe,
+  .ps-garden-bed.is-growing .ps-garden-bed__crop,
+  .ps-garden-bed.is-ripe .ps-garden-bed__crop,
+  .ps-garden-slot.is-pending .ps-garden-bed__crop,
+  .ps-garden-bed__glow {
     animation: none;
+  }
+  /* 减少动态效果：作物直接显示（上面 animation: none，不等），倒种子这一整组不出现，免得一只静止的袋子压在苗上 */
+  .ps-seed-pour,
+  .ps-seed-pour i,
+  .ps-garden-flyer {
+    display: none;
   }
 }

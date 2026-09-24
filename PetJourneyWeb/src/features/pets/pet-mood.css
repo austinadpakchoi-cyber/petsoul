@@ -1,0 +1,344 @@
+/* 带状态表情的宠物头像（PetMoodAvatar）。所有尺寸以 --mood-size 为基准，任何页面都能复用。 */
+
+.ps-mood {
+  --mood-color: var(--c-leaf);
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: var(--mood-size);
+  height: var(--mood-size);
+}
+.ps-mood.is-sleeping { --mood-color: #7d7fb3; }
+.ps-mood.is-eating { --mood-color: #d9824b; }
+.ps-mood.is-sunbathing { --mood-color: var(--c-sun); }
+.ps-mood.is-walking { --mood-color: var(--c-sun); }
+.ps-mood.is-riding { --mood-color: var(--c-sky); }
+.ps-mood.is-cafe { --mood-color: var(--c-coral); }
+.ps-mood.is-working { --mood-color: var(--c-sea); }
+.ps-mood.is-exploring { --mood-color: var(--c-leaf); }
+.ps-mood.is-idle { --mood-color: var(--c-leaf); }
+.ps-mood.is-unknown { --mood-color: var(--c-ink-3); }
+
+.ps-mood__body {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transform-origin: 50% 92%;
+}
+
+.ps-mood__badge {
+  position: absolute;
+  z-index: 3;
+  right: -4px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: max(18px, calc(var(--mood-size) * 0.46));
+  height: max(18px, calc(var(--mood-size) * 0.46));
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--mood-color);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* ---------- 身体的动作 ---------- */
+.ps-mood.is-idle .ps-mood__body,
+.ps-mood.is-sleeping .ps-mood__body {
+  animation: ps-mood-breathe 3.4s ease-in-out infinite;
+}
+.ps-mood.is-walking .ps-mood__body {
+  animation: ps-mood-gait 0.72s ease-in-out infinite;
+}
+.ps-mood.is-riding .ps-mood__body {
+  animation: ps-mood-rumble 0.5s linear infinite;
+}
+.ps-mood.is-eating .ps-mood__body {
+  animation: ps-mood-nibble 1.1s ease-in-out infinite;
+}
+.ps-mood.is-exploring .ps-mood__body {
+  animation: ps-mood-sway 3s ease-in-out infinite;
+}
+.ps-mood.is-working .ps-mood__body {
+  animation: ps-mood-work 0.9s ease-in-out infinite;
+}
+.ps-mood.is-working .ps-mood__badge {
+  animation: ps-mood-wiggle 0.9s ease-in-out infinite;
+}
+
+/* ---------- 睡觉：z Z z ---------- */
+.ps-mood__zzz {
+  position: absolute;
+  z-index: 4;
+  top: -34px;
+  right: -30px;
+  width: 38px;
+  height: 36px;
+  pointer-events: none;
+}
+.ps-mood__zzz i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  color: #55579a;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 0 6px #fff;
+  opacity: 0;
+  animation: ps-mood-z 2.7s ease-in infinite;
+}
+.ps-mood__zzz i:nth-child(1) { font-size: 12px; }
+.ps-mood__zzz i:nth-child(2) { font-size: 15px; animation-delay: 0.9s; }
+.ps-mood__zzz i:nth-child(3) { font-size: 19px; animation-delay: 1.8s; }
+
+/* ---------- 走路：脚下交替的小爪印 ---------- */
+.ps-mood__steps {
+  position: absolute;
+  z-index: 0;
+  left: -22px;
+  bottom: -4px;
+  width: 20px;
+  height: 28px;
+  pointer-events: none;
+}
+.ps-mood__steps i {
+  position: absolute;
+  bottom: 0;
+  width: 11px;
+  height: 11px;
+  background: #7a6650;
+  opacity: 0;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><ellipse cx='12' cy='16' rx='5' ry='4'/><circle cx='6' cy='10' r='2.2'/><circle cx='10' cy='6.2' r='2.2'/><circle cx='14' cy='6.2' r='2.2'/><circle cx='18' cy='10' r='2.2'/></svg>") center / contain no-repeat;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><ellipse cx='12' cy='16' rx='5' ry='4'/><circle cx='6' cy='10' r='2.2'/><circle cx='10' cy='6.2' r='2.2'/><circle cx='14' cy='6.2' r='2.2'/><circle cx='18' cy='10' r='2.2'/></svg>") center / contain no-repeat;
+  animation: ps-mood-step 0.72s linear infinite;
+}
+.ps-mood__steps i:nth-child(1) { left: 0; bottom: 0; transform: rotate(-35deg); }
+.ps-mood__steps i:nth-child(2) { right: 0; bottom: 14px; transform: rotate(-35deg); animation-delay: 0.36s; }
+
+/* ---------- 坐车：身后的速度线 ---------- */
+.ps-mood__wind {
+  position: absolute;
+  z-index: 0;
+  top: 26%;
+  left: -15px;
+  width: 13px;
+  pointer-events: none;
+}
+.ps-mood__wind i {
+  display: block;
+  height: 2px;
+  margin: 3px 0;
+  border-radius: 2px;
+  background: var(--c-ink-3);
+  opacity: 0;
+  animation: ps-mood-wind 0.6s linear infinite;
+}
+.ps-mood__wind i:nth-child(2) { width: 70%; margin-left: 30%; animation-delay: 0.2s; }
+.ps-mood__wind i:nth-child(3) { animation-delay: 0.4s; }
+
+/* ---------- 在店里：杯子冒热气 ---------- */
+.ps-mood__steam {
+  position: absolute;
+  z-index: 4;
+  right: -10px;
+  bottom: calc(var(--mood-size) * 0.42);
+  width: 22px;
+  height: 28px;
+  pointer-events: none;
+}
+.ps-mood__steam i {
+  position: absolute;
+  bottom: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(122, 102, 80, 0.4);
+  opacity: 0;
+  animation: ps-mood-steam 2.2s ease-out infinite;
+}
+.ps-mood__steam i:nth-child(1) { left: 2px; }
+.ps-mood__steam i:nth-child(2) { left: 9px; animation-delay: 0.7s; }
+.ps-mood__steam i:nth-child(3) { left: 16px; animation-delay: 1.4s; }
+
+/* ---------- 打工 / 张望：小星星 ---------- */
+.ps-mood__spark {
+  position: absolute;
+  z-index: 4;
+  inset: -10px;
+  pointer-events: none;
+}
+.ps-mood__spark i {
+  position: absolute;
+  color: var(--c-sun);
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1;
+  text-shadow: 0 0 2px #fff;
+  opacity: 0;
+  animation: ps-mood-spark 1.8s ease-out infinite;
+}
+.ps-mood__spark i:nth-child(1) { left: 0; top: 6px; }
+.ps-mood__spark i:nth-child(2) { right: 2px; top: 0; animation-delay: 0.6s; }
+.ps-mood__spark i:nth-child(3) { left: 4px; bottom: 8px; animation-delay: 1.2s; }
+.ps-mood.is-exploring .ps-mood__spark i {
+  color: var(--c-sky);
+  animation-duration: 2.6s;
+}
+
+/* ---------- 吃东西：碎屑 ---------- */
+.ps-mood__crumbs {
+  position: absolute;
+  z-index: 4;
+  left: -10px;
+  bottom: 0;
+  width: 20px;
+  height: 16px;
+  pointer-events: none;
+}
+.ps-mood__crumbs i {
+  position: absolute;
+  top: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #b5804b;
+  box-shadow: 0 0 0 1.5px #fff;
+  opacity: 0;
+  animation: ps-mood-crumb 1.1s ease-in infinite;
+}
+.ps-mood__crumbs i:nth-child(2) { left: 11px; animation-delay: 0.55s; }
+
+/* ---------- 晒太阳：身后的阳光 ---------- */
+.ps-mood__rays {
+  position: absolute;
+  z-index: 0;
+  inset: -10px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(rgba(233, 165, 58, 0.55) 0deg 9deg, transparent 9deg 30deg);
+  -webkit-mask: radial-gradient(circle, transparent 54%, #000 55%);
+  mask: radial-gradient(circle, transparent 54%, #000 55%);
+  animation: ps-mood-spin 14s linear infinite;
+}
+
+@keyframes ps-mood-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+@keyframes ps-mood-gait {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  25% { transform: translateY(-4px) rotate(0deg); }
+  50% { transform: translateY(0) rotate(3deg); }
+  75% { transform: translateY(-4px) rotate(0deg); }
+}
+@keyframes ps-mood-rumble {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
+@keyframes ps-mood-nibble {
+  0%, 60%, 100% { transform: translateY(0) rotate(0deg); }
+  70% { transform: translateY(2px) rotate(-3deg); }
+  80% { transform: translateY(0) rotate(0deg); }
+  90% { transform: translateY(2px) rotate(-3deg); }
+}
+@keyframes ps-mood-sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+@keyframes ps-mood-work {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-3px); }
+}
+@keyframes ps-mood-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-14deg); }
+  60% { transform: rotate(10deg); }
+}
+@keyframes ps-mood-z {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.7); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(14px, -30px) scale(1); }
+}
+@keyframes ps-mood-step {
+  0% { opacity: 0.75; }
+  50%, 100% { opacity: 0; }
+}
+@keyframes ps-mood-wind {
+  0% { opacity: 0; transform: translateX(6px); }
+  40% { opacity: 0.8; }
+  100% { opacity: 0; transform: translateX(-6px); }
+}
+@keyframes ps-mood-steam {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  30% { opacity: 0.95; }
+  100% { opacity: 0; transform: translate(3px, -18px) scale(1.4); }
+}
+@keyframes ps-mood-spark {
+  0% { opacity: 0; transform: scale(0.3); }
+  30% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: translateY(-6px) scale(0.6); }
+}
+@keyframes ps-mood-crumb {
+  0% { opacity: 0; transform: translateY(0); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(9px); }
+}
+@keyframes ps-mood-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 减少动态：只留静态的样子（zzz、爪印、热气、星星都停在可见的一帧）。 */
+@media (prefers-reduced-motion: reduce) {
+  .ps-mood__body,
+  .ps-mood__badge,
+  .ps-mood__rays,
+  .ps-mood__zzz i,
+  .ps-mood__steps i,
+  .ps-mood__wind i,
+  .ps-mood__steam i,
+  .ps-mood__spark i,
+  .ps-mood__crumbs i {
+    animation: none !important;
+  }
+  .ps-mood__zzz i { opacity: 1; }
+  .ps-mood__zzz i:nth-child(2) { transform: translate(7px, -12px); }
+  .ps-mood__zzz i:nth-child(3) { transform: translate(14px, -26px); }
+  .ps-mood__steps i,
+  .ps-mood__wind i,
+  .ps-mood__steam i,
+  .ps-mood__spark i,
+  .ps-mood__crumbs i { opacity: 0.7; }
+}
+
+/* 紧凑版（主状态面板、列表）：表情收在头像旁边，不飘出所在卡片。 */
+.ps-mood.is-compact .ps-mood__zzz {
+  top: -6px;
+  right: -14px;
+  width: 26px;
+  height: 22px;
+}
+.ps-mood.is-compact .ps-mood__zzz i:nth-child(1) { font-size: 9px; }
+.ps-mood.is-compact .ps-mood__zzz i:nth-child(2) { font-size: 11px; }
+.ps-mood.is-compact .ps-mood__zzz i:nth-child(3) { font-size: 13px; }
+.ps-mood.is-compact .ps-mood__steam {
+  bottom: calc(var(--mood-size) * 0.3);
+  height: 18px;
+}
+.ps-mood.is-compact .ps-mood__spark {
+  inset: -4px;
+}
+.ps-mood.is-compact .ps-mood__rays {
+  inset: -5px;
+}
+@keyframes ps-mood-z-compact {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.7); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(8px, -12px) scale(1); }
+}
+.ps-mood.is-compact .ps-mood__zzz i {
+  animation-name: ps-mood-z-compact;
+}

@@ -24,6 +24,8 @@ from .storage import JourneyStorage
 from .utils import utcnow
 from .web_agent import MomentBuilder
 from .web_agent.moment import is_sleep_time
+from .web_agent.decision.commitments import commitment_gate
+from .web_agent.decision.service_reader import STAY_HOME_HOURS
 from .web_agent.life import LifeEngine, decide_window
 from .web_agent.profile import BehaviorProfile, derive_profile, profile_sources
 from .web_agent.proactive import OwnerPrefs, ProactiveMessenger
@@ -240,11 +242,17 @@ def wire_agent_world(*, storage: JourneyStorage, settings, providers, identity, 
         collection.image_retry_started(task_id, conn=conn)
         guides.image_retry_started(task_id, conn=conn)
 
-    # 付费生图的最终写入就在领取写事务里做最后一次授权复核，所以这个读口**必须走调用方那个 conn**：
-    # 另开连接读到的是事务外的旧值，主人刚撤销的许可看不见、图还是会被发布出去（image-revocation-20260923）。
-    # 家庭级授权，不区分哪位家人；"某位家人被移出家庭后立刻失效"属于 membership_epoch 那条线，不合成一个开关。
-    # 全仓只有 households.generated_photos_in 这一份实现，opted_in 也委托到它，两者不可能漂移。
-    illustrations.consent_in = lambda conn, user_id, pet_id: households.generated_photos_in(conn, pet_id)
+    # 【已摘除】`illustrations.consent_in` —— 写事务里的最后一次**生成授权**复核。
+    # 用户 2026-09-23 决定取消逐次询问（角色与生活/旅行两类都取消），这道许可不再存在，
+    # 所以复核它的读口也一并摘掉。摘除顺序：**先**去掉上方 `photo_generation_on` 里的
+    # `opted_in` 调用，**再**摘这两处接线——反过来会让 `opted_in` 落回服务里的默认
+    # `lambda …: False`，到店照片**全部静默停掉**（不报错、不崩，就是什么都不生成）。
+    #
+    # **随之取消的只有「这家开没开生成照片」这一个判断。** 同一段注释里原先记着的另外两件事
+    # 仍然成立、也仍在别处生效，不要因为这段被删而以为它们没了：
+    #   · 「必须走调用方那个 conn」——撤权/成员变更的同事务可见性，仍由 `can_view_pet`
+    #     与 `visit_revision_of` 各自在自己的写事务里保证；
+    #   · 「成员被移出家庭立刻失效」本来就属于 membership_epoch 那条线，**从来不是这个开关**。
     # 展示层分辨"确认没画成"与"结果未确认"：**必须用调用方那个 conn**。
     # 另开连接读到的是事务外的旧值——晚到的 unknown 会被当成 failed 写进页面，
     # 主人看到"没画成"，而实际上那次调用可能已经被受理、也已经计费。
@@ -264,12 +272,27 @@ def wire_agent_world(*, storage: JourneyStorage, settings, providers, identity, 
     illustrations.on_failed = on_image_failed
     illustrations.on_unknown = lambda task_id, conn=None: on_image_failed(task_id, conn, outcome="unknown")
     illustrations.on_retrying = on_image_retrying
+    # 出发闸要的那个谓词（TRV-02 合同 15 节）：此刻有没有**拦住出行**的有效承诺。
+    # 谓词是 C 写的（`decision/commitments.py`），数据源是 A 的 `owner_asked_stay_home_in`；
+    # 决策包不 import 通讯器，所以两边由**这里**接上——组合根是唯一同时认识两边的地方。
+    #
+    # **不接就等于没有闸**：服务里默认 None，谁要是传了 `honor_commitments=True` 会当场
+    # 被 `commitment_gate_unavailable` 拒绝出发（明确要闸却没有闸可用时**拒绝，而不是当成没有承诺放行**）。
+    journeys.active_commitment_in = commitment_gate(communicator)
     journeys.photo_request_in = bind_photo_request(illustrations, households)
-    # 这次到店该不该真的去生成照片：供应商可用 ＋ 这家开了"生成照片"。**只读、无副作用**——
+    # 这次到店该不该真的去生成照片：**只看供应商可用**。**只读、无副作用**——
     # C 在提交事务之前用它决定走不走拍照这条路，这里不能顺手预占、也不能写任何东西。
     # 它在服务里的默认值是 False，所以**不接就等于一张照片都不生成**；接上之前 photo_not_wired 那条守卫也用不上。
-    journeys.photo_generation_on = lambda visit, journey: bool(
-        illustrations.available() and illustrations.opted_in(journey.user_id, journey.pet_id))
+    #
+    # 原先这里还要 `illustrations.opted_in(...)`，即那道家庭级「生成照片」许可。
+    # 用户 2026-09-23 决定**取消逐次询问**（角色与生活/旅行两类都取消），所以这半边摘掉。
+    # A 已先摘掉主人主动拍照那条路；**这一行是最后一处半边闸**——在它摘掉之前，
+    # 到店事件仍被旧开关挡在「创建拍照请求之前」，根本走不到 A 摘过的地方。
+    #
+    # **摘的是「询问」，不是保护**：身份与成员关系（`can_view_pet`）、事实代数
+    # （`visit_revision_of`）、租约、额度预占、`unknown` 不自动重试——一条都没动。
+    # 写事务里的最终授权复核（`consent_in`）也随之取消，它的注释见下方摘除说明。
+    journeys.photo_generation_on = lambda visit, journey: bool(illustrations.available())
 
     def postcard_note(journey, visit) -> str:
         """明信片上 TA 写的话（寄给全家）：发起这趟出门的家人开启“模型回信”时由模型按共用 DNA 写；否则用模板。只写真实发生的地点。"""
@@ -359,7 +382,9 @@ def wire_agent_world(*, storage: JourneyStorage, settings, providers, identity, 
         return homes.by_pet(pet_id) or residents.home_of(pet_id)
 
     life = LifeEngine(storage, journeys, economy, moments, persona_of=persona_of, home_of=life_home_of, activated_pets=living_pets,
-                      owner_said_stay_home=lambda user_id, pet_id, now: communicator.owner_asked_stay_home(user_id, pet_id, now - timedelta(hours=12)))
+                      # 回看多久算“主人说了留在家”：与 `decision/service_reader.py:92` 是**同一个判断**，
+                      # 所以用同一个常量。先前这里写字面量 12、那边写具名 12，**将来只会有一处被改**（Q 提）。
+                      owner_said_stay_home=lambda user_id, pet_id, now: communicator.owner_asked_stay_home(user_id, pet_id, now - timedelta(hours=STAY_HOME_HOURS)))
     life.profile_of = profile_of_pet
     proactive.profile_of = profile_of_pet
 
@@ -399,6 +424,10 @@ def wire_agent_world(*, storage: JourneyStorage, settings, providers, identity, 
     projector.model_available = lambda: bool(getattr(providers.chat, "available", False))
     projector.decide_window = lambda pet_id: decide_window(profile_of_pet(pet_id))
     # 规则生活与模型生活共用同一本“谁在什么时候替这只宠物做了决定”的账：两条线不会在同一个时段各安排一次
+    # 暂停闸：用 `RuntimeStore.paused` 这个**唯一口径**（与 `due_pets` 同一列同一条件）。
+    # 不在这里就地读列——那就成了第二份实现，正是今天在别处吃过的漂移。
+    # 到点回复与主动消息那两处（I 持有）调同一个谓词，三处一份实现。
+    life.paused = projector.runtime.paused
     life.recently_decided = lambda pet_id, now: projector.runtime.decided_within(pet_id, now, HeartbeatPolicy().min_decision_interval)
     life.record_decision = lambda pet_id, now, by: projector.runtime.record_decision(pet_id, now, by=by, next_review_at=None)
 

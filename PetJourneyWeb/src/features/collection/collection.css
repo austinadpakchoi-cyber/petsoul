@@ -13,7 +13,25 @@
   border-color: color-mix(in srgb, var(--c-sun) 22%, var(--c-surface-stroke));
   display: grid;
   gap: 11px;
-  background: #fffaf0;
+  /* 暖白卡面跟着主题走：原来写死 #fffaf0，深色下成了亮斑，继承来的浅色标题几乎看不见 */
+  background: color-mix(in srgb, var(--c-sun-soft) 20%, var(--c-surface));
+}
+/* 夜里明信片（纸卡）回到暖纸：上面 .ps-collection-item 的卡面会盖掉 .ps-card--paper 的纸色。
+   卡里的次要字、“演示数据”、标签用纸墨，交给 ui.css 的纸卡规则（.ps-card--paper …），这里不再重复。 */
+@media (prefers-color-scheme: dark) {
+  .ps-collection-item.ps-card--paper {
+    background: var(--paper);
+  }
+}
+/* 右上角的星形装饰会压在“演示数据”上：标记往左让出星形的位置。
+   标记整体不换行、不收缩（320 宽时不会被挤成“演示数 / 据”），长标题由左侧标题块自己换行。 */
+.ps-collection-item__head .ps-origin {
+  flex: none;
+  margin-right: 28px;
+  white-space: nowrap;
+}
+.ps-collection-item__head > div {
+  min-width: 0;
 }
 .ps-collection-item__head, .ps-collection-filter { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .ps-collection-item__head { position: relative; z-index: 1; }
@@ -57,5 +75,6 @@
   margin-bottom: 2px;
 }
 .ps-market-row .ps-btn {
+  min-height: 40px;
   border-radius: 12px;
 }

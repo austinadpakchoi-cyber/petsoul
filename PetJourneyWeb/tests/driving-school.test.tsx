@@ -328,21 +328,25 @@ describe("driving school pages", () => {
     expect(screen.getByRole("button", { name: "开始" })).toBeTruthy();
   });
 
-  it("home shows the school card only once the pet is enrolled (the default demo shows none)", async () => {
+  it("home shows no school card, not even once the pet is enrolled (map-first plan v2.1 §8.2: progress lives in the map panel)", async () => {
     renderApp("/home", createFixtureDrivingService({ latency: 0 }));
     await screen.findAllByText(/团子/);
     await new Promise((r) => setTimeout(r, 300));
     expect(screen.queryByRole("link", { name: /爪爪驾校/ })).toBeNull();
     cleanup();
     renderApp("/home", createFixtureDrivingService({ stage: "enrolled", latency: 0 }));
-    expect(await screen.findByRole("link", { name: /爪爪驾校/ })).toBeTruthy();
+    // 方案 8.2：学车进度挪到地图主状态面板，小窝不再放驾校卡。
+    await screen.findAllByText(/团子/);
+    await new Promise((r) => setTimeout(r, 300));
+    expect(screen.queryByRole("link", { name: /爪爪驾校/ })).toBeNull();
   });
 
-  it("the planet circle lists the school, and the trial runs without the backend", async () => {
+  it("the friends circle no longer lists the school (map-first plan v2.1 §8.1), and the trial runs without the backend", async () => {
     const svc = createFixtureDrivingService({ stage: "wish", latency: 0 });
     renderApp("/circle", svc);
-    const entry = await screen.findByRole("link", { name: /爪爪驾校/ });
-    expect(entry.getAttribute("href")).toBe("/school");
+    // 方案 8.1：驾校入口不再挂在朋友圈（原“星球”标签）顶部；TA 想学开车时出现在地图主状态面板，主人主动的入口在证件卡包。
+    await screen.findByText("宠物们自己的公开动态");
+    expect(screen.queryByRole("link", { name: /爪爪驾校/ })).toBeNull();
     cleanup();
     const offline: DrivingSchoolService = new Proxy({} as DrivingSchoolService, {
       get: () => () => Promise.reject(new Error("体验版不应该调用驾校服务")),

@@ -33,6 +33,12 @@
   background: var(--c-leaf);
   color: var(--c-on-deep);
 }
+/* 深色下 leaf 按钮用深色墨字（浅绿底上约 7.3:1），须写在上面这条之后；以后加手动主题开关时，tokens.css 和 ui.css 要一起按同一个属性切换。 */
+@media (prefers-color-scheme: dark) {
+  .ps-btn--leaf {
+    color: var(--c-deep-ink);
+  }
+}
 .ps-btn--secondary {
   background: var(--c-surface);
   border-color: var(--c-surface-stroke);
@@ -46,8 +52,9 @@
   background: var(--c-danger-soft);
   color: var(--c-danger);
 }
+/* 小号按钮：点按区不小于 40px（原 36px）；字号、内边距不变 */
 .ps-btn--sm {
-  min-height: 36px;
+  min-height: 40px;
   padding: 0 var(--space-3);
   font-size: var(--fs-sm);
 }
@@ -73,6 +80,20 @@
   background: var(--paper);
   color: var(--paper-ink);
   border-color: var(--paper-shade);
+}
+/* 纸卡昼夜都是暖纸（--paper 系是固定色）：卡里的次要字、数据来源标记、不带色调的标签也用纸墨系，不随主题变浅
+   （原来的 --c-ink-2、--c-sun 在纸上：浅色下“演示数据”约 1.8～2:1，深色下次要字约 1.9:1，标签成了深色块）。
+   特异性保持 (0,2,0)（:where 不计）：模块对同一位置的规则在 ui.css 之后加载，照样生效（如接待页便笺的标签）。 */
+.ps-card--paper .ps-muted {
+  color: var(--paper-secondary-ink);
+}
+.ps-card--paper .ps-origin {
+  color: color-mix(in srgb, var(--c-sun) 35%, var(--paper-ink));
+}
+.ps-card--paper .ps-chip:where(:not([class*="ps-chip--"]):not([aria-pressed="true"])) {
+  border-color: var(--paper-shade);
+  background: color-mix(in srgb, var(--paper-shade) 55%, var(--paper));
+  color: var(--paper-ink);
 }
 
 .ps-chip {
@@ -118,9 +139,10 @@
   color: var(--c-danger);
   border-color: transparent;
 }
+/* 按钮式标签：点按区不小于 40px（原 36px）；字号、内边距不变 */
 button.ps-chip {
   cursor: pointer;
-  min-height: 36px;
+  min-height: 40px;
   padding: 0 14px;
   font-size: var(--fs-sm);
 }
@@ -231,10 +253,32 @@ button.ps-chip[aria-pressed="true"] {
   color: var(--c-ink);
   font-weight: 700;
 }
+/* 状态组件（空状态 / 错误 / 未开放）的标题与说明折行时让各行长度接近，避免最后一行只剩一两个字
+   （如 320 宽下“……都在这 / 里。”）。只作用在状态组件里：说明是 StateView 里不带类名的 div，
+   或 RouteErrorPage、ErrorBoundary 里的 .ps-muted。不支持 text-wrap 的浏览器按原来的方式折行。 */
+.ps-state__title,
+.ps-state > div:not([class]),
+.ps-state > .ps-muted {
+  text-wrap: balance;
+}
 .ps-state__meta {
   font-size: var(--fs-xs);
   color: var(--c-ink-3);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+/* 错误码等默认收起（ErrorState 的 TechDetails）：一行小字入口，展开后才见代码。 */
+.ps-state__tech {
+  font-size: var(--fs-xs);
+  color: var(--c-ink-3);
+}
+.ps-state__tech summary {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.ps-state__tech .ps-state__meta {
+  overflow-wrap: anywhere;
 }
 .ps-skeleton {
   border-radius: var(--r-card);
@@ -324,11 +368,10 @@ button.ps-chip[aria-pressed="true"] {
   height: 100%;
   object-fit: cover;
 }
-.ps-avatar__initial {
-  color: #6c5b4c;
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 700;
-  line-height: 1;
+/* 没有照片（live）：中性爪印，和 features/pets/PetPortrait 的占位同一个样子；不写名字首字。 */
+.ps-avatar.is-placeholder {
+  background: var(--c-leaf-soft);
+  color: var(--c-leaf);
 }
 
 .ps-origin {

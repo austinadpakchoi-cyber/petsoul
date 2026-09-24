@@ -11,9 +11,10 @@ import type { InputChunk, SchoolCurriculum, SchoolSession } from "@/shared/contr
 import { toApiError } from "@/shared/api/errors";
 import { queryKeys } from "@/shared/query/queryClient";
 import { useServices } from "@/shared/services/registry";
+import { WorldGate } from "@/features/world_map/WorldGate";
 import { Button, Chip, ErrorState, LoadingState, Page } from "@/shared/ui";
 import { type DriveBackend, DriveRunner } from "../drive/DriveRunner";
-import { practiceHints, useCurriculum, useInvalidateSchool, useSchoolStatus } from "../hooks";
+import { practiceHints, useCurriculum, useInvalidateSchool, useSchoolPetId, useSchoolStatus } from "../hooks";
 import { QuizRunner } from "../quiz/QuizRunner";
 import { attemptText, SUBJECT_SHORT } from "../text";
 
@@ -128,7 +129,19 @@ function ExitDialog({ session, onStay, onLeave, onAbandon, busy, error }: { sess
   );
 }
 
+/**
+ * 全屏页（bareRoutes）不在主布局里，没有家庭上下文：用 WorldGate 套一层（与“我的”等全屏页同一个守卫），
+ * 才知道当前是哪只宠物——一家有两只时，考局与领证的每条请求都要带上它（否则 409 pet_required）。
+ */
 export function SessionPage() {
+  return (
+    <WorldGate>
+      <SessionBody />
+    </WorldGate>
+  );
+}
+
+function SessionBody() {
   const { sessionId = "" } = useParams();
   const { driving } = useServices();
   const navigate = useNavigate();
@@ -136,14 +149,16 @@ export function SessionPage() {
   const invalidate = useInvalidateSchool();
   const curriculum = useCurriculum();
   const status = useSchoolStatus();
+  // 考局按宠物分：一家有两只时每条都要带上是哪一只（否则 409 pet_required）。
+  const petId = useSchoolPetId();
   const [exiting, setExiting] = useState(false);
   const [voidMessage, setVoidMessage] = useState<string | null>(null);
-  const query = useQuery({ queryKey: queryKeys.drivingSession(sessionId), queryFn: () => driving.session(sessionId), refetchOnWindowFocus: false, staleTime: Infinity });
+  const query = useQuery({ queryKey: queryKeys.drivingSession(sessionId), queryFn: () => driving.session(sessionId, petId), refetchOnWindowFocus: false, staleTime: Infinity });
   const put = (session: SchoolSession) => queryClient.setQueryData(queryKeys.drivingSession(sessionId), session);
   // 结算后先取回已结算的考局再进成绩页，成绩页直接显示服务端结果。
   const toResult = async () => {
     try {
-      put(await driving.session(sessionId));
+      put(await driving.session(sessionId, petId));
     } catch {
       /* 取不到也照常跳转，成绩页会自己重试 */
     }
@@ -151,14 +166,14 @@ export function SessionPage() {
     navigate(`/school/result/${sessionId}`, { replace: true });
   };
   const begin = useMutation({
-    mutationFn: () => driving.begin(sessionId),
+    mutationFn: () => driving.begin(sessionId, petId),
     onSuccess: (s) => {
       put(s);
       invalidate();
     },
   });
   const abandon = useMutation({
-    mutationFn: () => driving.abandon(sessionId, true),
+    mutationFn: () => driving.abandon(sessionId, true, petId),
     onSuccess: (s) => {
       put(s);
       invalidate();
@@ -169,15 +184,15 @@ export function SessionPage() {
   });
   const backend = useMemo<DriveBackend>(
     () => ({
-      upload: (chunk: InputChunk) => driving.inputs(sessionId, chunk),
-      pause: () => driving.pause(sessionId),
+      upload: (chunk: InputChunk) => driving.inputs(sessionId, chunk, petId),
+      pause: () => driving.pause(sessionId, petId),
       reload: async () => {
-        const fresh = await driving.session(sessionId);
+        const fresh = await driving.session(sessionId, petId);
         queryClient.setQueryData(queryKeys.drivingSession(sessionId), fresh);
         return fresh;
       },
     }),
-    [driving, queryClient, sessionId],
+    [driving, queryClient, sessionId, petId],
   );
   const hints = useMemo(() => practiceHints(curriculum.data), [curriculum.data]);
   // TA 的台词按 DNA 行为画像的性格选（服务端给出 temperament），只影响话语，不影响成绩。
@@ -253,9 +268,9 @@ export function SessionPage() {
           practice={practice}
           exitLabel={practice ? "结束" : "离开"}
           onExit={() => setExiting(true)}
-          onAnswer={(body) => driving.answer(sessionId, body)}
+          onAnswer={(body) => driving.answer(sessionId, body, petId)}
           onSubmit={async () => {
-            put(await driving.submit(sessionId));
+            put(await driving.submit(sessionId, petId));
             invalidate();
             navigate(`/school/result/${sessionId}`, { replace: true });
           }}

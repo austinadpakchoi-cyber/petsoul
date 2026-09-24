@@ -73,7 +73,7 @@ function VisitBody({ visit, pet }: { visit: Visit; pet: PetPrivateSummary | null
         <div className="ps-muted">店内画面是动物世界的原创场景，不代表这家店的真实装修、菜单或宠物准入。</div>
       </Card>
       <Slot name="venue.panels" props={{ visit }} />
-      <Link to="/journey" className="ps-btn ps-btn--secondary">
+      <Link to="/map" className="ps-btn ps-btn--secondary">
         <Icon name="journey" /> 回到地图
       </Link>
     </div>
@@ -87,7 +87,7 @@ export function VisitPage() {
   const home = useActiveHome();
   return (
     <Page>
-      <TopBar title={query.data?.place.name ?? "店里"} subtitle="到店活动" back="/journey" />
+      <TopBar title={query.data?.place.name ?? "店里"} subtitle="到店活动" back="/map" />
       <QueryView query={query}>{(visit) => home.isPending ? <LoadingState label="正在确认当前宠物…" /> : home.isError ? <ErrorState error={home.error} onRetry={() => void home.refetch()} /> : home.data?.pet.pet_id !== visit.pet_id ? <EmptyState icon="lock" title="这不是当前宠物的到访">切回这次出门的伙伴，才能看见 TA 的店内活动。</EmptyState> : <VisitBody visit={visit} pet={home.data.pet} />}</QueryView>
     </Page>
   );

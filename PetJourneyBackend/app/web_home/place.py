@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 
 from ..storage import JourneyStorage
@@ -123,6 +123,18 @@ def default_place() -> HomePlace:
     return HomePlace(habitat, HABITATS[habitat][0], area.key, area.label, area.city, area.lat, area.lng, area.timezone, False)
 
 
+def _fuzzed(place: HomePlace, seed: str) -> HomePlace:
+    """把一个**没有落库**的片区参考点，按种子偏移成片区里的一点。
+
+    为什么需要它：`default_place()` 给的是片区参考点本身，**一个片区所有没落库的家都会共用它**。
+    落过库的家在 `assign()` 时已经偏移过（写进 `web_home_places`），两条路径走到这里语义就不一致了。
+    种子用 `home_id` / `residence_id`：`fuzz` 是纯函数，**同一个家每次算出同一点**，
+    不是每次随机——地图上不会自己漂。
+    """
+    lat, lng = fuzz(place.lat, place.lng, seed)
+    return replace(place, lat=lat, lng=lng)
+
+
 class HomePlaceStore:
     def __init__(self, storage: JourneyStorage) -> None:
         self.storage = storage
@@ -133,7 +145,15 @@ class HomePlaceStore:
         with self.storage.connect() as conn:
             row = conn.execute("SELECT * FROM web_home_places WHERE home_id = ?", (home_id,)).fetchone()
         if row is None:
-            return default_place()
+            # 没选过环境的家在这张表里没有行。**原先直接返回 `default_place()`，
+            # 那是片区的参考点、没有任何偏移——于是所有这类家会落在同一个坐标上**
+            # （6c2b 2026-09-24 做地图端到端时发现：`/world/state` 给的 home.center
+            # 正好是中环参考点 22.2819/114.1581，多只宠物在地图上会叠在一起）。
+            #
+            # 这里按 `home_id` 做种子偏移一次：**同一个家每次算出同一点**（`fuzz` 是纯函数、
+            # 种子稳定，不是每次随机），不同的家分散开。偏移量与 `assign()` 写库时用的是同一个
+            # `FUZZ_METERS`，所以「家在片区里、不对应门牌」这条语义两条路径一致。
+            return _fuzzed(default_place(), home_id)
         habitat, area = AREAS.get(row["area_key"], AREAS[DEFAULT_AREA])
         return HomePlace(habitat, HABITATS[habitat][0], area.key, area.label, area.city, row["lat"], row["lng"], area.timezone, True)
 
@@ -142,7 +162,7 @@ class HomePlaceStore:
         with self.storage.connect() as conn:
             row = conn.execute("SELECT * FROM web_residences WHERE residence_id = ?", (residence_id,)).fetchone()
         if row is None or row["area_key"] not in AREAS:
-            return default_place()
+            return _fuzzed(default_place(), residence_id)  # 同上：不让找不到的驿站全部叠在参考点上
         habitat, area = AREAS[row["area_key"]]
         return HomePlace(habitat, HABITATS[habitat][0], area.key, row["label"].split("·", 1)[-1], area.city, row["lat"], row["lng"], row["timezone"], True)
 

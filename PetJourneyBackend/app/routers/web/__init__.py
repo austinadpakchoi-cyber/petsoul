@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from ...schemas.web.common import Capability
 from . import (
+    character,
     collection,
     communicator,
     companion_media,
@@ -20,12 +21,14 @@ from . import (
     identity,
     journey,
     life,
+    map as map_module,
     meta,
     pets,
     public,
     reception,
     social,
     transport,
+    world,
 )
 
 WEB_ROUTER_MODULES = (
@@ -34,6 +37,7 @@ WEB_ROUTER_MODULES = (
     identity,
     households,
     pets,
+    character,
     reception,
     home,
     farm,
@@ -47,6 +51,8 @@ WEB_ROUTER_MODULES = (
     credentials,
     driving,
     life,
+    map_module,  # 地图底图配置（CR-6C2B-MAP W0）；`map` 是内置名，导入时改名避免遮蔽
+    world,       # 统一世界状态（CR-6C2B-MAP W1）：纯读聚合
 )
 WEB_ROUTERS = tuple(module.router for module in WEB_ROUTER_MODULES)
 

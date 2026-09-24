@@ -26,7 +26,11 @@ from .web_driving import DrivingService
 logger = logging.getLogger(__name__)
 
 ANNOUNCE = {  # 拿驾照的消息由驾考模块和考试结果一起登记（web_driving.notes），不在这里发
-    "identity_card": "我的星球身份证办好啦，编号 {number}！以后我就是星球上正式的居民了。",
+    # 「星球居民证」是用户 2026-09-24 定的叫法（原「星球身份证」）。
+    # **这处没有改成读 `CATALOG.label`**：它是一句完整的话、名字嵌在句中，抽成模板要改调用处，
+    # 收益不抵改动面。**代价是它仍然是第二处名字**——改名时要记得连它一起改，
+    # 而 `timeline.py` 那条注释里列了这个坑。
+    "identity_card": "我的星球居民证办好啦，编号 {number}！以后我就是星球上正式的居民了。",
     "passport": "我领到护照啦，编号 {number}！第一次出远门，就去{title}。",
 }
 

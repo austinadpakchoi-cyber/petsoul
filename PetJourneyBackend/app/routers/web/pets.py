@@ -170,12 +170,20 @@ def save_dna(pet_id: str, body: PetDNA, request: Request, expected_version: int 
              principal: WebPrincipal = Depends(require_principal)) -> PetDNAView:
     """整体保存（即确认）。保存后 TA 在私信与主动消息里按这份 DNA 说话，作息与出门倾向也立刻按新的来（见返回的 behavior）。
     expected_version：读到的共用版本号；家人在这之后改过 → 409 dna_version_conflict（带 current_version），页面应重新读取再改。
+    **还没保存过时传 0**：版本从 1 起（`web_pets/dna.py:137` 写死 1），所以 0 撞不上任何已存在的记录——
+    两位家人同时首存时，后到的那位会看见先到的那一版（检查在 `BEGIN IMMEDIATE` 里、由写锁排序），
+    `1 != 0` 当场冲突。**这个窗口是关上的，不是缩小的。**
+    **不传 `expected_version` 则完全不检查**：记录已存在也直接覆盖。那是留给「明知要覆盖」的调用方的口子，
+    **正常的编辑页面应当一律传**（首存传 0，之后传读到的版本号）。
     称呼与小暗号只写进你自己的那一份，不会覆盖其他家人的。"""
     _own_pet(request, principal, pet_id, Action.care)
     try:
         web_of(request).dna.save(principal.user_id, pet_id, body, utcnow(), expected_version)
     except DNAConflict as exc:
-        raise WebAPIError(WebErrorCode.conflict, "家人刚改过 TA 的 DNA，先看看最新的再改。", 409,
+        # 文案里不出现「DNA」：那是**代码里的名字**，界面上这一页叫「TA 的档案」（6c2b 2026-09-24 指出）。
+        # 主人看到的词应当和它在界面上看到的一致。**`reason` 码不动**——`dna_version_conflict`
+        # 是契约里的稳定标识，前端按它分支；**给人看的话和给程序看的码，改的自由度不一样。**
+        raise WebAPIError(WebErrorCode.conflict, "家人刚改过 TA 的档案，先看看最新的再改。", 409,
                           details={"reason": "dna_version_conflict", "current_version": exc.current_version}) from exc
     return _dna_view(request, principal, pet_id)
 

@@ -5,7 +5,7 @@ import { newIdempotencyKey } from "@/shared/api/idempotency";
 import { toApiError } from "@/shared/api/errors";
 import { queryKeys } from "@/shared/query/queryClient";
 import { useServices } from "@/shared/services/registry";
-import { useSessionState } from "@/shared/session/onboarding";
+import { onboardingRoute, useSessionState } from "@/shared/session/onboarding";
 import { Button, ErrorState, LoadingState, Page, TopBar } from "@/shared/ui";
 import publicWorldScene from "./assets/public-world-v1.webp";
 import "./pets.css";
@@ -41,7 +41,8 @@ export function PendingEntryPage() {
   if (session.isPending) return <Page bare><LoadingState lines={2} label="正在找回你的选择…" /></Page>;
   if (session.isError) return <Page bare><ErrorState error={session.error} onRetry={() => void session.refetch()} /></Page>;
   if (!session.data.authenticated) return <Navigate to={`/login${petId ? `?entry=adopt&pet_id=${encodeURIComponent(petId)}` : ""}`} replace />;
-  if (session.data.onboarding?.step !== "needs_companion") return <Navigate to="/home" replace />;
+  // 已经不在“挑伙伴”这一步：按入住阶段去该去的地方（已入住 → 地图首页，接待 / 入住没完成 → 对应那一步）。
+  if (session.data.onboarding?.step !== "needs_companion") return <Navigate to={onboardingRoute(session.data.onboarding)} replace />;
   if (!petId) return <Navigate to="/onboarding" replace />;
   const selected = pet.data;
   const canAdopt = Boolean(selected?.adoptable && selected.resident?.candidate_id && (pending?.pet_id !== petId || pending.available !== false));

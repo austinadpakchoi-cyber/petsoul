@@ -1,0 +1,25 @@
+/* “调整形象”里的证件照一节（PetFigure.tsx 的 IdPhotoAdjust）：左边小张证件照（3:4），右边说明与按钮。 */
+.ps-idphoto-adjust {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--c-surface-stroke);
+}
+.ps-idphoto-adjust__photo {
+  flex: 0 0 auto;
+  width: 60px;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: 50% 0;
+  border-radius: 8px;
+  border: 1px solid var(--c-surface-stroke);
+  background: var(--c-surface-2);
+}
+.ps-idphoto-adjust__body {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  min-width: 0;
+}

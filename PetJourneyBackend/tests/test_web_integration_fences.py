@@ -66,10 +66,23 @@ class IllustrationFenceTests(WebPlatformTestBase):
             illustrations.run_claimed(task, old, queue)
         self.assertEqual(self.row("SELECT status FROM web_illustrations WHERE task_id = ?", (task_id,))["status"], "processing", "旧领取的结果不写库")
         self.assertEqual(self.row("SELECT photo_status FROM web_messages WHERE message_id = 'msg-fence'", ())["photo_status"], "processing", "也不改来信")
+        # ---- 这一段的断言换过一次（2026-09-24「成功结果恢复」派单，A 实现、我核过实现再改的）----
+        #
+        # **围栏那一半没有变，就在上面三条**：旧领取抛 `StaleClaim`、插画记录不写、来信不改。
+        # 变的是**被拒绝的东西是什么**——被拒的是旧领取的**提交**，而它**已经付钱画出来的那张图**
+        # 不再作废：新领取凭小票认领它（`illustrations.py:257-263`「凭小票认领那张图，**不预占、不发送**」，
+        # 按上一次的领取代数找，落盘后缀 `-{代数}` 与预占编号末尾同源）。
+        #
+        # **「提交被拒」与「那张图被认领」不矛盾**：前者挡的是并发写坏数据，后者省的是第二次付费。
+        # 原先第 72 行断言后缀是**新领取**的代数——那等于把「新领取自己重画一张、再付一次钱」写成期望，
+        # 正是这次要消灭的重复付费。**旧断言红得对，我改的是它钉错了的那件事，不是让它变绿。**
+        sent = len(self.illustrator.prompts)
+        self.assertGreaterEqual(sent, 1, "前提：旧领取真的调过一次供应商——它是 0 的话下面那句『没再调』毫无意义")
         illustrations.run_claimed(task, new, queue)
         ready = self.row("SELECT status, rel_path FROM web_illustrations WHERE task_id = ?", (task_id,))
         self.assertEqual(ready["status"], "ready")
-        self.assertTrue(ready["rel_path"].endswith(f"-{new.claim_generation}.png"), "每次领取写自己的文件，旧领取晚到的图不会覆盖")
+        self.assertTrue(ready["rel_path"].endswith(f"-{old.claim_generation}.png"), "发布的是旧领取已经付过钱的那张")
+        self.assertEqual(len(self.illustrator.prompts), sent, "新领取认领那张就够了，不该再付一次钱")
         self.assertEqual(self.row("SELECT photo_status FROM web_messages WHERE message_id = 'msg-fence'", ())["photo_status"], "ready")
         self.assertEqual(queue.get(task_id).status, "succeeded", "结果与任务完成同一个事务提交")
 

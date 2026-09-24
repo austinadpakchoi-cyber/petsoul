@@ -14,9 +14,9 @@ export function JourneyStatusPanel({ snapshot }: { snapshot: HomeSnapshot }) {
             <Icon name="compass" />
           </span>
           <span style={{ flex: 1 }}>
-            <strong>{snapshot.pet.name} 在家，想出去走走吗？</strong>
+            <strong>{snapshot.pet.name} 在家 · 出不出门由 TA 决定</strong>
             <span className="ps-muted" style={{ display: "block" }}>
-              去出发站选个地方，旅费 {snapshot.wallet.balance}
+              想到好地方，可以悄悄告诉 TA
             </span>
           </span>
           <Icon name="chevron" />

@@ -1,18 +1,94 @@
-import { useQuery } from "@tanstack/react-query";
+/**
+ * 单张证件（三级页，全屏）：大卡面 +“翻到背面”。正面是照片位、服务端字段（原样）、编号与签发日期；背面按种类不同。
+ * 先确认这张证件在当前宠物的卡包里，才把当前宠物的照片放上去（切换宠物后不张冠李戴）。
+ */
 import { Link, useParams } from "react-router";
-import { queryKeys } from "@/shared/query/queryClient";
-import { useServices } from "@/shared/services/registry";
-import { useCurrentHousehold } from "@/shared/session/householdContext";
-import { EmptyState, ErrorState, LoadingState, Page, TopBar } from "@/shared/ui";
+import type { CredentialDetail, CredentialLink } from "@/shared/contracts";
+import { env } from "@/shared/config/env";
+import { Button, DataOriginBadge, EmptyState, ErrorState, LoadingState, Page, TopBar } from "@/shared/ui";
+import { dayText, formOf, linkKindText, linkRoute, statusText } from "./copy";
+import { useCredentialDetail, useCredentialList, useFlip, useWalletPet, type WalletPet } from "./data";
+import { CredentialBack, CredentialFront, flipHint } from "./faces";
 import "./life.css";
 
 export function CredentialPage() {
   const { credentialId } = useParams();
-  const { life } = useServices();
-  const { userId, pet } = useCurrentHousehold();
-  const petId = pet?.pet_id ?? "";
-  const list = useQuery({ queryKey: queryKeys.credentialsFor(userId ?? "-", petId), queryFn: ({ signal }) => life.credentials(petId, signal), enabled: Boolean(userId && petId) });
-  const own = list.data?.some((item) => item.credential_id === credentialId) ?? false;
-  const detail = useQuery({ queryKey: queryKeys.credentialFor(userId ?? "-", petId, credentialId ?? "-"), queryFn: ({ signal }) => life.credential(credentialId!, signal), enabled: Boolean(credentialId && own) });
-  return <Page className="ps-life-page"><TopBar title="星球证件" subtitle="只属于当前这只伙伴" back="/life" /><div className="ps-life-content">{list.isPending ? <LoadingState label="正在确认这张证件的归属…" /> : list.isError ? <ErrorState error={list.error} onRetry={() => void list.refetch()} /> : !own ? <EmptyState icon="lock" title="这不是当前宠物的证件">切回对应的伙伴，或返回生活档案。</EmptyState> : detail.isPending ? <LoadingState label="正在翻开证件…" /> : detail.isError ? <ErrorState error={detail.error} onRetry={() => void detail.refetch()} /> : detail.data ? <><section className={`ps-life-card ps-life-card--${detail.data.summary.kind}`}><span>PETSOUL · OFFICIAL RECORD</span><h1>{detail.data.summary.label}</h1><p>{pet?.name}</p><strong>{detail.data.summary.number ?? "尚未签发编号"}</strong><small>{detail.data.summary.issued_at ? `签发于 ${new Date(detail.data.summary.issued_at).toLocaleDateString("zh-CN")}` : detail.data.summary.condition}</small></section>{detail.data.fields.length ? <section className="ps-life-detail"><h2>卡面资料</h2>{detail.data.fields.map((field) => <div key={field.label}><span>{field.label}</span><strong>{field.value}</strong></div>)}</section> : null}{detail.data.summary.kind === "bank_card" ? <section className="ps-life-detail"><h2>星球银行卡</h2><p>与家园钱包是同一个账户，不另加一份余额。</p><div className="ps-life-balance">{detail.data.balance == null ? "余额暂不可用" : `${detail.data.balance} 星币`}</div><h3>最近收支</h3>{detail.data.ledger.length ? detail.data.ledger.map((entry) => <div key={entry.tx_id} className="ps-life-ledger"><span>{entry.reason}<small>{new Date(entry.created_at).toLocaleString("zh-CN")}</small>{entry.ref_kind && entry.ref_id ? <small>关联 {entry.ref_kind} · {entry.ref_id}</small> : null}</span><strong>{entry.delta > 0 ? "+" : ""}{entry.delta}</strong></div>) : <p>还没有收支记录。</p>}</section> : null}{detail.data.stamps.length ? <section className="ps-life-detail"><h2>旅途盖章</h2>{detail.data.stamps.map((stamp) => <div key={stamp.journey_id}><span>{stamp.city}</span><strong>{stamp.title}</strong></div>)}</section> : null}{detail.data.care_notes.length ? <section className="ps-life-detail"><h2>只给主人看的照护叮嘱</h2>{detail.data.care_notes.map((note, index) => <p key={`${index}-${note}`}>{note}</p>)}</section> : null}{detail.data.summary.links.length ? <section className="ps-life-detail"><h2>这张证件关联的经历</h2>{detail.data.summary.links.map((link) => <div key={`${link.kind}-${link.ref_id}`}><span>{link.kind}</span><strong>{link.title}</strong></div>)}</section> : null}<Link className="ps-life-back" to="/life">← 返回生活档案</Link></> : null}</div></Page>;
+  const pet = useWalletPet();
+  const list = useCredentialList();
+  const detail = useCredentialDetail(credentialId);
+  const summary = list.data?.find((item) => item.credential_id === credentialId) ?? null;
+  const shown = detail.data?.summary ?? summary;
+  // 副标题只放一个短状态（已使用 / 待出发 / 在途……）；行程本身就在票面上，不塞进顶栏被截断。
+  const subtitle = shown ? statusText(shown) : null;
+
+  let body;
+  if (list.isPending || !pet.ready) body = <LoadingState label="正在翻开这张证件…" lines={2} />;
+  else if (list.isError) body = <ErrorState error={list.error} onRetry={() => void list.refetch()} />;
+  else if (!summary)
+    body = (
+      <EmptyState
+        icon="lock"
+        title={`这张证件不在${pet.name}的卡包里`}
+        action={
+          <Link className="ps-btn ps-btn--secondary" to="/life">
+            回到卡包
+          </Link>
+        }
+      >
+        如果它属于家里另一只伙伴，先切换到那只伙伴再看。
+      </EmptyState>
+    );
+  else if (detail.isPending) body = <LoadingState label="正在翻开这张证件…" lines={2} />;
+  else if (detail.isError) body = <ErrorState error={detail.error} onRetry={() => void detail.refetch()} />;
+  else body = <CredentialView key={credentialId} detail={detail.data} pet={pet} />;
+
+  return (
+    <Page bare className="ps-cred-page">
+      <TopBar title={shown?.label ?? "证件"} subtitle={subtitle ?? undefined} back="/life" right={env.dataMode === "fixture" ? <DataOriginBadge origin="fixture" /> : undefined} />
+      <div className="ps-cred-content">{body}</div>
+    </Page>
+  );
+}
+
+function CredentialView({ detail, pet }: { detail: CredentialDetail; pet: WalletPet }) {
+  const { face, phase, flip } = useFlip();
+  const { summary } = detail;
+  const hint = flipHint(summary.kind);
+  return (
+    <>
+      <div className={`ps-cred-stage ps-cred-stage--${formOf(summary.kind)}`} data-phase={phase}>
+        <div className="ps-cred-flip" id="ps-cred-face" role="group" aria-label={`${summary.label}${face === "front" ? "正面" : "背面"}`} data-face={face}>
+          {face === "front" ? <CredentialFront detail={detail} pet={pet} /> : <CredentialBack detail={detail} pet={pet} />}
+        </div>
+      </div>
+      <div className="ps-cred-actions">
+        <Button variant="secondary" icon="refresh" aria-controls="ps-cred-face" onClick={flip}>
+          {face === "front" ? "翻到背面" : "翻回正面"}
+        </Button>
+        {face === "front" && hint ? <span className="ps-cred-actions__hint">{hint}</span> : null}
+      </div>
+      {summary.links.length ? <LinksSection links={summary.links} /> : null}
+      <p className="ps-cred-foot">这是 PetSoul 星球里的纪念证件，不是现实中的证件或票据。</p>
+    </>
+  );
+}
+
+function LinksSection({ links }: { links: CredentialLink[] }) {
+  return (
+    <section className="ps-cred-links" aria-labelledby="ps-cred-links-title">
+      <h2 id="ps-cred-links-title">相关经历</h2>
+      <ul>
+        {links.map((link, index) => {
+          const to = linkRoute(link);
+          const meta = [linkKindText(link.kind), dayText(link.at)].filter(Boolean).join(" · ");
+          return (
+            <li key={`${link.kind}-${link.ref_id}-${index}`} data-testid="cred-link">
+              {to ? <Link to={to}>{link.title}</Link> : <span>{link.title}</span>}
+              {meta ? <small>{meta}</small> : null}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
 }

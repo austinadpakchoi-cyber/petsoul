@@ -1,11 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import type { AdoptionCandidate, InvitePreview, PublicWorld, SessionState } from "@/shared/contracts";
 import { ServicesProvider } from "@/shared/services/registry";
 import type { ServiceMap } from "@/shared/services/types";
-import { RegisterPage, WelcomePage } from "@/features/identity/pages";
+import { LoginPage, RegisterPage, WelcomePage } from "@/features/identity/pages";
 import { AdoptPage } from "@/features/pets/pages";
 import { PublicWorldPage } from "@/features/pets/PublicWorldPage";
 import { JoinPage } from "@/features/household/JoinPage";
@@ -44,13 +44,18 @@ function renderEntry(children: React.ReactNode, services: Partial<ServiceMap>, i
 describe("0.4.1 first-batch entry UX", () => {
   it("keeps the film decorative and offers both register and guest routes", async () => {
     renderEntry(<WelcomePage />, { session: { current: async () => guest } as ServiceMap["session"] });
-    expect(screen.getByRole("link", { name: /带我的宠物来/ }).getAttribute("href")).toBe("/register?entry=own_pet");
-    expect(screen.getByRole("link", { name: /先认识星球居民/ }).getAttribute("href")).toBe("/world#residents");
+    expect(screen.getByRole("link", { name: /寻找我的 TA/ }).getAttribute("href")).toBe("/register");
+    expect(screen.getByRole("link", { name: /先去星球上逛逛/ }).getAttribute("href")).toBe("/world#residents");
+    expect(screen.getByRole("link", { name: /已经找到 TA 了？登录/ }).getAttribute("href")).toBe("/login");
+    expect(screen.getByRole("heading", { level: 1, name: /和 TA 一起，走进另一个世界。/ })).toBeTruthy();
+    expect(screen.getByText(/每只宠物，都有一段属于自己的故事/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "暂停开场影片" })).toBeTruthy();
     expect(screen.getByText(/概念影像，不代表你或居民的真实宠物/)).toBeTruthy();
   });
 
   it("renders public entry options only when the public-world contract offers them", async () => {
+    // 2026-09-23 星球页改为全屏地图 + 相遇卡（claude-6c2b）：注册入口沿用用户确认的“寻找我的 TA”，仍只在契约提供 own_pet 时出现。
+    vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} unobserve() {} });
     const world: PublicWorld = {
       server_time: "2026-09-23T00:00:00Z", data_origin: "live", cache_seconds: 30,
       entries: [
@@ -60,10 +65,33 @@ describe("0.4.1 first-batch entry UX", () => {
       ],
       residents: [], recent_posts: [], living_residents: 0,
     };
-    renderEntry(<PublicWorldPage />, { pets: { publicWorld: async () => world } as ServiceMap["pets"] });
-    expect(await screen.findByRole("link", { name: /带我的宠物来/ })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /认识星球居民/ })).toBeTruthy();
+    const view = renderEntry(<PublicWorldPage />, {
+      session: { current: async () => guest } as ServiceMap["session"],
+      pets: { publicWorld: async () => world } as ServiceMap["pets"],
+      platform: { basemap: vi.fn() } as unknown as ServiceMap["platform"],
+    });
+    expect((await screen.findByRole("link", { name: "寻找我的 TA" })).getAttribute("href")).toBe("/register");
+    expect((screen.getByRole("button", { name: /看全部居民/ }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.queryByText("从家人邀请进入")).toBeNull();
+    view.unmount();
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps the illustrated register and login entry tied to the real account form", () => {
+    const services = { session: { current: async () => guest } as ServiceMap["session"] };
+    const registerPage = renderEntry(<RegisterPage />, services);
+    const registerView = within(registerPage.container);
+    expect(registerView.getByText("和 TA 一起，走进另一个世界。")).toBeTruthy();
+    expect(registerView.getByLabelText("你的账号名")).toBeTruthy();
+    expect(registerView.getByLabelText("设置密码")).toBeTruthy();
+    expect(registerView.getByRole("button", { name: "创建账号，继续" })).toBeTruthy();
+    registerPage.unmount();
+    const loginPage = renderEntry(<LoginPage />, services);
+    const loginView = within(loginPage.container);
+    expect(loginView.getByText("另一个世界，等你回来。")).toBeTruthy();
+    expect(loginView.getByLabelText("你的账号名")).toBeTruthy();
+    expect(loginView.getByLabelText("密码")).toBeTruthy();
+    loginPage.unmount();
   });
 
   it("sends the selected public resident as entry intent during registration", async () => {
@@ -73,9 +101,9 @@ describe("0.4.1 first-batch entry UX", () => {
       pets: { publicPet: async () => ({ profile: { pet_id: "pet-test-1", display_name: "小岚", avatar_url: null }, adoptable: true, resident: null, posts: [] }) } as unknown as ServiceMap["pets"],
     }, ["/register?entry=adopt&pet_id=pet-test-1"]);
     expect(await screen.findByText("刚才认识的居民")).toBeTruthy();
-    fireEvent.change(screen.getByLabelText("用户名"), { target: { value: "entry_test" } });
-    fireEvent.change(screen.getByLabelText("密码"), { target: { value: "password123" } });
-    fireEvent.click(screen.getByRole("button", { name: "注册" }));
+    fireEvent.change(screen.getByLabelText("你的账号名"), { target: { value: "entry_test" } });
+    fireEvent.change(screen.getByLabelText("设置密码"), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: "创建账号，继续" }));
     await waitFor(() => expect(register).toHaveBeenCalledWith("entry_test", "password123", undefined, { kind: "adopt", pet_id: "pet-test-1", invite_token: null }));
   });
 

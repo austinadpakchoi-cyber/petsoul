@@ -52,21 +52,48 @@ class RealisticMediaTests(MediaTestBase):
         for rule in ("写实摄影照片", "邮筒", "不是卡通", "不要出现人、人手或手机", "不要出现任何招牌、商标、品牌标志"):
             self.assertIn(rule, prompt)
 
-    def test_without_generated_photos_the_postcard_is_words_only(self) -> None:
+    # ---- 生不出图时不冒充：触发条件换过一次，见下 ----
+    #
+    # 这两条原先靠「主人没开启 `generated_photos`」来制造"生不出图"。用户 2026-09-23 决定
+    # **取消 AI 生图的逐次授权询问**（角色与生活/旅行两类都取消），那道开关连同接线已摘除，
+    # 「没开启」这个状态**不再存在**——原样留着就是断言一个到不了的前提。
+    #
+    # **但这两条真正钉的产品规则没变**：生不出图的时候**如实说没有，不拿别的东西冒充**
+    # （方案「不将照片框当作已完成的场景角色，也不拿通用猫代替」）。所以触发条件换成
+    # **供应商不可用**——那是取消询问之后仍然存在、而且更常见的一种"生不出图"。
+    def no_provider(self) -> None:
+        """供应商不可用：`IllustrationService.available()` 读的就是这个属性（`illustrations.py:97`）。
+
+        **先确认替身真的装在服务上。** 下面两条用例的核心断言是 `prompts == []`（一次都没调过），
+        **而替身要是根本没装上去，`prompts` 也永远是空——断言恒真、什么都不测、还照样绿**。
+        `setUp` 里那行 `web.illustrations.illustrator = self.illustrator` 是**只写没读**的：
+        属性哪天改了名，赋值会悄悄挂到一个新属性上，不报错。
+
+        这个前提以前只写在注释里（「文件级有别的用例会 `prompts[-1]` 炸」）——
+        **那是可读、不是可执行**：救它的是**别的测试方法**，单跑这一条时没有任何东西会响。
+        改成断言之后，破了就炸在这一行，而不是变成「某条用例悄悄不再测东西」。
+        """
+        assert self.web.illustrations.illustrator is self.illustrator, \
+            "替身没装在 IllustrationService 上：prompts 会恒为空，下面的断言将失去意义"
+        self.illustrator.available = False
+
+    def test_without_a_provider_the_postcard_is_words_only(self) -> None:
+        self.no_provider()
         self.visit_id()
         self.clock.advance(minutes=30)
         card = next(i for i in self.collection() if i["kind"] == "postcard")
         self.assertIsNone(card["image_status"])
         self.assertIsNone(card["image_url"])
-        self.assertTrue(card["note"])
-        self.assertEqual(self.illustrator.prompts, [], "没开启就不生图")
+        self.assertTrue(card["note"], "图生不出来，话还是要写——明信片本身不该消失")
+        self.assertEqual(self.illustrator.prompts, [], "供应商不可用就一次都不该调它")
 
     def test_cafe_photo_is_a_realistic_photo_task_or_an_honest_paper_card(self) -> None:
+        self.no_provider()
         visit_id = self.visit_id()
         photo = next(a for a in self.owner.get(f"/visits/{visit_id}").json()["activities"] if a["kind"] == "take_photo")
         done = self.owner.post(f"/visits/{visit_id}/actions", {"activity_id": photo["activity_id"]}).json()
         text = next(a for a in done["activities"] if a["kind"] == "take_photo")["result_text"]
-        self.assertIn("没有照片", text, "没开启生成照片：纸质卡片，不冒充照片")
+        self.assertIn("没有照片", text, "生不出照片时：纸质卡片，不冒充照片")
         card = next(m for m in self.owner.get(f"/communicator/{self.owner.pet_id}/messages").json()["items"] if "纸质卡片" in m["text"])
         svg = self.owner.get(card["photo_url"].removeprefix("/api/v1/web")).text
         self.assertNotIn("<circle cx=\"400\" cy=\"200\" r=\"70\"", svg, "卡片上不画卡通动物")

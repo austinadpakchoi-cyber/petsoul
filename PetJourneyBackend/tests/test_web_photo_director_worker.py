@@ -53,7 +53,6 @@ class PhotoDirectorWorkerTests(unittest.TestCase):
         self.illustrator = RecordingIllustrator()
         self.illustrations = IllustrationService(self.storage, root / "media", self.queue)
         self.illustrations.illustrator = self.illustrator
-        self.illustrations.opted_in = lambda user_id, pet_id=None: True
         self.illustrations.can_view_pet = lambda user_id, pet_id: True
         self.illustrations.character_of = lambda pet_id: ("cat", "小岚", None)
         self.illustrations.reference_photo_of = lambda pet_id: (PNG, "image/png")  # 主人原照，不用画证件照
@@ -135,6 +134,28 @@ class PhotoDirectorWorkerTests(unittest.TestCase):
         self.assertEqual(row["status"], "failed", "进终态")
         self.assertTrue(row["last_error"].startswith("image director_hold:"), f"原因要看得见：{row['last_error']}")
         self.assertEqual(self.illustration_status(task_id), "failed", "如实显示没有图，不冒充已发送")
+
+    def test_someone_who_cannot_see_the_pet_gets_no_photo(self) -> None:
+        """**摘掉用途授权闸没有把访问权一起摘掉**（用户 2026-09-23 取消逐次询问）。
+
+        `PhotoAccess.can_access` 与用途授权是两回事：前者是"这个人还能不能看这只宠物"
+        （被移出家庭后立即失效），后者是"要不要为这个用途向外部供应商发送"。
+        取消的是后者，前者一个字没动，而且照样在**预占之前** hold——0 预占、0 发送。
+
+        这条原本我写在 `test_web_consent_boundary.py` 里，跑出来是绿→查明那条路径是**非导演路径**
+        （`directed = bool(scene_key) and style == "selfie"`，冒险照两样都不满足），根本不读 `can_access`。
+        所以搬到这里——**有这道闸的是导演路径**。
+        """
+        self.illustrations.can_view_pet = lambda user_id, pet_id: False
+        task_id = self.register(**self.full_facts())
+
+        self.illustrations.run_pending()
+
+        self.assertEqual(self.illustrator.prompts, [], "看不了这只宠物：0 次发送")
+        self.assertEqual(self.reservations(task_id), [], "**0 次预占**——闸在预占之前")
+        row = self.task_row(task_id)
+        self.assertEqual(row["status"], "failed", "进终态，不自动重试")
+        self.assertTrue(row["last_error"].startswith("image director_hold:"), f"原因要看得见：{row['last_error']}")
 
     def test_a_missing_timezone_holds_instead_of_guessing(self) -> None:
         task_id = self.register(**self.full_facts(place_timezone=None))

@@ -37,7 +37,7 @@ function CollectionPage() {
     <Page>
       <TopBar
         title="回忆与收藏"
-        back="/home"
+        back="/memories"
         right={
           <Link to="/market" className="ps-btn ps-btn--ghost ps-btn--sm">
             <Icon name="coin" size={16} /> 集市
@@ -79,12 +79,12 @@ function useMarketWrite() {
   };
 }
 
-function PantryRow({ item }: { item: InventoryItem }) {
+function PantryRow({ item, petId }: { item: InventoryItem; petId: string | null }) {
   const { economy } = useServices();
   const done = useMarketWrite();
   const keyRef = useRef(newIdempotencyKey("sell"));
   const sell = useMutation({
-    mutationFn: (qty: number) => economy.sell(item.item_key, qty, keyRef.current),
+    mutationFn: (qty: number) => economy.sell(item.item_key, qty, keyRef.current, petId),
     onSuccess: (result) => {
       keyRef.current = newIdempotencyKey("sell");
       done(result);
@@ -115,11 +115,11 @@ function PantryRow({ item }: { item: InventoryItem }) {
   );
 }
 
-function OrderRow({ order }: { order: ResidentOrder }) {
+function OrderRow({ order, petId }: { order: ResidentOrder; petId: string | null }) {
   const { economy } = useServices();
   const done = useMarketWrite();
   const keyRef = useRef(newIdempotencyKey("order"));
-  const fulfill = useMutation({ mutationFn: () => economy.fulfill(order.order_id, keyRef.current), onSuccess: done });
+  const fulfill = useMutation({ mutationFn: () => economy.fulfill(order.order_id, keyRef.current, petId), onSuccess: done });
   return (
     <li className="ps-market-row">
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -150,10 +150,18 @@ function OrderRow({ order }: { order: ResidentOrder }) {
 
 function MarketPage() {
   const { economy } = useServices();
-  const query = useQuery({ queryKey: MARKET_KEY, queryFn: () => economy.market() });
+  const { userId, pet } = useCurrentHousehold();
+  const petId = pet?.pet_id ?? null;
+  const fixture = env.dataMode === "fixture";
+  // 按当前宠物读集市：live 的键带账号与宠物（切宠物就换一份），演示只有一份；写操作按 MARKET_KEY 前缀失效，两种键都覆盖。
+  const query = useQuery({
+    queryKey: fixture ? MARKET_KEY : [...MARKET_KEY, userId ?? "-", petId ?? "-"],
+    queryFn: () => economy.market(petId),
+    enabled: fixture || Boolean(userId && petId),
+  });
   return (
     <Page>
-      <TopBar title="集市" subtitle="把仓库里的收成换成旅费" back="/home" />
+      <TopBar title="集市" subtitle="把仓库里的收成换成旅费" back="/garden" />
       <QueryView query={query}>
         {(market) => (
           <div className="ps-stack">
@@ -174,7 +182,7 @@ function MarketPage() {
               ) : (
                 <ul className="ps-market-list">
                   {market.pantry.map((item) => (
-                    <PantryRow key={item.item_key} item={item} />
+                    <PantryRow key={item.item_key} item={item} petId={petId} />
                   ))}
                 </ul>
               )}
@@ -188,7 +196,7 @@ function MarketPage() {
               </p>
               <ul className="ps-market-list">
                 {market.orders.map((order) => (
-                  <OrderRow key={order.order_id} order={order} />
+                  <OrderRow key={order.order_id} order={order} petId={petId} />
                 ))}
               </ul>
             </Card>
@@ -220,9 +228,10 @@ export default defineModule({
       }),
       live: ({ api }) => ({
         collection: (petId, signal) => api.request<CollectionItem[]>("/collection", { query: { pet_id: petId }, signal }),
-        market: () => api.request<MarketView>("/market"),
-        sell: (itemKey, qty, key) => api.request<MarketResult>("/market/sell", { method: "POST", body: { item_key: itemKey, qty }, idempotencyKey: key }),
-        fulfill: (orderId, key) => api.request<MarketResult>(`/market/orders/${encodeURIComponent(orderId)}/fulfill`, { method: "POST", idempotencyKey: key }),
+        // 集市按宠物分（仓库、旅费、订单都是这只宠物的家的）：一家有两只时不带 pet_id 后端回 409 pet_required，所以三条都显式带上当前宠物。
+        market: (petId) => api.request<MarketView>("/market", { query: { pet_id: petId } }),
+        sell: (itemKey, qty, key, petId) => api.request<MarketResult>("/market/sell", { method: "POST", query: { pet_id: petId }, body: { item_key: itemKey, qty }, idempotencyKey: key }),
+        fulfill: (orderId, key, petId) => api.request<MarketResult>(`/market/orders/${encodeURIComponent(orderId)}/fulfill`, { method: "POST", query: { pet_id: petId }, idempotencyKey: key }),
       }),
     },
   },

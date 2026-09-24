@@ -6,6 +6,8 @@
 |---|---|---|---|---|---|---|---|
 | POST | `/adoption/adopt` | AdoptRequest | AdoptResult | 200 | required | 是 | 必填 |
 | GET | `/adoption/candidates` | — | AdoptionCandidate[] | 200 | required | — | — |
+| GET | `/announcements` | — | AnnouncementFeed | 200 | optional | — | — |
+| GET | `/assets/{asset_id}` | — | — | 200 | public | — | — |
 | POST | `/auth/login` | LoginRequest | SessionState | 200 | public | — | — |
 | POST | `/auth/logout` | — | — | 204 | optional | 是 | — |
 | POST | `/auth/register` | RegisterRequest | SessionState | 201 | public | — | — |
@@ -69,10 +71,14 @@
 | POST | `/journey/suggest` | SuggestRequest | JourneySuggestion | 200 | required | 是 | — |
 | GET | `/journey/suggestions` | — | JourneySuggestion[] | 200 | required | — | — |
 | GET | `/map/basemap` | — | BasemapView | 200 | required | — | — |
+| GET | `/map/config` | — | MapConfig | 200 | public | — | — |
 | GET | `/market` | — | MarketView | 200 | required | — | — |
 | POST | `/market/orders/{order_id}/fulfill` | — | MarketResult | 200 | required | 是 | 必填 |
 | POST | `/market/sell` | SellRequest | MarketResult | 200 | required | 是 | 必填 |
 | GET | `/media/basemaps/{basemap_id}` | — | — | 200 | required | — | — |
+| GET | `/media/characters/{asset_id}` | — | — | 200 | required | — | — |
+| GET | `/media/id-photos/{asset_id}` | — | — | 200 | required | — | — |
+| GET | `/media/id-photos/{asset_id}/avatar` | — | — | 200 | required | — | — |
 | GET | `/media/illustrations/{illustration_id}` | — | — | 200 | required | — | — |
 | GET | `/media/pets/{pet_id}/photo` | — | — | 200 | required | — | — |
 | GET | `/media/postcards/{photo_id}` | — | — | 200 | required | — | — |
@@ -89,10 +95,13 @@
 | GET | `/ops/status` | — | OpsStatus | 200 | public | — | — |
 | POST | `/pets` | Body_create_own_pet_api_v1_web_pets_post | PetPrivateSummary | 201 | required | 是 | 必填 |
 | GET | `/pets/{pet_id}/care-notes` | — | CareNote[] | 200 | required | — | — |
+| GET | `/pets/{pet_id}/character` | — | CharacterState | 200 | required | — | — |
+| POST | `/pets/{pet_id}/character/regenerate` | CharacterRegenerateCommand | CharacterRegenerateResult | 200 | required | 是 | 必填 |
 | GET | `/pets/{pet_id}/dna` | — | PetDNAView | 200 | required | — | — |
 | PUT | `/pets/{pet_id}/dna` | PetDNA | PetDNAView | 200 | required | 是 | — |
 | POST | `/pets/{pet_id}/follow` | FollowRequest | — | 204 | required | 是 | — |
 | GET | `/pets/{pet_id}/home-welcome` | — | HomeWelcome | 200 | required | — | — |
+| POST | `/pets/{pet_id}/id-photo/regenerate` | — | CharacterRegenerateResult | 200 | required | 是 | 必填 |
 | POST | `/pets/{pet_id}/photo-request` | PhotoRequestCommand | PhotoRequestResult | 200 | required | 是 | 必填 |
 | GET | `/pets/{pet_id}/photo-requests` | — | PhotoRequestView[] | 200 | required | — | — |
 | POST | `/pets/{pet_id}/photo-requests/{request_id}/retry-image` | — | PhotoRequestView[] | 200 | required | 是 | — |
@@ -117,6 +126,7 @@
 | POST | `/reception/sessions/{session_id}/skip` | — | ReceptionSession | 200 | required | 是 | — |
 | POST | `/reception/sessions/{session_id}/turns` | ReceptionTurnRequest | ReceptionSession | 200 | required | 是 | 必填 |
 | POST | `/reports` | ReportRequest | — | 204 | required | 是 | — |
+| GET | `/reports/mine` | — | MyReports | 200 | required | — | — |
 | GET | `/session` | — | SessionState | 200 | optional | — | — |
 | GET | `/settings` | — | SettingsView | 200 | required | — | — |
 | PATCH | `/settings` | SettingsUpdate | SettingsView | 200 | required | 是 | — |
@@ -124,3 +134,4 @@
 | GET | `/visits/{visit_id}` | — | Visit | 200 | required | — | — |
 | POST | `/visits/{visit_id}/actions` | VisitActionRequest | Visit | 200 | required | 是 | 必填 |
 | POST | `/visits/{visit_id}/choice` | VisitChoiceRequest | JourneyMapSnapshot | 200 | required | 是 | 必填 |
+| GET | `/world/state` | — | WorldState | 200 | required | — | — |

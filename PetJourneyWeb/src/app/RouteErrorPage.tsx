@@ -14,7 +14,7 @@ export function RouteErrorPage() {
           <Button variant="primary" icon="refresh" onClick={() => window.location.reload()}>
             刷新
           </Button>
-          <Link className="ps-btn ps-btn--secondary" to="/home">
+          <Link className="ps-btn ps-btn--secondary" to="/map">
             回到家
           </Link>
         </div>
@@ -27,7 +27,7 @@ export function NotFoundPage() {
   return (
     <Page>
       <div style={{ marginTop: "18vh" }}>
-        <EmptyState icon="compass" title="这里还没有路" action={<Link className="ps-btn ps-btn--primary" to="/home">回到家</Link>}>
+        <EmptyState icon="compass" title="这里还没有路" action={<Link className="ps-btn ps-btn--primary" to="/map">回到家</Link>}>
           地址可能写错了，或者这个地方还在建设。
         </EmptyState>
       </div>

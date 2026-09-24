@@ -230,7 +230,19 @@ class WebRulesTests(WebPlatformTestBase):
     def test_cafe_adventure_uses_confirmed_keepsake_and_grants_bound_badge(self) -> None:
         owner = self.user("hero-owner")
         owner.pet_id = owner.upload_pet("布丁", "dog").json()["pet_id"]
-        self.confirm_all(owner, "它最喜欢那条蓝色的毯子。", purposes=("private_chat", "home_interaction"))
+        # **授权用途改过一次（CR-IMAGE-MEMORY-PURPOSE-2026-09-24）**：原先这里只授
+        # `private_chat` + `home_interaction`，却在末尾断言那件物件出现在**家庭故事**里——
+        # **那正是 B 报、c84a 逐段核实的那条泄露**：只授权过私聊的叮嘱进了全家可见的频道。
+        # 这条用例当时是在**保护那个缺陷**。入口修好后它理应变红，而它一直没红，
+        # 只是因为没人跑到它（A 那批受影响套件 11 个不含本文件，我改完也只跑了四个套件）——
+        # **第一次全量才暴露**。
+        #
+        # 现在按接收方授权：家庭故事的接收方是家庭频道 → 要 `public_story`。
+        # 本条钉的产品规则**没变**——「出现在故事里的物件必须是主人确认过的，不能凭空编」；
+        # 变的只是「确认」要覆盖到哪个用途。
+        # 反向那半（只授 `private_chat` 时两处都不得使用）由 Q 的 C32 覆盖，这里不重复。
+        self.confirm_all(owner, "它最喜欢那条蓝色的毯子。",
+                         purposes=("private_chat", "home_interaction", "public_story"))
         owner.move_in(public_posts=False)
         owner.post("/journey/depart", {"destination_key": "harbour_cafe"})
         self.clock.advance(minutes=7)
@@ -246,7 +258,7 @@ class WebRulesTests(WebPlatformTestBase):
         self.assertFalse(badges[0]["tradable"])
         self.clock.advance(seconds=10)
         story = next(m["text"] for m in owner.get(f"/communicator/{owner.pet_id}/messages").json()["items"] if "咖啡馆小侦探" in m["text"])
-        self.assertIn("蓝色的毯子", story, "主人确认、允许私密通讯使用的物件出现在故事里")
+        self.assertIn("蓝色的毯子", story, "主人确认、且授权了 public_story 的物件才出现在家庭故事里")
 
     def test_harvest_replay_does_not_duplicate(self) -> None:
         user = self.user("replay-farmer")

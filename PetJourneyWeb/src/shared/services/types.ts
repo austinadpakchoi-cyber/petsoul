@@ -18,6 +18,9 @@ import type {
   CompanionHeartbeatRequest,
   CompanionSession,
   CeremonyResult,
+  CharacterRegenerateCommandInput,
+  CharacterRegenerateResult,
+  CharacterState,
   CropInfo,
   DestinationOption,
   DrivingSchoolStatus,
@@ -29,6 +32,7 @@ import type {
   FoodRecommendation,
   FoodRecommendationList,
   FoodRecommendationRequestInput,
+  FriendSummary,
   HabitatKind,
   HomePlaceView,
   HomeSnapshot,
@@ -63,6 +67,8 @@ import type {
   Participation,
   PatrolResult,
   PetPrivateSummary,
+  PetDNAInput,
+  PetDNAView,
   PetSpecies,
   PetPublicProfile,
   PhotoRequestCommand,
@@ -94,9 +100,11 @@ import type {
   VisitActionRequest,
   VisitChoiceRequest,
   WebMeta,
+  WorldState,
 } from "@/shared/contracts";
 import type { ApiClient } from "@/shared/api/client";
 import type { DataMode } from "@/shared/config/env";
+import type { TravelWish } from "@/shared/contracts";
 
 /** 地图范围（WGS-84）与容器尺寸（CSS 像素），用于请求真实底图。 */
 export interface BasemapRequest {
@@ -125,8 +133,8 @@ export interface SessionService {
   moveIn(publicPosts: boolean, habitat?: HabitatKind | null, petId?: string | null): Promise<OnboardingState>;
   /** 服务端当前家庭住处及当下真正开放的环境；不可据设计图列出可选片区。 */
   homePlace(petId?: string | null): Promise<HomePlaceView>;
-  settings(): Promise<SettingsView>;
-  updateSettings(patch: SettingsUpdateInput): Promise<SettingsView>;
+  settings(petId?: string | null): Promise<SettingsView>;
+  updateSettings(patch: SettingsUpdateInput, petId?: string | null): Promise<SettingsView>;
 }
 
 /** 家庭邀请沿唯一服务边界；访客可预览，接受必须有原始令牌与显式确认。 */
@@ -141,6 +149,8 @@ export interface HouseholdService {
   saveRelationship(petId: string, body: PetRelationshipRequestInput): Promise<PetRelationship>;
   previewInvite(token: string): Promise<InvitePreview>;
   acceptInvite(token: string): Promise<HouseholdDetail>;
+  /** 管理员移除成员（DELETE /households/{id}/members/{user_id}，204）；立即生效。拒绝：409 last_admin、403 admin_required、404 member_not_found。 */ removeMember(householdId: string, userId: string): Promise<void>;
+  /** 管理员调整成员角色（PUT …/members/{user_id}/role），返回最新家庭详情。拒绝：409 last_admin（最后一位管理员不能降级）、403 admin_required、404 member_not_found。 */ setMemberRole(householdId: string, userId: string, role: import("@/shared/contracts").HouseholdRole): Promise<HouseholdDetail>;
 }
 
 export interface LifeService {
@@ -152,6 +162,11 @@ export interface LifeService {
 /** 共同生活状态：家园权威快照（宠物唯一位置、守护、钱包摘要、欢迎细节）。 */
 export interface WorldService {
   home(petId?: string | null, signal?: AbortSignal): Promise<HomeSnapshot>;
+  /**
+   * 统一世界状态（W1，纯读）：请求者家里每只宠物此刻在做什么、在哪（坐标 WGS-84，画到高德上要换 GCJ-02）。
+   * position 无出处时整个为 null；pose 只给事实能确定的（作息接不上是 idle，不是 sleeping）；since/until 是“这一阶段”的起止。
+   */
+  state(petId?: string, signal?: AbortSignal): Promise<WorldState>;
 }
 
 /** 到访：一次到访贯穿地图/店内/通讯/动态；推荐不等于到访。 */
@@ -160,15 +175,17 @@ export interface VisitService {
   act(visitId: string, body: VisitActionRequest, idempotencyKey: string): Promise<Visit>;
   /** 到店前改去寻味推荐的分店：行程版本 +1，旧推荐待复核。 */
   choose(visitId: string, body: VisitChoiceRequest, idempotencyKey: string): Promise<JourneyMapSnapshot>;
+  /** TRV-06：GET /travel/wish（合同 §23.4）——当前宠物的活动心愿；没有活动心愿时返回 200 + null，不包对象（I 已定）。 */
+  travelWish(petId: string | null, signal?: AbortSignal): Promise<TravelWish | null>;
 }
 
 /** 统一物资与账本：钱包只从 HomeSnapshot.wallet 读取；这里是库存/收藏。 */
 export interface EconomyService {
   collection(petId?: string | null, signal?: AbortSignal): Promise<CollectionItem[]>;
   /** 集市：仓库、杂货铺收购价、今天的居民订单（都是 NPC；玩家挂牌未开放）。 */
-  market(): Promise<MarketView>;
-  sell(itemKey: string, qty: number, idempotencyKey: string): Promise<MarketResult>;
-  fulfill(orderId: string, idempotencyKey: string): Promise<MarketResult>;
+  market(petId?: string | null): Promise<MarketView>;
+  sell(itemKey: string, qty: number, idempotencyKey: string, petId?: string | null): Promise<MarketResult>;
+  fulfill(orderId: string, idempotencyKey: string, petId?: string | null): Promise<MarketResult>;
 }
 
 export interface FarmService {
@@ -206,6 +223,20 @@ export interface PetsService {
   /** 上传自己的宠物：照片私有存储，只经鉴权接口访问。 */
   createOwn(input: NewPetInput, idempotencyKey: string): Promise<PetPrivateSummary>;
   publicProfile(petId: string): Promise<PetPublicProfile>;
+  /** 专属世界形象：纯读，绝不触发生成（首次形象由有授权的上传自动排队）。 */
+  character(petId: string, signal?: AbortSignal): Promise<CharacterState>;
+  /** 可选的“调整形象”；幂等键走 Idempotency-Key 请求头（与其他写命令一致），同一次调整恢复时复用。 */
+  regenerateCharacter(petId: string, body: CharacterRegenerateCommandInput, idempotencyKey: string): Promise<CharacterRegenerateResult>;
+  /** 生成 / 重画证件照（CR-6C2B-IDPHOTO）：无请求体，幂等键走请求头。存量宠物不批量补，老宠物只能靠它拿到第一张。 */
+  regenerateIdPhoto(petId: string, idempotencyKey: string): Promise<CharacterRegenerateResult>;
+  /** TA 的 DNA（只给家人）：没保存过时是整理出的草稿（confirmed=false，页面提示“待你确认”）；behavior 是由原话整理出的倾向，每条带出处。 */
+  dna(petId: string, signal?: AbortSignal): Promise<PetDNAView>;
+  /**
+   * 整体保存（即确认）。expectedVersion 是读到的全家共用版本号（写入时的并发凭据，不属于数据身份，不要放进 query key）；
+   * 家人在这之后改过会 409（details.reason = dna_version_conflict，带 current_version），页面应重新读取再改。
+   */
+  saveDna(petId: string, body: PetDNAInput, expectedVersion: number | null): Promise<PetDNAView>;
+  timeline(petId: string, signal?: AbortSignal): Promise<import("@/shared/contracts").TimelineItem[]>;
 }
 
 export interface ReceptionService {
@@ -270,11 +301,18 @@ export interface SocialService {
   /** 屏蔽某条动态或评论的作者（不暴露对方账号）。 */
   block(target: { post_id?: string; comment_id?: string }): Promise<void>;
   report(targetKind: "post" | "comment", targetId: string, reason: string): Promise<void>;
+  /**
+   * TA 在外面遇到的朋友（只给这只宠物的家人）：见过几次、多熟、最近在哪见过。
+   * `last_place` 只说明“在哪见过”，**不是实时位置**——地图上不得据此画点，朋友的位置只来自世界状态接口（W1/W2）。
+   */
+  friends(petId: string, signal?: AbortSignal): Promise<FriendSummary[]>;
+  /** 我的举报 GET /reports/mine（要登录）。类型用契约 MyReports；路由还没关联 response_model，取回后逐条校验（坏条目丢掉）；没装运营后台时是能力未接入。 */ myReports(signal?: AbortSignal): Promise<import("@/shared/contracts").MyReports>;
 }
 
 export interface CommunicatorService {
   thread(petId: string): Promise<MessageThread>;
   send(petId: string, body: SendMessageRequest): Promise<MessageSummary>;
+  /** 平台公告 GET /announcements（登录与否都能读）。类型用契约 AnnouncementFeed；路由还没关联 response_model，取回后逐条校验（坏条目丢掉）；source = not_installed 是读不到，不是没有公告。 */ announcements(signal?: AbortSignal): Promise<import("@/shared/contracts").AnnouncementFeed>;
 }
 
 /**
@@ -284,17 +322,17 @@ export interface CommunicatorService {
 export interface DrivingSchoolService {
   status(petId?: string | null, signal?: AbortSignal): Promise<DrivingSchoolStatus>;
   curriculum(): Promise<SchoolCurriculum>;
-  enroll(): Promise<DrivingSchoolStatus>;
-  createSession(body: SessionCreateRequest, idempotencyKey: string): Promise<SchoolSession>;
-  session(sessionId: string): Promise<SchoolSession>;
-  begin(sessionId: string): Promise<SchoolSession>;
-  answer(sessionId: string, body: AnswerRequest): Promise<AnswerResult>;
-  inputs(sessionId: string, body: InputChunk): Promise<InputResult>;
-  pause(sessionId: string): Promise<SchoolSession>;
-  submit(sessionId: string): Promise<SchoolSession>;
-  abandon(sessionId: string, confirm: boolean): Promise<SchoolSession>;
-  history(): Promise<SessionBrief[]>;
-  ceremony(): Promise<CeremonyResult>;
+  enroll(petId?: string | null): Promise<DrivingSchoolStatus>;
+  createSession(body: SessionCreateRequest, idempotencyKey: string, petId?: string | null): Promise<SchoolSession>;
+  session(sessionId: string, petId?: string | null): Promise<SchoolSession>;
+  begin(sessionId: string, petId?: string | null): Promise<SchoolSession>;
+  answer(sessionId: string, body: AnswerRequest, petId?: string | null): Promise<AnswerResult>;
+  inputs(sessionId: string, body: InputChunk, petId?: string | null): Promise<InputResult>;
+  pause(sessionId: string, petId?: string | null): Promise<SchoolSession>;
+  submit(sessionId: string, petId?: string | null): Promise<SchoolSession>;
+  abandon(sessionId: string, confirm: boolean, petId?: string | null): Promise<SchoolSession>;
+  history(petId?: string | null): Promise<SessionBrief[]>;
+  ceremony(petId?: string | null): Promise<CeremonyResult>;
 }
 
 export interface ServiceMap {

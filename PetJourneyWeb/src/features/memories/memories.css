@@ -1,0 +1,291 @@
+/*
+ * 回忆（/memories）：像一本手账的目录页——标题下一道淡淡的纸胶带，入口是贴着小印章、带一圈缝线的卡片。
+ * 与地图首页是一家：暖色表面、20px 圆角、柔和阴影、底部悬浮的新版三栏。只用 tokens 颜色，深色模式自动跟随。
+ */
+
+.ps-page.ps-mem {
+  padding-bottom: calc(var(--safe-bottom) + 108px);
+}
+
+/* ---------- 标题 ---------- */
+.ps-mem-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 2px 18px;
+}
+.ps-mem-head__text {
+  flex: 1;
+  min-width: 0;
+}
+.ps-mem-head h1 {
+  position: relative;
+  isolation: isolate;
+  display: inline-block;
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+}
+/* 纸胶带：压在标题下半截，只作装饰。 */
+.ps-mem-head h1::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: -6px;
+  right: -12px;
+  bottom: 1px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--c-sun-soft);
+  transform: rotate(-2deg);
+}
+.ps-mem-head p {
+  margin: 8px 0 0;
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  color: var(--c-ink-2);
+  overflow-wrap: anywhere;
+}
+/* 我的 TA 带高亮圈（与地图上的标记一致）：一圈表面色的细边，再一圈暖黄。 */
+.ps-mem-head .ps-pet-portrait {
+  box-shadow: 0 0 0 2px var(--c-surface), 0 0 0 5px var(--c-sun), 0 8px 18px -8px var(--c-shadow);
+}
+
+/* ---------- 入口卡片 ---------- */
+.ps-mem-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ps-mem-card {
+  --stamp-bg: var(--c-leaf-soft);
+  --stamp-ink: var(--c-leaf);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  min-height: 150px;
+  padding: 16px 14px 14px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 20px;
+  background: var(--c-surface);
+  box-shadow: 0 14px 28px -22px var(--c-shadow), 0 2px 6px -4px var(--c-shadow);
+  color: var(--c-ink);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+/* 一圈淡淡的缝线，像贴进手账里的卡片。 */
+.ps-mem-card::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px dashed var(--c-surface-stroke);
+  border-radius: 15px;
+  pointer-events: none;
+}
+.ps-mem-card:active {
+  transform: scale(0.98);
+}
+.ps-mem-card:focus-visible {
+  outline: 3px solid var(--c-sun);
+  outline-offset: 2px;
+}
+.ps-mem-card[data-tone="sun"] {
+  --stamp-bg: var(--c-sun-soft);
+  --stamp-ink: var(--c-sun);
+}
+.ps-mem-card[data-tone="coral"] {
+  --stamp-bg: var(--c-coral-soft);
+  --stamp-ink: var(--c-coral);
+}
+.ps-mem-card[data-tone="sky"] {
+  --stamp-bg: var(--c-sky-soft);
+  --stamp-ink: var(--c-sea);
+}
+
+/* 小印章：微微歪着贴，单双数方向相反。 */
+.ps-mem-stamp {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--stamp-bg);
+  color: var(--stamp-ink);
+  transform: rotate(-4deg);
+}
+.ps-mem-card:nth-child(even) .ps-mem-stamp {
+  transform: rotate(3deg);
+}
+
+.ps-mem-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+.ps-mem-card__title {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1.35;
+}
+.ps-mem-card__desc {
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  color: var(--c-ink-2);
+}
+.ps-mem-card__fact {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: auto;
+  padding-top: 8px;
+  animation: ps-mem-fact-in 0.4s var(--ease-out);
+}
+.ps-mem-card__main {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--c-ink);
+  overflow-wrap: anywhere;
+}
+.ps-mem-card__detail {
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  color: var(--c-ink-2);
+  overflow-wrap: anywhere;
+}
+/* 数字用衬线体，像手写记下的数。 */
+.ps-mem-card__fact b {
+  margin-right: 1px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+.ps-mem-card__go {
+  position: absolute;
+  top: 16px;
+  right: 12px;
+  color: var(--c-ink-3);
+}
+
+/* 证件卡包：横跨两列，右侧叠着几张空白小卡。 */
+.ps-mem-card--wide {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  min-height: 0;
+  padding: 16px 38px 16px 14px;
+}
+.ps-mem-card--wide .ps-mem-card__go {
+  top: 50%;
+  margin-top: -8px;
+}
+.ps-mem-card--wide .ps-mem-card__fact {
+  margin-top: 0;
+  padding-top: 4px;
+}
+
+.ps-mem-wallet {
+  position: relative;
+  flex: 0 0 auto;
+  width: 62px;
+  height: 44px;
+}
+.ps-mem-wallet i {
+  position: absolute;
+  top: 4px;
+  left: 2px;
+  width: 52px;
+  height: 34px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 7px;
+  background: var(--c-leaf-soft);
+  box-shadow: 0 6px 12px -8px var(--c-shadow);
+}
+/* 卡面上一道浅浅的条纹，不写任何字。 */
+.ps-mem-wallet i::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 8px;
+  width: 22px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--c-surface);
+  opacity: 0.7;
+}
+.ps-mem-wallet i:nth-child(1) {
+  transform: rotate(-9deg);
+}
+.ps-mem-wallet i:nth-child(2) {
+  background: var(--c-sun-soft);
+  transform: translate(4px, 3px) rotate(-1deg);
+}
+.ps-mem-wallet i:nth-child(3) {
+  background: var(--c-coral-soft);
+  transform: translate(8px, 6px) rotate(7deg);
+}
+
+/* ---------- 底部：新版三栏（预览） ---------- */
+.ps-mem-dock {
+  position: fixed;
+  z-index: 30;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20px 12px calc(var(--safe-bottom) + 10px);
+  background: linear-gradient(to top, var(--c-bg) 58%, transparent);
+  pointer-events: none;
+}
+.ps-mem-dock > * {
+  pointer-events: auto;
+}
+
+@keyframes ps-mem-fact-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-mem-card,
+  .ps-mem-card__fact {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* 很窄的屏：印章与卡片内边距收一点，两列照旧。 */
+@media (max-width: 350px) {
+  .ps-mem-grid {
+    gap: 10px;
+  }
+  .ps-mem-card {
+    padding: 14px 12px 12px;
+  }
+  .ps-mem-card--wide {
+    padding: 14px 34px 14px 12px;
+    gap: 12px;
+  }
+  .ps-mem-stamp {
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
+  }
+}

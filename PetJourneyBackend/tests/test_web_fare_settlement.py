@@ -18,7 +18,9 @@ from app.web_journey.errors import JourneyError
 from test_web_commit_boundary import CommitBoundaryBase
 
 
-class FareSettlementTests(CommitBoundaryBase):
+class VoucherBase(CommitBoundaryBase):
+    """券的工具放这里，下面两组用例各自继承——不互相继承，否则子类会把父类的用例再跑一遍。"""
+
     # ---- 券：用一张自备的券验"旅程这一侧"的契约 ----
     def grant_voucher(self) -> None:
         with self.app.state.storage.connect() as conn:
@@ -46,6 +48,8 @@ class FareSettlementTests(CommitBoundaryBase):
 
         self.web.journeys.fee_waiver_in = consume_in
 
+
+class FareSettlementTests(VoucherBase):
     # ---- 行程与旅费同生共死（CR-C9） ----
     def test_the_journey_and_the_fare_are_written_together(self) -> None:
         self.coins(50)
@@ -187,6 +191,77 @@ class FareSettlementTests(CommitBoundaryBase):
 
         self.assertEqual(rejected.exception.reason, "insufficient_funds")
         self.assertEqual(self.journey_rows(), 0, "券没了又付不起：整笔回滚，一条行程都不留")
+
+
+class FareWaivedRecordTests(VoucherBase):
+    """用券省下的钱要在出发那一刻记下来，不靠"账本里没有那一笔"事后反推（m1701）。
+
+    `fee` 存的是**标价**，用没用券都一样；账本里那笔扣费**用券时根本不存在**——
+    而散步、打工这种本来就不花钱的也不存在。两种"查不到"在账本上长得一模一样，
+    页面于是把用券那趟显示成「0 星币」，借车券省下的钱就这么没了。
+
+    反推还有个更慢的坏处：账本会因为退款、调账、幂等键改名而变，
+    那时"没有那一行"会悄悄变成别的意思，**而页面不会报错，只会显示错**。
+    """
+
+    def waived_column(self, journey_id: str) -> int:
+        """直接看库里那一列，不经过 `_journey()`——否则读写用同一份代码，错了也对得上。"""
+        with self.app.state.storage.connect() as conn:
+            return conn.execute("SELECT fare_waived FROM web_journeys WHERE journey_id = ?", (journey_id,)).fetchone()["fare_waived"]
+
+    def test_a_voucher_trip_records_that_the_fare_was_waived(self) -> None:
+        self.coins(50)
+        self.grant_voucher()
+        self.wire_same_transaction_waiver()
+
+        journey = self.web.journeys.depart(self.owner.user_id, self.owner.pet_id, self.owner.home_id, "harbour_cafe", self.clock.now)
+
+        self.assertTrue(journey.fare_waived, "出发这一刻就知道用了券，返回的这一趟要带着这个事实")
+        self.assertEqual(self.waived_column(journey.journey_id), 1)
+        self.assertEqual(journey.fee, 8, "标价照旧写进去：省下多少要靠它算")
+        self.assertTrue(self.web.journeys.repo.get(journey.journey_id).fare_waived, "隔一次读取回来也还在")
+
+    def test_a_paid_trip_records_that_the_fare_was_not_waived(self) -> None:
+        """正向对照：照价付的那趟不能也标成用券，否则这一列只会一直说"是"。"""
+        self.coins(50)
+
+        journey = self.web.journeys.depart(self.owner.user_id, self.owner.pet_id, self.owner.home_id, "harbour_cafe", self.clock.now)
+
+        self.assertFalse(journey.fare_waived)
+        self.assertEqual(self.waived_column(journey.journey_id), 0)
+        self.assertEqual(self.fares(), [f"web:travel_fee:{journey.journey_id}"], "钱是真扣了")
+
+    def test_a_free_outing_is_not_recorded_as_waived(self) -> None:
+        """散步本来就不花钱——它和用券在账本上同样查不到，正是这一列要分开的那两种。"""
+        journey = self.web.journeys.depart(self.owner.user_id, self.owner.pet_id, self.owner.home_id, "local:stroll", self.clock.now)
+
+        self.assertEqual(journey.fee, 0)
+        self.assertFalse(journey.fare_waived, "不花钱的出门不是「券省下来的」")
+        self.assertEqual(self.waived_column(journey.journey_id), 0)
+        self.assertEqual(self.fares(), [], "两种情况在账本里同样没有一笔——所以只能看这一列")
+
+    def test_a_voucher_taken_by_someone_else_records_the_trip_as_paid(self) -> None:
+        """出发前券还在、解析期间被别处用掉：最后照价付了，就不能记成用券。
+
+        这条是这一列最容易错的地方——`waivable` 是**事务外**算的"看起来能用券"，
+        真正用没用得等事务里核销那一下的返回值。拿前者记账就会记出一趟"用了券却又扣了钱"的行程。
+        """
+        self.coins(50)
+        self.grant_voucher()
+        self.wire_same_transaction_waiver()
+
+        def used_elsewhere() -> None:
+            with self.app.state.storage.connect() as conn:
+                conn.execute("UPDATE fare_voucher SET used_for = '别处' WHERE pet_id = ? AND used_for IS NULL", (self.owner.pet_id,))
+
+        self.during_resolve(used_elsewhere)
+
+        journey = self.web.journeys.depart(self.owner.user_id, self.owner.pet_id, self.owner.home_id, "harbour_cafe", self.clock.now)
+
+        self.assertFalse(journey.fare_waived, "券没抢到、钱照扣：这趟不是用券出的")
+        self.assertEqual(self.waived_column(journey.journey_id), 0)
+        self.assertEqual(self.fares(), [f"web:travel_fee:{journey.journey_id}"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,122 @@
+/*
+ * 我的举报（/me/reports）：和“我的”“TA 的档案”同一套外观——44px 圆角返回钮、圆角暖色卡片、柔和阴影。
+ * 只用 tokens 颜色，深色模式自动跟随；小字一律 ink / ink-2 压在浅底上。320 宽手机上时间与标题可以换行，不横向滚动。
+ */
+
+.ps-page.ps-reports {
+  padding-bottom: calc(var(--safe-bottom) + 32px);
+}
+
+/* 服务端给的一句说明：原文放在最上面。 */
+.ps-reports-note {
+  margin: 12px 0 14px;
+  padding: 12px 14px;
+  border: 1px dashed var(--c-surface-stroke);
+  border-radius: 16px;
+  background: var(--c-surface-2);
+  color: var(--c-ink-2);
+  font-size: var(--fs-sm);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.ps-reports-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ps-report {
+  --report-dot: var(--c-sun);
+  padding: 14px 16px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 18px;
+  background: var(--c-surface);
+  box-shadow: 0 14px 28px -24px var(--c-shadow), 0 2px 6px -4px var(--c-shadow);
+}
+.ps-report[data-settled="yes"] {
+  --report-dot: var(--c-leaf);
+}
+.ps-report__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.ps-report__head strong {
+  font-size: var(--fs-md);
+}
+.ps-report__head time {
+  color: var(--c-ink-2);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+.ps-report__reason {
+  margin: 6px 0 0;
+  color: var(--c-ink-2);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+/* 处理结果：服务端的固定措辞原样，前面一个小圆点（等着是暖黄，有结果了是绿）。 */
+.ps-report__result {
+  position: relative;
+  margin: 8px 0 0;
+  padding-left: 14px;
+  color: var(--c-ink);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.ps-report__result::before {
+  content: "";
+  position: absolute;
+  top: 0.62em;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--report-dot);
+}
+.ps-report__meta {
+  margin: 4px 0 0;
+  padding-left: 14px;
+  color: var(--c-ink-2);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 空：你还没有举报过。 */
+.ps-reports-empty {
+  margin-top: 4px;
+  padding: 22px 18px 20px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 20px;
+  background: var(--c-surface);
+  text-align: center;
+  box-shadow: 0 14px 28px -24px var(--c-shadow), 0 2px 6px -4px var(--c-shadow);
+}
+.ps-reports-empty__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 8px;
+  border-radius: 16px;
+  background: var(--c-sun-soft);
+  color: var(--c-sun);
+}
+.ps-reports-empty h2 {
+  margin: 0 0 6px;
+  font-size: var(--fs-lg);
+}
+.ps-reports-empty p {
+  max-width: 24em;
+  margin: 0 auto;
+  color: var(--c-ink-2);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+}

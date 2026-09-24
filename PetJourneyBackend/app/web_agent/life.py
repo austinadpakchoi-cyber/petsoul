@@ -159,6 +159,13 @@ class LifeEngine:
         # 世界线的规则生活与认知线的模型生活都会替同一只宠物安排出门；没有这一对钩子，
         # 同一个时段里两条线会各决定一次——模型刚说“今天在家”，规则生活转头就把 TA 送出门。
         self.recently_decided: Callable[[str, datetime], bool] = lambda pet_id, now: False
+        # 这只宠物此刻有没有一份**就绪的**旅行计划（装配时接 `wish_wiring.bind_ready_plan`）。
+        # **不接就是"没有"**——那时规则生活照原样掷骰选目的地，一行行为都不变。
+        self.ready_plan_of: Callable[[str], object | None] = lambda pet_id: None
+        # 运营把这只宠物暂停了吗（`web_entity_runtime.maintenance`）。装配时接到**心跳读的同一份运行记录**，
+        # 不在这里自己开连接读 SQL——三处各读一份就会变成三份可能漂移的实现。
+        # 没接时恒为 False，行为与接线前完全一致。
+        self.paused: Callable[[str], bool] = lambda pet_id: False
         self.record_decision: Callable[[str, datetime, str], None] = lambda pet_id, now, by: None
 
     def run(self, now: datetime) -> int:
@@ -182,6 +189,25 @@ class LifeEngine:
         with unit_of_work(self.storage) as conn:
             return conn.execute("INSERT OR IGNORE INTO web_pet_decisions (pet_id, slot_key, decision, created_at) VALUES (?, ?, ?, ?)",
                                 (pet_id, slot_key, decision, iso(now))).rowcount == 1
+
+    def _wish_pick(self, pet_id: str, options: list, balance: int, long_ok: set[str]):
+        """就绪心愿指向的那个目的地——**而且此刻真的去得了**；否则返回 None，照常掷骰选。
+
+        「有一份就绪计划」和「现在能去那儿」是两件事：
+        - 目的地**不在出发选项里**（比如计划指向一个引擎还没接的地方）→ 不强推。
+          方案 §8 明写"未接入的目的地最多保存为心愿"，所以这不是缺陷，是那条规则生效的样子；
+        - 钱不够、选项不可用、长途冷却没过 → 同样不强推。
+          **这三条与 `choose` 用的是同一组判据**，不能因为"有计划"就绕过去。
+        """
+        picked = self.ready_plan_of(pet_id)
+        if picked is None:
+            return None
+        option = next((o for o in options if o.destination_key == picked.destination_key), None)
+        if option is None or not getattr(option, "available", True) or balance < option.fee:
+            return None
+        if picked.destination_key in LONG_TRIPS and picked.destination_key not in long_ok:
+            return None
+        return picked
 
     def _history(self, pet_id: str, since: datetime) -> list[tuple[str, datetime]]:
         with self.storage.connect() as conn:
@@ -228,6 +254,11 @@ class LifeEngine:
 
     # ---- 决定 ----
     def consider(self, user_id: str, pet_id: str, now: datetime) -> str | None:
+        if self.paused(pet_id):
+            # 运营暂停了这只宠物：**规则生活也不能替 TA 做决定**。
+            # 放在最前面是有意的——再往下就会占掉这个时段的决定名额（`_record`），
+            # 那会让恢复之后的这半小时白白不出门。在途旅程不受影响，按设计照常走完。
+            return None
         moment = self.moments.build(pet_id, now)
         if moment.presence is not PetPresence.at_home or moment.asleep:
             return None
@@ -269,11 +300,32 @@ class LifeEngine:
         balance = self.economy.wallet(pet_id).balance
         key = choose(options, balance, kind, suggested=suggested, worked_today=any(k.startswith("work:") for k, _ in today),
                      long_trip_ok=long_ok, roll=_roll(pet_id, slot_key, "where"), interest=profile.route_interest, job_affinity=profile.job_affinity)
+        # **名额在出发之前就记掉，出发被拒也不退——这是有意的，不是漏了回滚。**
+        # 被拒的原因（主人说了别出门、钱不够、已经在外面）在**同一个时段内**都不会自己变好，
+        # 反复再试只是空转。下一个时段照常重新决定。
+        #
+        # 这条记录**不参与任何冷却**：`_history`（:190）读的是 `web_journeys`——真实走过的行程，
+        # 所以长途冷却（:274）、今天出门几次与打没打过工（:262）都只认真的出过门。
+        # `web_pet_decisions` 在本文件里只被 :183 读一次，只回答「这个时段决定过了吗」。
+        # 写在这里是因为**这一点会被反复重新发现**：看到「没走成却留下一条 go:<key>」，
+        # 很容易顺手推出「它会把长途算成刚去过」——**那是错的**（我自己就这么推过一次，C 核出来）。
+        # 攒够了、资料也齐了的那份计划：这一轮**优先去那儿**。TA 自己惦记了很久的地方，
+        # 不该再跟随机权重抢。「出不出门」那一掷仍在上面，这里只换「去哪儿」。
+        picked = self._wish_pick(pet_id, options, balance, long_ok)
+        if picked is not None:
+            key = picked.destination_key
         if key is None or not self._record(pet_id, slot_key, f"go:{key}", now):
             return None
         by = self.suggesters(pet_id, key, now) if key in suggested else []
         try:
-            self.journeys.depart(user_id, pet_id, home.home_id, key, now)
+            # honor_commitments=True：规则生活也是 TA 自己决定出门（合同 15 节：自主出发认闸，主人点击不认）。
+            # 注意这**不是重复**上面那条 `owner_said_stay_home`——那一条只把出门概率乘 0.15（"多半就在家"），
+            # 仍有约一成会出门；这道闸是硬的。**软偏好管的是 TA 想不想去，硬闸管的是允不允许。**
+            self.journeys.depart(user_id, pet_id, home.home_id, key, now,
+                                 # 按计划出发时**编号与版本一起给**（`PlanChoice` 让漏传写不出来）。
+                                 # 这两个值来自事务外那一次读，**只够用来选**；能不能用由 depart 在写事务里重核。
+                                 plan=picked.choice if picked is not None else None,
+                                 honor_commitments=True)
         except LeaseLost:  # 出发事务已整体回滚；这不是“TA 决定不出门”，不能记成结果
             raise
         except Exception as exc:  # noqa: BLE001 - 钱不够/已经在外面等：这次就在家

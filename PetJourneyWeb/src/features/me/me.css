@@ -1,0 +1,171 @@
+/*
+ * 我的（/me）：顶部是 TA（带高亮圈的头像，与地图上的标记一致），下面两组入口：家、形象与账号。
+ * 与地图首页是一家：44px 圆角返回钮、22px 圆角暖色卡片、柔和阴影。只用 tokens 颜色，深色模式自动跟随。
+ */
+
+.ps-page.ps-me {
+  padding-bottom: calc(var(--safe-bottom) + 32px);
+}
+
+/* ---------- 顶部：返回地图 + 标题 ---------- */
+.ps-me-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0 4px;
+}
+.ps-me-back {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 14px;
+  background: var(--c-surface);
+  color: var(--c-ink);
+  box-shadow: 0 6px 18px var(--c-shadow);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.ps-me-back:focus-visible {
+  outline: 3px solid var(--c-sun);
+  outline-offset: 2px;
+}
+.ps-me-top h1 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- TA ---------- */
+.ps-me-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 16px 0 18px;
+  padding: 20px 18px;
+  overflow: hidden;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 22px;
+  background: linear-gradient(135deg, var(--c-sun-soft) 0%, var(--c-surface) 72%);
+  box-shadow: 0 14px 30px -22px var(--c-shadow), 0 2px 6px -4px var(--c-shadow);
+}
+/* 一圈淡淡的缝线，和回忆页的卡片同一种手账质感。 */
+.ps-me-hero::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px dashed var(--c-surface-stroke);
+  border-radius: 16px;
+  pointer-events: none;
+}
+.ps-me-hero .ps-pet-portrait {
+  margin-left: 4px;
+  box-shadow: 0 0 0 2px var(--c-surface), 0 0 0 5px var(--c-sun), 0 10px 20px -10px var(--c-shadow);
+}
+.ps-me-hero__text {
+  flex: 1;
+  min-width: 0;
+}
+.ps-me-hero h2 {
+  margin: 0;
+  font-size: var(--fs-2xl);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.ps-me-hero p {
+  margin: 6px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--c-ink-2);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 入口 ---------- */
+.ps-me-group {
+  margin: 0 0 14px;
+  padding: 4px 0;
+  list-style: none;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 20px;
+  background: var(--c-surface);
+  box-shadow: 0 14px 28px -24px var(--c-shadow), 0 2px 6px -4px var(--c-shadow);
+}
+.ps-me-group li {
+  position: relative;
+}
+/* 分隔线从文字开始，不压到图标。 */
+.ps-me-group li + li::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 66px;
+  right: 14px;
+  border-top: 1px solid var(--c-surface-stroke);
+}
+
+.ps-me-row {
+  --row-bg: var(--c-leaf-soft);
+  --row-ink: var(--c-leaf);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  color: var(--c-ink);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.ps-me-row:active {
+  background: var(--c-surface-2);
+}
+.ps-me-row:focus-visible {
+  outline: 3px solid var(--c-sun);
+  outline-offset: -3px;
+}
+.ps-me-row[data-tone="sun"] {
+  --row-bg: var(--c-sun-soft);
+  --row-ink: var(--c-sun);
+}
+.ps-me-row[data-tone="coral"] {
+  --row-bg: var(--c-coral-soft);
+  --row-ink: var(--c-coral);
+}
+.ps-me-row[data-tone="sky"] {
+  --row-bg: var(--c-sky-soft);
+  --row-ink: var(--c-sea);
+}
+.ps-me-row__icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: var(--row-bg);
+  color: var(--row-ink);
+}
+.ps-me-row__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.ps-me-row__title {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  line-height: 1.4;
+}
+.ps-me-row__meta {
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--c-ink-2);
+  overflow-wrap: anywhere;
+}
+.ps-me-row__go {
+  flex: 0 0 auto;
+  color: var(--c-ink-3);
+}

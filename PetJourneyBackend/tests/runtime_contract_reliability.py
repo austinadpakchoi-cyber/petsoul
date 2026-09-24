@@ -330,6 +330,10 @@ class ReliabilityContractCases:
                 else:
                     ledger.settle(permit, first, actual_units=None, now=day_one)
                 after_first = delta(base, used(pet, at=day_one))
+                with storage.connect() as conn:  # 只采集：查清之前那一刻这行长什么样
+                    early = conn.execute("SELECT status, outcome, actual_units FROM web_budget_reservations "
+                                         "WHERE operation_id = ?", (op,)).fetchone()
+                row_at_first = dict(zip(("status", "outcome", "actual_units"), tuple(early))) if early else {}
                 if then is not None:
                     # `settle` 认的是**预占编号**，不是操作编号：查清那一次要先按操作编号取回这条预占
                     ledger.settle(ledger.get(op).reservation_id, then, actual_units=actual, now=clarify_at or day_one)
@@ -339,7 +343,7 @@ class ReliabilityContractCases:
                                        "WHERE operation_id = ?", (op,)).fetchone()
                 row = dict(zip(("status", "outcome", "actual_units", "accounting_window"), tuple(raw))) if raw else {}
                 next_day = delta({"pet": 0, "global": 0, "inflight_pet": 0}, used(pet, at=day_two))
-                return {"reserved_units": 2, "after_first": after_first,
+                return {"reserved_units": 2, "after_first": after_first, "row_at_first": row_at_first,
                         "after_clarified": delta(base, used(pet, at=day_one)),
                         "next_day_window": next_day if clarify_at is not None else None,
                         "row": row}
@@ -378,9 +382,16 @@ class ReliabilityContractCases:
                           "other_operation_untouched": ledger.usage("pet:c30-once-other:illustration", now=day_one),
                           "other_status": ledger.get("illustration:onceother:1").status}
 
-            # 现状记录（**不在本批范围**）：unknown 当场就是按预占全额记、actual_units 留空
-            on_the_spot = {"used_right_after_unknown": unknown_clarified["after_first"],
-                           "note": "unknown 当场按预占全额保守计入、actual_units 留空；属另一项未解决设计项，本批未派"}
+            # 现状记录（**不在本批范围，不作断言**）。写成**自带绑定的实测值**而不是一句话：
+            # 一句"actual_units 留空"会在实现改了之后变成错话，而合同照样全绿——
+            # 记录只在它被测到的那一版上成立，所以把那一版的指纹和测到的数一起带上。
+            on_the_spot = {"budget_py": source_digests("app/web_platform/budget.py")["app/web_platform/budget.py"],
+                           "measured_settle_call": "settle(outcome='unknown', actual_units=None)  # 本合同只走这一条路径",
+                           "used_delta_right_after_unknown": unknown_clarified["after_first"],
+                           "row_right_after_unknown": unknown_clarified["row_at_first"],
+                           "note": "以上为**本轮实测**：落 unknown 当场的两层用量增量与该行取值。"
+                                   "属「当场记多少」那一项，本批未派、不作断言。"
+                                   "**本合同从不以 actual_units≠None 落 unknown**，所以它覆盖不到那条分支的行为。"}
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -425,8 +436,10 @@ class ReliabilityContractCases:
              "跨日那档：23:50 预占并落 unknown，次日 00:10 才查清——核对差额补在**原窗口**、新一天为 0",
              "重复查清＋两个线程同时查清（Barrier 对齐）：核对只调一次、两个线程都没抛异常",
              "同一天另起一笔 3 个单位的预占作旁证：回正不得碰到它",
-             "**不在本批范围**：unknown 当场仍按预占全额记、actual_units 留空——属「当场记多少」的另一项未解决设计项；"
-             "本合同只如实记录现状（见 out_of_scope_observation），不据此判本批失败",
+             "**不在本批范围**：「当场记多少」是另一项设计项。本合同只把**那一版的实测值连同其指纹**记在 "
+             "out_of_scope_observation 里，不作断言、不据此判本批失败",
+             "**覆盖边界**：本合同落 unknown 时**一律传 actual_units=None**，因此**覆盖不到**"
+             "「以 actual_units≠None 落 unknown」那条分支——该分支的行为改动，本合同会安静地继续绿",
              "**未证明**：真实供应商的计费；这里只证明本地账本的记账口径",
              "**顺带记下的接线现状**：`settle` 认的是预占编号而非操作编号，查清方必须先按操作编号取回这条预占"],
             source_digests("app/web_platform/budget.py", "app/web_agent/brain_wiring.py", "app/web_journey/illustrations.py"),

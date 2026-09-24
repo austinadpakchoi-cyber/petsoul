@@ -1,0 +1,565 @@
+/* 地图首页原型（/map）。地图满屏；左上小窝/菜园，右上我的，右侧定位与范围；底部一张主状态面板 + 新版三栏预览。 */
+
+.ps-wmap {
+  --wmap-bottom: 190px;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--c-map-land);
+  color: var(--c-ink);
+  font-family: var(--font-sans);
+}
+
+.ps-wmap-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* 高德 Logo 与版权按条款要求保持可见：抬到底部面板上方。 */
+.ps-wmap .amap-logo,
+.ps-wmap .amap-copyright {
+  bottom: calc(var(--wmap-bottom) + 6px) !important;
+}
+.ps-wmap .amap-logo {
+  left: 12px !important;
+}
+
+/* ---------- 顶部与侧边按钮 ---------- */
+.ps-wmap-top {
+  position: absolute;
+  z-index: 5;
+  top: calc(var(--safe-top) + 10px);
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+.ps-wmap-top > * {
+  pointer-events: auto;
+}
+.ps-wmap-top__left {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ps-wmap-fab,
+.ps-wmap-me {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 14px;
+  background: var(--c-surface);
+  color: var(--c-ink);
+  box-shadow: 0 6px 18px var(--c-shadow);
+  cursor: pointer;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.ps-wmap-me {
+  flex: 0 0 auto;
+  border-radius: 50%;
+  color: var(--c-leaf);
+}
+.ps-wmap-fab.is-on {
+  color: var(--c-leaf);
+  border-color: rgba(47, 125, 94, 0.35);
+}
+.ps-wmap-fab:focus-visible,
+.ps-wmap-me:focus-visible {
+  outline: 3px solid var(--c-sun);
+  outline-offset: 2px;
+}
+
+.ps-wmap-side {
+  position: absolute;
+  z-index: 5;
+  right: 12px;
+  top: calc(var(--safe-top) + 66px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ps-wmap-scope {
+  position: relative;
+}
+.ps-wmap-scope__menu {
+  position: absolute;
+  right: 52px;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 168px;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--c-surface);
+  box-shadow: 0 10px 28px rgba(32, 49, 41, 0.22);
+}
+.ps-wmap-scope__menu button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--c-ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.ps-wmap-scope__menu button[aria-checked="true"] {
+  background: var(--c-leaf-soft);
+  color: var(--c-leaf);
+  font-weight: 600;
+}
+.ps-wmap-scope__menu button:disabled {
+  color: var(--c-ink-3);
+  cursor: default;
+}
+.ps-wmap-scope__menu small {
+  font-size: 11px;
+}
+
+/* ---------- 演示剧本条（fixture） ---------- */
+.ps-wmap-demo {
+  flex: 0 1 236px;
+  min-width: 0;
+  padding: 6px 8px 7px;
+  border-radius: 14px;
+  background: rgba(32, 49, 41, 0.88);
+  color: var(--c-on-deep);
+  font-size: 12px;
+  box-shadow: 0 6px 18px var(--c-shadow);
+}
+.ps-wmap-demo__tag {
+  display: block;
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.ps-wmap-demo__controls {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 5px;
+}
+.ps-wmap-demo__controls button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 6px;
+  white-space: nowrap;
+  border: 1px solid rgba(251, 247, 239, 0.25);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.ps-wmap-demo__controls button[aria-pressed="true"] {
+  background: rgba(251, 247, 239, 0.9);
+  color: var(--c-deep-ink);
+}
+
+/* ---------- 底部：主状态面板 + 三栏 ---------- */
+.ps-wmap-bottom {
+  position: absolute;
+  z-index: 6;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 12px calc(var(--safe-bottom) + 10px);
+  pointer-events: none;
+}
+.ps-wmap-bottom > * {
+  pointer-events: auto;
+}
+
+.ps-wmap-panel {
+  width: 100%;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 14px 14px 12px;
+  border-radius: 22px;
+  background: var(--c-surface);
+  box-shadow: 0 12px 32px rgba(32, 49, 41, 0.2);
+}
+.ps-wmap-panel__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ps-wmap-panel__text {
+  min-width: 0;
+}
+.ps-wmap-panel h2 {
+  margin: 0;
+  font-size: var(--fs-lg);
+  line-height: 1.3;
+  color: var(--c-ink);
+  animation: ps-wmap-text-in 0.45s var(--ease-out);
+}
+.ps-wmap-panel p {
+  margin: 2px 0 0;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--c-ink-2);
+}
+.ps-wmap-panel__progress {
+  height: 6px;
+  margin: 10px 0 2px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--c-sun-soft);
+}
+.ps-wmap-panel__progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f1ad6a, #e0773a);
+  transition: width 0.4s linear;
+}
+/* 提醒：一行一条；收起时只剩最重要的那一条，“还有 N 条”小按钮贴在同一行末尾，展开后落在最后一条旁边。 */
+.ps-wmap-panel__notes {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin: 8px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--c-ink-2);
+}
+.ps-wmap-panel__note-list {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ps-wmap-panel__note-list li + li {
+  margin-top: 2px;
+}
+/* 能点进去看全文的提醒只占一行（例如 TA 想学开车的原话很长）：整行可点，超出部分省略；读屏仍读全文。 */
+.ps-wmap-panel__notes a {
+  display: block;
+  padding: 3px 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--c-leaf);
+}
+/* 收起时那一条也只占一行（不带链接的系统提示点“还有 N 条”展开后看全文）。 */
+.ps-wmap-panel__notes.has-more:not(.is-expanded) li {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ps-wmap-panel__more {
+  flex: none;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 999px;
+  background: var(--c-surface-2);
+  color: var(--c-ink-2);
+  font: inherit;
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ps-wmap-panel__more:focus-visible {
+  outline: 3px solid var(--c-sun);
+  outline-offset: 2px;
+}
+.ps-wmap-panel__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.ps-wmap-panel__actions .ps-btn {
+  flex: 1;
+  justify-content: center;
+  gap: 6px;
+  min-height: 42px;
+}
+
+.ps-wmap-tabs {
+  display: flex;
+  width: 100%;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 6px;
+  border-radius: 22px;
+  background: rgba(32, 49, 41, 0.93);
+  box-shadow: 0 10px 26px rgba(32, 49, 41, 0.25);
+}
+.ps-wmap-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 0 5px;
+  border-radius: 16px;
+  color: rgba(251, 247, 239, 0.66);
+  font-size: 11px;
+  text-decoration: none;
+}
+.ps-wmap-tab.is-active {
+  background: rgba(251, 247, 239, 0.14);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ---------- 地图标记 ---------- */
+.ps-wmap-anchor {
+  position: relative;
+}
+
+.ps-wmap-pet {
+  position: relative;
+  display: block;
+  width: 52px;
+  height: 62px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transform-origin: 50% 100%;
+  animation: ps-wmap-hop 0.75s var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+}
+.ps-wmap-pet__ring {
+  position: absolute;
+  top: 0;
+  left: 2px;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 6px 14px rgba(32, 49, 41, 0.3);
+}
+.ps-wmap-pet__ring::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: #fff;
+  transform: translateX(-50%) rotate(45deg);
+}
+.ps-wmap-pet.is-selected .ps-wmap-pet__ring {
+  box-shadow: 0 0 0 3px var(--c-sun), 0 6px 14px rgba(32, 49, 41, 0.3);
+}
+.ps-wmap-pet__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 22px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.18);
+  transform: translateX(-50%);
+}
+
+/* 小窝标记（UI-ASSET-004）：按钮就是可点区域；--home-dx / --home-dy 由 markers.tsx 按交付单锚点算好，
+   把画布平移到“小房子底部中点对准坐标”（画布底下 23px 是透明安全边）。 */
+.ps-wmap-home {
+  --home-size: 44px;
+  --home-dx: 0px;
+  --home-dy: 0px;
+  display: block;
+  width: var(--home-size);
+  height: var(--home-size);
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  cursor: pointer;
+  transform: translate(var(--home-dx), var(--home-dy));
+  -webkit-tap-highlight-color: transparent;
+}
+.ps-wmap-home__art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  /* 素材没有预画投影：浅色底图上只给一圈淡白边和一点落地影，让小房子从街道里分出来。 */
+  filter: drop-shadow(0 0 1px rgba(255, 252, 246, 0.9)) drop-shadow(0 2px 2px rgba(32, 49, 41, 0.35));
+}
+.ps-wmap-home:focus-visible {
+  outline: 3px solid var(--c-sun);
+  outline-offset: 2px;
+}
+/* TA 在家时小房子不再让位：在家的宠物站到小窝两侧（位置由 ./homeCluster 按标记尺寸算好，写在宠物锚点的 transform 上），
+   谁也不盖住谁、也不盖住小窝（第 0b 步；原来头像压在房子上方，巡检报“小窝被压住一半”）。 */
+@media (prefers-color-scheme: dark) {
+  /* 深色底图偏蓝黑，陶土屋顶会沉进去：描一圈暖白光边把轮廓托出来。 */
+  .ps-wmap-home__art {
+    filter: drop-shadow(0 0 1.5px rgba(255, 244, 222, 0.95)) drop-shadow(0 0 5px rgba(255, 236, 206, 0.45)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+  }
+  /* 睡觉冒的 zzz：原来的深紫字（#55579a）在深色底图、深色面板上对比度只有约 2.2:1。地图页里（标记和主状态面板的头像）
+     换浅色字、描一圈深色晕，≥ 3:1（实测见报告）。 */
+  .ps-wmap .ps-mood__zzz i {
+    color: #e9e7ff;
+    text-shadow: 0 0 2px rgba(9, 14, 26, 0.95), 0 0 4px rgba(9, 14, 26, 0.8);
+  }
+  /* 高德 Logo 按使用条款要保持可见：“高德地图”几个字是深色，深色底图上看不见——垫一块浅色衬底。
+     衬底往两边各扩 6px，Logo 图本身留在原位（margin-left 抵掉左边的扩出）；紧挨着的版权文字是浅色的，也要可见，
+     所以版权往右让开 8px，不压在浅色衬底上。 */
+  .ps-wmap .amap-logo {
+    margin-left: -6px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    background: rgba(251, 247, 239, 0.94);
+  }
+  .ps-wmap .amap-copyright {
+    margin-left: 8px;
+  }
+}
+
+.ps-wmap-place {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 180px;
+  padding: 5px 7px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--c-surface);
+  color: var(--c-coral);
+  font: inherit;
+  font-size: 12px;
+  box-shadow: 0 4px 12px rgba(32, 49, 41, 0.22);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ps-wmap-place__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--c-ink);
+}
+
+/* ---------- 地图还在读 / 读不出来：不是死胡同，底部三栏与右上“我的”一直在（./MapStatusShell） ---------- */
+.ps-page.ps-wmap-shell {
+  padding-bottom: calc(var(--safe-bottom) + 108px);
+}
+.ps-wmap-shell__top {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 0 6px;
+}
+.ps-wmap-shell__dock {
+  position: fixed;
+  z-index: 30;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20px 12px calc(var(--safe-bottom) + 10px);
+  background: linear-gradient(to top, var(--c-bg) 58%, transparent);
+  pointer-events: none;
+}
+.ps-wmap-shell__dock > * {
+  pointer-events: auto;
+}
+
+/* ---------- 地图不可用时的示意底 ---------- */
+.ps-wmap-fallback {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(207, 227, 234, 0.9), transparent 42%),
+    radial-gradient(circle at 70% 65%, rgba(217, 236, 223, 0.8), transparent 45%),
+    var(--c-map-land);
+}
+.ps-wmap-fallback__pet {
+  padding: 4px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(32, 49, 41, 0.25);
+  transform: translateY(-60px);
+}
+.ps-wmap-fallback__note {
+  position: absolute;
+  top: calc(var(--safe-top) + 130px);
+  left: 50%;
+  max-width: min(300px, calc(100% - 120px));
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--c-surface);
+  font-size: var(--fs-sm);
+  color: var(--c-ink-2);
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+@keyframes ps-wmap-hop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1.06);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes ps-wmap-text-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-wmap-pet,
+  .ps-wmap-pet__ring,
+  .ps-wmap-panel h2 {
+    animation: none !important;
+  }
+  .ps-wmap-panel__progress i {
+    transition: none;
+  }
+}
+
+@media (max-height: 600px) {
+  .ps-wmap-panel {
+    padding: 10px 12px 10px;
+  }
+  .ps-wmap-panel__actions {
+    margin-top: 8px;
+  }
+  .ps-wmap-panel__actions .ps-btn {
+    min-height: 38px;
+  }
+}

@@ -1,18 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
-import type { EntryIntentRequest, HabitatKind, SessionState, SettingsUpdateInput, SettingsView } from "@/shared/contracts";
+import type { EntryIntentRequest, HabitatKind, HabitatOption, SessionState, SettingsUpdateInput, SettingsView } from "@/shared/contracts";
 import { toApiError } from "@/shared/api/errors";
 import { env } from "@/shared/config/env";
 import { queryKeys } from "@/shared/query/queryClient";
 import { useServices } from "@/shared/services/registry";
 import { onboardingRoute, routeAfterSession, useSessionState } from "@/shared/session/onboarding";
+import { useCurrentHousehold } from "@/shared/session/householdContext";
 import { Button, Card, Chip, DisabledState, ErrorState, Icon, LoadingState, Page, ToggleChip, TopBar } from "@/shared/ui";
-import { EntryHeading } from "./EntryHeading";
+import { EntryHeading, EntrySteps, entryStepKicker } from "./EntryHeading";
+import { BrandLogo } from "@/shared/ui/BrandLogo";
 import "./identity.css";
 import entryFilm from "./assets/entry-film-mobile.mp4";
 import entryPoster from "./assets/entry-film-poster.jpg";
 import invitationLetter from "@/features/pets/assets/entry-invitation-letter-v1.webp";
+import courtyard from "@/features/home/assets/living/courtyard-base.webp";
+import { PawMark, petPortraitUrl } from "@/features/pets/PetPortrait";
 
 export function WelcomePage() {
   const session = useSessionState();
@@ -37,7 +41,7 @@ export function WelcomePage() {
         <video ref={film} src={entryFilm} poster={entryPoster} autoPlay={!reduceMotion} muted playsInline loop preload="metadata" />
       </div>
       <div className="ps-welcome-top">
-        <span className="ps-welcome-wordmark">PetSoul<span className="ps-welcome-wordmark__star">✳</span></span>
+        <BrandLogo size="welcome" />
         {!reduceMotion ? <button
           type="button"
           className="ps-welcome-pause"
@@ -58,13 +62,13 @@ export function WelcomePage() {
       </div>
       <div className="ps-welcome-bottom">
         <span className="ps-welcome-eyebrow">WELCOME TO THE LIVING WORLD</span>
-        <h1>这一次，<br />和 TA 一起生活。</h1>
-        <p>家会一直在，旅途也正在发生。先从你喜欢的方式，走进这个世界。</p>
+        <h1>和 TA 一起，<br />走进另一个世界。</h1>
+        <p>每只宠物，都有一段属于自己的故事。</p>
         <div className="ps-welcome-actions">
-          <Link to="/register?entry=own_pet" className="ps-welcome-action ps-welcome-action--primary">带我的宠物来 <span aria-hidden="true">↗</span></Link>
-          <Link to="/world#residents" className="ps-welcome-action ps-welcome-action--secondary">先认识星球居民 <span aria-hidden="true">→</span></Link>
+          <Link to="/register" className="ps-welcome-action ps-welcome-action--primary">寻找我的 TA <span aria-hidden="true">↗</span></Link>
+          <Link to="/world#residents" className="ps-welcome-action ps-welcome-action--secondary">先去星球上逛逛 <span aria-hidden="true">→</span></Link>
         </div>
-        <Link to="/login" className="ps-welcome-login">已经有家了？登录</Link>
+        <Link to="/login" className="ps-welcome-login">已经找到 TA 了？登录</Link>
         <span className="ps-welcome-disclosure">开场影片为概念影像，不代表你或居民的真实宠物。</span>
       </div>
     </Page>
@@ -92,7 +96,8 @@ function SelectedResidentBanner({ petId }: { petId: string }) {
   if (selected.isError || !selected.data) return <p className="ps-selected-resident">这位居民暂时无法打开，<Link to="/world">返回星球看看</Link>。</p>;
   return (
     <div className="ps-selected-resident">
-      <span className="ps-selected-resident__portrait">{selected.data.profile.avatar_url ? <img src={selected.data.profile.avatar_url} alt="" /> : selected.data.profile.display_name.slice(0, 1)}</span>
+      {/* 头像不用名字首字：没有公开照片时演示模式用授权小灰猫，live 用爪印占位。 */}
+      <span className="ps-selected-resident__portrait">{petPortraitUrl(selected.data.profile.avatar_url) ? <img src={petPortraitUrl(selected.data.profile.avatar_url)!} alt="" /> : <PawMark size={18} />}</span>
       <span><small>刚才认识的居民</small><strong>{selected.data.profile.display_name}</strong></span>
       <Link to={`/world/residents/${encodeURIComponent(petId)}`}>再看一眼</Link>
     </div>
@@ -119,6 +124,7 @@ function AuthForm({ kind }: { kind: "register" | "login" }) {
   const entry = entryFromParams(params);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const submit = useMutation({
     mutationFn: () => (kind === "register" ? session.register(username.trim(), password, undefined, entry) : session.login(username.trim(), password)),
     onSuccess: (state: SessionState) => {
@@ -134,19 +140,20 @@ function AuthForm({ kind }: { kind: "register" | "login" }) {
   const error = submit.error ? toApiError(submit.error) : null;
   return (
     <form
-      className="ps-stack"
+      className="ps-stack ps-auth-form"
       onSubmit={(e) => {
         e.preventDefault();
         submit.mutate();
       }}
     >
       <div className="ps-field">
-        <label htmlFor="username">用户名</label>
+        <label htmlFor="username">你的账号名</label>
         <input
           id="username"
           className="ps-input"
           autoComplete="username"
           autoCapitalize="none"
+          placeholder="用来找到属于你的家"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           minLength={3}
@@ -155,24 +162,31 @@ function AuthForm({ kind }: { kind: "register" | "login" }) {
           title="3–32 位字母、数字、下划线、点或短横线"
           required
         />
+        <span className="ps-auth-field-note">3–32 位，可用英文字母、数字、点、下划线或短横线。</span>
       </div>
       <div className="ps-field">
-        <label htmlFor="password">密码</label>
-        <input
-          id="password"
-          className="ps-input"
-          type="password"
-          autoComplete={kind === "register" ? "new-password" : "current-password"}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          minLength={kind === "register" ? 8 : 1}
-          maxLength={128}
-          required
-        />
-        {kind === "register" ? <span className="ps-muted">至少 8 位。目前没有邮箱找回，请记好密码。</span> : null}
+        <label htmlFor="password">{kind === "register" ? "设置密码" : "密码"}</label>
+        <div className="ps-auth-password">
+          <input
+            id="password"
+            className="ps-input"
+            type={showPassword ? "text" : "password"}
+            autoComplete={kind === "register" ? "new-password" : "current-password"}
+            placeholder={kind === "register" ? "至少 8 位" : "输入密码"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            minLength={kind === "register" ? 8 : 1}
+            maxLength={128}
+            required
+          />
+          <button type="button" className="ps-auth-password__toggle" aria-label={showPassword ? "隐藏密码" : "显示密码"} aria-pressed={showPassword} onClick={() => setShowPassword((old) => !old)}>
+            {showPassword ? "隐藏" : "显示"}
+          </button>
+        </div>
+        {kind === "register" ? <span className="ps-auth-field-note">现在还没有密码找回功能，请记住这把钥匙。</span> : null}
       </div>
       <Button type="submit" variant="primary" block loading={submit.isPending}>
-        {kind === "register" ? "注册" : "登录"}
+        {kind === "register" ? "创建账号，继续" : "登录，继续"}
       </Button>
       {error ? (
         error.isCapabilityUnavailable ? (
@@ -195,18 +209,22 @@ export function RegisterPage() {
   const suffix = params.toString() ? `?${params.toString()}` : "";
   const back = entry?.kind === "invite" && entry.invite_token ? `/join?invite=${encodeURIComponent(entry.invite_token)}` : entry?.kind === "adopt" && entry.pet_id ? `/world/residents/${encodeURIComponent(entry.pet_id)}` : "/welcome";
   return (
-    <Page bare className="ps-entry-page">
-      <TopBar title="注册" back={back} />
-      <EntryHeading step={1} kicker="入住准备 · 01 / 04" title={entry?.kind === "invite" ? "把这封邀请，留在这里" : entry?.kind === "adopt" ? "把刚才的相遇，留在这里" : "从这里，走进 TA 的生活"} description={entry?.kind === "invite" ? "先建立账号。邀请会留作待确认事项，是否加入这个家仍由你决定。" : entry?.kind === "adopt" ? "先建立账号。刚才选中的居民会被记住，领养仍要由你登录后亲自确认。" : "先为自己建立一个账号。你可以带自己的宠物入住，也可以在星球上认识新伙伴。"} />
-      {entry?.kind === "adopt" && entry.pet_id ? <SelectedResidentBanner petId={entry.pet_id} /> : null}
-      {entry?.kind === "invite" && entry.invite_token ? <SelectedInviteBanner token={entry.invite_token} /> : null}
-      <Card className="ps-entry-card">
+    <Page bare className={`ps-entry-page ps-auth-page${entry?.kind === "adopt" ? " ps-auth-page--adopt" : ""}`}>
+      <div className="ps-auth-hero">
+        <TopBar title="注册" back={back} />
+        <div className="ps-auth-hero__caption">
+          <BrandLogo />
+          <strong>和 TA 一起，走进另一个世界。</strong>
+        </div>
+      </div>
+      <div className="ps-auth-sheet">
+        <EntryHeading step={1} kicker="第一站 · 建立账号" title={entry?.kind === "invite" ? "先收好这封邀请" : entry?.kind === "adopt" ? "把刚才的相遇留住" : "给自己留一把钥匙"} description={entry?.kind === "invite" ? "建立账号后，你可以决定是否加入这个家。" : entry?.kind === "adopt" ? "建立账号后，回到刚才认识的居民身边。" : "先认识你，再带 TA 来到这个世界。"} />
+        {entry?.kind === "adopt" && entry.pet_id ? <SelectedResidentBanner petId={entry.pet_id} /> : null}
+        {entry?.kind === "invite" && entry.invite_token ? <SelectedInviteBanner token={entry.invite_token} /> : null}
         <AuthForm kind="register" />
-      </Card>
-      <p className="ps-entry-support">注册只建立账号，不会自动领养居民或加入家庭；之后都由你确认。</p>
-      <p className="ps-entry-support">
-        已有账号？<Link to={`/login${suffix}`}>去登录</Link>
-      </p>
+        <p className="ps-entry-support">创建账号不会自动领养居民或加入家庭，之后仍由你确认。</p>
+        <p className="ps-entry-support ps-auth-switch">已有账号？<Link to={`/login${suffix}`}>登录，继续</Link></p>
+      </div>
     </Page>
   );
 }
@@ -217,36 +235,80 @@ export function LoginPage() {
   const suffix = params.toString() ? `?${params.toString()}` : "";
   const back = entry?.kind === "invite" && entry.invite_token ? `/join?invite=${encodeURIComponent(entry.invite_token)}` : entry?.kind === "adopt" && entry.pet_id ? `/world/residents/${encodeURIComponent(entry.pet_id)}` : "/welcome";
   return (
-    <Page bare className="ps-entry-page">
-      <TopBar title="登录" back={back} />
-      <EntryHeading kicker="欢迎回来" title="家还在这里等你" description="登录后继续照顾 TA。领养和加入家庭都需要你自己确认，不会因为登录自动发生。" />
-      {entry?.kind === "adopt" && entry.pet_id ? <SelectedResidentBanner petId={entry.pet_id} /> : null}
-      {entry?.kind === "invite" && entry.invite_token ? <SelectedInviteBanner token={entry.invite_token} /> : null}
-      <Card className="ps-entry-card">
+    <Page bare className={`ps-entry-page ps-auth-page${entry?.kind === "adopt" ? " ps-auth-page--adopt" : ""}`}>
+      <div className="ps-auth-hero">
+        <TopBar title="登录" back={back} />
+        <div className="ps-auth-hero__caption">
+          <BrandLogo />
+          <strong>另一个世界，等你回来。</strong>
+        </div>
+      </div>
+      <div className="ps-auth-sheet">
+        <EntryHeading kicker="欢迎回来" title="继续你们的故事" description="从上次停下的地方继续。" />
+        {entry?.kind === "adopt" && entry.pet_id ? <SelectedResidentBanner petId={entry.pet_id} /> : null}
+        {entry?.kind === "invite" && entry.invite_token ? <SelectedInviteBanner token={entry.invite_token} /> : null}
         <AuthForm kind="login" />
-      </Card>
-      <p className="ps-entry-support">
-        还没有账号？<Link to={`/register${suffix}`}>去注册</Link>
-      </p>
+        <p className="ps-entry-support ps-auth-switch">第一次来？<Link to={`/register${suffix}`}>创建账号</Link></p>
+      </div>
     </Page>
   );
 }
 
+/**
+ * UI-ASSET-001 v1（r7k 交付，c84a 素材检查通过）：海边 SHA-256 3709438F…/blob 1fa57117，城市 3487B7C8…/blob 23b3f6a2。
+ * 只登记已交付的住处；其余住处开放前另出版本，未登记时显示中性色块，不用示意画冒充。
+ */
+const HABITAT_ART: Partial<Record<HabitatKind, string>> = {
+  seaside: "/ui-assets/UI-ASSET-001/v1/habitat-seaside.webp",
+  city: "/ui-assets/UI-ASSET-001/v1/habitat-city.webp",
+};
+const HABITAT_MARK: Partial<Record<HabitatKind, "wave" | "home" | "sprout" | "compass">> = { seaside: "wave", lakeside: "wave", city: "home", countryside: "sprout", grassland: "sprout", forest: "sprout" };
+
+function HabitatPostcard({ option, selected, onSelect }: { option: HabitatOption; selected: boolean; onSelect: () => void }) {
+  const art = HABITAT_ART[option.habitat];
+  const [artFailed, setArtFailed] = useState(false);
+  const showArt = Boolean(art && !artFailed);
+  return (
+    <button type="button" className={`ps-habitat-card is-${option.habitat}${selected ? " is-selected" : ""}${showArt ? " has-art" : ""}`} aria-pressed={selected} onClick={onSelect}>
+      <span className="ps-habitat-card__art" aria-hidden="true">
+        {showArt ? <img src={art} alt="" onError={() => setArtFailed(true)} /> : <Icon name={HABITAT_MARK[option.habitat] ?? "compass"} size={26} strokeWidth={1.5} />}
+        <span className="ps-habitat-card__check"><Icon name="check" size={15} strokeWidth={2.6} /></span>
+      </span>
+      <strong>{option.label}</strong>
+      <small>{option.examples.length ? `可能落在 ${option.examples.join("、")}` : "由星球安排片区"}</small>
+    </button>
+  );
+}
+
+/** 入住失败的每种原因都有自己的出路；pet_away 是等待，不是错误。 */
+function moveInProblem(error: unknown): { reason: string | null; message: string } | null {
+  if (!error) return null;
+  const err = toApiError(error);
+  const reason = typeof err.details?.reason === "string" ? err.details.reason : null;
+  if (reason === "pet_away") return { reason, message: "" };
+  if (reason === "habitat_not_supported") return { reason, message: "刚才选的地方暂时不能入住了。请重新选一处，或者不选直接入住。" };
+  if (reason === "manage_required") return { reason, message: "家的位置由家庭管理员决定。可以不选，直接入住。" };
+  if (err.kind === "network" || err.kind === "timeout" || (err.status ?? 0) >= 500) return { reason: "unconfirmed", message: "入住结果还没确认。已经重新核对；如果还停在这里，可以再点一次，不会重复入住。" };
+  return { reason, message: err.message };
+}
+
 /** 入住激活：与接待分开。主人明确选择是否让 TA 的旅行到访生成公开动态（默认不公开）。 */
 export function MoveInPage() {
-  const { session, pets, reception } = useServices();
+  const { session, pets } = useServices();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const state = useSessionState();
   const [publicPosts, setPublicPosts] = useState(false);
   const [habitat, setHabitat] = useState<HabitatKind | null>(null);
+  // 入住成功后本页不再按会话步骤自行跳转：否则守卫的 <Navigate replace> 会盖掉带“到家时刻”状态的那次跳转。
+  const movedIn = useRef(false);
   const petId = state.data?.onboarding?.pet_id ?? null;
   const profile = useQuery({ queryKey: queryKeys.petProfile(petId ?? "-"), queryFn: () => pets.publicProfile(petId!), enabled: Boolean(petId) });
-  const welcome = useQuery({ queryKey: queryKeys.homeWelcome(petId ?? "-"), queryFn: () => reception.homeWelcome(petId!), enabled: Boolean(petId && !state.data?.onboarding?.reception_skipped), retry: false });
   const place = useQuery({ queryKey: queryKeys.homePlace(petId ?? "-"), queryFn: () => session.homePlace(petId), enabled: Boolean(petId), retry: false });
   const moveIn = useMutation({
     mutationFn: () => session.moveIn(publicPosts, habitat, petId),
     onSuccess: (onboarding) => {
+      movedIn.current = true;
       queryClient.setQueryData<SessionState | undefined>(queryKeys.session, (prev) => (prev ? { ...prev, onboarding } : prev));
       void queryClient.invalidateQueries({ queryKey: queryKeys.home });
       void queryClient.invalidateQueries({ queryKey: ["households"] });
@@ -255,64 +317,101 @@ export function MoveInPage() {
       if (userId && petId) {
         try { sessionStorage.setItem(`petsoul:current-pet:${userId}`, petId); } catch { /* still usable without storage */ }
       }
-      navigate("/home", { replace: true });
+      // 到家时刻只跟着这一次跳转（路由状态）出现：刷新、返回都不会重播。
+      // 这里有意去小窝 /home、不去地图首页 /map：第一次入住的“到家时刻”在小窝里播（小窝左上角再回地图）；
+      // 其余完成、返回都已改去 /map 或“我的”（2026-09-24 新导航）。
+      navigate("/home", { replace: true, state: petId ? { arrival: petId } : null });
+    },
+    onError: (error) => {
+      const problem = moveInProblem(error);
+      if (problem?.reason === "habitat_not_supported") {
+        setHabitat(null);
+        void place.refetch();
+      }
+      if (problem?.reason === "manage_required") setHabitat(null);
+      // 入住接口幂等：回执不确定时先重读会话；若其实已经入住，下方守卫会按入住阶段直接带去地图首页。
+      if (problem?.reason === "unconfirmed") void state.refetch();
     },
   });
 
-  if (env.dataMode === "fixture") return <Navigate to="/home" replace />;
+  if (env.dataMode === "fixture") return <Navigate to="/map" replace />;
   if (state.isPending) return <LoadingState lines={2} />;
   if (state.isError) return <ErrorState error={state.error} onRetry={() => void state.refetch()} />;
   if (!state.data.authenticated) return <Navigate to="/welcome" replace />;
+  if (movedIn.current) return <Page bare className="ps-entry-page ps-movein-page"><LoadingState lines={1} label="正在回家…" /></Page>;
   const step = state.data.onboarding?.step;
   if (step !== "ready_to_move_in" && step !== "reception_optional") return <Navigate to={onboardingRoute(state.data.onboarding)} replace />;
 
+  const name = profile.data?.display_name ?? "TA";
+  const photo = profile.data?.avatar_url ?? null;
+  const portrait = petPortraitUrl(photo);
+  const problem = moveIn.isError && !moveIn.isPending ? moveInProblem(moveIn.error) : null;
+  const away = problem?.reason === "pet_away";
+  const view = place.data;
+  const openOptions = view?.options.filter((option) => option.open) ?? [];
+  const closedLabels = view?.options.filter((option) => option.open === false).map((option) => option.label) ?? [];
+  const canChoose = Boolean(view && !view.place.chosen && view.can_change && openOptions.length);
   return (
-    <Page bare className="ps-entry-page">
-      <TopBar title="入住" subtitle="布置好了，就一起开始生活" />
-      <EntryHeading step={4} kicker="入住准备 · 04 / 04" title="欢迎来到你们的家" description="从这一刻起，家园、信箱和 TA 的旅途会按真实状态慢慢展开。" />
-      <div className="ps-stack">
-        <Card className="ps-row ps-entry-card">
-          {profile.data ? (
-            <span className="ps-movein-portrait" aria-label={profile.data.avatar_url ? `${profile.data.display_name}的当前头像` : `${profile.data.display_name}暂时没有照片`}>
-              {profile.data.avatar_url ? <img src={profile.data.avatar_url} alt="" /> : profile.data.display_name.slice(0, 1)}
-            </span>
-          ) : null}
-          <div style={{ flex: 1 }}>
-            <h2 className="ps-h2">{profile.data?.display_name ?? "TA"} 准备好搬进来了</h2>
-            <div className="ps-muted">{welcome.data ? welcome.data.greeting : "入住后 TA 会先在家里熟悉环境、守着菜园；你可以在旅途里提出建议，TA 也有自己的节奏。"}</div>
+    <Page bare className="ps-entry-page ps-movein-page">
+      <TopBar title="入住" subtitle="最后一步，带 TA 回家" />
+      <section className="ps-movein-hero" aria-label={`${name} 的新家`}>
+        <img className="ps-movein-hero__scene" src={courtyard} alt="" />
+        <span className={`ps-movein-hero__pet${portrait ? " has-photo" : ""}`} aria-label={portrait ? `${name}的当前头像` : `${name}暂时没有照片`}>
+          {portrait ? <img src={portrait} alt="" /> : <PawMark size={28} />}
+          <small>{portrait ? name : "暂无照片"}</small>
+        </span>
+        <div className="ps-movein-hero__caption">
+          <span className="ps-movein-hero__kicker">{entryStepKicker(4)}</span>
+          <h1>带 {name} 回家</h1>
+          <p>入住之后，家园、信箱和 TA 的旅途会按真实时间慢慢展开。</p>
+          <EntrySteps step={4} />
+        </div>
+      </section>
+
+      <section className="ps-movein-section" aria-labelledby="movein-place-title">
+        <h2 id="movein-place-title">家的样子</h2>
+        {place.isPending ? <LoadingState lines={1} label="正在确认可以安家的地方…" /> : place.isError ? <ErrorState error={place.error} onRetry={() => void place.refetch()} /> : view ? (
+          view.place.chosen ? (
+            <p className="ps-movein-note">这个家在 {view.place.display}，{name} 会住进同一处。</p>
+          ) : (
+            <>
+              <p className="ps-movein-note">
+                {canChoose ? `希望 ${name} 住在什么样的地方？星球会在那一类片区里安排一处，不给具体地址。不选也可以，先住在 ${view.place.display}。` : `${name} 会先住在 ${view.place.display}。`}
+              </p>
+              {canChoose ? (
+                <div className="ps-habitat-grid" role="group" aria-label="选择家的环境">
+                  {openOptions.map((option) => <HabitatPostcard key={option.habitat} option={option} selected={habitat === option.habitat} onSelect={() => setHabitat((old) => (old === option.habitat ? null : option.habitat))} />)}
+                </div>
+              ) : null}
+              {!view.can_change ? <p className="ps-movein-note">TA 在外面的时候不能定家的位置，回来后再选。</p> : null}
+              {closedLabels.length ? <p className="ps-movein-closed">{closedLabels.join("、")}还没开放，开放后才会出现在这里。</p> : null}
+            </>
+          )
+        ) : null}
+      </section>
+
+      <section className="ps-movein-section">
+        <label className="ps-switch-row">
+          <span>
+            <strong>让 TA 的旅途见闻出现在朋友圈</strong>
+            <small>默认关闭。只在 TA 真实到访之后才会发；你们的私密通讯和入住叮嘱永远不会公开。之后可以在设置里改。</small>
+          </span>
+          <input type="checkbox" role="switch" className="ps-switch" checked={publicPosts} onChange={(e) => setPublicPosts(e.target.checked)} />
+        </label>
+      </section>
+
+      <div className="ps-entry-dock" role="group" aria-label="入住">
+        {away ? (
+          <div className="ps-movein-away" role="status">
+            <strong>{name} 还在外面</strong>
+            <span>TA 不会瞬移回家。等 TA 回到驿站，再来接 TA 回家。</span>
           </div>
-        </Card>
-        <Card className="ps-entry-card">
-          <div className="ps-section-title" style={{ marginTop: 0 }}>家的位置</div>
-          {place.isPending ? <LoadingState lines={1} label="正在确认可以安家的地方…" /> : place.isError ? <ErrorState error={place.error} onRetry={() => void place.refetch()} /> : place.data ? <>
-            <p className="ps-entry-support ps-place-note">{place.data.place.chosen ? `这个家已在 ${place.data.place.display}，新伙伴会住在同一处。` : `暂不选择会使用当前默认住处：${place.data.place.display}。`}</p>
-            {!place.data.place.chosen && place.data.can_change ? <div className="ps-place-options" role="group" aria-label="选择家的环境">
-              {place.data.options.filter((option) => option.open).map((option) => <button key={option.habitat} type="button" className={`ps-place-option${habitat === option.habitat ? " is-selected" : ""}`} aria-pressed={habitat === option.habitat} onClick={() => setHabitat((old) => old === option.habitat ? null : option.habitat)}>
-                <strong>{option.label}</strong><small>{option.examples.length ? `可能落在 ${option.examples.join("、")}` : "由星球安排片区"}</small>
-              </button>)}
-            </div> : null}
-            {!place.data.place.chosen && place.data.options.some((option) => option.open === false) ? <span className="ps-muted ps-place-unavailable">其余环境尚未开放，不会提前展示为可入住。</span> : null}
-          </> : null}
-        </Card>
-        <Card className="ps-entry-card">
-          <div className="ps-section-title" style={{ marginTop: 0 }}>
-            星球圈公开范围
-          </div>
-          <label className="ps-check">
-            <input type="checkbox" checked={publicPosts} onChange={(e) => setPublicPosts(e.target.checked)} />
-            <span>
-              允许 TA 旅行到访时在星球圈发公开动态
-              <span className="ps-muted" style={{ display: "block" }}>
-                只发生在真实到访之后；你和 TA 的私密通讯、入住叮嘱永远不会被公开。之后可以在设置里随时改。
-              </span>
-            </span>
-          </label>
-        </Card>
+        ) : problem ? (
+          <p role="alert" className="ps-form-error ps-entry-dock__error">{problem.message}</p>
+        ) : null}
         <Button variant="primary" block icon="home" loading={moveIn.isPending} disabled={place.isPending || place.isError} onClick={() => moveIn.mutate()}>
-          入住，一起开始生活
+          {away ? "再看看 TA 回来没有" : "入住，一起开始生活"}
         </Button>
-        {moveIn.isError ? <ErrorState error={moveIn.error} /> : null}
-        <p className="ps-entry-support">入住后的菜地、旅费与来信，以家园实时状态为准。</p>
       </div>
     </Page>
   );
@@ -324,14 +423,26 @@ const VISIBILITY: Array<{ id: string; label: string }> = [
   { id: "private", label: "只有我" },
 ];
 
-function SettingsForm({ view }: { view: SettingsView }) {
+/**
+ * 聊天时的“理解帮手”（后端的意图判断层）：服务端统一开关，玩家这里只看。按模式说人话，不露原始代码。
+ * off 没开；shadow 只在后台试着理解、不改变 TA 的回复；assist 开着。
+ */
+const INTENT_MODE: Record<string, { chip: string; tone: "neutral" | "sky"; note?: string }> = {
+  off: { chip: "未开启", tone: "neutral" },
+  shadow: { chip: "试运行中", tone: "neutral", note: "现在只在后台试着理解，不会改变 TA 的回复。" },
+  assist: { chip: "已开启", tone: "sky" },
+};
+
+function SettingsForm({ view, petId, settingsKey }: { view: SettingsView; petId: string | null; settingsKey: readonly unknown[] }) {
   const { session } = useServices();
   const queryClient = useQueryClient();
   const [bio, setBio] = useState(view.bio ?? "");
+  const intent = Object.prototype.hasOwnProperty.call(INTENT_MODE, view.intent_layer_mode) ? INTENT_MODE[view.intent_layer_mode] : INTENT_MODE.off;
   const save = useMutation({
-    mutationFn: (patch: SettingsUpdateInput) => session.updateSettings(patch),
+    // 简介、公开范围、公开动态都是这只宠物的：带上当前宠物（一家有两只时不带就 409 pet_required）。
+    mutationFn: (patch: SettingsUpdateInput) => session.updateSettings(patch, petId),
     onSuccess: (next) => {
-      queryClient.setQueryData(queryKeys.settings, next);
+      queryClient.setQueryData(settingsKey, next);
       void queryClient.invalidateQueries({ queryKey: ["social"] });
     },
   });
@@ -339,14 +450,14 @@ function SettingsForm({ view }: { view: SettingsView }) {
     <>
       <Card>
         <div className="ps-section-title" style={{ marginTop: 0 }}>
-          星球圈
+          朋友圈
         </div>
         <label className="ps-check">
           <input type="checkbox" checked={view.public_posts} disabled={save.isPending} onChange={(e) => save.mutate({ public_posts: e.target.checked })} />
           <span>
             TA 旅行到访后发公开动态
             <span className="ps-muted" style={{ display: "block" }}>
-              关闭后新的到访不再公开；已发的动态可以在星球圈里撤下。
+              关闭后新的到访不再公开；已发的动态可以在朋友圈里撤下。
             </span>
           </span>
         </label>
@@ -378,11 +489,14 @@ function SettingsForm({ view }: { view: SettingsView }) {
       </Card>
       <Card>
         <div className="ps-section-title" style={{ marginTop: 0 }}>
-          意图判断层
+          聊天时更懂你
         </div>
-        <div className="ps-row">
-          <Chip tone={view.intent_layer_mode === "off" ? "neutral" : "sky"}>{view.intent_layer_mode === "off" ? "关闭（默认）" : view.intent_layer_mode}</Chip>
-          <span className="ps-muted">只调整回应措辞或给出可选控件，不会替你改行程、删记忆或公开内容。</span>
+        <div className="ps-row" style={{ alignItems: "flex-start" }}>
+          <Chip tone={intent.tone}>{intent.chip}</Chip>
+          <span className="ps-muted">
+            开启后，TA 回你消息时会更贴着你的意思，有时还会附上一个由你决定点不点的小选项；不开启时 TA 照常回复。开不开都不会替你改行程、删回忆，也不会把内容公开。
+            {intent.note ? <span style={{ display: "block", marginTop: 4 }}>{intent.note}</span> : null}
+          </span>
         </div>
       </Card>
     </>
@@ -394,7 +508,13 @@ export function SettingsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const current = useSessionState();
-  const settings = useQuery({ queryKey: queryKeys.settings, queryFn: () => session.settings() });
+  // 设置里有这只宠物的简介与公开范围：按当前宠物读。live 的键带账号与宠物（切宠物时“identity”前缀的缓存不会被清，
+  // 不分键就会看到上一只的简介）；演示只有一份。
+  const { userId, pet } = useCurrentHousehold();
+  const petId = pet?.pet_id ?? null;
+  const fixture = env.dataMode === "fixture";
+  const settingsKey = fixture ? queryKeys.settings : [...queryKeys.settings, userId ?? "-", petId ?? "-"];
+  const settings = useQuery({ queryKey: settingsKey, queryFn: () => session.settings(petId), enabled: fixture || Boolean(userId && petId) });
   const logout = useMutation({
     mutationFn: () => session.logout(),
     onSettled: () => {
@@ -404,7 +524,7 @@ export function SettingsPage() {
   });
   return (
     <Page>
-      <TopBar title="账号与设置" back="/home" />
+      <TopBar title="账号与设置" back="/me" />
       <div className="ps-stack">
         <Card>
           <div className="ps-section-title" style={{ marginTop: 0 }}>
@@ -436,7 +556,7 @@ export function SettingsPage() {
             <LoadingState lines={1} />
           )}
         </Card>
-        {settings.isError ? <ErrorState error={settings.error} onRetry={() => void settings.refetch()} /> : settings.data ? <SettingsForm view={settings.data} /> : <LoadingState lines={2} />}
+        {settings.isError ? <ErrorState error={settings.error} onRetry={() => void settings.refetch()} /> : settings.data ? <SettingsForm key={petId ?? "demo"} view={settings.data} petId={petId} settingsKey={settingsKey} /> : <LoadingState lines={2} />}
       </div>
     </Page>
   );

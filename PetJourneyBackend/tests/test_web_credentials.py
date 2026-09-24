@@ -38,7 +38,11 @@ class CredentialWalletTests(WebPlatformTestBase):
         again = self.cards()["identity_card"][0]
         self.assertEqual((again["number"], again["issued_at"]), (first["number"], first["issued_at"]), "刷新、隔几天都不重新签发")
         timeline = [i for i in self.owner.get("/timeline").json() if i["kind"] == "credential"]
-        self.assertEqual(sorted(i["title"] for i in timeline), sorted(["拿到星球身份证", "开通星球银行卡", "建立照护档案"]), "入住时的证件进时间线，只记一次")
+        # 标题**故意写死中文**，不从 `CATALOG` 读：实现现在是「动词 ＋ CATALOG.label」拼的，
+        # 测试再读同一个 `CATALOG` 就成了 `CATALOG == CATALOG`——**改名改错也照样绿**。
+        # 写死意味着以后改名时这条会红，**那是它该做的事**：改名是产品决定，应当有一处当场提醒。
+        # （「星球居民证」是用户 2026-09-24 定的叫法，原「星球身份证」。）
+        self.assertEqual(sorted(i["title"] for i in timeline), sorted(["拿到星球居民证", "开通星球银行卡", "建立照护档案"]), "入住时的证件进时间线，只记一次")
 
     def test_numbers_are_unique_and_cards_are_private_to_the_owner(self) -> None:
         other = self.user("card-other")

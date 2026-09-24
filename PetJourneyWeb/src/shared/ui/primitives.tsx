@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import type { DataOrigin } from "@/shared/contracts";
 import { Icon, type IconName } from "./Icon";
 
@@ -73,20 +73,33 @@ export function DataOriginBadge({ origin, label }: { origin: DataOrigin | "fixtu
   );
 }
 
+/**
+ * 顶栏返回（用户 2026-09-24 同意）：从哪来回哪去。
+ * - 有站内上一页（不是直接打开链接进来的）：普通点击退回上一页，例如从小窝的菜园门进菜园，返回回到小窝；
+ * - 直接打开链接进来、没有站内历史：回上级页。back 为字符串时回它，为 true 时回地图首页。
+ * 链接的 href 始终是上级页：新标签页打开、读屏、“没有死胡同”的检查都以它为准。
+ */
 export function TopBar({ title, subtitle, back, right }: { title: ReactNode; subtitle?: ReactNode; back?: string | boolean; right?: ReactNode }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const parent = typeof back === "string" ? back : "/map";
+  const hasInAppHistory = location.key !== "default";
   return (
     <header className="ps-topbar">
       {back ? (
-        typeof back === "string" ? (
-          <Link to={back} className="ps-btn ps-btn--ghost ps-btn--icon" aria-label="返回">
-            <Icon name="back" />
-          </Link>
-        ) : (
-          <button type="button" className="ps-btn ps-btn--ghost ps-btn--icon" aria-label="返回" onClick={() => navigate(-1)}>
-            <Icon name="back" />
-          </button>
-        )
+        <Link
+          to={parent}
+          className="ps-btn ps-btn--ghost ps-btn--icon"
+          aria-label="返回"
+          onClick={(event) => {
+            // 修饰键 / 中键交给浏览器（新标签页打开上级页）；只有普通左键、并且确有站内上一页时才退回上一页。
+            if (!hasInAppHistory || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            navigate(-1);
+          }}
+        >
+          <Icon name="back" />
+        </Link>
       ) : null}
       <div className="ps-topbar__title">
         {title}

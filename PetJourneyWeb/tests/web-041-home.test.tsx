@@ -35,10 +35,10 @@ beforeEach(() => sessionStorage.clear());
 
 describe("0.4.1 household and visual identity", () => {
   it("uses a crop-specific mature illustration and an honest generic growing stage", () => {
-    expect(cropVisual("sun_pea", "ripe")).toContain("crop-pea-v1.webp");
-    expect(cropVisual("moon_radish", "ripe")).toContain("crop-radish-v1.webp");
-    expect(cropVisual("star_tomato", "ripe")).toContain("crop-tomato.webp");
-    expect(cropVisual("moon_radish", "growing")).toContain("crop-sprouts.webp");
+    expect(cropVisual("sun_pea", "ripe")).toContain("/ui-assets/UI-ASSET-006/v1/crop-ripe-sun_pea.webp");
+    expect(cropVisual("moon_radish", "ripe")).toContain("/ui-assets/UI-ASSET-006/v1/crop-ripe-moon_radish.webp");
+    expect(cropVisual("star_tomato", "ripe")).toContain("/ui-assets/UI-ASSET-006/v1/crop-ripe-star_tomato.webp");
+    expect(cropVisual("moon_radish", "growing")).toContain("/ui-assets/UI-ASSET-006/v1/crop-growing-moon_radish.webp");
   });
 
   it("switches pets without projecting a late old-home result into the new pet", async () => {

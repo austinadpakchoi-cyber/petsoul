@@ -1,0 +1,77 @@
+/*
+ * 我们的家 · 成员管理。所在的卡片是“纸质”卡（Card paper：暖纸固定色，夜里也保持暖纸配深墨），
+ * 所以这里只用 paper 系列 token，不跟随深浅色切换；按钮压过 .ps-family-card button 的默认实心样式。
+ */
+
+.ps-member__row {
+  flex-wrap: wrap;
+}
+/* 要压过 .ps-family-row > div 的 grid（那条是给名字一栏用的），按钮才会并排、靠右；放不下时整组换到下一行。 */
+.ps-family-row > .ps-member__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+.ps-family-card .ps-member__actions button,
+.ps-family-card .ps-member__confirm button {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+.ps-family-card button.is-quiet {
+  border: 1px solid var(--paper-shade);
+  background: transparent;
+  color: var(--paper-ink);
+}
+.ps-family-card button.is-danger {
+  border: 1px solid var(--paper-accent);
+  background: transparent;
+  color: var(--paper-accent);
+}
+.ps-family-card button.is-danger-solid {
+  background: var(--paper-accent);
+  color: var(--c-on-deep);
+}
+
+/* 二次确认：写清后果，确定 / 先不。 */
+.ps-member__confirm {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px dashed var(--paper-accent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--paper-shade) 35%, var(--paper));
+}
+.ps-family-card .ps-member__confirm p {
+  color: var(--paper-ink);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.ps-member__confirm-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ps-family-card .ps-member__notice {
+  color: var(--paper-ink);
+  font-weight: 700;
+}
+.ps-family-card .ps-member__failure p {
+  color: var(--paper-accent);
+  font-weight: 700;
+}
+.ps-member__tech summary {
+  margin-top: 4px;
+  color: var(--paper-secondary-ink);
+  font-size: 11px;
+  cursor: pointer;
+}
+.ps-member__tech span {
+  color: var(--paper-secondary-ink);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}

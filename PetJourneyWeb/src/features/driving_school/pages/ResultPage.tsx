@@ -10,7 +10,7 @@ import { useServices } from "@/shared/services/registry";
 import { useNow } from "@/shared/time/clock";
 import { Card, Chip, ErrorState, LoadingState, Page, PetAvatar, TopBar } from "@/shared/ui";
 import { ReplayViewer } from "../drive/ReplayViewer";
-import { useCurriculum, usePet } from "../hooks";
+import { useCurriculum, usePet, useSchoolPetId } from "../hooks";
 import { describeAnswer } from "../quiz/QuizRunner";
 import { attemptText, formatDateTime, formatTicks, formatWait, SUBJECT_SHORT } from "../text";
 
@@ -96,7 +96,8 @@ export function ResultPage() {
   const { driving } = useServices();
   const curriculum = useCurriculum();
   const { pet, name } = usePet();
-  const query = useQuery({ queryKey: queryKeys.drivingSession(sessionId), queryFn: () => driving.session(sessionId) });
+  const petId = useSchoolPetId();
+  const query = useQuery({ queryKey: queryKeys.drivingSession(sessionId), queryFn: () => driving.session(sessionId, petId) });
   if (query.isPending) {
     return (
       <Page>

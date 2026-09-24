@@ -11,6 +11,7 @@
 from .common import *  # noqa: F401,F403
 from .identity import *  # noqa: F401,F403
 from .pets import *  # noqa: F401,F403
+from .character import *  # noqa: F401,F403
 from .home import *  # noqa: F401,F403
 from .journey import *  # noqa: F401,F403
 from .transport import *  # noqa: F401,F403
@@ -27,8 +28,17 @@ from .school_session import *  # noqa: F401,F403
 from .household import *  # noqa: F401,F403
 from .public import *  # noqa: F401,F403
 from .ops import *  # noqa: F401,F403
+from .map import *  # noqa: F401,F403
+from .world import *  # noqa: F401,F403
+from .moderation import *  # noqa: F401,F403
+from .travel import *  # noqa: F401,F403
 
-from . import common, companion_media, credentials, farm, food, home, household, identity, intent, journey, market, ops, pets, public, reception, school, school_session, social, transport
+from . import character, common, companion_media, credentials, farm, food, home, household, identity, intent, journey, market, ops, pets, public, reception, school, school_session, social, transport
+from . import map as map_schema  # `map` 是内置名，模块级绑定会遮蔽 map()，所以取别名
+from . import moderation, travel, world
 
-CONTRACT_MODULES = (common, identity, household, pets, home, farm, market, journey, transport, companion_media, food, reception, social, intent, credentials, school,
-                    school_session, public, ops)
+# **只有列进这里的模块才会进生成物**（`scripts/gen_web_contract.py` 读的就是它）。
+# 光加 `from .x import *` 和 `__all__` 都不够——那两样让模型**可导入**，这一行才让它**进契约**。
+# 漏了不会报错：契约里静静地少一个模型，只有数模型个数才看得出来。
+CONTRACT_MODULES = (common, identity, household, pets, character, home, farm, market, journey, transport, companion_media, food, reception, social, intent, credentials, school,
+                    school_session, public, ops, map_schema, world, moderation, travel)

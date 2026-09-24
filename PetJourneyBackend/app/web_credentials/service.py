@@ -39,7 +39,10 @@ class KindInfo:
 
 
 CATALOG: dict[str, KindInfo] = {
-    "identity_card": KindInfo("宠物 ID", "入住星球时签发", "PS-ID"),
+    # 用户 2026-09-24 定：叫法用方案里的「星球居民证」（原「宠物 ID」）。
+    # **只改 label，不改 kind 与编号前缀**：`identity_card` 与 `PS-ID` 是已经签发出去的证件的身份，
+    # 改它们会让存量证件对不上号。卡面、时间线、签发通知都读这个 label，所以改这一处就够。
+    "identity_card": KindInfo("星球居民证", "入住星球时签发", "PS-ID"),
     "bank_card": KindInfo("星球银行卡", "入住时开户；就是 TA 的钱包账户，工资和旅费都记在这里", "PSB"),
     "care_profile": KindInfo("照护档案", "入住时按注册、照片与接待资料建立；主人修改 DNA 后同步", "PS-CARE", private=True),
     "passport": KindInfo("护照", "第一次出远门（跨城或跨境）时签发；本地散步不需要", "PSP"),

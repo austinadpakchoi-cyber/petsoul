@@ -48,6 +48,10 @@ def build_web_providers(settings: Settings, storage: JourneyStorage) -> WebProvi
         from ..image_provider.seedream import DoubaoSeedreamImageProvider
 
         illustrator = SeedreamIllustrator(DoubaoSeedreamImageProvider(dataclasses.replace(settings, volcengine_image_model=settings.web_image_model)), meter)
+    elif settings.image_provider_type in {"openai", "openai-compatible"} and settings.image_api_key:
+        from .gpt_images import GPTIllustrator
+
+        illustrator = GPTIllustrator(dataclasses.replace(settings, image_model=settings.web_image_model), meter)
     geo = GeoService(storage, meter, amap_key=settings.amap_api_key, google_key=settings.google_maps_api_key, timeout=settings.map_timeout_seconds)
     basemap = (BasemapService(storage, settings.web_private_media_dir, meter, amap_key=settings.amap_api_key, timeout=settings.map_timeout_seconds)
                if settings.amap_api_key else None)

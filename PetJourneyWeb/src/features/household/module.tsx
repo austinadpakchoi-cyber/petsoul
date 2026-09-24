@@ -21,6 +21,10 @@ export default defineModule({
         saveRelationship: (petId, body) => api.request<PetRelationship>(`/pets/${encodeURIComponent(petId)}/relationship`, { method: "PUT", body }),
         previewInvite: (token) => api.request<InvitePreview>("/invites/preview", { method: "POST", body: { token } }),
         acceptInvite: (token) => api.request<HouseholdDetail>("/invites/accept", { method: "POST", body: { token } }),
+        // 成员管理（管理员）：写操作走 CSRF（客户端自动带）；拒绝原因在 details.reason，页面按码说人话。
+        removeMember: (householdId, userId) => api.request<void>(`/households/${encodeURIComponent(householdId)}/members/${encodeURIComponent(userId)}`, { method: "DELETE" }),
+        setMemberRole: (householdId, userId, role) =>
+          api.request<HouseholdDetail>(`/households/${encodeURIComponent(householdId)}/members/${encodeURIComponent(userId)}/role`, { method: "PUT", body: { role } }),
       }),
       fixture: () => ({
         list: async () => [],
@@ -33,6 +37,9 @@ export default defineModule({
         saveRelationship: async () => { throw ApiError.capability("households.relationship", "演示模式不能保存真实称呼。"); },
         previewInvite: async () => { throw ApiError.capability("households.invites", "演示模式没有真实家庭邀请。"); },
         acceptInvite: async () => { throw ApiError.capability("households.invites", "演示模式不能加入真实家庭。"); },
+        // 演示世界没有真实家庭成员：不编成员变动。
+        removeMember: async () => { throw ApiError.capability("households.members", "演示模式不能移除家庭成员。"); },
+        setMemberRole: async () => { throw ApiError.capability("households.members", "演示模式不能调整家庭成员的角色。"); },
       }),
     },
   },

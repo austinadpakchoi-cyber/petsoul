@@ -13,7 +13,24 @@ from datetime import datetime
 from ..storage import JourneyStorage
 from ..utils import parse_dt
 
-CREDENTIAL_TITLE = {"identity_card": "拿到星球身份证", "bank_card": "开通星球银行卡", "care_profile": "建立照护档案", "passport": "领到护照", "driver_license": "拿到驾驶证"}
+# 证件名**不在这里写第二遍**，读 `CATALOG` 那一份；这里只留动词。
+#
+# 为什么改成拼接（2026-09-24）：原先每条都硬编码了完整标题，结果和 `CATALOG` 漂出两处——
+#   · `identity_card` 用户改名成「星球居民证」后，这里还写着「星球身份证」（我改名时 grep 的是旧 label
+#     「宠物 ID」，而这里是**第三种说法**，扫不到）；
+#   · `driver_license` 的 `CATALOG` label 是「爪爪驾驶证」，这里只写「驾驶证」——**这一处早就漂了，没人报过。**
+#
+# **同一个名字写在两处，就会漂；而且漂了不报错。** 现在名字只有一个来源，改名只改 `CATALOG`。
+CREDENTIAL_VERB = {"identity_card": "拿到", "bank_card": "开通", "care_profile": "建立", "passport": "领到", "driver_license": "拿到"}
+
+
+def credential_title(kind: str) -> str | None:
+    """「拿到星球居民证」这类标题。不认识的 kind 返回 None——调用方据此跳过，不编一个标题。"""
+    from ..web_credentials.service import CATALOG  # 局部导入：避免模块级循环依赖
+
+    verb = CREDENTIAL_VERB.get(kind)
+    info = CATALOG.get(kind)
+    return f"{verb}{info.label}" if verb and info else None
 COLLECTION_TITLE = {"postcard": "寄回一张明信片", "badge": "获得一枚勋章", "seed": "带回稀有种子", "shared_memory": "和你一起听歌/看片的回忆",
                     "license_photo": "和你一起领了驾照", "car_voucher": "拿到驾校借车券"}
 SUBJECT_NAMES = {"s1": "科目一", "s2": "科目二", "s3": "科目三", "s4": "科目四"}
@@ -70,8 +87,9 @@ def timeline(storage: JourneyStorage, user_id: str, pet_id: str, limit: int = 10
                           "detail": f"{r['score']} 分", "ref_id": r["session_id"]})
         for r in conn.execute("SELECT credential_id, kind, number, issued_at FROM web_credentials WHERE pet_id = ? ORDER BY issued_at, rowid",
                               (pet_id,)):
-            if r["kind"] in CREDENTIAL_TITLE:
-                items.append({"at": parse_dt(r["issued_at"]), "kind": "credential", "title": CREDENTIAL_TITLE[r["kind"]], "detail": r["number"], "ref_id": r["credential_id"]})
+            title = credential_title(r["kind"])
+            if title is not None:
+                items.append({"at": parse_dt(r["issued_at"]), "kind": "credential", "title": title, "detail": r["number"], "ref_id": r["credential_id"]})
         for r in conn.execute("SELECT journey_id, city, stamped_at FROM web_passport_stamps WHERE pet_id = ?", (pet_id,)):
             items.append({"at": parse_dt(r["stamped_at"]), "kind": "stamp", "title": f"护照上盖了{r['city']}的纪念章", "detail": None, "ref_id": r["journey_id"]})
         for r in conn.execute("SELECT friend_id, friend_kind, friend_name, first_met_at, last_place FROM web_pet_friends WHERE pet_id = ?", (pet_id,)):

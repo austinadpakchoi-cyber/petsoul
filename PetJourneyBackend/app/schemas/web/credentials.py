@@ -49,7 +49,7 @@ class CredentialField(WebModel):
 class CredentialSummary(WebModel):
     credential_id: str | None = Field(default=None, description="尚未获得时为空")
     kind: CredentialKind
-    label: str = Field(description="宠物 ID / 星球银行卡 / 照护档案 / 护照 / 爪爪驾驶证 / 登机牌 / 船票车票 / 酒店房卡")
+    label: str = Field(description="星球居民证 / 星球银行卡 / 照护档案 / 护照 / 爪爪驾驶证 / 登机牌 / 船票车票 / 酒店房卡")
     status: CredentialStatus
     number: str | None = Field(default=None, description="稳定唯一的证件编号；签发后不变")
     issued_at: datetime | None = Field(default=None, description="持久保存的签发时间；刷新不会变成“今天签发”")

@@ -56,9 +56,15 @@
 }
 .ps-food-ctx > svg {
   flex: none;
+  /* 全局是 border-box：8px 内边距会把图标本身挤到只剩几个像素，这里按内容盒计算 */
+  box-sizing: content-box;
   margin-top: 2px;
   padding: 8px;
   border-radius: 12px;
   background: var(--c-surface);
   color: var(--c-sea);
+}
+/* “看依据与出处”是小号按钮（36px），放大到 40px 点按区 */
+.ps-rec .ps-btn--sm {
+  min-height: 40px;
 }

@@ -45,8 +45,9 @@ export default defineModule({
         onboarding: () => api.request<OnboardingState>("/onboarding"),
         moveIn: (publicPosts, habitat, petId) => api.request<OnboardingState>("/onboarding/move-in", { method: "POST", body: { public_posts: publicPosts, habitat: habitat ?? null, pet_id: petId ?? null } }),
         homePlace: (petId) => api.request<HomePlaceView>("/home/place", { query: { pet_id: petId ?? undefined } }),
-        settings: () => api.request<SettingsView>("/settings"),
-        updateSettings: (patch) => api.request<SettingsView>("/settings", { method: "PATCH", body: patch }),
+        // 设置里的简介、公开范围、公开动态是这只宠物的：一家有两只时不带 pet_id，读的是“第一只”，改则 409 pet_required。
+        settings: (petId) => api.request<SettingsView>("/settings", { query: { pet_id: petId } }),
+        updateSettings: (patch, petId) => api.request<SettingsView>("/settings", { method: "PATCH", query: { pet_id: petId }, body: patch }),
       }),
       fixture: () => {
         let settings: SettingsView = { username: null, display_name: "演示主人", public_posts: true, profile_visibility: "public", bio: "演示宠物的简介", intent_layer_mode: "off" };

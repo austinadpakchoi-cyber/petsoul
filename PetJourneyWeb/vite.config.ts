@@ -9,6 +9,10 @@ export default defineConfig(({ mode }) => {
   const proxy = {
     "/api/v1/web": { target: apiTarget, changeOrigin: false },
     "/media": { target: apiTarget, changeOrigin: false },
+    // 高德 JS API 安全代理（CR-6C2B-MAP W0）。**必须是站点根一级路由**——高德的 serviceHost
+    // 指到 /api/v1/web 下面会被 JS API 拒绝（6c2b 实测）。后端实现在 app/routers/amap_service.py：
+    // 只放行三条渲染类路径并补安全密钥，服务类一律 403。开发期靠这条转给后端，生产由反向代理转发。
+    "/_AMapService": { target: apiTarget, changeOrigin: false },
   };
   return {
     plugins: [react()],

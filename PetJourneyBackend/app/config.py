@@ -45,6 +45,15 @@ class Settings:
     agent_turn_interval_seconds: float = 1800.0
 
     amap_api_key: str | None = None
+    # 高德 **Web 端（JS API）** 的两把，和上面那把 Web 服务 Key 是不同的东西，别混（CR-6C2B-MAP W0）：
+    #   · `amap_js_key`           —— 浏览器加载 JS API 必须拿到它，**按设计是公开的**，由 `GET /map/config` 下发。
+    #     它的防护靠高德控制台的**域名白名单**，不靠保密。**白名单必须早于任何公网可达的环境**（含临时预览），
+    #     否则公开下发的这把 Key 等于把额度开放给任何人。
+    #   · `amap_js_security_code` —— 安全密钥，**只在后端**。它由 `/_AMapService` 代理在转发时补进查询串，
+    #     **任何响应体、任何日志、任何前端构建产物里都不许出现它**。
+    # 两者都存在 git 忽略的 `data/secrets/web-providers.env`，经 `scripts/dev-backend.mjs` 的白名单加载。
+    amap_js_key: str | None = None
+    amap_js_security_code: str | None = None
     google_maps_api_key: str | None = None
     doubao_api_key: str | None = None
     doubao_base_url: str = "https://ark.cn-beijing.volces.com/api/v3"
@@ -92,13 +101,49 @@ class Settings:
     # 网页真实供应商总开关（默认关闭：测试与其他窗口的本地运行不会产生付费调用）；只在服务端使用密钥
     web_providers_enabled: bool = False
     web_llm_daily_cap: int = 300
-    web_image_daily_cap: int = 20
-    # 每只宠物每天的生图额度（**单位**，不是张数：没有参考照时一次请求要先画证件照再画正图，占 2 个单位）。
+    # 全站每天的生图额度（**单位**，不是张数）。用户 2026-09-24 定为 500（原 20）：目前用户很少，
+    # 先把上限放开让功能跑起来。**中转单价未核，最坏情况就是每天 500 个单位的费用**——
+    # 线上真正生效的是部署环境变量 `PETJOURNEY_WEB_IMAGE_DAILY_CAP`（归 c84a／部署），这里只是默认值。
+    web_image_daily_cap: int = 500
+    # 每只宠物每天的生图额度（**单位**，不是张数：插画链路没有参考照时一次请求要先画证件照再画正图，占 2 个单位；
+    # 角色链路每张固定 1 个单位，见下面 `web_character_extra_poses` 那段）。
     # 为什么要有这一条：`web_image_daily_cap` 是**全局**的，不分宠物也不分家庭——
     # 一只宠物（或一个主人反复点"重画"）可以把整个部署当天的额度吃光，别人一张都画不成。
-    # 默认 6 ＝ 无参考照时约 3 张／天，有参考照时 6 张／天；它与全局那条**并列生效**，两条都不能超。
-    # 设成 0 表示不限（只剩全局那条）——那正是现在的状态，不建议保持。
-    web_image_per_pet_daily_cap: int = 6
+    # 用户 2026-09-24 调为 12（原 6）：12 ＝ 一整套角色 6 张 ＋ 同一天再调整一次形象的 6 张。
+    # 它与全局那条**并列生效**，两条都不能超。设成 0 表示不限（只剩全局那条），不建议。
+    web_image_per_pet_daily_cap: int = 12
+    # 额外姿态（sleeping／sunbathing／eating／walking／petted）要不要自动生成。**默认关**。
+    # 为 A 的 CR-PLAYER-CHARACTER 批次二加（它那边读 `getattr(settings, …, False)`，字段在不在都能跑）。
+    #
+    # **打开之前先算额度，但要看对是哪条车道**（A 2026-09-24 报、我逐行核过）：
+    #   · 角色与插画是**两条独立的每宠车道**——`pet:<id>:character`（`web_character/service.py:137`）
+    #     与 `pet:<id>:illustration`（`web_agent/brain_wiring.py:86`），**各自** `web_image_per_pet_daily_cap`
+    #     个单位、互不占用。**只有全局那条 `provider:image:daily`（＝下面的 `web_image_daily_cap`）是共用的。**
+    #     一只宠物合起来能花到配置值的两倍，这是有意的：把插画额度用光的宠物，不该因此连自己的形象都没有。
+    #   · 角色每张固定 **1 个单位**（`service.py:422` 的 `reserve(…, pet_id, 1)`）；
+    #     没有参考照时**根本不生成**（`service.py:408` 返回 `no_reference_photo`，**0 预占、0 发送**）。
+    #     所以一整套 6 张就是**恰好 6 个单位**，不会更多。
+    #     **上面 `web_image_per_pet_daily_cap` 那句「首张要先画证件照、占 2 个单位」是插画链路的事，
+    #     角色链路没有这一步——别把它读到这里来。**
+    #
+    # 实际影响（**按用户 2026-09-24 调整后的 12／500 重算，下面这段原先是按 6／20 写的**）：
+    #   · 每宠角色车道 12 个单位 ＝ **一天两套**。所以「同一天再调整一次形象」**现在不会**被 `budget_denied`
+    #     ——这正是当初调到 12 的理由。**第三套才会被拦。**
+    #     （A 有一条用例钉的是旧数字下「第二套就被拦」，改额度后它会红；已告知 A，由它判断怎么改。）
+    #   · 它自己的明信片仍然不受影响，那是另一条车道。
+    #   · 全局 500：3 只新宠 × 6 ＝ 18，只占 3.6%，**全局不再是瓶颈**。
+    #     瓶颈变成费用本身——500 个单位／天是最坏情况，中转单价未核。
+    web_character_extra_poses: bool = False
+    # 新宠物的证件照要不要**自动**生成（上传、领养时触发）。**默认开**——用户 2026-09-24 定
+    # 「每只宠物都要有证件照」，存量不批量补。**主人点「重画」不受它管**，那是显式请求。
+    #
+    # **默认值与上面那个开关相反，getenv 的写法也相反**：这里是「没设置就是开」，
+    # 所以判的是**有没有被显式关掉**（`0`／`false`／`no`／`off`），而不是有没有被显式打开。
+    # 装配那边读 `getattr(settings, "web_id_photo_auto", True)`，字段在不在都能跑。
+    #
+    # 额度：证件照走独立车道 `pet:<id>:id_photo`，用途 `id_photo`，**一只新宠多 1 张**；
+    # 全局仍与插画、角色共用 `provider:image:daily`（现为 500）。
+    web_id_photo_auto: bool = True
     web_map_daily_cap: int = 500
     web_map_static_daily_cap: int = 200
     web_world_tick_seconds: float = 30.0
@@ -168,6 +213,8 @@ def load_settings() -> Settings:
         map_timeout_seconds=float(os.getenv("PETJOURNEY_MAP_TIMEOUT_SECONDS", "10")),
         agent_turn_interval_seconds=float(os.getenv("PETJOURNEY_AGENT_TURN_INTERVAL_SECONDS", "1800")),
         amap_api_key=os.getenv("AMAP_API_KEY"),
+        amap_js_key=os.getenv("AMAP_JS_KEY"),
+        amap_js_security_code=os.getenv("AMAP_JS_SECURITY_CODE"),
         google_maps_api_key=os.getenv("GOOGLE_MAPS_API_KEY"),
         doubao_api_key=os.getenv("DOUBAO_API_KEY"),
         doubao_base_url=os.getenv("PETJOURNEY_DOUBAO_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3"),
@@ -215,11 +262,17 @@ def load_settings() -> Settings:
         intent_layer_provider=os.getenv("PETJOURNEY_INTENT_LAYER_PROVIDER", "rule").strip().lower(),
         web_providers_enabled=os.getenv("PETJOURNEY_WEB_PROVIDERS", "").lower() in {"1", "true", "yes", "on"},
         web_llm_daily_cap=int(os.getenv("PETJOURNEY_WEB_LLM_DAILY_CAP", "300")),
-        web_image_daily_cap=int(os.getenv("PETJOURNEY_WEB_IMAGE_DAILY_CAP", "20")),
-        web_image_per_pet_daily_cap=int(os.getenv("PETJOURNEY_WEB_IMAGE_PER_PET_DAILY_CAP", "6")),
+        web_image_daily_cap=int(os.getenv("PETJOURNEY_WEB_IMAGE_DAILY_CAP", "500")),
+        web_image_per_pet_daily_cap=int(os.getenv("PETJOURNEY_WEB_IMAGE_PER_PET_DAILY_CAP", "12")),
+        web_character_extra_poses=os.getenv("PETJOURNEY_WEB_CHARACTER_EXTRA_POSES", "").lower() in {"1", "true", "yes", "on"},
+        # 默认开：判的是**有没有被显式关掉**，不是有没有被显式打开（与上一行相反，别照抄）。
+        web_id_photo_auto=os.getenv("PETJOURNEY_WEB_ID_PHOTO_AUTO", "").strip().lower() not in {"0", "false", "no", "off"},
         web_map_daily_cap=int(os.getenv("PETJOURNEY_WEB_MAP_DAILY_CAP", "500")),
         web_map_static_daily_cap=int(os.getenv("PETJOURNEY_WEB_MAP_STATIC_DAILY_CAP", "200")),
         web_world_runner=os.getenv("PETJOURNEY_WEB_WORLD_RUNNER", "embedded").strip().lower(),
+        web_heartbeat_mode=os.getenv("PETJOURNEY_WEB_HEARTBEAT_MODE", "shadow").strip().lower(),
+        web_brain_mode=os.getenv("PETJOURNEY_WEB_BRAIN_MODE", "off").strip().lower(),
+        web_brain_daily_per_pet=int(os.getenv("PETJOURNEY_WEB_BRAIN_DAILY_PER_PET", "12")),
         web_environment=os.getenv("PETJOURNEY_WEB_ENVIRONMENT", "dev").strip().lower(),
         sqlite_wal=os.getenv("PETJOURNEY_SQLITE_WAL", "").lower() in {"1", "true", "yes", "on"},
         web_demo_catalog=os.getenv("PETJOURNEY_WEB_DEMO_CATALOG", "").lower() in {"1", "true", "yes", "on"},

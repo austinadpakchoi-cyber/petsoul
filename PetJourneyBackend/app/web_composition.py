@@ -29,6 +29,7 @@ from .schemas.web.household import EntryIntentView, EntryKind, HouseholdRole, In
 from .storage import JourneyStorage
 from .transport_world.registry import WorldServiceRegistry
 from .utils import utcnow
+from .web_character import CharacterService, ImageWorkPump, install_character_service
 from .web_collection import WebCollectionService
 from .web_agent import MomentBuilder
 from .web_agent.life import LifeEngine
@@ -36,6 +37,7 @@ from .web_agent.profile import BehaviorProfile
 from .web_agent.proactive import ProactiveMessenger
 from .web_agent.ticker import WorldTicker
 from .web_agent_wiring import wire_agent_world
+from .web_agent.wish_wiring import bind_ready_plan, bind_wish_round, bind_wish_tick
 from .web_communicator import WebCommunicatorService
 from .web_economy import WebEconomy, WebInventory
 from .web_farm import WebFarmService
@@ -45,6 +47,7 @@ from .web_identity import WebIdentityService
 from .web_identity.entry import EntryStore
 from .web_residents import ResidentService
 from .web_journey import JourneySnapshotBuilder, PostcardService, WebJourneyService, window_of
+from .web_travel import TravelServices, install_travel
 from .web_journey.guides import TravelGuideService
 from .web_journey.illustrations import IllustrationService, IllustrationWorker
 from .web_home.place import HomePlaceStore
@@ -89,6 +92,7 @@ class WebServices:
     intent: IntentLayer
     providers: WebProviders
     illustrations: IllustrationService
+    character: CharacterService  # TA 在世界里的专属形象（与旅行照片是两条链路，见 web_character/）
     dna: PetDNAStore
     home_places: HomePlaceStore
     moments: MomentBuilder
@@ -98,6 +102,7 @@ class WebServices:
     friends: FriendService
     credentials: CredentialService
     driving: DrivingService
+    travel: TravelServices  # 旅行心愿与自动手账（TRV-00 §6 装配）
     ticker: WorldTicker  # 世界线（结算与确定性下游）
     cognition: WorldTicker  # 认知线（可能调模型的表达与回复）
     projector: object | None = None  # 每宠运行投影（只读）
@@ -164,6 +169,46 @@ def build_web_services(storage: JourneyStorage, settings: Settings, economy_engi
     def projection_slot(user_id: str, pet_id: str, purpose: MemoryPurpose, slot: CareNoteSlot) -> str | None:
         items = reception.projection(user_id, pet_id, purpose).items
         return next((i.slot_value for i in items if i.slot is slot and i.slot_value), None)
+
+    def slot_for_all_purposes(user_id: str, pet_id: str, slot: CareNoteSlot,
+                              *purposes: MemoryPurpose) -> str | None:
+        """这个槽位的值，**只有同一条叮嘱把列出的每个用途都授权了**才给出来。
+
+        为什么要"同一条"：分别取每个用途的投影再看"都有值"是不够的——
+        可能是甲叮嘱授了 A 用途、乙叮嘱授了 B 用途，恰好落在同一个槽位上。
+        那是**两次不同的许可**，拼不成一次。所以按 `(note_id, note_version)` 取交集。
+
+        带上 `note_version`：叮嘱被更正后版本会变，**旧版本那条 grant 记录不会放行新内容**。
+
+        **这句话容易被读宽，所以把实际行为写明**（Q 实测 + 我核 `reception/store.py:276-293`）：
+        更正时旧 note 的 grants 全部 `revoked_at`，新 note 以 `version + 1` 落库，
+        然后 `for purpose in note.purposes` **为新版本重新插入 grants**——
+        也就是**用途集合是继承的，用户不需要重新授权，新文字立即可用**。
+        所以这里挡住的是「拿旧版本那条 grant 去放行新内容」，
+        **不是**「更正后必须重新授权」。后者是**假的保护**，别当它存在。
+        （要不要改成「更正后需重新授权」是产品决定，不在本函数范围内。）
+
+        取不到就返回 None，由调用方省略——CR-IMAGE-MEMORY-PURPOSE：**未明确允许的输入应省略**，
+        不是换一个用途再用同一段文本。
+
+        **当前唯一调用方 `keepsake_of` 只传一个用途**（`public_story`，
+        C84A-MEMORY-RECIPIENT-01 之后按接收方各自授权，见那处注释）。
+        名字里的 "all" 说的是**传进来的那些**要全部满足，不是"系统里所有用途"；
+        只传一个时它就是"按这一个用途读"，而 `(note_id, note_version)` 那条版本保护照旧生效。
+        多用途的交集逻辑留着——**它挡的是"甲叮嘱授 A、乙叮嘱授 B 恰好同槽位"被拼成一次许可**，
+        哪天再有接收方需要双授权，直接多传一个即可。
+        """
+        if not purposes:
+            return None
+        allowed: dict[tuple[str, int], str] | None = None
+        for purpose in purposes:
+            here = {(i.note_id, i.note_version): i.slot_value
+                    for i in reception.projection(user_id, pet_id, purpose).items
+                    if i.slot is slot and i.slot_value}
+            allowed = here if allowed is None else {k: v for k, v in allowed.items() if k in here}
+            if not allowed:
+                return None
+        return next(iter(allowed.values())) if allowed else None
 
     def quiet_of(pet_id: str) -> bool:
         """路上喜欢安静：任何一位家人确认过、并允许用于“出行偏好”的叮嘱都算（只影响活动选择，不转述叮嘱原文）。"""
@@ -259,7 +304,34 @@ def build_web_services(storage: JourneyStorage, settings: Settings, economy_engi
     journeys.wishes_of = wishes_of
     journeys.postcard_maker = postcards.make
     journeys.recommendation_place = recommendation_place
-    journeys.keepsake_of = lambda user_id, pet_id: projection_slot(user_id, pet_id, MemoryPurpose.private_chat, CareNoteSlot.favorite_object)
+    # 冒险故事里那件"带着你准备的 X"。**按它自己的接收方授权**：
+    # `web_communicator` 把 story 写进**家庭频道**（全家可见）→ 所以要的是 `public_story`。
+    #
+    # **原先这里请求的是 `private_chat`**（CR-IMAGE-MEMORY-PURPOSE-2026-09-24）。
+    # `reception/policy.py` 的过滤本身没错——它老老实实按**请求的那个用途**过滤；
+    # 错在这个消费端请求了私聊专用的用途，于是私聊叮嘱进了家庭故事，又进了供应商提示词。
+    # **这一条我逐环核过可达数据流，不是照抄 CR。**
+    #
+    # ---- 为什么这不是绕回一个已经被否定的做法（C84A-MEMORY-RECIPIENT-01，00:44 收口增量）----
+    #
+    # 这里一度要求 `public_story` ∩ `media_generation` **双授权**。当初否定
+    # 「把 `private_chat` 换成 `public_story` 就完事」，理由是**那样只挡住家庭频道那一半，
+    # 同一段文本照样进生图**——那时 story 确实会流进 `illustrations` 的任务载荷，
+    # 再进 `photo_prompts.build_prompt` 的 `Scene (…): {story}`。
+    #
+    # **那个理由现在不成立了**：A 已把图片那一侧从根上断开——`illustrations.request`
+    # 不再存 story，发送时按模板 `render_story(…, None)` **无条件**不带叮嘱
+    # （`illustrations.py:341`）。**「同一段文字要给两个接收者」这个前提没有了。**
+    # 再要求 `media_generation` 就成了**过度限制**：只授权过「公开故事」的叮嘱
+    # 本该能进家庭故事，却因为没授权生图被挡在外面。
+    #
+    # 所以 CR 禁止的是「换个用途名继续共用同一文本」，**不是**「家庭文字永远绑上图片许可」。
+    # 两个接收方各按各的用途授权、互不默认——而图片那一侧本批**一律不用叮嘱**，比任何用途门都严。
+    #
+    # 仍然走 `slot_for_all_purposes`（即便现在只传一个用途）：它按 `(note_id, note_version)`
+    # 取值，**叮嘱被更正后旧版本的许可不延续到新内容**这条保护要留着。
+    journeys.keepsake_of = lambda user_id, pet_id: slot_for_all_purposes(
+        user_id, pet_id, CareNoteSlot.favorite_object, MemoryPurpose.public_story)
     # 世界事件下游（按 outbox 投递）：家庭来信、公开动态、收藏都只写库，走 fast 通道
     journeys.add_consumer("communicator", communicator)
     journeys.add_consumer("social", social)
@@ -392,16 +464,19 @@ def build_web_services(storage: JourneyStorage, settings: Settings, economy_engi
     illustrations.illustrator = providers.illustrator
     households.prefs_in = identity.prefs_in  # 家庭那边复核授权时，在调用方的连接上读个人设置
 
-    def generated_photos_of(user_id: str, pet_id: str | None = None) -> bool:
-        """写实照片会产生付费生图：家庭里的宠物看家庭设置（管理员决定；没设置过沿用建立者当初的个人选择）。
-        没有家庭的宠物（待领养居民）一律不生图。
-
-        **实现只有一份**，在 `households.generated_photos_in(conn, pet_id)` 里。这里只是"自己开一个连接"的便利包装，
-        写事务里要复核授权请直接用那个同连接版本（`illustrations.consent_in`），否则会读到事务外的旧值。"""
-        with storage.connect() as conn:
-            return households.generated_photos_in(conn, pet_id)
-
-    illustrations.opted_in = generated_photos_of
+    # 【已摘除】`generated_photos_of` 与 `illustrations.opted_in = …` —— 那道家庭级「生成照片」许可。
+    # 用户 2026-09-23 决定取消逐次询问（角色与生活/旅行两类都取消）。摘的是**询问**，
+    # 身份与成员关系、事实代数、租约、额度预占、`unknown` 不自动重试一条都没动。
+    #
+    # 摘除顺序（反过来会静默全停）：先去掉 `web_agent_wiring.py` 里 `photo_generation_on`
+    # 的 `opted_in` 调用，**再**摘这里和那边的 `consent_in` 接线——先摘接线的话，
+    # `opted_in` 会落回 `IllustrationService` 的默认 `lambda …: False`，
+    # 到店照片全部停掉且**不报错**。
+    #
+    # **留给 c84a 的线索**：摘掉这里之后，`households.generated_photos_in`
+    # （`web_household/access.py:23`）**已无任何调用方**。它连同 `web_user_prefs` /
+    # `web_households` 两张表的 `generated_photos` 列、`PATCH /settings` 的写入口、
+    # 以及前端设置页，属于同一批要统筹处置的东西——**不在本窗口范围，我只摘到这里为止**。
     illustrations.character_of = character_of
     illustrations.reference_photo_of = reference_photo_of
     illustrations.reference_origin_of = reference_origin_of
@@ -438,12 +513,70 @@ def build_web_services(storage: JourneyStorage, settings: Settings, economy_engi
                           illustrations=illustrations, activated_pets=agent.activated_pets, households=households)
     agent.ticker.jobs.append(("driving", docs.tick))
 
+    # ---- 旅行心愿与自动手账（TRV-00 合同 §6）----
+    # **只接了三样，其余留默认，逐条登记在下面**——默认值都是安全的（少画东西，不是多造事实）。
+    travel = install_travel(
+        storage, tasks,
+        # 合同 §4.5：复用既有暂停谓词，不再读一次那一列
+        paused_in=lambda conn, pet_id: agent.projector.runtime.paused(pet_id, conn=conn),
+        settings=settings,
+        illustrations=illustrations,
+    )
+    # **没接的，以及后果**（不写的话下一个人会以为已经全接上了）：
+    #   research_port  —— TRV-04 适配器还没做。`run_pending` 在没有 port 时 `return 0`，
+    #                     任务留在队里、**不造一个「没查到」**（A 的 fail-closed，我核过 research.py:94）。
+    #                     心愿会停在 `research_pending`，那是诚实的状态。
+    #   ledger         —— ⚠ **它和 research_port 是一对**：`_reserve_in` 在 `ledger is None` 时直接
+    #                     `return None`（research.py:207）＝**不预占额度就继续**。今天不出事只因为
+    #                     没有 port 就走不到那一行。**接 port 的那一刻必须同时接 ledger**。
+    #                     **A 已闭合，两层**：`install_travel` 构造期抛 ValueError（装配时快速失败），
+    #                     `_reserve_in` 开头抛 ResearchMisconfigured（**花钱那一步 fail-closed**）。
+    #                     **承重的是第二层**（Q 核出）：`port` 是普通属性，事后赋值能绕过构造期检查。
+    #                     接法：`install_travel(ledger=BudgetLedger(storage), research_port=...)`，
+    #                     **不要事后写 `travel.research.port = adapter`**。
+    #   identity_of    —— 默认 None ＝ 手账里不画 TA（仍有文字与画面）。
+    #   mood_of        —— 默认心情常量。
+    #   visit_of       —— 默认 None ＝ 回忆页不盖到访章。
+    # 出发事务内的三个注入位（合同 §4.2，C 的 CR）。**不接这三行，心愿链路最后一段就是断的，
+    # 而且断得很安静**：`depart` 传了 plan_id 时会被 `plan_link_unavailable` 当场拒——
+    # 闸在正常工作（端口缺席时宁可不出发，也不建一趟没有计划归属的行程），
+    # 但**不报错、不崩，只是每次都拒绝**。我上一轮装配时漏了这三行，C 核出。
+    journeys.ready_plan_in = travel.wishes.ready_plan_in
+    journeys.link_journey_in = travel.wishes.link_journey_in
+    journeys.stale_facts_in = travel.wishes.stale_facts_in
+    # 世界事件 sink：returned_home 时出回忆页、心愿落定 completed，重放幂等（A 的口径）
+    journeys.add_consumer("travel_journals", travel.journals)
+    # 心愿这一轮挂在**现有的生活节奏**上，不新建调度器（TRV-01 接入点，I 定）。
+    # **在有提案器之前它是空转**：每宠每轮一次只读。接它的理由是 B 那条——
+    # 「接线本身是一次独立的验证」，不要等 TRV-04 时把接口改动和新模块放同一批。
+    # `activated` 是**按调用传进来的事实、不是谓词**（B 改）：`bind_wish_tick` 本来就在遍历
+    # 已入住的宠物，**它知道答案，不需要再查一遍**——上一版那个谓词是每轮 N 次 SQL，
+    # 而 ticker 是 30 秒一轮、`activated_pets` 的 SQL 上限 2000 行。现在与 driving tick 同量级。
+    agent.ticker.jobs.append(("wishes", bind_wish_tick(
+        bind_wish_round(wishes=travel.wishes, projector=agent.projector, economy=economy,
+                        journeys=journeys, storage=storage),
+        agent.activated_pets)))
+    # 链路最后一格：规则生活挑目的地时先看有没有就绪的计划（B 的 CR）。
+    # **不接的后果是安静的**：`ready_plan_of` 默认返回 None，规则生活照原样掷骰，
+    # **一条用例都不会红**——攒了很久的那个心愿只是永远轮不到。所以 B 专门写了一条行为断言看着它。
+    # `_wish_pick` 用的是与 `choose` 同一组判据（不在选项里／钱不够／长途冷却没过 → 都不强推）：
+    # **不能因为「有计划」就绕过既有闸**，那会变成第五条出门路径。
+    agent.life.ready_plan_of = bind_ready_plan(travel.wishes, storage)
+
     web = WebServices(identity=identity, households=households, entries=entries, residents=residents, pets=pets, homes=homes, economy=economy, inventory=inventory, market=market, farm=farm, reception=reception, journeys=journeys, snapshots=snapshots,
                       registry=registry, media=media, food=food, social=social, communicator=communicator, collection=collection, postcards=postcards, intent=intent,
-                      providers=providers, illustrations=illustrations, dna=agent.dna, home_places=agent.home_places, moments=agent.moments,
-                      proactive=agent.proactive, life=agent.life, guides=agent.guides, friends=agent.friends, credentials=docs.credentials, driving=docs.driving,
+                      providers=providers, illustrations=illustrations,
+                      # 海象绑定是为了让下面的 worker= 能引用同一个实例：实参按源码顺序求值，
+                      # 所以这里绑好之后 worker= 才求值。不另起一行局部变量，是为了把改动收在已释放的实参位置内。
+                      character=(character := install_character_service(
+                          storage, settings.web_private_media_dir, tasks, pets=pets,
+                          illustrator=providers.illustrator, settings=settings, meter=providers.meter)),
+                      dna=agent.dna, home_places=agent.home_places, moments=agent.moments,
+                      proactive=agent.proactive, life=agent.life, guides=agent.guides, friends=agent.friends, credentials=docs.credentials, driving=docs.driving, travel=travel,
                       ticker=agent.ticker, cognition=agent.cognition, projector=agent.projector, shadow=agent.shadow, profile_of=agent.profile_of,
-                      worker=IllustrationWorker(illustrations) if providers.illustrator.available else None)
+                      # 进程内那一个线程要同时泵插画与角色：`illustrations.run_pending` 里写死了 kind="illustration"，
+                      # 角色任务永远不会被它领取（上传排了队、库里有行，却没人执行）。`ImageWorkPump` 逐个泵、逐个兜异常。
+                      worker=IllustrationWorker(ImageWorkPump(illustrations, character)) if providers.illustrator.available else None)
     holder["web"] = web
     wire_brain(web, agent, storage, providers, settings)
     return web

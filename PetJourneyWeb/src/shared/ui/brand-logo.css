@@ -1,0 +1,32 @@
+.ps-brand-logo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 154px;
+  max-width: 100%;
+  line-height: 0;
+  vertical-align: middle;
+}
+
+.ps-brand-logo > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 1;
+  object-fit: contain;
+}
+
+.ps-brand-logo--welcome {
+  width: 156px;
+}
+
+/* A light, transparent rendering for the original position over dark footage. */
+.ps-brand-logo--welcome > img {
+  filter: grayscale(1) invert(1) brightness(1.5);
+}
+
+.ps-brand-logo--compact {
+  width: 136px;
+}

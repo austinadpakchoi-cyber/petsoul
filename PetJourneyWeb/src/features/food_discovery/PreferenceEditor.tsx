@@ -108,7 +108,7 @@ export function PreferenceEditor({ petId, subject, variant }: { petId: string; s
               <label htmlFor="pref-restrictions">不吃/过敏（用顿号分隔）</label>
               <input id="pref-restrictions" className="ps-input" value={restrictionText} onChange={(e) => setRestrictionText(e.target.value)} placeholder="比如：花生、牛肉" />
               <span className="ps-muted">
-                <Icon name="lock" size={12} /> 只用于给你推荐，不会出现在星球圈或任何公开页面。
+                <Icon name="lock" size={12} /> 只用于给你推荐，不会出现在朋友圈或任何公开页面。
               </span>
             </div>
           ) : (

@@ -6,6 +6,7 @@ import { queryKeys } from "@/shared/query/queryClient";
 import { useServices } from "@/shared/services/registry";
 import { useSessionState } from "@/shared/session/onboarding";
 import { Button, ErrorState, LoadingState, Page, TopBar } from "@/shared/ui";
+import { BrandLogo } from "@/shared/ui/BrandLogo";
 import invitationLetter from "@/features/pets/assets/entry-invitation-letter-v1.webp";
 import "./household.css";
 
@@ -34,7 +35,7 @@ export function JoinPage() {
     mutationFn: () => households.acceptInvite(token),
     onSuccess: () => {
       queryClient.clear();
-      navigate("/home", { replace: true });
+      navigate("/map", { replace: true });
     },
   });
   const invite = token ? preview.data : saved;
@@ -44,7 +45,7 @@ export function JoinPage() {
     <TopBar title="家人邀请" subtitle="先看清楚，再决定要不要加入" back="/world" />
     <div className="ps-join-hero">
       <img src={invitationLetter} alt="" />
-      <span>PetSoul · A PLACE TO BELONG</span>
+      <BrandLogo size="compact" />
       <h1>有一封信，<br />写给你。</h1>
       <p>加入家庭是你的决定。打开邀请、注册或登录，都不会自动加入。</p>
     </div>

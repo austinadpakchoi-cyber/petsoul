@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import type { HomeSnapshot, HouseholdBrief, HouseholdPetBrief } from "@/shared/contracts";
 import { env } from "@/shared/config/env";
 import { queryKeys } from "@/shared/query/queryClient";
@@ -20,6 +20,21 @@ type HouseholdContextValue = {
 
 const HouseholdContext = createContext<HouseholdContextValue | null>(null);
 
+/**
+ * 属于“某一只宠物的某条具体记录”的页面（证件、到访、攻略、驾考考局与成绩、寻味推荐）：切到别的宠物后留在原地会指向上一只的东西，
+ * 所以退回对应的列表；其余页面（地图、通讯器、回忆、我的、菜园、别人的公开主页……）留在原地。
+ */
+export function listForPetScopedPath(pathname: string): string | null {
+  const rules: Array<[RegExp, string]> = [
+    [/^\/credentials\/[^/]+/, "/life"],
+    [/^\/visits\/[^/]+/, "/map"],
+    [/^\/guides\/[^/]+/, "/guides"],
+    [/^\/school\/(session|result)\/[^/]+/, "/school"],
+    [/^\/journey\/food\/[^/]+/, "/journey/food"],
+  ];
+  return rules.find(([re]) => re.test(pathname))?.[1] ?? null;
+}
+
 function preferredPet(userId: string): string | null {
   try { return sessionStorage.getItem(`petsoul:current-pet:${userId}`); } catch { return null; }
 }
@@ -29,6 +44,7 @@ export function HouseholdProvider({ userId, children }: { userId: string | null;
   const { households } = useServices();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
   const [selection, setSelection] = useState<Selection | null>(null);
   const list = useQuery({ queryKey: queryKeys.households(userId ?? "-"), queryFn: () => households.list(), enabled: env.dataMode === "live" && Boolean(userId), staleTime: 15_000 });
 
@@ -48,7 +64,9 @@ export function HouseholdProvider({ userId, children }: { userId: string | null;
     try { sessionStorage.setItem(`petsoul:current-pet:${userId}`, petId); } catch { /* 私密浏览器仍可在当前页切换 */ }
     void queryClient.cancelQueries({ predicate: (query) => !["identity", "households", "platform"].includes(String(query.queryKey[0])) });
     queryClient.removeQueries({ predicate: (query) => !["identity", "households", "platform"].includes(String(query.queryKey[0])) });
-    navigate("/home", { replace: true });
+    // 切宠物是换上下文、不是导航：留在当前页，按新宠物重新读。只有停在上一只宠物某条具体记录上时才退回对应列表。
+    const fallback = listForPetScopedPath(location.pathname);
+    if (fallback) navigate(fallback, { replace: true });
   };
   return <HouseholdContext.Provider value={{ userId, household: active.household, pet: active.pet, pets, selectPet }}>
     {pets.length > 1 ? <div className="ps-current-pet-bar" aria-label="当前家庭与宠物">

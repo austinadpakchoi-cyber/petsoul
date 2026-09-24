@@ -16,11 +16,14 @@ from typing import Callable
 
 from ..storage import JourneyStorage
 from ..utils import iso, utcnow
+from ..web_platform import paid_result
 from ..web_platform.runtime_epochs import versions_in
 from ..web_platform.tasks import WebTask, WebTaskQueue, run_once
 from ..web_platform.uow import execute_in, unit_of_work
 from . import photo_director_bridge as bridge
+from .adventures import ADVENTURES, render_story  # 冒险插画按模板不带叮嘱重渲（CR-IMAGE-MEMORY-PURPOSE）
 from ..web_photo_director import Readiness
+from ..web_travel.journal import reference_for_brief  # 旅行手账：身份参考只认编译时那一张（TRV-03）
 # 提示词构造拆在 photo_prompts.py（COORD-A-ATOMIC：给原子登记腾定义数）。
 # 这里连带重新导出，历史调用方（app/routers/web/credentials.py、web_journey/guides.py 用 SPECIES_CN）不受影响。
 from .photo_prompts import (  # noqa: F401
@@ -42,18 +45,16 @@ NOT_SENT_REASONS = frozenset({"daily_cap", "not_configured", "rejected", "provid
 # 结果不明：timeout＝发出去没等到响应；unconfirmed＝响应已回、生成已受理，之后解析/解码/取图才失败。
 # 两种都可能已经计费，保守计入，且不自动重试（判定在 web_providers/images.py 的 failure_reason）
 UNKNOWN_REASONS = frozenset({"timeout", "unconfirmed"})
-# 恢复时发现上一次可能已经发出、结果没确认：同样不重发（见 _unconfirmed_attempt）
+# 恢复时发现上一次可能已经发出、结果没确认（或付过钱的结果找不回来）：同样不重发（见 `paid_result.resume`）
 UNCONFIRMED_REASON = "unknown_result"
-# 主人在这一次尝试**进行当中**收回了“生成照片”授权：不再发下一次调用、也不发布这次的新图。
-# 已经发出去的调用撤不回，本地按实际发出的次数照常结算（见 _settle_calls），不退成 not_sent。
-CONSENT_REVOKED = "consent_revoked"
 # 上一次尝试的额度预占停在这些状态，就说明那次很可能已经发出去了：
-# reserved＝崩在调用中途还没结算，unknown＝超时，expired＝预占到期都没结算
-UNCONFIRMED_RESERVATION_STATUSES = ("reserved", "unknown", "expired")
+# reserved＝崩在调用中途还没结算，unknown＝超时，expired＝预占到期都没结算。与角色链路共用 `paid_result` 那一份。
+UNCONFIRMED_RESERVATION_STATUSES = paid_result.MAYBE_SENT
 # 这几类不排自动重试：如实显示“没画成”／“还没确认”，等主人点“重画”。
 # 结果不明的不能重发（可能已经计费）；rejected/not_configured/daily_cap 重发也是同样的结果，白费一次。
 # provider_error（连不上、被限流）确定没受理、换个时间可能就成功，所以**不在**这里，仍走自动重试。
-NO_RETRY_REASONS = (NOT_SENT_REASONS - {"provider_error"}) | UNKNOWN_REASONS | {UNCONFIRMED_REASON, CONSENT_REVOKED}
+# `consent_revoked` 已从这里删除：逐次授权询问取消后（用户 2026-09-23）它不可能再产生。
+NO_RETRY_REASONS = (NOT_SENT_REASONS - {"provider_error"}) | UNKNOWN_REASONS | {UNCONFIRMED_REASON}
 
 class IllustrationService:
     def __init__(self, storage: JourneyStorage, media_root: Path, tasks: WebTaskQueue) -> None:
@@ -61,13 +62,8 @@ class IllustrationService:
         self.root = media_root
         self.tasks = tasks
         self.illustrator = None  # web_providers.Illustrator
-        # 是否生成写实照片（付费）：(发起的成员, 宠物) → 家庭设置；主人关掉后未开始的任务不再执行。
-        # **每次可能付费的发送之前都要重新问一遍**——一次尝试里要发两张图，主人可能在两次之间就关掉了。
-        self.opted_in: Callable[[str, str | None], bool] = lambda user_id, pet_id=None: False
-        # 同连接版本的授权读口（CR-A14，由组合根注入）：在领取写事务的那个 conn 上复核，读得到本事务的快照。
-        # 没注入时不降级也不掩盖：最终复核由 privacy_epoch 的版本围栏兜住（见 run_claimed），两者都是事务内判断。
-        # 注意这份授权是**家庭级**的：user_id 对有家庭的宠物不参与判断；“某位家人被移出家庭”属于 membership_epoch 那条线，不要并成一个开关。
-        self.consent_in: Callable[..., bool] | None = None
+        # 逐次授权询问已取消（用户 2026-09-23），原先的 `opted_in` / `consent_in` 两个接线口已删除（2026-09-24）。
+        # 谁以原名把读它们的检查加回来，`test_web_consent_boundary` 与 `test_web_photo_atomic` 的反向用例当场红。
         # 能不能看这只宠物的照片：有效家庭成员（被移除后立即失效）
         self.can_view_pet: Callable[[str, str], bool] | None = None
         self.character_of: Callable[[str], tuple[str, str, str | None] | None] = lambda pet_id: None  # (species, name, personality)
@@ -101,11 +97,16 @@ class IllustrationService:
     # ---- 排队（世界事件 sink 调用，事件号去重）----
     def request(self, event) -> str | None:
         journey = event.journey
-        if not self.available() or not self.opted_in(journey.user_id, journey.pet_id):
+        if not self.available():  # 逐次授权询问已取消（用户 2026-09-23），只看供应商配没配
             return None
         illustration_id = f"il-{uuid.uuid4().hex[:12]}"
+        # **不存 `story`，只存 `adventure_key`**（CR-IMAGE-MEMORY-PURPOSE-2026-09-24 的 A 半）。
+        # 冒险故事里可能夹着接待叮嘱（`keepsake_of` → `render_story` 插进"带着你准备的…"那一句），
+        # 而那份叮嘱未必授权过 `media_generation`——曾经只授权 `private_chat` 的也照样被拼了进来。
+        # 本批**彻底不让任何叮嘱内容进生图**：载荷里连那段文本都不留，发送时按模板**不带叮嘱**重渲（见 `_render`）。
+        # 这样任务表里也不会再积攒一份私人叮嘱的副本。
         payload = {"illustration_id": illustration_id, "user_id": journey.user_id, "pet_id": journey.pet_id,
-                   "title": event.data.get("title", ""), "story": event.data.get("story", "")}
+                   "title": event.data.get("title", ""), "adventure_key": event.data.get("adventure_key")}
         task, created = self.tasks.enqueue(KIND, f"illustration:{event.source_event_id}", payload, max_attempts=2)
         if created:
             now = iso(utcnow())
@@ -148,20 +149,15 @@ class IllustrationService:
     def request_image_in(self, conn, user_id: str, pet_id: str, source_key: str, *, style: str, **extras) -> str | None:
         """在调用方的写事务里登记：任务与插画记录一起提交、一起回滚，**不会出现有任务没记录或反过来**。
 
-        授权在这里查一次（登记时刻）；每次可能付费的发送之前还会再查（见 `_render`），两处都要，
-        **登记时那次不能代替发送前那次**——中间隔着排队的时间，主人完全可能在这期间关掉开关。
-
-        授权必须读**调用方这个连接**：另开连接读到的是事务开始前的快照，会在一个正要撤权的事务里
-        又排一张要花钱的照片（C 指出的缺陷，反例见 `test_permission_is_read_on_the_callers_connection_not_a_fresh_one`）。
-        `consent_in` 没注入时退回 `opted_in`，那是另开连接的读，**只在没接线时成立，不能当作同连接判断**；
-        正式装配已经接上（`web_agent_wiring` → `households.generated_photos_in`）。
+        **逐次授权询问已取消**（用户 2026-09-23 直接决定，角色与生活/旅行两类都取消；计划文档
+        「上传处说明照片会用于准备专属形象；按图片服务的新策略自动处理，不另设家庭生图许可」）。
+        原先这里在**登记时刻**查一次、`_render` 在每次可能付费的发送之前再查一次，两处都已摘除。
+        **摘掉的是「询问」，不是别的保护**：额度与每宠上限、幂等、恢复不重发、`unknown` 不自动重试、
+        换参考不发布、越权读挡下，一条都没动。
 
         `extras` 里为 None 的键不写进 payload——“没有这个事实”和“这个事实是 None”要能分得开。
         """
         if not self.available():
-            return None
-        allowed = self.consent_in(conn, user_id, pet_id) if self.consent_in is not None else self.opted_in(user_id, pet_id)
-        if not allowed:
             return None
         illustration_id = f"il-{uuid.uuid4().hex[:12]}"
         # source_key 也存进 payload：worker 里的照片导演要用它当事件标识（跨重试不变，进 context_key）。
@@ -218,7 +214,10 @@ class IllustrationService:
     kind = KIND
 
     def precheck(self, task: WebTask) -> bool:
-        return self.opted_in(task.payload["user_id"], task.payload.get("pet_id"))  # 关掉开关后，未开始的任务不再执行
+        # 原先这里读生成授权（关掉开关后未开始的任务不再执行）。逐次询问已取消（用户 2026-09-23），
+        # 这道早停没有依据了；真正的依据（供应商配没配、参考照还在不在、事件代数变没变）都在 `_render` 里判，
+        # 而且那边给得出具体原因码。**不留一个永远为真的假 precheck**，直接如实说"没有可前置检查的东西"。
+        return True
 
     def run(self, task: WebTask) -> None:
         """旧式执行（没有领取令牌时）：生图后自己开事务写结果。任务队列走 run_claimed。"""
@@ -231,10 +230,12 @@ class IllustrationService:
         被别的进程接管或已撤回时，队列抛 StaleClaim，这次的结果整批作废：不写库、不发消息（多画的那张图只留在磁盘上，没有记录引用它）。
 
         不该自动重试的失败（没配置、到了每日上限、超时结果不明）：展示状态与任务终态一起落定为"没画成"，
-        由主人点"重画"再发起新的一次尝试——任务、预算与页面上看到的是同一个说法（包 A 的 CR-A3）。"""
-        pet_id = task.payload.get("pet_id")
-        with self.storage.connect() as own:  # 发出任何调用之前记下用途授权的代数，提交前再比一次
-            before = versions_in(own, pet_id).privacy_epoch if pet_id else 0
+        由主人点"重画"再发起新的一次尝试——任务、预算与页面上看到的是同一个说法（包 A 的 CR-A3）。
+
+        **发布前那道授权复核已摘除**（逐次询问取消，用户 2026-09-23）。原先它比的是 `privacy_epoch`——
+        那个代数在 `model_replies` / `pet_messages` 变化时同样会 +1，留着就会因为一个**无关的**设置变动
+        把已经画好、已经计过费的照片丢掉。领取围栏（`StaleClaim`）与导演自己的版本闸照旧。
+        """
         rendered, no_retry = self._render(task, suffix=f"-{claim.claim_generation}", attempt=claim.claim_generation)
         if rendered is None and no_retry is not None:
             with queue.fenced(claim, complete=False) as conn:
@@ -242,15 +243,7 @@ class IllustrationService:
             queue.fail_claim(claim, f"image {no_retry}", retryable=False)
             return
         with queue.fenced(claim) as conn:
-            # **最终复核，就在领取写事务的这个 conn 上**：用途授权的代数变了，就不发布这次的新图。
-            # 图已经画出来了、费用也已经按实际发出的次数结算过——不发布的是"把它拿给主人看"，不是假装什么都没发生。
-            allowed = versions_in(conn, pet_id).privacy_epoch == before if pet_id else True
-            if allowed and self.consent_in is not None:  # 接了同连接授权读口就再明确问一次（家庭级授权）
-                allowed = bool(self.consent_in(conn, task.payload["user_id"], pet_id))
-            if not allowed:
-                logger.info("illustration not published, consent changed during the attempt task=%s", task.task_id)
-            # 任务本身走完了（没有可重试的东西），所以照常完成；没发布的那次在插画记录与展示上如实落“没画成”。
-            self._commit(task, rendered if allowed else None, conn)
+            self._commit(task, rendered, conn)
 
     def _render(self, task: WebTask, *, suffix: str, attempt: int) -> tuple:
         """调供应商生图并落盘。返回 ((相对路径, 图片, 是否用了参考照) 或 None, 不该重试的原因 或 None)。
@@ -262,17 +255,33 @@ class IllustrationService:
         from ..web_providers import ImageUnavailable
 
         payload = task.payload
-        # 上一次尝试可能已经发出、结果没确认（超时，或崩在调用中途）：恢复回来也不重发，等主人点“重画”。
-        # 重画会把任务的 last_error 清掉，所以那条路不受这里限制。
-        previous = self._unconfirmed_attempt(task.task_id) if task.last_error else None
-        if previous is not None:
-            logger.info("illustration not resent task=%s previous_reservation=%s", task.task_id, previous)
+        # 重新执行时（自动重试，或主人点了"重画"）先问上一次（`paid_result.resume`）：
+        #   - **已付费成功、只是没写进去**（提交时抛异常、丢了租约）→ 凭小票认领那张图，**不预占、不发送**。
+        #     自动重试与重画**都这样**：重画只对 failed 的任务开放，那张图主人从没见过，认领它就是主人要的那张；
+        #   - 可能已经发出、结果没确认（超时、崩在调用中途），或付过钱的结果找不回来 → **自动重试**不重发，等主人点"重画"。
+        #     重画会清掉 last_error：没有可认领的图时，那是主人明确要的一次新的付费尝试，这一条不拦它。
+        # 认领按**上一次的领取代数**找：落盘文件名的后缀 `-{代数}` 与预占编号末尾的代数同源。第一次执行没有上一次，不查。
+        resumed = paid_result.resume(
+            self.storage, f"illustration:{task.task_id}:", self.root,
+            f"illustrations/{payload['user_id']}/{payload['illustration_id']}-{{attempt}}"
+        ) if task.last_error or task.attempts > 1 else None
+        if resumed is not None and resumed.image is not None:
+            logger.info("illustration reclaimed paid result task=%s attempt=%s", task.task_id, resumed.attempt)
+            return (resumed.rel, resumed.image, bool(resumed.extra.get("used_reference"))), None
+        if resumed is not None and task.last_error:
+            logger.info("illustration not resent task=%s previous=%s", task.task_id, resumed.blocked)
             return None, UNCONFIRMED_REASON
         character = self.character_of(payload["pet_id"])
         if character is None or not self.available():
             return None, "not_configured"
         species, name, personality = character
         reference = self.reference_photo_of(payload["pet_id"])
+        journal = payload.get("style") == "travel_journal"
+        if journal:
+            # 旅行手账（TRV-03／TRV-05）：提示词是 P 编好的简报；参考照换过就不发，无肖像版不给参考、也不补画证件照
+            reference, refused = reference_for_brief(payload, reference)
+            if refused is not None:
+                return None, refused
         # 照片导演的预检必须在**预占之前**：目标场景 hold 要做到 0 次预占、0 次发送。
         # 放到编译提示词那一步就晚了——那时已经占掉一次额度，hold 会留下一笔空预占。
         directed = bool(payload.get("scene_key")) and payload.get("style") == "selfie"
@@ -287,7 +296,7 @@ class IllustrationService:
                 return None, bridge.hold(reason or "inputs_missing", missing)
         # 发出付费调用之前先原子预占（同一次尝试重放不会重复预占）；没拿到额度就如实显示“没画成”，不偷偷调用
         # 预占按“这次领取的代数”编号：同一次领取重放不会重复付费，被接管后的新一次领取是新的操作
-        permit = self.reserve(f"illustration:{task.task_id}:{attempt}", payload["pet_id"], 1 if reference is not None else 2) if self.reserve else None
+        permit = self.reserve(f"illustration:{task.task_id}:{attempt}", payload["pet_id"], 1 if reference is not None or journal else 2) if self.reserve else None
         if permit is not None and getattr(permit, "status", None) != "reserved":
             logger.info("illustration budget denied task=%s reason=%s", task.task_id, getattr(permit, "reason", "unknown"))
             return None, "budget_denied"
@@ -295,11 +304,7 @@ class IllustrationService:
         # **不要**预置成 "owner_original"：那会在执行阶段把一张来源不明（或本来就是我们生成的）基准照
         # 改称主人原图，覆盖掉 reference_origin_of 读到的真实来源。只有这次真的生成了才标 original_companion。
         portrait_origin = None
-        if reference is None and self.portrait_saver is not None:
-            if not self.opted_in(payload["user_id"], payload.get("pet_id")):  # 发送前实时复核（领取时那次不算数）
-                logger.info("illustration consent revoked before portrait task=%s", task.task_id)
-                self._settle_calls(permit, "succeeded", sent)
-                return None, CONSENT_REVOKED
+        if reference is None and self.portrait_saver is not None and not journal:
             try:
                 portrait = self.illustrator.render(build_portrait_prompt(species=species, name=name, personality=personality), None, size="2048x2048")
             except ImageUnavailable as exc:
@@ -333,18 +338,21 @@ class IllustrationService:
         elif payload.get("style") == "selfie":
             prompt = build_selfie_prompt(species=species, name=name, place=payload.get("place", ""), city=payload.get("city", ""),
                                          scene=payload.get("scene", ""), with_reference=reference is not None)
+        elif journal:
+            prompt, size = payload["brief_prompt"], payload["brief_size"]  # P 编好的简报：站名、数字不在里面；不请求 background
         elif payload.get("style") == "journal":
             prompt = build_journal_prompt(species=species, name=name, title=payload.get("title", ""), lines=payload.get("lines", []),
                                           city=payload.get("city", ""), with_reference=reference is not None)
             size = "1440x2560"
         else:
-            prompt = build_prompt(species=species, name=name, personality=personality, title=payload.get("title", ""), story=payload.get("story", ""),
+            # 冒险插画：**不用载荷里的 story，也不用叮嘱**（CR-IMAGE-MEMORY-PURPOSE-2026-09-24 的 A 半）。
+            # 有冒险键就按模板**不带叮嘱**重渲——场景描述保留，"带着你准备的…"那一句不出现；
+            # 没有键的是按旧规则排进来的在途任务，它载荷里那段 story 可能夹着只授权过私聊的叮嘱，
+            # 所以**一个字都不读**，只用标题。不借 `privacy_epoch` 判断任何东西：无关设置改动不该挡住合法的照片。
+            template = ADVENTURES.get(payload.get("adventure_key") or "")
+            story = render_story(template, name, None) if template is not None else ""
+            prompt = build_prompt(species=species, name=name, personality=personality, title=payload.get("title", ""), story=story,
                                   with_reference=reference is not None)
-        # 证件照那次可能花了几十秒，中途主人完全可能关掉开关：**再问一次**，撤权之后不发第二次可能付费的调用。
-        if not self.opted_in(payload["user_id"], payload.get("pet_id")):
-            logger.info("illustration consent revoked before scene task=%s sent=%s", task.task_id, sent)
-            self._settle_calls(permit, "succeeded", sent)  # 已经发出去的照留，不退成 not_sent
-            return None, CONSENT_REVOKED
         try:
             image = self.illustrator.render(prompt, reference, size=size)
         except ImageUnavailable as exc:
@@ -360,6 +368,8 @@ class IllustrationService:
         folder.mkdir(parents=True, exist_ok=True)
         rel = f"illustrations/{payload['user_id']}/{payload['illustration_id']}{suffix}.{ext}"
         (self.root / rel).write_bytes(image.image_bytes)
+        # 小票：提交若失败，自动重试凭它认领这张已付费的图（证件照那一次也已算在这次预占里），不再付第二次
+        paid_result.write_receipt(self.root, rel.rsplit(".", 1)[0], rel, image, used_reference=reference is not None)
         return (rel, image, reference is not None), None
 
     def _director_inputs(self, payload: dict, species: str, reference, origin: str | None = None):
@@ -380,8 +390,7 @@ class IllustrationService:
         if gap is not None:
             return gap  # 返回**具体缺什么**，调用方直接拿它当 hold 原因
         return bridge.photo_inputs(payload, species=species, reference=reference, origin=origin,
-                                   can_access=can_access, generated_photos=self.opted_in(user_id, pet_id),
-                                   current=current, current_revision=revision_now)
+                                   can_access=can_access, current=current, current_revision=revision_now)
 
     def _director_ready(self, payload: dict, species: str, reference):
         """预占之前的预检：输入凑不齐返回 None，凑齐了返回 `Readiness`。"""

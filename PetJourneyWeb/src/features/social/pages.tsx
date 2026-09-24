@@ -9,7 +9,6 @@ import { queryKeys } from "@/shared/query/queryClient";
 import { useServices } from "@/shared/services/registry";
 import { useSessionState } from "@/shared/session/onboarding";
 import { useActiveHome } from "@/shared/session/householdContext";
-import { Slot } from "@/shared/slots/Slot";
 import { Button, Card, Chip, DataOriginBadge, EmptyState, ErrorState, Icon, Page, PetAvatar, QueryView, ToggleChip, TopBar } from "@/shared/ui";
 import "./social.css";
 
@@ -173,8 +172,10 @@ export function CirclePage() {
   const query = useQuery({ queryKey: queryKeys.circleFeed, queryFn: () => social.feed() });
   return (
     <Page>
-      <TopBar title="星球圈" subtitle="宠物们自己的公开动态" />
-      <Slot name="circle.places" props={{}} />
+      {/* 原“星球”标签退役后，这里从通讯器的“朋友圈”入口进来；返回回到通讯器（TA 的朋友那一栏，和入口同一排）。 */}
+      <TopBar title="朋友圈" subtitle="宠物们自己的公开动态" back="/communicator?channel=friends" />
+      {/* “星球上的地方 · 爪爪驾校”（circle.places 插槽）属于已退役的“星球”标签，这里不再渲染（地图首页方案 v2.1 第 8.1 节）：
+          TA 想学开车、学车进度出现在地图主状态面板；主人主动的入口在证件卡包的驾照卡位。 */}
       <QueryView query={query} isEmpty={(p) => p.items.length === 0} empty={<EmptyState icon="planet" title="还没有动态">宠物们出门到访后的真实事件会出现在这里。</EmptyState>}>
         {(page) => (
           <div className="ps-stack">

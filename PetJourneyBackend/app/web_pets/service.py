@@ -68,6 +68,13 @@ class WebPetsService:
         self.households = households
         # 领养一位待领养居民时（居民模块装配后注入）：同一事务里把它从驿站名单转到这个家庭，保留身份与经历
         self.on_resident_adopted = None  # Callable[[sqlite3.Connection, pet_id, household_id, user_id, now], None]
+        # 主人上传的原照刚落库（角色模块装配后注入）：**在同一个事务里**登记世界角色生成任务。
+        # 为什么必须同事务：上传那一步回滚了，队列里却留着一张要花钱的图，就是"上传没成功但任务排上了"；
+        # 反过来另开连接排队还会读到事务外的旧授权快照。钩子没接时这里什么都不做，行为与接线前完全一致。
+        self.on_pet_photo_stored = None  # Callable[[conn, pet_id, user_id, species, photo_ref, content_type, now], None]
+        # 领养成功（证件照模块装配后注入）：**同一个事务里、归属写好之后**登记证件照任务。只管证件照，角色的触发范围不变；
+        # 有没有照片、能不能画由那边判断。钩子没接时这里什么都不做，行为与接线前完全一致。
+        self.on_pet_adopted = None  # Callable[[conn, pet_id, user_id, now], None]
 
     # ---- 建立伙伴 ----
     def create_own(self, user_id: str, name: str, species: PetSpecies, photo: bytes | None, household_id: str | None = None) -> PetProfileRecord:
@@ -85,6 +92,10 @@ class WebPetsService:
                 self.households.create_with_pet(conn, user_id, pet_id, "upload", now)
             else:
                 self.households.add_pet(conn, household_id, pet_id, user_id, "upload", now)
+            # **建好家之后**才登记角色任务：授权是家庭级的，新建的家没显式设置时要回落到建家人的个人选择，
+            # 家还没建出来就读不到授权，会把"其实已授权"读成"没授权"。
+            if photo_ref and self.on_pet_photo_stored is not None:
+                self.on_pet_photo_stored(conn, pet_id, user_id, species.value, photo_ref, content_type, now)
         return self.profile(pet_id)  # type: ignore[return-value]
 
     def adopt(self, user_id: str, candidate_id: str, household_id: str | None = None) -> AdoptResult:
@@ -113,6 +124,8 @@ class WebPetsService:
                 self.households.add_pet(conn, household_id, pet_id, user_id, "adoption", now)
             if resident_pet is not None and self.on_resident_adopted is not None:
                 self.on_resident_adopted(conn, pet_id, household_id, user_id, now)
+            if self.on_pet_adopted is not None:
+                self.on_pet_adopted(conn, pet_id, user_id, now)
         return AdoptResult(pet_id=pet_id, candidate_id=candidate_id, adopted_at=now)
 
     def _insert_pet(self, conn: sqlite3.Connection, pet_id, user_id, name, species, origin, candidate_id, photo_ref, content_type, now) -> None:

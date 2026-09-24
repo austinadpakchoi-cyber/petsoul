@@ -11,6 +11,7 @@ import time
 from dataclasses import dataclass
 from typing import Protocol
 from urllib import error, request
+from urllib.parse import urlparse
 
 from .meter import ProviderMeter
 
@@ -61,6 +62,10 @@ class OpenAICompatibleChat:
         if not self.meter.allow("llm"):
             raise ChatUnavailable("daily_cap")
         payload: dict[str, object] = {"model": self.model, "messages": messages, "max_tokens": max_tokens, "temperature": temperature}
+        flash = urlparse(self.base_url).hostname == "api.deepseek.com" and self.model == "deepseek-flash"
+        if flash:
+            # V4.1 默认开启思考；这些短回复/JSON 调用沿用非思考预算，避免预算耗在 reasoning_content。
+            payload["thinking"] = {"type": "disabled"}
         if json_mode:
             payload["response_format"] = {"type": "json_object"}
         req = request.Request(
@@ -86,6 +91,14 @@ class OpenAICompatibleChat:
         except (KeyError, IndexError, TypeError) as exc:
             self.meter.record("llm", False, "malformed response")
             raise ChatUnavailable("malformed") from exc
+        if flash and json_mode:
+            try:
+                if not isinstance(json.loads(text), dict):
+                    raise ValueError("expected JSON object")
+            except ValueError as exc:
+                # 已调用成功但结构无效：如实失败，不清理异常标记来伪造 JSON，也不自动重发。
+                self.meter.record("llm", False, "malformed JSON response")
+                raise ChatUnavailable("malformed_json") from exc
         self.meter.record("llm", True)
         usage = data.get("usage") or {}
         return ChatResult(text=text, requested_model=self.model, effective_model=data.get("model"), latency_ms=latency,

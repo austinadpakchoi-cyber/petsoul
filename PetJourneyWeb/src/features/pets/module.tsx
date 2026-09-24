@@ -3,7 +3,7 @@
  * live：照片以 multipart 上传，服务端校验格式与大小、剥离元数据、私有存储。
  * fixture：演示候选池；不上传照片（明确提示），不创建真实归属。
  */
-import type { AdoptionCandidate, AdoptResult, PetPrivateSummary, PetPublicProfile, PhotoRequestResult, PhotoRequestView, PostPage, PublicPetView, PublicResident, PublicWorld } from "@/shared/contracts";
+import type { AdoptionCandidate, AdoptResult, CharacterRegenerateResult, CharacterState, PetDNAView, PetPrivateSummary, PetPublicProfile, PhotoRequestResult, PhotoRequestView, PostPage, PublicPetView, PublicResident, PublicWorld, TimelineItem } from "@/shared/contracts";
 import { ApiError } from "@/shared/api/errors";
 import { defineModule } from "@/shared/modules/types";
 import { fixtureAdopt, fixtureCandidates } from "@/fixtures/adoption";
@@ -80,6 +80,15 @@ export default defineModule({
           if (!profile) throw new ApiError({ kind: "http", status: 404, code: "NOT_FOUND", message: "没有找到这只宠物的公开主页。" });
           return delay(profile);
         },
+        // 演示模式没有专属世界形象：不拿内部样例猫冒充任何宠物的角色。
+        character: async () => { throw ApiError.capability("character.state", "演示模式没有专属世界形象。"); },
+        regenerateCharacter: async () => { throw ApiError.capability("character.regenerate", "演示模式不能调整形象。"); },
+        regenerateIdPhoto: async () => { throw ApiError.capability("character.id_photo", "演示模式不能生成证件照。"); },
+        // 演示世界没有主人交代过的 DNA：不编性格与习惯。
+        dna: async () => { throw ApiError.capability("pets.dna", "演示模式没有 TA 的档案。"); },
+        saveDna: async () => { throw ApiError.capability("pets.dna", "演示模式不能保存档案。"); },
+        // 演示世界没有一条连贯的生活记录：各份样例的时间互不相干（收藏里“第一次坐飞机”在一小时前，卡包里的登机牌三周前就用过），拼起来等于替 TA 编经历。
+        timeline: async () => { throw ApiError.capability("life.timeline", "演示模式没有生活片段。"); },
       }),
       live: ({ api }) => ({
         requestPhoto: (petId, body, key) => api.request<PhotoRequestResult>(`/pets/${encodeURIComponent(petId)}/photo-request`, { method: "POST", body, idempotencyKey: key }),
@@ -100,6 +109,13 @@ export default defineModule({
           return api.request<PetPrivateSummary>("/pets", { method: "POST", body: form, idempotencyKey: key, timeoutMs: 30_000 });
         },
         publicProfile: (petId) => api.request<PetPublicProfile>(`/pets/${encodeURIComponent(petId)}/profile`),
+        character: (petId, signal) => api.request<CharacterState>(`/pets/${encodeURIComponent(petId)}/character`, { signal }),
+        regenerateCharacter: (petId, body, key) => api.request<CharacterRegenerateResult>(`/pets/${encodeURIComponent(petId)}/character/regenerate`, { method: "POST", body, idempotencyKey: key }),
+        regenerateIdPhoto: (petId, key) => api.request<CharacterRegenerateResult>(`/pets/${encodeURIComponent(petId)}/id-photo/regenerate`, { method: "POST", idempotencyKey: key }),
+        dna: (petId, signal) => api.request<PetDNAView>(`/pets/${encodeURIComponent(petId)}/dna`, { signal }),
+        saveDna: (petId, body, expectedVersion) =>
+          api.request<PetDNAView>(`/pets/${encodeURIComponent(petId)}/dna`, { method: "PUT", body, query: { expected_version: expectedVersion } }),
+        timeline: (petId, signal) => api.request<TimelineItem[]>("/timeline", { query: { pet_id: petId }, signal }),
       }),
     },
   },

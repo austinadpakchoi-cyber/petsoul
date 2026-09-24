@@ -28,6 +28,7 @@ class JourneyRecord:
     departed_at: datetime
     completes_at: datetime
     completed_at: datetime | None
+    fare_waived: bool = False  # 这趟的旅费被券抵掉了。`fee` 始终是标价，省下多少＝两者一起看（m1701）
 
 
 @dataclass
@@ -81,6 +82,7 @@ def _journey(row: sqlite3.Row) -> JourneyRecord:
         departed_at=parse_dt(row["departed_at"]),
         completes_at=parse_dt(row["completes_at"]),
         completed_at=parse_dt(row["completed_at"]) if row["completed_at"] else None,
+        fare_waived=bool(row["fare_waived"]),
     )
 
 
@@ -129,9 +131,9 @@ class JourneyRepository:
     def insert(self, conn: sqlite3.Connection, journey: JourneyRecord, legs: list[LegRecord], visit: VisitRecord, created_at: datetime) -> None:
         conn.execute(
             "INSERT INTO web_journeys (journey_id, user_id, pet_id, home_id, destination_key, title, city, lifecycle, itinerary_version, fee, "
-            "departed_at, completes_at, completed_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', 1, ?, ?, ?, NULL, ?)",
+            "fare_waived, departed_at, completes_at, completed_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', 1, ?, ?, ?, ?, NULL, ?)",
             (journey.journey_id, journey.user_id, journey.pet_id, journey.home_id, journey.destination_key, journey.title, journey.city,
-             journey.fee, iso(journey.departed_at), iso(journey.completes_at), iso(created_at)),
+             journey.fee, int(journey.fare_waived), iso(journey.departed_at), iso(journey.completes_at), iso(created_at)),
         )
         for leg in legs:
             conn.execute(

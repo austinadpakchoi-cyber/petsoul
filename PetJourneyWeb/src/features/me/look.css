@@ -1,0 +1,120 @@
+/*
+ * TA 的形象（/me/look）：和“我的”“TA 的档案”“我的举报”同一套外观——44px 圆角返回钮、圆角暖色卡片、柔和阴影。
+ * 顶部沿用“我的”的 TA 卡（.ps-me-hero）。只用 tokens 颜色，深色模式自动跟随；
+ * “调整形象”与证件照一节的样式来自小窝（home.css、id-photo.css，模块是一起加载的），这里只管页面自己的卡片。
+ */
+
+.ps-page.ps-look {
+  padding-bottom: calc(var(--safe-bottom) + 32px);
+}
+
+.ps-look-quiet {
+  margin: 16px 0 0;
+  color: var(--c-ink-2);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+
+/* ---------- 生效形象的站姿图 ---------- */
+.ps-look-stage {
+  position: relative;
+  margin: 0 0 14px;
+  padding: 18px 16px 12px;
+  overflow: hidden; /* 站姿图按身体高度放大，透明的边会伸出舞台：裁掉，窄屏也不横向滚动 */
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 20px;
+  background: linear-gradient(180deg, var(--c-sky-soft) 0%, var(--c-surface) 62%, var(--c-leaf-soft) 100%);
+  box-shadow: 0 14px 28px -24px var(--c-shadow), 0 2px 6px -4px var(--c-shadow);
+}
+.ps-look-stage__body {
+  position: relative;
+  display: block;
+  height: 168px;
+}
+.ps-look-stage__body img {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: auto;
+  max-width: none;
+  object-fit: contain;
+}
+.ps-look-stage__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 42%;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--c-shadow);
+  filter: blur(5px);
+  transform: translateX(-50%);
+}
+.ps-look-stage figcaption {
+  position: relative;
+  margin-top: 12px;
+  color: var(--c-ink-2);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+/* ---------- 说明与“调整形象”、证件照 ---------- */
+.ps-look-card {
+  margin: 0 0 14px;
+  padding: 16px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 20px;
+  background: var(--c-surface);
+  box-shadow: 0 14px 28px -24px var(--c-shadow), 0 2px 6px -4px var(--c-shadow);
+}
+.ps-look-intro {
+  margin: 0 0 12px;
+  color: var(--c-ink);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.ps-look-keep {
+  white-space: nowrap;
+}
+/*
+ * 小窝面板里的“调整形象”“生成证件照”是 ghost 按钮（只有字）；这页只有这两个动作，给它们一圈边、40px 高，
+ * 看得出是按钮、也好点。证件照一节撑满卡片宽度，分隔虚线不再只画到文字那么长。
+ */
+.ps-look-card .ps-btn--ghost {
+  min-height: 40px;
+  border-color: var(--c-surface-stroke);
+  background: var(--c-surface-2);
+  color: var(--c-ink);
+}
+.ps-look-card .ps-idphoto-adjust {
+  justify-self: stretch;
+}
+
+/* 演示模式、暂时看不了：一张安静的说明卡。 */
+.ps-look-note {
+  padding: 22px 18px 20px;
+  text-align: center;
+}
+.ps-look-note__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 8px;
+  border-radius: 16px;
+  background: var(--c-leaf-soft);
+  color: var(--c-leaf);
+}
+.ps-look-note h3 {
+  margin: 0 0 6px;
+  font-size: var(--fs-lg);
+  line-height: 1.35;
+}
+.ps-look-note p {
+  max-width: 24em;
+  margin: 0 auto;
+  color: var(--c-ink-2);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+}

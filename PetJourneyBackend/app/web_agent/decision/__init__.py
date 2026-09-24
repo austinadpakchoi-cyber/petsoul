@@ -7,6 +7,7 @@
 
 from .brain import Brain, decide
 from .chat_adapter import ChatModelAdapter
+from .commitments import OWNER_ASKED_STAY_HOME, commitment_gate
 from .context import BuiltContext, build_context, can_continue
 from .offers import action_kind_of, destination_key_of, offers_from_options
 from .outcomes import CallRecord, DecisionAudit, DecisionResult, reason_of
@@ -17,6 +18,7 @@ from .prompt import PROMPT_VERSION
 from .service_reader import ServiceContextReader
 
 __all__ = [
+    "commitment_gate", "OWNER_ASKED_STAY_HOME",
     "PROMPT_VERSION", "Brain", "BuiltContext", "CallLimits", "CallRecord", "ChatModelAdapter", "ContextReader", "DecisionAudit", "DecisionRequest",
     "DecisionResult", "DnaSnapshot", "ModelAdapter", "ModelCallError", "ModelReply", "PetBrief", "Record", "ServiceContextReader", "ToolPort",
     "ToolSpec", "action_kind_of", "build_context", "can_continue", "decide", "destination_key_of", "dna_snapshot", "offers_from_options", "reason_of",

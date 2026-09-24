@@ -35,7 +35,8 @@ export function buildRoutes(modules: FeatureModule[]): RouteObject[] {
     {
       element: <RootLayout />,
       errorElement: <RouteErrorPage />,
-      children: [{ index: true, element: <Navigate to="/home" replace /> }, ...tabbed, { path: "*", element: <NotFoundPage /> }],
+      // “/” 先过主布局的登录 / 入住守卫，再进地图首页；其余路径（深链）不受首页规则影响。
+      children: [{ index: true, element: <Navigate to="/map" replace /> }, ...tabbed, { path: "*", element: <NotFoundPage /> }],
     },
     {
       element: <BareLayout />,

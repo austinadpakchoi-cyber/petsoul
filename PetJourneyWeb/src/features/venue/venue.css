@@ -123,12 +123,14 @@
   transform: rotate(5deg);
   animation: ps-cafe-appear 430ms var(--ease-out) both;
 }
-.ps-visit-memento-link { display: flex; align-items: center; gap: 7px; padding: 11px 13px; border: 1px solid #e4d7be; border-radius: 12px; background: #fff9ed; color: #315a43; font-size: 12px; font-weight: 700; text-decoration: none; }
+/* 跟主题走：原来写死浅底，深色页面里是一条亮斑 */
+.ps-visit-memento-link { display: flex; align-items: center; gap: 7px; padding: 11px 13px; border: 1px solid color-mix(in srgb, var(--c-sun) 22%, var(--c-surface-stroke)); border-radius: 12px; background: color-mix(in srgb, var(--c-sun-soft) 30%, var(--c-surface)); color: color-mix(in srgb, var(--c-leaf) 60%, var(--c-ink)); font-size: 12px; font-weight: 700; text-decoration: none; }
 .ps-visit-memento-link svg:last-child { margin-left: auto; }
+/* 放左下角：宠物站在画面右侧，名牌在头像下方，放右下角时会被这枚标签压住（320 宽尤其明显） */
 .ps-cafe__tag {
   position: absolute;
   z-index: 4;
-  right: 8px;
+  left: 8px;
   bottom: 6px;
   padding: 2px 8px;
   border-radius: var(--r-pill);

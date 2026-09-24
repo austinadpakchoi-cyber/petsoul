@@ -52,7 +52,7 @@ def web_meta(request: Request) -> WebMeta:
 
 
 LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost", "testclient"}
-PROVIDERS = (("llm", "对话模型"), ("amap", "高德地点/路线"), ("amap_static", "高德静态底图"), ("google", "Google 地图"), ("image", "生图（Seedream）"))
+PROVIDERS = (("llm", "对话模型"), ("amap", "高德地点/路线"), ("amap_static", "高德静态底图"), ("google", "Google 地图"), ("image", "生图"))
 
 
 def _allowed(request: Request) -> bool:

@@ -75,6 +75,18 @@ export const PhotoSceneValues = ["home", "train", "flight_adventure"] as const;
 export type PhotoNarrative = "daily_life" | "fictional_adventure";
 export const PhotoNarrativeValues = ["daily_life", "fictional_adventure"] as const;
 
+export type CharacterStatus = "absent" | "queued" | "running" | "ready" | "failed" | "unknown";
+export const CharacterStatusValues = ["absent", "queued", "running", "ready", "failed", "unknown"] as const;
+
+export type CharacterReason = "no_reference_photo" | "species_unsupported" | "provider_unavailable" | "not_configured" | "pet_has_no_household" | "generated_reference_only" | "reference_changed" | "budget_denied" | "unknown_result" | "transparency_not_requested" | "attempts_exhausted" | "daily_cap" | "rejected" | "timeout" | "unconfirmed" | "already_queued" | "not_png" | "undecodable" | "interlaced_unsupported" | "palette_unsupported" | "bit_depth_unsupported" | "no_alpha_channel" | "opaque_background" | "checkerboard_drawn" | "empty_subject" | "multiple_subjects" | "subject_cut_off" | "subject_too_large" | "subject_too_small" | "too_large_to_check" | "photo_not_to_bottom" | "photo_headroom_off" | "photo_head_cut_off" | "photo_too_small" | "photo_wrong_shape" | "photo_blank";
+export const CharacterReasonValues = ["no_reference_photo", "species_unsupported", "provider_unavailable", "not_configured", "pet_has_no_household", "generated_reference_only", "reference_changed", "budget_denied", "unknown_result", "transparency_not_requested", "attempts_exhausted", "daily_cap", "rejected", "timeout", "unconfirmed", "already_queued", "not_png", "undecodable", "interlaced_unsupported", "palette_unsupported", "bit_depth_unsupported", "no_alpha_channel", "opaque_background", "checkerboard_drawn", "empty_subject", "multiple_subjects", "subject_cut_off", "subject_too_large", "subject_too_small", "too_large_to_check", "photo_not_to_bottom", "photo_headroom_off", "photo_head_cut_off", "photo_too_small", "photo_wrong_shape", "photo_blank"] as const;
+
+export type CharacterPose = "neutral_full" | "sleeping" | "sunbathing" | "eating" | "walking" | "petted";
+export const CharacterPoseValues = ["neutral_full", "sleeping", "sunbathing", "eating", "walking", "petted"] as const;
+
+export type IdPhotoSource = "generated" | "companion_portrait";
+export const IdPhotoSourceValues = ["generated", "companion_portrait"] as const;
+
 export type HabitatKind = "seaside" | "grassland" | "desert" | "forest" | "lakeside" | "mountain" | "city" | "countryside";
 export const HabitatKindValues = ["seaside", "grassland", "desert", "forest", "lakeside", "mountain", "city", "countryside"] as const;
 
@@ -344,6 +356,60 @@ export const EntryRouteValues = ["browse", "own_pet", "adopt", "invite"] as cons
 
 export type ProviderState = "disabled" | "not_configured" | "configured" | "verified" | "failing";
 export const ProviderStateValues = ["disabled", "not_configured", "configured", "verified", "failing"] as const;
+
+export type MapProvider = "amap";
+export const MapProviderValues = ["amap"] as const;
+
+export type MapUnavailableReason = "not_configured";
+export const MapUnavailableReasonValues = ["not_configured"] as const;
+
+export type WorldRelation = "mine" | "household";
+export const WorldRelationValues = ["mine", "household"] as const;
+
+export type WorldActivityKind = "home" | "stroll" | "cafe" | "city_trip" | "drive_trip" | "job" | "trip";
+export const WorldActivityKindValues = ["home", "stroll", "cafe", "city_trip", "drive_trip", "job", "trip"] as const;
+
+export type WorldPhase = "home" | "going" | "there" | "returning" | "unknown";
+export const WorldPhaseValues = ["home", "going", "there", "returning", "unknown"] as const;
+
+export type WorldPositionBasis = "home_area" | "place" | "route" | "unknown";
+export const WorldPositionBasisValues = ["home_area", "place", "route", "unknown"] as const;
+
+export type WorldPose = "idle" | "sleeping" | "eating" | "sunbathing" | "walking" | "riding" | "cafe" | "working" | "exploring" | "unknown";
+export const WorldPoseValues = ["idle", "sleeping", "eating", "sunbathing", "walking", "riding", "cafe", "working", "exploring", "unknown"] as const;
+
+export type AnnouncementSeverity = "info" | "notice" | "maintenance";
+export const AnnouncementSeverityValues = ["info", "notice", "maintenance"] as const;
+
+export type AnnouncementSource = "live" | "not_installed";
+export const AnnouncementSourceValues = ["live", "not_installed"] as const;
+
+export type ReportStatus = "received" | "resolved";
+export const ReportStatusValues = ["received", "resolved"] as const;
+
+export type ReportOutcome = "received" | "content_removed" | "no_violation_found" | "content_restored";
+export const ReportOutcomeValues = ["received", "content_removed", "no_violation_found", "content_restored"] as const;
+
+export type TravelWaitingReason = "missing_funds" | "quota_denied" | "research_pending" | "research_unknown" | "research_failed" | "fact_stale" | "plan_stale" | "fact_unverified" | "fact_conflicting" | "weather_unsuitable" | "commitment_active" | "maintenance";
+export const TravelWaitingReasonValues = ["missing_funds", "quota_denied", "research_pending", "research_unknown", "research_failed", "fact_stale", "plan_stale", "fact_unverified", "fact_conflicting", "weather_unsuitable", "commitment_active", "maintenance"] as const;
+
+export type TravelWishStatus = "active" | "ready" | "linked" | "completed" | "cancelled";
+export const TravelWishStatusValues = ["active", "ready", "linked", "completed", "cancelled"] as const;
+
+export type TravelResearchStatus = "queued" | "running" | "ready" | "failed" | "unknown";
+export const TravelResearchStatusValues = ["queued", "running", "ready", "failed", "unknown"] as const;
+
+export type TravelStopRole = "main" | "suggested";
+export const TravelStopRoleValues = ["main", "suggested"] as const;
+
+export type TravelFactVerdict = "verified" | "unverified" | "stale" | "conflicting" | "rejected";
+export const TravelFactVerdictValues = ["verified", "unverified", "stale", "conflicting", "rejected"] as const;
+
+export type TravelJournalPhase = "plan" | "memory";
+export const TravelJournalPhaseValues = ["plan", "memory"] as const;
+
+export type TravelIdentityMode = "photo" | "none";
+export const TravelIdentityModeValues = ["photo", "none"] as const;
 
 export interface WebError {
   code: WebErrorCode;
@@ -884,6 +950,146 @@ export interface PhotoRequestView {
 }
 export type PhotoRequestViewInput = WithOptional<PhotoRequestView, "task_id" | "image_url">;
 
+/** 非透明内容在画布里的实际边界（像素，左上原点）。 */
+export interface ContentBox {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+export type ContentBoxInput = ContentBox;
+
+/** 落地点：角色"脚踩在哪里"，相对画布的归一化坐标。 */
+export interface GroundAnchor {
+  x: number;
+  y: number;
+  /** True＝从图像实测；False＝导演给的估计值 */
+  measured: boolean;
+}
+export type GroundAnchorInput = WithOptional<GroundAnchor, "measured">;
+
+/** 一张姿态图。URL **受权限保护**，不是公开静态资源。 */
+export interface CharacterAsset {
+  asset_id: string;
+  pose: CharacterPose;
+  /** 受权限保护的读取地址；越权读会被挡下，不是 CDN 直链 */
+  url: string;
+  /** 图片字节的 SHA-256；用于证明前端拿到的就是这一版 */
+  content_sha256: string;
+  /** 实际的图片 MIME，例如 image/png */
+  content_type: string;
+  width: number;
+  height: number;
+  content_box: ContentBox;
+  anchor: GroundAnchor;
+  /** 不透明像素占整张画布的比例。`has_alpha` 只说通道在不在，这个说主体有多大——接近 1 基本就是一张不透明的方图（背景没抠掉），接近 0 则可能主体被裁没了。 */
+  opaque_ratio: number;
+  /** 实际验证过的 alpha 通道可用性。**不得因为返回的是 PNG 就填 True**——PNG 可以完全不透明，当前 GPT 适配器也没有请求或验收透明背景。 */
+  has_alpha: boolean;
+}
+export type CharacterAssetInput = CharacterAsset;
+
+/** 一套已发布的角色资产。同一 `character_set_id` 内各姿态外貌必须一致。 */
+export interface CharacterSet {
+  character_set_id: string;
+  pet_id: string;
+  /** 同一只宠物的第几套；过期任务不得覆盖更高的 revision */
+  revision: number;
+  /** 生成时所用身份参考（原照）的版本。**换参考后旧结果不得发布**，靠这个比。 */
+  reference_version: number;
+  /** 画风版本；换风格要能解释形象为何变了 */
+  style_version: string;
+  assets: CharacterAsset[];
+  published_at: IsoDateTime;
+}
+export type CharacterSetInput = CharacterSet;
+
+/** 本次在建的那一套。它失败不影响 `active` 继续显示。 */
+export interface CharacterCandidate {
+  status: CharacterStatus;
+  pose: CharacterPose;
+  reference_version: number;
+  style_version: string;
+  queued_at: IsoDateTime;
+  /** 未获授权、额度不足、供应商失败等**如实写原因**；不要把 unknown 的原因写成「没生成」。 */
+  reason: string | null;
+  /** 对应的后台任务；没有任务时为 null */
+  task_id: string | null;
+}
+export type CharacterCandidateInput = WithOptional<CharacterCandidate, "reason" | "task_id">;
+
+/** active 那一套里**一个额外姿态**的进度（批次二）。中性站姿不在这里——它的状态就是 `CharacterState.status`。 */
+export interface CharacterPoseProgress {
+  pose: CharacterPose;
+  status: CharacterStatus;
+  /** 没画成或作废的原因，码表同 `CharacterReason` */
+  reason: string | null;
+  /** 对应的后台任务 */
+  task_id: string | null;
+}
+export type CharacterPoseProgressInput = WithOptional<CharacterPoseProgress, "reason" | "task_id">;
+
+/** 每只宠物一张证件照（CR-6C2B-IDPHOTO）：护照、居民证、驾照等全部证件都用它。**不透明**，所以不是一种姿态。 */
+export interface CharacterIdPhoto {
+  /** 与角色同一口径；`unknown` 是可能已经发出、结果没确认，不得说成没画成 */
+  status: CharacterStatus;
+  /** `absent` 时为 null */
+  source: IdPhotoSource | null;
+  /** 证件用图（竖幅 3:4、浅蓝纯底）的受保护地址；没有生效的证件照时为 null */
+  url: string | null;
+  /** 地图头像：从证件照上方正方形缩成的 **256×256** 小图。**没有就是 null，不拿别的图冒充**（没照片的宠物那张基准照不是裁好的头像，也是 null） */
+  avatar_url: string | null;
+  width: number | null;
+  height: number | null;
+  /** 证件用图字节的 SHA-256 */
+  content_sha256: string | null;
+  /** 依据的是这只宠物的第几张参考照；换了照片才重画 */
+  reference_version: number | null;
+  revision: number | null;
+  /** 没画成或作废的原因，码表同 `CharacterReason` */
+  reason: string | null;
+  task_id: string | null;
+}
+export type CharacterIdPhotoInput = WithOptional<CharacterIdPhoto, "source" | "url" | "avatar_url" | "width" | "height" | "content_sha256" | "reference_version" | "revision" | "reason" | "task_id">;
+
+/** `GET /pets/{pet_id}/character` 的响应。**纯读，绝不触发生成。** */
+export interface CharacterState {
+  pet_id: string;
+  /** 综合状态：有 candidate 时取它的，否则由 active 是否存在决定 */
+  status: CharacterStatus;
+  /** 当前生效的一套；从未成功过时为 null */
+  active: CharacterSet | null;
+  /** 本次在建的；空闲时为 null */
+  candidate: CharacterCandidate | null;
+  /** 是否允许发起「调整形象」。授权缺失、额度用尽、已有在建任务时为 False，**原因在 candidate.reason 或 blocked_reason 里给**。 */
+  can_regenerate: boolean;
+  /** can_regenerate 为 False 且没有 candidate 时，这里说明为什么 */
+  blocked_reason: string | null;
+  /** active 那一套里其余姿态的进度（批次二）。自动生成的开关默认关，关着时为空数组；已就绪的那几张同时出现在 `active.assets` 里 */
+  poses?: CharacterPoseProgress[];
+  /** 证件照（与形象不同，不透明、有底色）。没有时前端退回 `photo_url` */
+  id_photo?: CharacterIdPhoto | null;
+}
+export type CharacterStateInput = WithOptional<CharacterState, "active" | "candidate" | "blocked_reason" | "poses" | "id_photo">;
+
+/** 「调整形象」——**可选**操作。正常路径由上传成功自动触发，用户不必点这个。 */
+export interface CharacterRegenerateCommand {
+  /** **目前一律按整套重做**：先重画中性站姿，其余姿态（开关开着时）随新的一套重新生成——只重画某一个姿态会让它和同套的站姿不再是同一张参考（P 规范 §6-4）。本字段暂不区分取值 */
+  pose: CharacterPose;
+  /** 主人想调整的地方，可空 */
+  note: string | null;
+}
+export type CharacterRegenerateCommandInput = WithOptional<CharacterRegenerateCommand, "pose" | "note">;
+
+/** 发起结果。`accepted=False` 时 `reason` 必须能解释为什么没排上。 */
+export interface CharacterRegenerateResult {
+  accepted: boolean;
+  status: CharacterStatus;
+  task_id: string | null;
+  reason: string | null;
+}
+export type CharacterRegenerateResultInput = WithOptional<CharacterRegenerateResult, "task_id" | "reason">;
+
 export interface HomePlaceSummary {
   habitat: HabitatKind;
   /** 海边/草原/…… */
@@ -1320,7 +1526,7 @@ export interface DestinationOption {
   title: string;
   city: string;
   summary: string;
-  /** 旅费（travel_coin），出发时从统一账本扣除 */
+  /** 这趟的星币标价。**出发时从统一账本扣除，但持驾校借车券的首次自驾不扣**——所以「账本里没有这一行」有两种含义（用了券／本来免费），不要据此推断花了多少；实际扣没扣见行程的 fare_waived（m1701） */
   fee: number;
   /** 门到门往返总时长（真实经过时间，不压缩） */
   total_minutes: number;
@@ -2300,7 +2506,7 @@ export interface CredentialSummary {
   /** 尚未获得时为空 */
   credential_id: string | null;
   kind: CredentialKind;
-  /** 宠物 ID / 星球银行卡 / 照护档案 / 护照 / 爪爪驾驶证 / 登机牌 / 船票车票 / 酒店房卡 */
+  /** 星球居民证 / 星球银行卡 / 照护档案 / 护照 / 爪爪驾驶证 / 登机牌 / 船票车票 / 酒店房卡 */
   label: string;
   status: CredentialStatus;
   /** 稳定唯一的证件编号；签发后不变 */
@@ -2905,6 +3111,292 @@ export interface OpsStatus {
 }
 export type OpsStatusInput = WithOptional<OpsStatus, "cognition" | "last_migration" | "tasks" | "outbox">;
 
+/** `GET /map/config` 的响应。未配置时 `available=false` 且 `js_key`/`service_host` 为空。 */
+export interface MapConfig {
+  provider: MapProvider;
+  available: boolean;
+  js_key: string | null;
+  service_host: string | null;
+  style: string;
+  style_dark: string;
+  overseas_tiles: boolean;
+  unavailable_reason: MapUnavailableReason | null;
+}
+export type MapConfigInput = WithOptional<MapConfig, "provider" | "js_key" | "service_host" | "overseas_tiles" | "unavailable_reason">;
+
+/** 家的模糊中心。**只给家庭成员**；非成员整个字段为 None，不是坐标置零。 */
+export interface WorldHome {
+  center: LatLng;
+  precision_m: number;
+  label: string;
+}
+export type WorldHomeInput = WorldHome;
+
+export interface WorldJob {
+  title: string;
+  pay: number;
+  paid: boolean;
+}
+export type WorldJobInput = WorldJob;
+
+export interface WorldPlace {
+  name: string;
+  lat: number;
+  lng: number;
+  attribution: string | null;
+}
+export type WorldPlaceInput = WithOptional<WorldPlace, "attribution">;
+
+/** 只在 going / returning 出现。`route` 用**出发时已缓存**的几何，没有就 `[]`——读时不调地图。 */
+export interface WorldLeg {
+  mode: string;
+  route: LatLng[];
+  departs_at: IsoDateTime | null;
+  arrives_at: IsoDateTime | null;
+}
+export type WorldLegInput = WithOptional<WorldLeg, "route" | "departs_at" | "arrives_at">;
+
+export interface WorldPosition {
+  lat: number;
+  lng: number;
+  basis: WorldPositionBasis;
+  precision_m: number;
+}
+export type WorldPositionInput = WorldPosition;
+
+export interface WorldActivity {
+  kind: WorldActivityKind;
+  phase: WorldPhase;
+  pose: WorldPose;
+  title: string;
+  doing: string | null;
+  place: WorldPlace | null;
+  since: IsoDateTime | null;
+  until: IsoDateTime | null;
+  job: WorldJob | null;
+  journey_id: string | null;
+  visit_id: string | null;
+}
+export type WorldActivityInput = WithOptional<WorldActivity, "doing" | "place" | "since" | "until" | "job" | "journey_id" | "visit_id">;
+
+export interface WorldPetState {
+  pet_id: string;
+  name: string;
+  species: string;
+  avatar_url: string | null;
+  relation: WorldRelation;
+  home: WorldHome | null;
+  activity: WorldActivity;
+  leg: WorldLeg | null;
+  position: WorldPosition | null;
+  version: number;
+}
+export type WorldPetStateInput = WithOptional<WorldPetState, "avatar_url" | "home" | "leg" | "position" | "version">;
+
+export interface WorldState {
+  server_time: IsoDateTime;
+  coord_system: string;
+  cache_seconds: number;
+  pets: WorldPetState[];
+}
+export type WorldStateInput = WithOptional<WorldState, "coord_system" | "cache_seconds" | "pets">;
+
+export interface AnnouncementItem {
+  item_id: string;
+  slug: string;
+  revision: number;
+  title: string;
+  body: string;
+  severity: AnnouncementSeverity;
+  link: string | null;
+  image_asset_id: string | null;
+  image_url: string | null;
+  effective_at: IsoDateTime | null;
+  expires_at: IsoDateTime | null;
+}
+export type AnnouncementItemInput = WithOptional<AnnouncementItem, "link" | "image_asset_id" | "image_url" | "effective_at" | "expires_at">;
+
+export interface AnnouncementFeed {
+  announcements: AnnouncementItem[];
+  as_of: IsoDateTime;
+  source: AnnouncementSource;
+}
+export type AnnouncementFeedInput = WithOptional<AnnouncementFeed, "announcements">;
+
+export interface ReportOutcomeItem {
+  report_id: string;
+  target_kind: string;
+  target_id: string;
+  reason: string;
+  created_at: IsoDateTime;
+  status: ReportStatus;
+  outcome: ReportOutcome;
+  resolved_at: IsoDateTime | null;
+  message: string;
+}
+export type ReportOutcomeItemInput = WithOptional<ReportOutcomeItem, "resolved_at">;
+
+export interface MyReports {
+  reports: ReportOutcomeItem[];
+  note: string;
+}
+export type MyReportsInput = WithOptional<MyReports, "reports">;
+
+/** TA 想去的一个地方。**「有心愿」不等于「可以出发」**（合同 §3）。 */
+export interface TravelWishCandidate {
+  destination_key: string;
+  title: string;
+  executable: boolean;
+  blocked_by: TravelWaitingReason[];
+}
+export type TravelWishCandidateInput = WithOptional<TravelWishCandidate, "executable" | "blocked_by">;
+
+/** 当前活动心愿（一只宠物同时只有一个 active 或 ready 的）。对应 A 的 `WishView`。 */
+export interface TravelWish {
+  wish_id: string;
+  pet_id: string;
+  wish_revision: number;
+  status: TravelWishStatus;
+  destination_key: string;
+  destination_name: string;
+  city: string;
+  owner_reason: string;
+  funds_goal: number | null;
+  waiting_reasons: TravelWaitingReason[];
+  research_state: TravelResearchStatus | null;
+  research_round: number;
+  plan_id: string | null;
+  plan_revision: number | null;
+  journey_id: string | null;
+  reconsider_after: IsoDateTime | null;
+  last_considered_at: IsoDateTime | null;
+  plan_stale: boolean;
+  target_coins: number | null;
+  current_coins: number | null;
+  candidates: TravelWishCandidate[];
+}
+export type TravelWishInput = WithOptional<TravelWish, "funds_goal" | "waiting_reasons" | "research_state" | "research_round" | "plan_id" | "plan_revision" | "journey_id" | "reconsider_after" | "last_considered_at" | "plan_stale" | "target_coins" | "current_coins" | "candidates">;
+
+/** 一条来源。`url` 可空——只有机构名没有链接时也是合法来源。 */
+export interface TravelSource {
+  source_id: string;
+  url: string | null;
+  publisher: string | null;
+  retrieved_at: IsoDateTime | null;
+  published_at: IsoDateTime | null;
+}
+export type TravelSourceInput = WithOptional<TravelSource, "url" | "publisher" | "retrieved_at" | "published_at">;
+
+/** 一条已核验（或已被判否）的事实。 */
+export interface TravelFact {
+  fact_id: string;
+  category: string;
+  subject: string;
+  value: unknown;
+  source_ids: string[];
+  verification: string | null;
+  conclusion: string | null;
+  verdict: TravelFactVerdict;
+  blocks_departure: boolean;
+  retrieved_at: IsoDateTime | null;
+  published_at: IsoDateTime | null;
+  observed_at: IsoDateTime | null;
+  valid_from: IsoDateTime | null;
+  valid_until: IsoDateTime | null;
+}
+export type TravelFactInput = WithOptional<TravelFact, "value" | "source_ids" | "verification" | "conclusion" | "blocks_departure" | "retrieved_at" | "published_at" | "observed_at" | "valid_from" | "valid_until">;
+
+/** 计划里的一个地点。 */
+export interface TravelStop {
+  station_id: string | null;
+  name: string;
+  role: TravelStopRole;
+  why: string | null;
+  tip: string | null;
+  fact_ids: string[];
+  verified: boolean;
+  lat: number | null;
+  lng: number | null;
+  nav_url: string | null;
+  visited_event_ids: string[];
+}
+export type TravelStopInput = WithOptional<TravelStop, "station_id" | "why" | "tip" | "fact_ids" | "verified" | "lat" | "lng" | "nav_url" | "visited_event_ids">;
+
+/** 给主人的一条提醒，**和支持它的事实一一对应**——没有 `fact_ids` 的提醒不该出现（§18.4）。 */
+export interface TravelOwnerTip {
+  text: string;
+  fact_ids: string[];
+}
+export type TravelOwnerTipInput = WithOptional<TravelOwnerTip, "fact_ids">;
+
+/** 计划关联的那趟真实行程里，跟钱有关的部分。 */
+export interface TravelJourneySummary {
+  journey_id: string;
+  fare: number;
+  fare_waived: boolean;
+}
+export type TravelJourneySummaryInput = WithOptional<TravelJourneySummary, "fare" | "fare_waived">;
+
+/** 一版计划（`web_travel_plans` 的一行，主键 `(plan_id, plan_revision)`）。**旧版都留着。** */
+export interface TravelPlanRevision {
+  plan_id: string;
+  plan_revision: number;
+  wish_id: string;
+  wish_revision_at_build: number;
+  pet_id: string;
+  destination_key: string;
+  operation_id: string | null;
+  title: string;
+  summary: string;
+  rain_alternative: string | null;
+  stops: TravelStop[];
+  owner_tips: TravelOwnerTip[];
+  preconditions: string[];
+  sources: TravelSource[];
+  facts: TravelFact[];
+  valid_from: IsoDateTime | null;
+  valid_until: IsoDateTime | null;
+  journey: TravelJourneySummary | null;
+  journals: TravelJournal[];
+  created_at: IsoDateTime;
+}
+export type TravelPlanRevisionInput = WithOptional<TravelPlanRevision, "operation_id" | "rain_alternative" | "stops" | "owner_tips" | "preconditions" | "sources" | "facts" | "valid_from" | "valid_until" | "journey" | "journals">;
+
+/** 一个心愿的计划全集。`current_revision` 指最新发布的那一版。 */
+export interface TravelPlan {
+  plan_id: string;
+  wish_id: string;
+  current_revision: number;
+  revisions: TravelPlanRevision[];
+}
+export type TravelPlanInput = WithOptional<TravelPlan, "revisions">;
+
+/** 一页手账（`web_travel_journals` 的一行，主键 `(journal_id, journal_revision)`）。 */
+export interface TravelJournal {
+  journal_id: string;
+  journal_revision: number;
+  plan_id: string;
+  plan_revision: number;
+  phase: TravelJournalPhase;
+  title: string | null;
+  summary: string | null;
+  stations: TravelStop[];
+  owner_tips: TravelOwnerTip[];
+  rain_alternative: string | null;
+  sources: TravelSource[];
+  identity_mode: TravelIdentityMode;
+  identity_note: string | null;
+  template_revision: string | null;
+  image_status: PhotoStatus | null;
+  image_url: string | null;
+  image_refused: string | null;
+  redraw_ticket: string | null;
+  event_ids: string[];
+  created_at: IsoDateTime;
+  updated_at: IsoDateTime | null;
+}
+export type TravelJournalInput = WithOptional<TravelJournal, "title" | "summary" | "stations" | "owner_tips" | "rain_alternative" | "sources" | "identity_mode" | "identity_note" | "template_revision" | "image_status" | "image_url" | "image_refused" | "redraw_ticket" | "event_ids" | "updated_at">;
+
 export interface WebEndpoint {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
@@ -2916,6 +3408,8 @@ export interface WebEndpoint {
 export const WEB_ENDPOINTS = {
   "adopt": { method: "POST", path: "/adoption/adopt", auth: "required", csrf: true, idempotency: true },
   "adoption_candidates": { method: "GET", path: "/adoption/candidates", auth: "required", csrf: false, idempotency: false },
+  "announcements": { method: "GET", path: "/announcements", auth: "optional", csrf: false, idempotency: false },
+  "public_asset": { method: "GET", path: "/assets/{asset_id}", auth: "public", csrf: false, idempotency: false },
   "login": { method: "POST", path: "/auth/login", auth: "public", csrf: false, idempotency: false },
   "logout": { method: "POST", path: "/auth/logout", auth: "optional", csrf: true, idempotency: false },
   "register": { method: "POST", path: "/auth/register", auth: "public", csrf: false, idempotency: false },
@@ -2979,10 +3473,14 @@ export const WEB_ENDPOINTS = {
   "suggest": { method: "POST", path: "/journey/suggest", auth: "required", csrf: true, idempotency: false },
   "suggestions": { method: "GET", path: "/journey/suggestions", auth: "required", csrf: false, idempotency: false },
   "basemap": { method: "GET", path: "/map/basemap", auth: "required", csrf: false, idempotency: false },
+  "map_config": { method: "GET", path: "/map/config", auth: "public", csrf: false, idempotency: false },
   "market_view": { method: "GET", path: "/market", auth: "required", csrf: false, idempotency: false },
   "market_fulfill": { method: "POST", path: "/market/orders/{order_id}/fulfill", auth: "required", csrf: true, idempotency: true },
   "market_sell": { method: "POST", path: "/market/sell", auth: "required", csrf: true, idempotency: true },
   "basemap_image": { method: "GET", path: "/media/basemaps/{basemap_id}", auth: "required", csrf: false, idempotency: false },
+  "character_media": { method: "GET", path: "/media/characters/{asset_id}", auth: "required", csrf: false, idempotency: false },
+  "id_photo_media": { method: "GET", path: "/media/id-photos/{asset_id}", auth: "required", csrf: false, idempotency: false },
+  "id_photo_avatar": { method: "GET", path: "/media/id-photos/{asset_id}/avatar", auth: "required", csrf: false, idempotency: false },
   "illustration": { method: "GET", path: "/media/illustrations/{illustration_id}", auth: "required", csrf: false, idempotency: false },
   "pet_photo": { method: "GET", path: "/media/pets/{pet_id}/photo", auth: "required", csrf: false, idempotency: false },
   "postcard": { method: "GET", path: "/media/postcards/{photo_id}", auth: "required", csrf: false, idempotency: false },
@@ -2999,10 +3497,13 @@ export const WEB_ENDPOINTS = {
   "ops_status": { method: "GET", path: "/ops/status", auth: "public", csrf: false, idempotency: false },
   "create_own_pet": { method: "POST", path: "/pets", auth: "required", csrf: true, idempotency: true },
   "list_care_notes": { method: "GET", path: "/pets/{pet_id}/care-notes", auth: "required", csrf: false, idempotency: false },
+  "character_state": { method: "GET", path: "/pets/{pet_id}/character", auth: "required", csrf: false, idempotency: false },
+  "character_regenerate": { method: "POST", path: "/pets/{pet_id}/character/regenerate", auth: "required", csrf: true, idempotency: true },
   "read_dna": { method: "GET", path: "/pets/{pet_id}/dna", auth: "required", csrf: false, idempotency: false },
   "save_dna": { method: "PUT", path: "/pets/{pet_id}/dna", auth: "required", csrf: true, idempotency: false },
   "follow": { method: "POST", path: "/pets/{pet_id}/follow", auth: "required", csrf: true, idempotency: false },
   "home_welcome": { method: "GET", path: "/pets/{pet_id}/home-welcome", auth: "required", csrf: false, idempotency: false },
+  "id_photo_regenerate": { method: "POST", path: "/pets/{pet_id}/id-photo/regenerate", auth: "required", csrf: true, idempotency: true },
   "photo_request": { method: "POST", path: "/pets/{pet_id}/photo-request", auth: "required", csrf: true, idempotency: true },
   "photo_requests": { method: "GET", path: "/pets/{pet_id}/photo-requests", auth: "required", csrf: false, idempotency: false },
   "retry_photo_request": { method: "POST", path: "/pets/{pet_id}/photo-requests/{request_id}/retry-image", auth: "required", csrf: true, idempotency: false },
@@ -3027,6 +3528,7 @@ export const WEB_ENDPOINTS = {
   "skip_reception": { method: "POST", path: "/reception/sessions/{session_id}/skip", auth: "required", csrf: true, idempotency: false },
   "add_turn": { method: "POST", path: "/reception/sessions/{session_id}/turns", auth: "required", csrf: true, idempotency: true },
   "report": { method: "POST", path: "/reports", auth: "required", csrf: true, idempotency: false },
+  "my_reports": { method: "GET", path: "/reports/mine", auth: "required", csrf: false, idempotency: false },
   "read_session": { method: "GET", path: "/session", auth: "optional", csrf: false, idempotency: false },
   "read_settings": { method: "GET", path: "/settings", auth: "required", csrf: false, idempotency: false },
   "update_settings": { method: "PATCH", path: "/settings", auth: "required", csrf: true, idempotency: false },
@@ -3034,5 +3536,6 @@ export const WEB_ENDPOINTS = {
   "get_visit": { method: "GET", path: "/visits/{visit_id}", auth: "required", csrf: false, idempotency: false },
   "visit_action": { method: "POST", path: "/visits/{visit_id}/actions", auth: "required", csrf: true, idempotency: true },
   "visit_choice": { method: "POST", path: "/visits/{visit_id}/choice", auth: "required", csrf: true, idempotency: true },
+  "world_state": { method: "GET", path: "/world/state", auth: "required", csrf: false, idempotency: false },
 } as const satisfies Record<string, WebEndpoint>;
 export type WebEndpointName = keyof typeof WEB_ENDPOINTS;

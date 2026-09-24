@@ -78,6 +78,8 @@ describe("layered home", () => {
     const pet = screen.getByRole("button", { name: "看看 团子" });
     pet.focus();
     fireEvent.click(pet);
+    // 小窝里的东西点到先冒出名字与能做的事（claude-6c2b 小窝二级页），面板从气泡里的“陪 TA 待一会儿”打开。
+    fireEvent.click(screen.getByRole("button", { name: "陪 TA 待一会儿" }));
     expect(screen.getByRole("dialog").parentElement).toBe(document.body);
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();

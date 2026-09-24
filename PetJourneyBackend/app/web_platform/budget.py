@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import uuid
 from dataclasses import dataclass
@@ -36,6 +37,7 @@ OUTCOMES = ("succeeded", "failed", "not_sent", "unknown")
 INFLIGHT_WINDOW = "inflight"
 EXPIRE_BATCH = 50
 TABLES = ("web_budget_reservations", "web_budget_counters")
+logger = logging.getLogger("petsoul.web.budget")
 _STATUS_OF = {"succeeded": "settled", "failed": "settled", "unknown": "unknown", "not_sent": "released"}
 
 T = TypeVar("T")
@@ -158,8 +160,18 @@ class BudgetLedger:
             raise KeyError(f"budget reservation not found: {reservation_id}")
         status, reserved = row["status"], int(row["reserved_units"])
         pairs = json.loads(row["scope_pairs_json"])
+        if actual_units is not None and int(actual_units) > reserved:
+            # 报的比预占还多＝调用方发的次数超出它申请到的额度，那是别处的缺陷。
+            # 这里按预占量封顶（预占之外的量从来没被授权过），但**不能静默吞掉**——留一条可查的痕迹。
+            logger.warning("budget settle reports more than reserved: operation=%s reserved=%s reported=%s outcome=%s",
+                           row["operation_id"], reserved, actual_units, outcome)
         if status == "reserved":  # 正常结算：释放在途，按结果计入已用
-            used = 0 if outcome == "not_sent" else reserved if outcome == "unknown" or actual_units is None else max(0, int(actual_units))
+            # `unknown` 也按**调用方报告的已发出次数**计——"结果不明"说的是那几次有没有被受理，
+            # 不是"预占的每一个单位都可能被受理"。预占 2、证件照超时、场景图**根本没发**，
+            # 场景图那一份不存在"可能被受理"，把它算进来不是保守，是记错了。
+            # 说不出发了几次（`actual_units is None`）才退回按预占全额保守计入——**不知道≠没发生**。
+            # 上限取预占量：调用方报多了也不让它把计数器撑大（预占之外的量从来没被授权过）。
+            used = 0 if outcome == "not_sent" else (reserved if actual_units is None else max(0, min(int(actual_units), reserved)))
             for window, scope_key, kind in pairs:
                 _bump(conn, window, scope_key, used=used if kind == DAILY else 0, inflight=-reserved, now=now)
         elif status in ("unknown", "expired") and outcome != "unknown":  # 迟到或查清的结果
@@ -168,8 +180,11 @@ class BudgetLedger:
             # "部分用上"这种情况一分钱都回不来，`used` 永久停在保守值——不是暂时多记，是永久多记。
             # 说不清用了几个单位（actual_units 为 None）时维持保守值，**不因为"回正"反而少记**。
             # 在途在那一步也已经释放过，这里一律不再动它（**不能重复扣 inflight**）。
-            clarified = 0 if outcome == "not_sent" else (reserved if actual_units is None else max(0, int(actual_units)))
-            correction = clarified - reserved
+            # 差额要对着**当初实际记了多少**算，不是对着预占量算——当场已经按已发出次数计了。
+            # 历史行（迁移前落下的 unknown）没有这个数，退回按预占量，与旧行为一致。
+            charged = reserved if row["actual_units"] is None else max(0, int(row["actual_units"]))
+            clarified = 0 if outcome == "not_sent" else (charged if actual_units is None else max(0, min(int(actual_units), reserved)))
+            correction = clarified - charged
             if correction:
                 for window, scope_key, kind in pairs:  # 用原 scope、原记账窗口，不碰当天别的操作
                     if kind == DAILY:
@@ -179,7 +194,10 @@ class BudgetLedger:
         conn.execute(
             "UPDATE web_budget_reservations SET status = ?, outcome = ?, actual_units = ?, provider_request_id = COALESCE(?, provider_request_id), "
             "settled_at = ?, updated_at = ? WHERE reservation_id = ?",
-            (_STATUS_OF[outcome], outcome, None if outcome == "unknown" else actual_units, provider_request_id, iso(now), iso(now), reservation_id),
+            # `actual_units` ＝**本地已按此计量的单位数**：succeeded/failed 时是确认发出并计费的次数；
+            # unknown 时是**已确认发出**的次数（是否被受理未知）。落下来是为了让事后查清能对着它算差额。
+            (_STATUS_OF[outcome], outcome, reserved if actual_units is None else max(0, min(int(actual_units), reserved)),
+             provider_request_id, iso(now), iso(now), reservation_id),
         )
         return _reservation(conn.execute("SELECT * FROM web_budget_reservations WHERE reservation_id = ?", (reservation_id,)).fetchone())
 

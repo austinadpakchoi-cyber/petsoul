@@ -1,5 +1,9 @@
 """旧 /api/v1 接口的统一访问策略（可选启用），防止“只保护新网页入口、旧入口绕过”。
 
+2026-09-23（运营后台窗口 adm1 追加）：`/api/v1/admin` 与 `/api/v1/web` 一样被排除在本守卫之外。
+它是新增的员工后台，自己带独立会话、CSRF、来源校验与逐请求权限；不排除的话 policy=closed
+会把它整个 404 掉。这一改只加了一个前缀判断，旧接口的策略语义没有任何变化。
+
 现状（HEAD 980feab 只读核对）：除 /api/v1/me 与 claim_pet 外，旧的宠物级接口
 （DNA、通讯、记忆、经济、旅行、轨迹等）都不校验调用者；/api/v1/scheduler/tick
 可匿名推进世界；/media 静态目录全量公开上传文件。
@@ -24,6 +28,9 @@ from ..auth import AuthError
 
 LEGACY_PREFIX = "/api/v1/"
 WEB_PREFIX = "/api/v1/web"
+# 平台运营后台（/api/v1/admin）不是旧接口：它有自己的员工会话、CSRF 与逐请求权限。
+# 不排除的话，policy=closed 的纯网页部署会把整个后台 404 掉（那正是推荐给公网的策略）。
+ADMIN_PREFIX = "/api/v1/admin"
 
 PUBLIC_PATHS = frozenset({"/api/v1/auth/apple"})
 BEARER_SELF_PATHS = frozenset({"/api/v1/me", "/api/v1/me/claim_pet", "/api/v1/push/register", "/api/v1/push/unregister"})
@@ -49,7 +56,8 @@ def _deny(status: int, detail: str) -> JSONResponse:
 def evaluate_legacy_request(request: Request) -> JSONResponse | None:
     """返回 None 表示放行；否则返回拒绝响应。只对旧 /api/v1（非 web）路径生效。"""
     path = request.url.path
-    if not path.startswith(LEGACY_PREFIX) or path == WEB_PREFIX or path.startswith(WEB_PREFIX + "/"):
+    exempt = (WEB_PREFIX, ADMIN_PREFIX)
+    if not path.startswith(LEGACY_PREFIX) or any(path == prefix or path.startswith(prefix + "/") for prefix in exempt):
         return None
     state = request.app.state
     policy = state.settings.legacy_api_policy

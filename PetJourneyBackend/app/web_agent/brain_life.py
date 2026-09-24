@@ -201,8 +201,11 @@ class BrainLife:
             return self._back_off(pet_id, at, BrainOutcome(pet_id, self.mode, "rejected", proposal.composed_by, destination,
                                                            reason="offer_expired", operation_id=operation_id), resolved=resolved)
         try:
+            # honor_commitments=True：**这是 TA 自己决定出门**，合同 15 节裁定自主出发要认承诺闸
+            # （主人自己点「出发」那条路一律不传，拦主人没道理）。被拦时抛 `commitment_active`，
+            # 由下面那个 except 记成一次明确的「这回没出成」，不是崩溃。
             journey = self.journeys.depart(user_id, pet_id, home.home_id, destination, at, operation_key=operation_id,
-                                           expected_versions=versions, valid_until=chosen.valid_until)
+                                           expected_versions=versions, valid_until=chosen.valid_until, honor_commitments=True)
         except LeaseLost:  # 租约在模型返回之后被接手：出发事务已整体回滚，这里不能再把它记成“这次没想成”
             raise
         except Exception as exc:  # noqa: BLE001 - 规则拒绝（钱不够、已在外面、睡着、现实资料不可用）都是明确结果，不是崩溃

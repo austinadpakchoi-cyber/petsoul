@@ -1,5 +1,6 @@
+/* 小窝是二级页（bareRoutes），下面没有底栏，不再为它留位置 */
 .ps-home-page.ps-page {
-  padding: 0 0 calc(var(--tabbar-h) + 24px);
+  padding: 0 0 calc(var(--safe-bottom) + 24px);
 }
 .ps-living-scene {
   position: relative;
@@ -17,103 +18,519 @@
   object-position: center;
   z-index: -1;
 }
+
+/*
+ * 庭院底图是 UI-ASSET-008 长图（780×1690）：盒子仍是 390:610，热点、站位仍按原 780×1320 的框算。
+ * cover 按宽度铺满（每个 CSS px 对 780 ÷ 宽 个原图像素），纵向位置取 50 ÷ (1690 − 1220) = 10.6383%：
+ * 盒子上沿对着第 50 行、下沿对着第 1270 行，和原图 780×1320 cover 居中时一模一样（原来上下各裁 50 行）。
+ */
+.ps-living-scene.is-courtyard .ps-living-background {
+  object-position: 50% calc(50 / 470 * 100%);
+}
+/* 页面是场景下面地面层的定位参照（庭院的长图地面、屋内的过渡垫层都靠它），层叠隔离在本页里：垫在本页内容之后、页面外壳之内 */
+.ps-home-page.ps-page {
+  position: relative;
+  isolation: isolate;
+}
+/*
+ * 庭院的地面：长图在场景盒子下面接着铺，从盒子底边（页面顶端往下 610 ÷ 390 个宽度）铺到页面底。
+ * ::before 是长图最下面的 420 行（第 1270–1690 行，底对齐、宽度铺满），和盒子里的图同一张、同一个缩放，接缝处像素是连着的；
+ * 屏幕再高，图下面还空着的部分补长图最底 8 行整幅平均的地面色 #8c7e39（rgb 140, 126, 57，取自 courtyard-base-tall.webp），
+ * 图的最后 64px 渐变到这个颜色，免得纹理一刀切断（长图最底 60 行本身就在往这个颜色暗下去，渐变顺着它）；
+ * 渐变两头缓、中间快（同一个颜色只调透明度），起点不出现一条线。
+ * 插画不随主题变，浅色、深色都用这个颜色（例外理由同 farm/garden-bed.css 文件头）。
+ * 矮屏上图比剩下的地方长，超出页面底边的部分裁掉，不把页面撑长（不为一段静景多出一截能滚的空白）。
+ */
+.ps-living-ground {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin-top: calc(610 / 390 * 100%);
+  overflow: hidden;
+  background: #8c7e39;
+  pointer-events: none;
+}
+.ps-living-ground::before {
+  content: "";
+  display: block;
+  width: 100%;
+  aspect-ratio: 780 / 420;
+  background:
+    linear-gradient(
+      to bottom,
+      transparent calc(100% - 64px),
+      rgba(140, 126, 57, 0.16) calc(100% - 48px),
+      rgba(140, 126, 57, 0.5) calc(100% - 31px),
+      rgba(140, 126, 57, 0.84) calc(100% - 14px),
+      #8c7e39
+    ),
+    var(--ground-src) 50% 100% / 100% auto no-repeat;
+}
+
+/*
+ * ================= [过渡方案] 场景自然淡进地面 · 开始 =================
+ * 现在只剩屋内用：庭院已换 UI-ASSET-008 长图（上面的 .ps-living-ground）；屋内那张长图接缝没过审，本轮不接。
+ * 底图是 390:610 的固定比例，高屏手机上场景下面会露出一截。在屋内底图往下延伸（上面 1320px 像素不变）之前：
+ *   ① 只有屋内底图这一层底部 14% 用遮罩淡出——装热区的 section、TA、便笺都不加遮罩；
+ *   ② 场景后面垫一层“地面”（HomeScene 里的 .ps-living-extend，只在屋内出现）：从底图开始淡出的那一行起铺，
+ *      接缝处是按底图可见区域底边 3% 取的 8 段颜色（横向渐变，一列一列接得上；每段向这一带的平均色靠 40%，免得往下拉出竖条），
+ *      往下约 130px 过渡成一种地面色；深色模式下地面从接缝下面就开始沉进深色页面底色
+ *      （底图本身不随主题变，所以接缝处两种模式都按它的颜色）。
+ * 取色方法：底图 780×1320，按 cover 放进 390:610 的盒子里可见 y=50–1270，取底边 3% 分 8 段平均，
+ * --x-avg 是同一带的整体平均，--extend-base 是底部 14% 的平均 ×0.9。
+ * 屋内真图到了整段删掉（到“结束”为止），再删 HomeScene.tsx 里的 .ps-living-extend 元素；section 的占位底色会回到上面的纯色。
+ */
+.ps-living-scene.is-inside {
+  /* 占位底色只铺在不淡出的部分，淡出的那一截要透出后面的地面 */
+  background: linear-gradient(to bottom, #dec79e 86%, transparent 86%);
+}
+.ps-living-scene.is-inside .ps-living-background {
+  -webkit-mask-image: linear-gradient(to bottom, #000 86%, transparent);
+  mask-image: linear-gradient(to bottom, #000 86%, transparent);
+}
+.ps-living-extend {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  /* 纵向的百分比外边距按宽度算：86% × 610/390 = 134.51% 的宽度，正好是底图开始淡出的那一行 */
+  margin-top: 134.51%;
+  /* 浅色：地面就是底图的地面色，往下略微沉一点，像退到远处 */
+  --extend-ground: var(--extend-base);
+  --extend-far: color-mix(in srgb, var(--extend-base) 86%, #000);
+  background-image:
+    linear-gradient(to bottom, transparent 0, transparent 40px, var(--extend-ground) 170px, var(--extend-far) 480px),
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--x0) 60%, var(--x-avg)) 6.25%,
+      color-mix(in srgb, var(--x1) 60%, var(--x-avg)) 18.75%,
+      color-mix(in srgb, var(--x2) 60%, var(--x-avg)) 31.25%,
+      color-mix(in srgb, var(--x3) 60%, var(--x-avg)) 43.75%,
+      color-mix(in srgb, var(--x4) 60%, var(--x-avg)) 56.25%,
+      color-mix(in srgb, var(--x5) 60%, var(--x-avg)) 68.75%,
+      color-mix(in srgb, var(--x6) 60%, var(--x-avg)) 81.25%,
+      color-mix(in srgb, var(--x7) 60%, var(--x-avg)) 93.75%
+    );
+  background-color: var(--extend-far);
+  pointer-events: none;
+}
+.ps-living-extend.is-inside {
+  --x0: #7f6a3a;
+  --x1: #6c5b32;
+  --x2: #7f6639;
+  --x3: #775f35;
+  --x4: #6a542b;
+  --x5: #ad6c36;
+  --x6: #a36432;
+  --x7: #9d5f2d;
+  --x-avg: #876233;
+  --extend-base: #876134;
+}
+@media (prefers-color-scheme: dark) {
+  .ps-living-extend {
+    /* 深色：接缝下面就开始往深色页面底色沉 */
+    --extend-ground: color-mix(in srgb, var(--extend-base) 62%, var(--c-bg));
+    --extend-far: color-mix(in srgb, var(--extend-base) 22%, var(--c-bg));
+  }
+}
+/* ================= [过渡方案] 场景自然淡进地面 · 结束 ================= */
+/*
+ * 小窝是地图下面的二级页。顶栏：左上“‹ 地图”，中间“TA 的小窝”，右上旅费；下面一排切换庭院 / 屋内。
+ * 顶栏与小图标、气泡用主题令牌（深色模式跟着变）；场景插画本身是白天，不随主题变。
+ */
 .ps-living-header {
+  position: relative;
+  z-index: 2;
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
-  padding: 17px 20px;
-  background: linear-gradient(#fff8ebed, #fff8eb9c 72%, transparent);
-}
-.ps-living-identity {
-  display: flex;
+  /* 名字很长时标题省略，不把“‹ 地图”和旅费挤出去；名字短时标题居中 */
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, max-content) minmax(max-content, 1fr);
+  grid-template-areas:
+    "back title wallet"
+    "switch switch switch";
   align-items: center;
-  gap: 9px;
-  min-width: 0;
+  gap: 8px 10px;
+  padding: calc(var(--safe-top) + 12px) 12px 22px;
+  background: linear-gradient(
+    color-mix(in srgb, var(--c-bg) 94%, transparent),
+    color-mix(in srgb, var(--c-bg) 62%, transparent) 70%,
+    transparent
+  );
+  pointer-events: none;
 }
-.ps-living-avatar {
-  width: 38px;
+.ps-living-header > * {
+  pointer-events: auto;
+}
+.ps-home-back {
+  grid-area: back;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   height: 38px;
-  object-fit: cover;
-  object-position: center 20%;
-  border: 2px solid #fffcf1;
-  border-radius: 50%;
-  background: #d5c4a0;
+  padding: 0 14px 0 8px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  box-shadow: 0 6px 18px var(--c-shadow);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
 }
-.ps-living-identity span {
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  color: #52624d;
+/* 场景还没出来（读取中 / 出错）时，同一个出口放在页面最上面 */
+.ps-home-back.is-inline {
+  margin: 12px 12px 8px;
 }
-.ps-living-identity h1 {
-  font-size: 19px;
+.ps-home-title {
+  grid-area: title;
   margin: 0;
-  color: #2e4033;
-  line-height: 1.35;
+  overflow: hidden;
+  color: var(--c-ink);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .ps-living-wallet {
-  align-self: center;
-  display: flex;
+  grid-area: wallet;
+  justify-self: end;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  height: 38px;
+  padding: 0 13px 0 10px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  box-shadow: 0 6px 18px var(--c-shadow);
   text-decoration: none;
-  color: #79551d;
-  padding: 6px 11px;
-  background: #fff6dfe8;
-  border: 1px solid #cbb0746b;
-  border-radius: 24px;
+}
+.ps-living-wallet svg {
+  color: var(--c-sun);
 }
 .ps-living-switch {
+  grid-area: switch;
+  justify-self: center;
   display: flex;
-  width: fit-content;
-  background: #fffcf4d9;
-  border: 1px solid #ffffff91;
   padding: 3px;
+  border: 1px solid var(--c-surface-stroke);
   border-radius: 22px;
-  box-shadow: 0 3px 10px #30423212;
+  background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+  box-shadow: 0 3px 10px var(--c-shadow);
 }
 .ps-living-switch button {
+  min-height: 34px;
+  padding: 6px 18px;
   border: 0;
-  padding: 7px 17px;
-  color: #3e4e40;
-  background: transparent;
   border-radius: 18px;
-  font-size: 12px;
-  min-height: 36px;
+  background: transparent;
+  color: var(--c-ink-2);
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
 }
 .ps-living-switch button[aria-pressed="true"] {
-  background: #52694d;
-  color: white;
+  background: var(--c-deep-ink);
+  color: var(--c-on-deep);
 }
-.ps-living-settings {
-  justify-self: end;
-  align-self: center;
-  color: #41553c;
-  padding: 10px;
+.ps-home-back:focus-visible,
+.ps-living-wallet:focus-visible,
+.ps-home-rail__btn:focus-visible {
+  outline: 3px solid var(--c-sun);
+  outline-offset: 2px;
 }
-.ps-living-label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+
+/* ---------- 场景里可以点的东西：平时不写字；点到冒出名字和能做的事；电脑上悬停显示名字 ---------- */
+.ps-home-hit {
+  z-index: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ps-home-hit:hover,
+.ps-home-hit:focus-visible,
+.ps-home-hit[aria-expanded="true"] {
+  z-index: 5;
+}
+/* 画在底图上的东西（屋门、信箱、收藏柜）：透明的点按区域，盖在画出来的那件东西上 */
+.ps-home-spot {
   position: absolute;
-  min-height: 36px;
-  padding: 5px 10px;
-  color: #3c5138;
-  background: #fffbefe8;
-  border: 1px solid #cebda582;
+  padding: 0;
+  border: 0;
   border-radius: 18px;
-  box-shadow: 0 3px 9px #3d342420;
+  background: transparent;
+}
+.ps-home-spot--door {
+  left: 26%;
+  top: 20%;
+  width: 28%;
+  height: 22%;
+}
+.ps-home-spot--mail {
+  left: 75%;
+  top: 53%;
+  width: 23%;
+  height: 14%;
+}
+.ps-home-spot--cabinet {
+  left: 60%;
+  top: 18%;
+  width: 38%;
+  height: 28%;
+}
+/* 名字标签：只在能悬停的设备上悬停、或键盘聚焦时出现；字来自 data-name，平时页面里没有这几个字 */
+.ps-home-hit::after {
+  content: attr(data-name);
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  max-width: 200px;
+  overflow: hidden;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--c-deep-ink) 86%, transparent);
+  color: var(--c-on-deep);
   font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.ps-home-hit:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.ps-home-hit[aria-expanded="true"]::after {
+  opacity: 0;
+}
+/* 轻光：第一次进来按顺序闪一次（延迟由页面给 --hint-delay）；悬停、点开时留一点微光，看得出是哪一件 */
+.ps-home-glow {
+  isolation: isolate;
+}
+.ps-home-glow::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -8%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--paper) 75%, transparent),
+    color-mix(in srgb, var(--paper) 35%, transparent) 60%,
+    transparent
+  );
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-sun) 70%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-med) var(--ease-out);
+}
+/* 点开 / 悬停：一圈暖光 + 很淡的亮，东西本身不被洗白 */
+.ps-home-hit[aria-expanded="true"]::before {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--paper) 22%, transparent), transparent);
+  opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ps-home-hit:hover::after {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  .ps-home-hit:hover::before {
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--paper) 22%, transparent), transparent);
+    opacity: 0.75;
+  }
+}
+/* 时长与 HomeScene.tsx 的 HINT_GLOW_MS 一致 */
+.ps-home-glow.is-hinting::before {
+  animation: ps-home-hint 1100ms var(--ease-out) var(--hint-delay, 400ms) 1 both;
+}
+@keyframes ps-home-hint {
+  0% {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.14);
+  }
+}
+
+/* 点开的小气泡：名字、一句状态、能做的事。位置由页面按物件算好，收在场景里 */
+.ps-home-bubble {
+  position: absolute;
+  z-index: 6;
+  top: 0;
+  left: 0;
+  display: grid;
+  gap: 4px;
+  width: max-content;
+  min-width: 132px;
+  max-width: min(232px, calc(100% - 16px));
+  padding: 10px 12px 12px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-control);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  box-shadow: 0 12px 28px var(--c-shadow);
+  animation: ps-home-bubble-in var(--dur-fast) var(--ease-out);
+}
+.ps-home-bubble__name {
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.35;
+}
+.ps-home-bubble__detail {
+  color: var(--c-ink-2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.ps-home-bubble__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.ps-home-bubble__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 36px;
+  padding: 0 10px 0 14px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--c-leaf-soft);
+  color: var(--c-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
   text-decoration: none;
   cursor: pointer;
 }
-.ps-living-door {
-  top: 25%;
-  left: 38%;
+.ps-home-bubble__action svg {
+  color: var(--c-leaf);
 }
-.ps-living-cabinet {
-  top: 31%;
-  right: 10%;
+@keyframes ps-home-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+
+/* ---------- 左侧小图标：只放小窝自己的几件事（菜园门、院子信箱都在场景里，不重复；信箱图标只在屋内） ---------- */
+.ps-home-rail {
+  position: absolute;
+  z-index: 3;
+  left: 12px;
+  top: calc(var(--safe-top) + 130px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ps-home-rail__item {
+  position: relative;
+}
+.ps-home-rail__btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-control);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  box-shadow: 0 6px 18px var(--c-shadow);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.ps-home-rail__btn::after {
+  content: attr(data-name);
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--c-deep-ink) 86%, transparent);
+  color: var(--c-on-deep);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-4px, -50%);
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ps-home-rail__btn:hover::after {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
+.ps-home-rail__btn:focus-visible::after {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+.ps-home-rail__btn[data-open="true"]::after {
+  opacity: 0;
+}
+.ps-home-rail__dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--c-surface);
+  border-radius: 50%;
+  background: var(--c-coral);
+}
+.ps-home-rail__bubble {
+  position: absolute;
+  z-index: 6;
+  left: calc(100% + 8px);
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 38px;
+  padding: 0 10px 0 14px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  box-shadow: 0 10px 24px var(--c-shadow);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+  transform: translateY(-50%);
+  animation: ps-home-rail-in var(--dur-fast) var(--ease-out);
+}
+.ps-home-rail__bubble svg {
+  color: var(--c-leaf);
+}
+@keyframes ps-home-rail-in {
+  from {
+    opacity: 0;
+    transform: translate(-4px, -50%);
+  }
 }
 .ps-living-pet {
   position: absolute;
@@ -208,6 +625,260 @@
   background: #fffaf2dc;
   color: #413b35;
 }
+/* 统一宠物形象（PetFigure）：已生效角色为透明全身，脚底对准容器底边中点；没有角色时是原照肖像（临时）+ 真实准备状态。 */
+.ps-living-pet.is-character {
+  left: 24%;
+  width: 52%;
+  top: 25%;
+  height: 28%;
+  filter: drop-shadow(0 8px 6px #3d362430);
+}
+.ps-pet-figure {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+.ps-pet-figure.is-character {
+  transform-origin: 50% 100%;
+  animation: ps-pet-breathe 5.6s ease-in-out infinite;
+}
+.ps-pet-figure.is-character img {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: auto;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+}
+.ps-pet-figure__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -3%;
+  width: 46%;
+  height: 10%;
+  border-radius: 50%;
+  background: #45352540;
+  filter: blur(5px);
+  transform: translateX(-50%);
+}
+.ps-pet-figure__note {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid #cebda582;
+  border-radius: 999px;
+  background: #fffbefe8;
+  color: #5a4d3a;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 3px 9px #3d342420;
+  transform: translateX(-50%);
+}
+.ps-pet-figure__note.is-queued::before,
+.ps-pet-figure__note.is-running::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d99a4a;
+  animation: ps-trip-live-dot 1.8s ease-in-out infinite;
+}
+.ps-pet-figure__note.is-failed {
+  color: #8d5b52;
+}
+.ps-pet-figure__note.is-unknown {
+  color: #7b6a3f;
+}
+/*
+ * 形象准备中（仅真实 queued/running）：照片后面一圈暖金光环慢慢转，照片轻轻浮起并发光，
+ * 一道金光扫过，四角星在周围闪、光点往上飘——读作“正在为 TA 作画”。形象就绪后角色淡入落地。
+ * 位置都以照片卡中心为基准（卡片 110px 见方），不随场景容器尺寸漂移。
+ */
+.ps-pet-figure__halo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 168px;
+  height: 168px;
+  margin: -84px 0 0 -84px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 214, 128, 0) 0deg,
+    rgba(255, 214, 128, 0.95) 55deg,
+    rgba(255, 248, 222, 1) 85deg,
+    rgba(255, 214, 128, 0) 145deg,
+    rgba(255, 214, 128, 0) 180deg,
+    rgba(238, 160, 88, 0.85) 240deg,
+    rgba(255, 236, 188, 0.95) 268deg,
+    rgba(238, 160, 88, 0) 325deg
+  );
+  filter: blur(10px);
+  animation: ps-prepare-spin 4.2s linear infinite;
+  pointer-events: none;
+}
+.ps-pet-figure.is-preparing .ps-living-pet__identity {
+  position: relative;
+  animation: ps-prepare-float 3.2s ease-in-out infinite;
+}
+.ps-pet-figure.is-preparing .ps-living-pet__identity::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: linear-gradient(
+    115deg,
+    transparent 40%,
+    rgba(255, 224, 150, 0.55) 46%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(255, 224, 150, 0.55) 54%,
+    transparent 60%
+  );
+  transform: translateX(-120%);
+  animation: ps-prepare-sweep 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+.ps-pet-figure__magic {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+/* 四角星：外圈柔光 + 裁成星形的亮芯 */
+.ps-pet-figure__magic b {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  opacity: 0;
+  animation: ps-prepare-twinkle 2.6s ease-in-out infinite;
+}
+.ps-pet-figure__magic b::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 214, 128, 0.8), rgba(255, 214, 128, 0) 68%);
+}
+.ps-pet-figure__magic b::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #fffef6 20%, #ffd27a 60%, #e99a45);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+}
+.ps-pet-figure__magic b:nth-child(1) { margin: -76px 0 0 -82px; animation-delay: 0s; }
+.ps-pet-figure__magic b:nth-child(2) { width: 12px; height: 12px; margin: -84px 0 0 58px; animation-delay: 0.7s; }
+.ps-pet-figure__magic b:nth-child(3) { width: 18px; height: 18px; margin: 10px 0 0 64px; animation-delay: 1.4s; }
+.ps-pet-figure__magic b:nth-child(4) { width: 11px; height: 11px; margin: 24px 0 0 -80px; animation-delay: 2s; }
+/* 光点：从照片下缘往上飘 */
+.ps-pet-figure__magic i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  margin-top: 46px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffbe8 0 32%, rgba(255, 206, 112, 0.95) 38% 58%, rgba(255, 206, 112, 0) 66%);
+  opacity: 0;
+  animation: ps-prepare-rise 3.6s ease-in infinite;
+}
+.ps-pet-figure__magic i:nth-child(5) { margin-left: -52px; animation-delay: 0s; }
+.ps-pet-figure__magic i:nth-child(6) { margin-left: -22px; width: 5px; height: 5px; animation-delay: 1.3s; }
+.ps-pet-figure__magic i:nth-child(7) { margin-left: 8px; width: 9px; height: 9px; animation-delay: 2.4s; }
+.ps-pet-figure__magic i:nth-child(8) { margin-left: 34px; width: 6px; height: 6px; animation-delay: 0.7s; }
+.ps-pet-figure__magic i:nth-child(9) { margin-left: 58px; animation-delay: 1.9s; }
+.ps-pet-figure.is-character img {
+  animation: ps-figure-appear 900ms var(--ease-out) both;
+}
+@keyframes ps-prepare-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@keyframes ps-prepare-float {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 12px 20px -10px #4f3a2b99, 0 0 14px 3px rgba(255, 206, 112, 0.45);
+  }
+  50% {
+    transform: translateY(-5px);
+    box-shadow: 0 18px 24px -12px #4f3a2b88, 0 0 30px 10px rgba(255, 206, 112, 0.75);
+  }
+}
+@keyframes ps-prepare-sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  60%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+@keyframes ps-prepare-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.3) rotate(0deg);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1) rotate(45deg);
+  }
+  70% {
+    opacity: 0.7;
+    transform: scale(0.8) rotate(70deg);
+  }
+}
+@keyframes ps-prepare-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-128px) scale(1.1);
+  }
+}
+@keyframes ps-figure-appear {
+  from {
+    opacity: 0;
+    filter: blur(6px) brightness(1.4);
+  }
+}
+.ps-character-adjust {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.ps-character-adjust__note {
+  margin: 0;
+  color: var(--c-ink-2);
+  font-size: 12px;
+  line-height: 1.5;
+}
+@keyframes ps-trip-live-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
 .is-inside .ps-living-pet {
   top: 44%;
   left: 27%;
@@ -220,6 +891,7 @@
 }
 .ps-living-bag {
   position: absolute;
+  z-index: 1;
   width: 18%;
   height: 15%;
   object-fit: contain;
@@ -228,6 +900,7 @@
 }
 .ps-living-cup {
   position: absolute;
+  z-index: 1;
   width: 12%;
   height: 9%;
   object-fit: contain;
@@ -235,175 +908,130 @@
   top: 44.5%;
   pointer-events: none;
 }
+/* TA 不在家：窝是空的，窝边一张便笺（纸质固定色，夜里也是暖纸深墨）；点它回到地图 */
 .ps-living-note {
   position: absolute;
-  top: 45%;
-  left: 43%;
+  z-index: 1;
+  top: 44%;
+  left: 40%;
+  display: block;
+  min-width: 96px;
+  padding: 9px 12px 8px;
+  border: 1px solid var(--paper-shade);
+  border-radius: 3px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  box-shadow: 1px 5px 8px color-mix(in srgb, var(--c-deep-ink) 22%, transparent);
+  font-family: Georgia, "Noto Serif SC", serif;
+  font-size: 15px;
+  line-height: 1.3;
+  text-decoration: none;
   transform: rotate(-6deg);
-  border: 1px solid #d7c29b;
-  background: #fff3d7;
-  color: #725b38;
-  padding: 8px 10px;
-  box-shadow: 1px 4px 5px #4a38232a;
-  font-family: serif;
-  font-size: 13px;
-  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .ps-living-note span {
   display: block;
-  font-family: sans-serif;
-  font-size: 9px;
-  opacity: 0.7;
+  margin-top: 3px;
+  color: var(--paper-secondary-ink);
+  font-family: var(--font-sans);
+  font-size: 11px;
 }
 .is-inside .ps-living-note {
-  top: 56%;
+  top: 57%;
+  left: 44%;
 }
-.ps-living-memento {
-  left: 9%;
+/* 你为 TA 留下的叮嘱（最爱的东西）：一枚纸签，不写字，点开才看得到 */
+.ps-home-memento {
+  position: absolute;
+  left: 8%;
   top: 55%;
-  max-width: 65%;
-}
-.ps-living-mail {
-  left: 76%;
-  top: 59%;
-}
-.ps-living-pantry {
-  right: 4%;
-  bottom: 9%;
-}
-.ps-living-envelope {
-  position: absolute;
-  top: -39px;
-  left: 14px;
-  background: #fff6dc;
-  padding: 3px;
-  border: 1px solid #b59a6d;
-  transform: rotate(-12deg);
-  color: #b96646;
-  border-radius: 4px;
-}
-.ps-living-garden {
-  position: absolute;
-  left: 3%;
-  bottom: 8%;
-  width: 67%;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0;
-}
-.ps-living-plot {
-  position: relative;
-  display: block;
-  min-width: 0;
-  height: 98px;
-  border: 0;
-  background: transparent;
+  place-items: center;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  cursor: pointer;
+  border: 1px solid var(--paper-shade);
+  border-radius: 12px 12px 12px 4px;
+  background: var(--paper);
+  color: var(--paper-accent);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--c-deep-ink) 22%, transparent);
+  transform: rotate(-4deg);
 }
-.ps-living-plot:focus-visible {
-  outline: 2px solid #fff8d5;
-  outline-offset: 3px;
+/* 有新消息：信封从信箱口探出来一点（不写数字，数字在左侧小图标上） */
+.ps-home-envelope {
+  position: absolute;
+  top: -20px;
+  left: 6%;
+  display: grid;
+  place-items: center;
+  padding: 3px 4px;
+  border: 1px solid var(--paper-shade);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--paper-accent);
+  box-shadow: 0 3px 6px color-mix(in srgb, var(--c-deep-ink) 20%, transparent);
+  transform: rotate(-12deg);
+  animation: ps-home-envelope 3.2s ease-in-out infinite;
+}
+@keyframes ps-home-envelope {
+  0%,
+  100% {
+    transform: rotate(-12deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-9deg) translateY(-3px);
+  }
+}
+/* 院子里的菜园入口：菜园是二级页（/garden），这里只露出最值得看的一块地；平时不挂字牌，点开气泡才说状态 */
+.ps-living-garden-gate {
+  position: absolute;
+  left: 4%;
+  bottom: 8%;
+  display: block;
+  width: 38%;
+  padding: 0;
+  border: 0;
   border-radius: 15px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
 }
-.ps-living-plot:nth-child(3) {
-  margin-top: -8px;
-  margin-left: 28px;
+.ps-living-garden-gate:active .ps-living-plot-art {
+  transform: scale(0.97);
 }
+/* 熟了：地块上挂一颗小亮点（不写字；几块熟了、去菜园，点开气泡才说） */
+.ps-living-garden-gate__ripe {
+  position: absolute;
+  top: 2px;
+  right: 10%;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  background: var(--c-sun);
+  color: var(--c-deep-ink);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--c-deep-ink) 25%, transparent);
+  animation: ps-home-ripe 1.9s ease-in-out infinite;
+}
+/*
+ * 露出的那块地：和菜园页同一个 GardenBed（开垦土块 + 种在地里的作物；几何、前景土层、成熟光、摇摆和“减少动态效果”
+ * 都在 farm 的 garden-bed.css / farm.css）。外框保持原来 92px 高，入口按钮的位置、大小不变；
+ * 地块比框宽 15%、往下探一点，像原来的木框那样压在草地上（伸出框的部分仍在按钮里，点到也算点入口）。
+ */
 .ps-living-plot-art {
   position: relative;
   display: block;
   width: 100%;
   height: 92px;
 }
-.ps-living-soil {
+.ps-living-plot-art .ps-garden-bed {
   position: absolute;
-  width: 115%;
-  max-width: none;
-  height: auto;
-  bottom: -12px;
   left: -7.5%;
-}
-.ps-living-crop {
-  position: absolute;
-  width: 84%;
-  height: auto;
-  bottom: 10px;
-  left: 8%;
-}
-.ps-living-crop.is-leaves {
-  bottom: 9px;
-}
-.ps-living-crop.is-tomato {
-  bottom: 12px;
-  width: 92%;
-  left: 4%;
-}
-.ps-living-crop.is-sun_pea,
-.ps-living-crop.is-sea_salt_pea {
-  width: 88%;
-  left: 6%;
-}
-.ps-living-crop.is-moon_radish,
-.ps-living-crop.is-sakura_radish {
-  bottom: 7px;
-  width: 82%;
-  left: 9%;
-}
-.ps-living-plot-name {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  padding: 2px 7px;
-  border: 1px solid #bd9d66;
-  background: #f6dfb1;
-  color: #56452b;
-  font-size: 10px;
-  border-radius: 3px;
-}
-.ps-living-plot-state {
-  position: absolute;
-  top: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #665a46;
-  background: #fff5d8df;
-  box-shadow: 0 3px 7px #3843262c;
-  border: 1px solid #d8c49a;
-  border-radius: 12px;
-  padding: 2px 7px;
-  white-space: nowrap;
-  font-size: 9px;
-  font-weight: 700;
-}
-.ps-living-plot-state.is-ready {
-  color: #fff9e6;
-  background: #55713a;
-  border-color: #e5ebac;
-  animation: ps-harvest-pulse 1.9s ease-in-out infinite;
-}
-.ps-living-plot-art.is-growing .ps-living-crop {
-  transform-origin: 50% 100%;
-  animation: ps-crop-sway 4.8s ease-in-out infinite;
-}
-.ps-living-plot-art.is-ripe::after {
-  content: "";
-  position: absolute;
-  left: 24%;
-  right: 24%;
-  bottom: 16px;
-  height: 35%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, #fff5a940, transparent 67%);
-  mix-blend-mode: screen;
-  pointer-events: none;
-  animation: ps-ripe-glow 2.2s ease-in-out infinite;
-}
-.ps-living-plot-art.is-ripe .ps-living-crop {
-  transform-origin: 50% 100%;
-  animation: ps-ripe-lift 2.4s ease-in-out infinite;
+  bottom: -18px;
+  width: 115%;
 }
 @keyframes ps-pet-breathe {
   0%,
@@ -427,105 +1055,204 @@
     filter: saturate(1.035) brightness(1.012);
   }
 }
-@keyframes ps-crop-sway {
+@keyframes ps-home-ripe {
   0%,
   100% {
-    transform: rotate(0);
-  }
-  36% {
-    transform: rotate(1.6deg) translateY(-1px);
-  }
-  71% {
-    transform: rotate(-1.3deg);
-  }
-}
-@keyframes ps-ripe-lift {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
+    transform: scale(1);
   }
   50% {
-    transform: translateY(-3px) scale(1.025);
+    transform: scale(1.12);
   }
 }
-@keyframes ps-ripe-glow {
-  0%,
-  100% {
-    opacity: 0.35;
-    transform: scale(0.9);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.1);
-  }
-}
-@keyframes ps-harvest-pulse {
-  0%,
-  100% {
-    transform: translateX(-50%) scale(1);
-  }
-  50% {
-    transform: translateX(-50%) scale(1.06);
-  }
-}
-.ps-home-participation {
-  color: var(--paper-ink);
-  position: relative;
-  margin: -30px 16px 0;
-  padding: 16px 18px;
-  z-index: 1;
-  background: #fffcf2f7;
-  border: 1px solid #ece2cb;
-  border-radius: 18px;
-  box-shadow: 0 5px 20px #56482c12;
-}
-.ps-home-participation__eyebrow {
-  color: #8b7654;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-}
-.ps-home-participation h2 {
-  font-size: 18px;
-  margin: 5px 0;
-  line-height: 1.4;
-}
-.ps-home-participation p {
-  color: #707562;
-  font-size: 12px;
-  margin: 0 0 12px;
-}
-.ps-home-participation .ps-btn {
-  width: 100%;
-  min-height: 41px;
-}
-@media (prefers-color-scheme: dark) {
-  .ps-home-participation .ps-btn--leaf {
-    background: var(--c-deep-ink);
-    color: var(--c-on-deep);
-  }
-}
+/* 场景下面插进来的卡片（入住欢迎、驾校卡）：卡片自己用主题令牌；自己不铺底色，底下透出场景后面的地面层 */
 .ps-home-below {
   padding: 20px 16px 24px;
   display: grid;
   gap: 12px;
-  background: linear-gradient(180deg, #faf4e7 0, var(--c-bg) 35%);
 }
 .ps-home-below > .ps-card {
-  border: 1px solid #e9deca;
+  border: 1px solid var(--c-surface-stroke);
   border-radius: 18px;
-  box-shadow: 0 8px 24px -21px #45382780;
+  box-shadow: 0 8px 24px -21px var(--c-shadow);
 }
 .ps-home-below > .ps-card:not(.ps-welcome) {
-  background: #fffdf6;
+  background: var(--c-surface);
 }
-.ps-home-quiet-links {
+/* 插槽都没有内容时（“生活与回忆”那排、“此刻 · 一起生活”面板都已退役）不留一块空白 */
+.ps-home-below:empty {
+  display: none;
+}
+
+/* 到家时刻：第一次入住后的一张纸卡，只讲真实的事 */
+.ps-arrival {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding: 16px calc(12px + var(--safe-right)) calc(var(--safe-bottom) + 12px) calc(12px + var(--safe-left));
+  background: rgba(38, 32, 24, 0.38);
+  animation: ps-arrival-fade var(--dur-med) var(--ease-out);
+}
+/* 卡片本身不裁切（头像要探出上沿）；内容太长时在内层 __body 里滚动 */
+.ps-arrival__card {
+  position: relative;
+  display: grid;
+  width: min(100%, 420px);
+  padding: 58px 20px 18px;
+  margin-top: 52px;
+  border: 1px solid #eadcc3;
+  border-radius: 26px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  text-align: center;
+  box-shadow: 0 24px 50px -24px rgba(38, 30, 18, 0.6);
+  animation: ps-arrival-rise 520ms var(--ease-out);
+}
+/* 视口高度 − 遮罩上下留白 32 − 卡片上边距 52 − 卡片上下内边距 76 − 边框 2 */
+.ps-arrival__body {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  max-height: calc(100dvh - 162px - var(--safe-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ps-arrival__portrait {
+  position: absolute;
+  z-index: 1;
+  top: -48px;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  overflow: hidden;
+  border: 5px solid #fff9eb;
+  border-radius: 26px;
+  background: #f1e5d5;
+  color: #795d49;
+  box-shadow: 0 14px 24px -12px rgba(79, 58, 43, 0.7);
+  transform: translateX(-50%);
+}
+.ps-arrival__portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ps-arrival__portrait.is-character {
+  background: radial-gradient(circle at 50% 85%, #efe1c9 0 38%, #f6ecdb 39%);
+}
+.ps-arrival__portrait.is-character img {
+  object-fit: contain;
+  object-position: 50% 100%;
+}
+/* 没有星球形象时是 PetPortrait（照片 / 演示头像 / 爪印占位，不写名字首字），铺满纸框 */
+.ps-arrival__portrait .ps-pet-portrait {
+  border-radius: 0;
+}
+.ps-arrival__kicker {
+  color: #a47a55;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.ps-arrival__card h2 {
+  margin: 0;
+  font-size: 25px;
+  letter-spacing: -0.03em;
+}
+.ps-arrival__greeting {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin: 2px 0 0;
+  padding: 13px 14px;
+  border: 1px dashed var(--paper-shade);
+  border-radius: 16px;
+  background: #fbf3e2;
+}
+.ps-arrival__greeting blockquote {
+  margin: 0;
+  font-family: Georgia, "Noto Serif SC", serif;
+  font-size: 17px;
+  line-height: 1.55;
+}
+.ps-arrival__greeting ul {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 28px;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ps-arrival__greeting li {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #efe2c8;
+  color: var(--paper-secondary-ink);
   font-size: 12px;
 }
-.ps-home-quiet-links a {
-  color: var(--c-ink-2);
+.ps-arrival__greeting figcaption {
+  color: var(--paper-secondary-ink);
+  font-size: 11px;
+}
+.ps-arrival__lead {
+  margin: 0;
+  color: var(--paper-secondary-ink);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.ps-arrival__guide {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin: 6px 0 4px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+.ps-arrival__guide li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--paper-secondary-ink);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.ps-arrival__guide svg {
+  flex: none;
+  margin-top: 1px;
+  color: #5d7c4a;
+}
+.ps-arrival__guide strong {
+  margin-right: 6px;
+  color: var(--paper-ink);
+}
+.ps-arrival__go.ps-btn {
+  min-height: 50px;
+  margin-top: 4px;
+  border-radius: 15px;
+  background: #315943;
+  color: #fffdf6;
+}
+@keyframes ps-arrival-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ps-arrival-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26px) scale(0.98);
+  }
+}
+@media (min-height: 760px) {
+  .ps-arrival {
+    align-items: center;
+  }
 }
 .ps-welcome__greeting {
   font-family: serif;
@@ -540,11 +1267,37 @@
 @media (prefers-reduced-motion: reduce) {
   .ps-living-pet.is-photo,
   .ps-living-pet.is-photo img,
-  .ps-living-plot-art.is-growing .ps-living-crop,
-  .ps-living-plot-art.is-ripe .ps-living-crop,
-  .ps-living-plot-art.is-ripe::after,
-  .ps-living-plot-state.is-ready {
+  .ps-living-garden-gate__ripe,
+  .ps-home-envelope,
+  .ps-home-bubble,
+  .ps-home-rail__bubble,
+  .ps-arrival,
+  .ps-arrival__card,
+  .ps-pet-figure.is-character,
+  .ps-pet-figure.is-character img,
+  .ps-pet-figure__note::before,
+  .ps-pet-figure.is-preparing .ps-living-pet__identity,
+  .ps-pet-figure.is-preparing .ps-living-pet__identity::after,
+  .ps-pet-figure__halo {
     animation: none;
+  }
+  .ps-pet-figure__magic,
+  .ps-pet-figure.is-preparing .ps-living-pet__identity::after {
+    display: none;
+  }
+  .ps-pet-figure.is-preparing .ps-living-pet__identity {
+    box-shadow: 0 12px 20px -10px #4f3a2b99, 0 0 22px 6px rgba(246, 204, 120, 0.55);
+  }
+  /* 第一次的提示不闪也不动：可点的东西一起亮着一小会儿，然后熄掉（时长由页面控制） */
+  .ps-home-glow.is-hinting::before {
+    animation: none;
+    opacity: 0.8;
+    transform: none;
+  }
+  .ps-home-glow::before,
+  .ps-home-hit::after,
+  .ps-home-rail__btn::after {
+    transition: none;
   }
 }
 .ps-home-catching-up { margin: 10px 16px 0; padding: 10px 12px; border: 1px solid #d8c8ac; border-radius: 12px; background: #fff8e8; color: #705b39; font-size: 12px; line-height: 1.5; }

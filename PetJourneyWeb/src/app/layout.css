@@ -1,6 +1,11 @@
 .ps-shell {
   min-height: 100dvh;
 }
+/* 二级页不显示底栏（方案 2.2，RootLayout 的 isTabPath）：底栏高度按 0 算，
+   页面底部留白、贴底的输入框、菜园场景高度等凡是用 --tabbar-h 的地方一起收回。 */
+.ps-shell--no-tabs {
+  --tabbar-h: 0px;
+}
 .ps-ribbon {
   display: flex;
   align-items: center;
@@ -38,7 +43,9 @@
   bottom: 0;
   z-index: 50;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* 有几个标签就平分几列（现在三栏）；写死 repeat(4, 1fr) 时新底栏右边会空出四分之一。 */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   height: calc(var(--tabbar-h) + var(--safe-bottom));
   padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
   background: color-mix(in srgb, var(--c-surface) 92%, transparent);

@@ -12,7 +12,7 @@
   box-shadow: 0 14px 22px -22px var(--c-shadow);
 }
 .ps-post::before {
-  content: "星球圈 JOURNAL";
+  content: "朋友圈 JOURNAL";
   display: block;
   margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-3);
   padding: 7px var(--space-4);
@@ -22,7 +22,10 @@
   font-weight: 800;
   letter-spacing: .14em;
 }
+/* 宠物名是行内链接（两个字约 30×21）：上下内边距只扩大点按区、不改行高；左右内边距用等量负外边距抵消 */
 .ps-actor a {
+  padding: 10px 6px;
+  margin: 0 -6px;
   color: inherit;
   text-decoration: none;
 }
@@ -89,10 +92,14 @@
   flex-wrap: wrap;
   gap: 6px;
 }
+/* 动态上的赞、评论、更多与“回复”都是小号按钮（32~36px），放大到 40px 点按区 */
+.ps-post .ps-btn--sm {
+  min-height: 40px;
+}
 .ps-link-btn {
   margin-top: 4px;
   padding: 6px 0;
-  min-height: 32px;
+  min-height: 40px;
   border: 0;
   background: none;
   color: var(--c-leaf);

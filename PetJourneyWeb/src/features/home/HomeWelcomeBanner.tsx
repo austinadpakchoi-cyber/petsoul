@@ -22,7 +22,7 @@ export function HomeWelcomeBanner({ snapshot }: { snapshot: import("@/shared/con
         ))}
       </div>
       <div className="ps-welcome__meta">
-        <Icon name="check" size={12} /> 来自你确认过的入住叮嘱 · 第 {welcome.projection_version} 版
+        <Icon name="check" size={12} /> 来自你确认过的入住叮嘱
       </div>
     </Card>
   );

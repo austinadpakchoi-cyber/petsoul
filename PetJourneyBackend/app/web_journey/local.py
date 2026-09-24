@@ -10,8 +10,9 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
+from ..content_overlay import OverlayCatalog
 from .catalog import Destination, LegPlan, VenuePlan
 from .geo_plan import region_of
 
@@ -61,7 +62,19 @@ class Job:
     habitats: tuple[str, ...] | None = None  # None＝哪里都有
 
 
-JOBS = {
+JOB_CONTENT_TYPE = "job"
+# 可发布的字段：岗位名、工时、工钱。keyword 与 habitats 是"哪里有这个活"的世界规则，不可发布。
+# 工钱在 work_done 事件**发生时**被写进事件数据、随后入账，所以发新版本只影响此后新发生的打工，
+# 已经结算过的工资一分都不动。
+JOB_PUBLISHABLE_FIELDS = ("label", "hours", "pay")
+
+
+def merge_job(base: "Job", body: dict) -> "Job":
+    update = {field: body[field] for field in JOB_PUBLISHABLE_FIELDS if body.get(field) is not None}
+    return replace(base, **update) if update else base
+
+
+JOBS = OverlayCatalog(JOB_CONTENT_TYPE, merge_job, {
     "cafe_helper": Job("cafe_helper", "在咖啡馆帮工", "咖啡", 3, 24),
     "florist": Job("florist", "在花店帮忙", "花店", 2, 16),
     "post_office": Job("post_office", "在邮局分拣信件", "邮局", 3, 24),
@@ -70,7 +83,9 @@ JOBS = {
     "ranch": Job("ranch", "去牧场帮忙看羊", "牧场|农场", 4, 30, ("grassland", "countryside")),
     "ranger": Job("ranger", "跟着护林员巡山", "景区|森林公园", 3, 26, ("forest", "mountain")),
     "camel_team": Job("camel_team", "帮骆驼队牵绳", "景区", 3, 28, ("desert",)),
-}
+})
+
+BUILT_IN_JOBS = frozenset(dict.keys(JOBS))
 
 
 def jobs_for(habitat: str) -> list[Job]:

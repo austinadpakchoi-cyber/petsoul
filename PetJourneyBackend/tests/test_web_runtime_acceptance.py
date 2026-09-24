@@ -44,11 +44,22 @@ INTEGRATED = ("c1a_queue_takeover", "c1b_reply_claim_crash", "c2_stale_results",
               "c10_photo_unknown_result", "c11_redraw_is_all_or_nothing",
               "c13_decision_operation_id", "c19_recovery_across_processes",
               "c20_fence_stacking", "c21_voucher_same_transaction", "c22_round_really_stops",
-              "c23_consent_revoked_in_flight", "c24_photo_is_atomic",
+              # Q-C23 已**退役**（2026-09-24），继任者是下面的 `c34_access_boundary_in_flight`。
+              # 旧规则「关掉『生成照片』即停图」随取消逐次授权询问而不复存在；函数体已从
+              # runtime_contract_media.py 移除（那里有完整说明与旧证据指引），旧证据保留不动。
+              "c24_photo_is_atomic",
               "c26_photo_command_facts_and_idempotency", "c27_image_quota_two_layers",
               "c28_photo_requests_are_visible", "c25_worker_uses_director_output",
               "c29_image_consumers_insert_in_one_transaction",
-              "c30_budget_reconcile_after_clarification")
+              "c30_budget_reconcile_after_clarification",
+              "c31_unknown_counts_actual_sends",
+              # 2026-09-24：叮嘱用途（c32）、旧载荷与在途撤回（c33）、以及 c23 的继任者 c34
+              "c32_note_purposes_do_not_leak", "c33_late_changes_and_legacy_payloads",
+              "c34_access_boundary_in_flight",
+              # 2026-09-24：已付费结果的认领（c35 两条链路 ＋ c36 四个边界）
+              "c35_paid_result_is_reclaimed_on_retry", "c36_reclaim_edge_cases",
+              "c37_character_reclaim_edges",
+              "c38_id_photo_reclaim_and_unknown")
 PRIVATE = "Q-不应出现在判定输出里的原文"
 NOW = datetime(2026, 9, 22, 18, 0, tzinfo=timezone.utc)
 

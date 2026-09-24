@@ -28,9 +28,25 @@ export function useCurriculum() {
   return useQuery({ queryKey: queryKeys.drivingCurriculum, queryFn: () => driving.curriculum(), staleTime: 10 * 60_000 });
 }
 
+/**
+ * 这些接口按宠物分：一家有两只时必须指明是哪一只（后端 require_pet 没收到 pet_id 就 409 pet_required）。
+ * live 取当前宠物；演示模式没有家庭上下文，为 null（演示服务不看它）。
+ */
+export function useSchoolPetId(): string | null {
+  return useOptionalCurrentHousehold()?.pet?.pet_id ?? null;
+}
+
 export function useSchoolHistory() {
   const { driving } = useServices();
-  return useQuery({ queryKey: queryKeys.drivingHistory, queryFn: () => driving.history() });
+  const selection = useOptionalCurrentHousehold();
+  const petId = selection?.pet?.pet_id ?? null;
+  const userId = selection?.userId ?? null;
+  // live 按账号与宠物分键（挂在 queryKeys.drivingHistory 前缀下，写操作按 ["driving"] 失效照样覆盖）；演示只有一份。
+  return useQuery({
+    queryKey: env.dataMode === "fixture" ? queryKeys.drivingHistory : [...queryKeys.drivingHistory, userId ?? "-", petId ?? "-"],
+    queryFn: () => driving.history(petId),
+    enabled: env.dataMode === "fixture" || Boolean(userId && petId),
+  });
 }
 
 /** 写操作之后：驾校状态、考局、历史，以及驾照（证件）、借车券与合影（收藏）、家园快照都可能变化。 */

@@ -26,8 +26,8 @@ export function LivingSample() {
     const presence = { away: false };
     services.world = {
       ...services.world,
-      home: async () => {
-        const snapshot = await originalHome();
+      home: async (petId, signal) => {
+        const snapshot = await originalHome(petId, signal);
         return presence.away
           ? snapshot
           : {

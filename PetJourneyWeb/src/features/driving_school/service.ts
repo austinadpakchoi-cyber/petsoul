@@ -6,20 +6,22 @@ import type { DrivingSchoolService, ServiceContext } from "@/shared/services/typ
 
 export function createLiveDrivingService({ api }: ServiceContext): DrivingSchoolService {
   const path = (id: string, tail = "") => `/driving/sessions/${encodeURIComponent(id)}${tail}`;
+  // 每只宠物各有自己的驾校进度、考局与驾照：除课程外每条都按 ?pet_id= 指明是哪一只（一家有两只时不带就 409 pet_required）。
+  const pet = (petId?: string | null) => ({ pet_id: petId ?? null });
   return {
-    status: (petId, signal) => api.request<DrivingSchoolStatus>("/driving", { query: { pet_id: petId }, signal }),
+    status: (petId, signal) => api.request<DrivingSchoolStatus>("/driving", { query: pet(petId), signal }),
     curriculum: () => api.request<SchoolCurriculum>("/driving/curriculum"),
-    enroll: () => api.request<DrivingSchoolStatus>("/driving/enroll", { method: "POST" }),
-    createSession: (body, idempotencyKey) => api.request<SchoolSession>("/driving/sessions", { method: "POST", body, idempotencyKey }),
-    session: (id) => api.request<SchoolSession>(path(id)),
-    begin: (id) => api.request<SchoolSession>(path(id, "/begin"), { method: "POST" }),
-    answer: (id, body) => api.request<AnswerResult>(path(id, "/answers"), { method: "PUT", body }),
-    inputs: (id, body) => api.request<InputResult>(path(id, "/inputs"), { method: "POST", body }),
-    pause: (id) => api.request<SchoolSession>(path(id, "/pause"), { method: "POST" }),
-    submit: (id) => api.request<SchoolSession>(path(id, "/submit"), { method: "POST" }),
-    abandon: (id, confirm) => api.request<SchoolSession>(path(id, "/abandon"), { method: "POST", body: { confirm } }),
-    history: () => api.request<SessionBrief[]>("/driving/history"),
-    ceremony: () => api.request<CeremonyResult>("/driving/ceremony", { method: "POST" }),
+    enroll: (petId) => api.request<DrivingSchoolStatus>("/driving/enroll", { method: "POST", query: pet(petId) }),
+    createSession: (body, idempotencyKey, petId) => api.request<SchoolSession>("/driving/sessions", { method: "POST", query: pet(petId), body, idempotencyKey }),
+    session: (id, petId) => api.request<SchoolSession>(path(id), { query: pet(petId) }),
+    begin: (id, petId) => api.request<SchoolSession>(path(id, "/begin"), { method: "POST", query: pet(petId) }),
+    answer: (id, body, petId) => api.request<AnswerResult>(path(id, "/answers"), { method: "PUT", query: pet(petId), body }),
+    inputs: (id, body, petId) => api.request<InputResult>(path(id, "/inputs"), { method: "POST", query: pet(petId), body }),
+    pause: (id, petId) => api.request<SchoolSession>(path(id, "/pause"), { method: "POST", query: pet(petId) }),
+    submit: (id, petId) => api.request<SchoolSession>(path(id, "/submit"), { method: "POST", query: pet(petId) }),
+    abandon: (id, confirm, petId) => api.request<SchoolSession>(path(id, "/abandon"), { method: "POST", query: pet(petId), body: { confirm } }),
+    history: (petId) => api.request<SessionBrief[]>("/driving/history", { query: pet(petId) }),
+    ceremony: (petId) => api.request<CeremonyResult>("/driving/ceremony", { method: "POST", query: pet(petId) }),
   };
 }
 
@@ -43,19 +45,20 @@ export function fixtureStageFromUrl(): FixtureDrivingOptions["stage"] {
 export function createFixtureDrivingService(options: FixtureDrivingOptions = {}): DrivingSchoolService {
   let impl: Promise<DrivingSchoolService> | null = null;
   const load = () => (impl ??= import("./fixture").then((m) => m.buildFixtureDrivingService(options)));
+  // 参数原样转发（宠物、取消信号都不丢）：演示现在只有一只宠物，但包装层吞参数的写法以后会咬人（见 tests/claude-6c2b-pet-scoped-calls）。
   return {
-    status: async () => (await load()).status(),
+    status: async (petId, signal) => (await load()).status(petId, signal),
     curriculum: async () => (await load()).curriculum(),
-    enroll: async () => (await load()).enroll(),
-    createSession: async (body, key) => (await load()).createSession(body, key),
-    session: async (id) => (await load()).session(id),
-    begin: async (id) => (await load()).begin(id),
-    answer: async (id, body) => (await load()).answer(id, body),
-    inputs: async (id, body) => (await load()).inputs(id, body),
-    pause: async (id) => (await load()).pause(id),
-    submit: async (id) => (await load()).submit(id),
-    abandon: async (id, confirm) => (await load()).abandon(id, confirm),
-    history: async () => (await load()).history(),
-    ceremony: async () => (await load()).ceremony(),
+    enroll: async (petId) => (await load()).enroll(petId),
+    createSession: async (body, key, petId) => (await load()).createSession(body, key, petId),
+    session: async (id, petId) => (await load()).session(id, petId),
+    begin: async (id, petId) => (await load()).begin(id, petId),
+    answer: async (id, body, petId) => (await load()).answer(id, body, petId),
+    inputs: async (id, body, petId) => (await load()).inputs(id, body, petId),
+    pause: async (id, petId) => (await load()).pause(id, petId),
+    submit: async (id, petId) => (await load()).submit(id, petId),
+    abandon: async (id, confirm, petId) => (await load()).abandon(id, confirm, petId),
+    history: async (petId) => (await load()).history(petId),
+    ceremony: async (petId) => (await load()).ceremony(petId),
   };
 }

@@ -5,4 +5,4 @@ export { Button, Card, Chip, ToggleChip, DataOriginBadge, TopBar, Page, Progress
 export { LoadingState, EmptyState, DisabledState, ErrorState, QueryView, PendingBadge } from "./StateView";
 export { ErrorBoundary } from "./ErrorBoundary";
 export { Sheet } from "./Sheet";
-export { PetAvatar } from "./PetAvatar";
+export { PawMark, PetAvatar, petPortraitUrl } from "./PetAvatar";

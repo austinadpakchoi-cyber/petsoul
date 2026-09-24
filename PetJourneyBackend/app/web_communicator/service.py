@@ -42,6 +42,7 @@ from ..web_platform.uow import execute_in, unit_of_work
 from ..web_agent import is_distress, plan_reply
 from ..web_agent.moment import PetMoment
 from .persona import PetPersona, build_messages, care_reply, clean_reply, template_reply
+from .stay_home import StayHomeReader
 
 WORLD_SOURCE = re.compile(r"^jn-[0-9a-f]+:[a-z_]+(:[0-9a-z_-]+)?$")  # 世界事件来源：<journey_id>:<事件键>
 REPLY_CLAIM = timedelta(minutes=5)  # 待回复的领取期限：领取者崩溃后，过期就能被别的进程重新领取
@@ -64,7 +65,6 @@ DAILY_TEXT = {
     ("returned_home", "work"): "干完活回到家啦，有点累，但是很开心。",
     ("work_done", "work"): "{title}干完啦，赚了 {pay}，已经存进我的银行卡。",
 }
-STAY_HOME = re.compile(r"(别出门|不要出门|别出去|不要出去|今天在家|待在家|呆在家|别乱跑|今天休息)")
 CATCH_UP = {
     "asleep": "你刚睡醒，才看到主人在你睡着时发来的消息。",
     "in_flight": "你刚落地，才看到主人在你飞行时发来的消息。",
@@ -76,7 +76,7 @@ UNRESOLVED_PHOTO = (PhotoStatus.failed.value, PhotoStatus.unknown.value)
 VISIBLE = "(channel = 'family' OR (channel = 'private' AND user_id = ?))"  # 某位家人能看到的消息
 
 
-class WebCommunicatorService:
+class WebCommunicatorService(StayHomeReader):
     def __init__(self, storage: JourneyStorage) -> None:
         self.storage = storage
         self.presence_of: Callable[[str], PetPresence] = lambda pet_id: PetPresence.at_home
@@ -318,13 +318,6 @@ class WebCommunicatorService:
                 "VALUES (?, ?, ?, 'pet', ?, ?, ?, ?, 'template')",
                 (f"msg-{uuid.uuid4().hex[:12]}", user_id, pet_id, dedupe_key, text, iso(now), iso(now)),
             ).rowcount == 1
-
-    def owner_asked_stay_home(self, user_id: str, pet_id: str, since: datetime) -> bool:
-        """最近有没有哪位家人说过“今天别出门”一类的话（只影响 TA 出不出门的倾向，不执行任何操作；不转述原话）。"""
-        with self.storage.connect() as conn:
-            rows = conn.execute("SELECT text FROM web_messages WHERE pet_id = ? AND sender = 'owner' AND channel = 'private' AND created_at >= ?",
-                                (pet_id, iso(since))).fetchall()
-        return any(STAY_HOME.search(r["text"]) for r in rows)
 
     # ---- 世界事件 ----
     def on_world_event(self, event) -> None:  # WorldEventSink

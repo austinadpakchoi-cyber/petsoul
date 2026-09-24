@@ -20,6 +20,9 @@ from ..web_platform.uow import unit_of_work
 from ..web_runtime.reasons import silence_of
 
 logger = logging.getLogger("petsoul.web.runtime")
+# 暂停闸的**唯一口径**：运营在 `web_entity_runtime.maintenance` 上按下的那一下。
+# 列名与条件只写在这里，`due_pets` 的 SQL 与 `paused()` 都用它，免得各处抄一遍再各自漂。
+NOT_PAUSED_SQL = "maintenance = 0"
 
 
 class RuntimeStore:
@@ -180,10 +183,10 @@ class RuntimeStore:
                            ELSE NULL
                          END AS why
                     FROM web_entity_runtime r
-                   WHERE r.maintenance = 0
+                   WHERE r.{NOT_PAUSED}
                 ) WHERE why IS NOT NULL
                 ORDER BY pet_id
-                """,
+                """.replace("{NOT_PAUSED}", NOT_PAUSED_SQL),
                 (stale, at, at, at),
             ).fetchall()
             candidates = [(row["pet_id"], row["why"]) for row in rows]
@@ -194,6 +197,30 @@ class RuntimeStore:
         start = next((i for i, (pet_id, _why) in enumerate(candidates) if pet_id > after), 0)
         rotated = candidates[start:] + candidates[:start]
         return rotated[:max(1, int(limit))]
+
+    def paused(self, pet_id: str, conn=None) -> bool:
+        """运营把这只宠物暂停了吗（`web_entity_runtime.maintenance`）。
+
+        **这是暂停闸的唯一口径**：规则生活、到点回复、主动消息三处都调它，不要各自读一次那一列。
+        给了 `conn` 就在调用方的事务里读（写事务里要判就用这个），没给就自己开一个短连接。
+
+        它**只回答"停没停"**，不回答"该不该做新决定"——后者是心跳的事。
+        两者不能合并：心跳判的是"要不要替 TA 做新决定"，而到点回复判的是
+        "要不要兑现一个**已经承诺过的**回复"。把履约塞进心跳，以后改心跳策略会顺带改掉履约行为，
+        而没人会想到去看那里。
+        """
+        if conn is not None:
+            row = conn.execute("SELECT maintenance FROM web_entity_runtime WHERE pet_id = ?", (pet_id,)).fetchone()
+            return bool(row and row["maintenance"])
+        return bool(self.row(pet_id).get("maintenance"))
+
+    def paused_pets(self, conn=None) -> set[str]:
+        """此刻被暂停的全部宠物。逐只判会变成 N 次查询，成批处理的调用方（到点回复、主动消息）用这个。"""
+        sql = f"SELECT pet_id FROM web_entity_runtime WHERE NOT ({NOT_PAUSED_SQL})"
+        if conn is not None:
+            return {row["pet_id"] for row in conn.execute(sql).fetchall()}
+        with self.storage.connect() as own:
+            return {row["pet_id"] for row in own.execute(sql).fetchall()}
 
     def decided_within(self, pet_id: str, now: datetime, window: timedelta) -> bool:
         """这只宠物刚刚做过生活决定吗（不论是模型还是规则决定的）。两条线共用这一个判断，避免同一时段各决定一次。"""

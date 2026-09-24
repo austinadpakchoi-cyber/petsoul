@@ -1,11 +1,17 @@
-"""照片链路在**正式装配**上确实接上了：同连接授权读口、同事务登记、该不该生成的判断。
-
-（CR-A14 / image-revocation-20260923 / COORD-C-ATOMIC 方案 B）
+"""照片链路在**正式装配**上确实接上了：同事务登记、结果读口、参考照来源、事实代数。
 
 为什么要单独有这一条：`on_unknown` / `on_retrying` 那次就是"实现写好了、用例里手工装上回调也过了，
 正式组合根却始终是 None"——网页上主人点了重画，页面还写着"没画成"。
-所以这里**不手工安装任何回调**，直接建真实应用，断言组合根把 `consent_in` 接上了、而且它真的在调用方的
-连接上读。手工注入的局部单测不能替代这一条。
+所以这里**不手工安装任何回调**，直接建真实应用，断言组合根真的接上了。手工注入的局部单测不能替代这一条。
+
+**文件名里的 `consent` 是历史**：用户 2026-09-23 决定**取消 AI 生图的逐次授权询问**，
+`illustrations.consent_in` / `opted_in` 两处接线随之摘除（I 执行，c84a 统筹）。
+原先钉"同连接授权复核接上了"的那一组断言，**对象已经不存在，所以删掉**——
+不是因为它红了不好改，是因为它守的东西被产品决定取消了。
+文件名保留不动：I 与 Q 的证据都按这个名字引用，改名只会让旧记录对不上。
+
+**取消的是「询问」，不是保护**。所以这里补了一条反向守卫：身份与成员关系、事实代数、
+结果读口、参考照来源、额度预占——**一条都不许跟着消失**。
 
 不联网、不调用真实供应商、不产生付费调用。
 """
@@ -15,65 +21,6 @@ from __future__ import annotations
 import unittest
 
 from web_base import LUNCH_UTC, FakeClock, WebPlatformTestBase
-
-
-class PhotoConsentWiringTests(WebPlatformTestBase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.clock = FakeClock(LUNCH_UTC).install(self)
-        self.owner = self.user("consent-wiring-owner")
-        self.owner.adopt_and_move_in("adopt-lan")
-        self.pet = self.owner.pet_id
-        self.illustrations = self.web.illustrations
-        self.assertEqual(self.owner.patch("/settings", {"generated_photos": True}).status_code, 200)
-        self.household_id = self.web.households.household_of_pet(self.pet)
-        self.assertTrue(self.household_id, "前提：这只宠物有家庭")
-
-    def test_the_composition_root_actually_wires_the_same_connection_read(self) -> None:
-        """presence：正式装配里它必须不是 None。缺注入时 A 侧会 hold 并记 consent_check_unwired，
-        那是安全的降级——但对已经接好的正式链路来说，None 就是漏接。"""
-        self.assertIsNotNone(self.illustrations.consent_in, "组合根没有接上同连接授权读口")
-
-    def test_it_answers_the_same_as_the_existing_household_authorisation(self) -> None:
-        """语义必须与现有 `opted_in` 一致：全仓只有一份实现，两者不可能漂移。"""
-        with self.web.journeys.storage.connect() as conn:
-            self.assertTrue(self.illustrations.consent_in(conn, self.owner.user_id, self.pet))
-        self.assertTrue(self.illustrations.opted_in(self.owner.user_id, self.pet))
-
-    def test_a_revocation_inside_the_open_transaction_is_visible_to_it(self) -> None:
-        """这就是 FINDING 里"写入前撤权仍发布 ready"的根因：另开连接读到的是事务外的旧值。
-
-        在一个**开着的写事务**里撤销，同连接读口必须当场看见；而自己开连接的 `opted_in` 此刻还看不见。
-        """
-        with self.web.journeys.storage.connect() as conn:
-            conn.execute("BEGIN IMMEDIATE")
-            conn.execute("UPDATE web_households SET generated_photos = 0 WHERE household_id = ?", (self.household_id,))
-
-            inside = self.illustrations.consent_in(conn, self.owner.user_id, self.pet)
-            outside = self.illustrations.opted_in(self.owner.user_id, self.pet)
-            still_open = conn.in_transaction
-
-            conn.rollback()
-
-        self.assertFalse(inside, "同连接读口必须看见这个事务里刚撤销的授权")
-        self.assertTrue(outside, "前提：另开连接此刻确实还读不到——这正是要修的那个缺口")
-        self.assertTrue(still_open, "读口不能替调用方收尾：调用之后事务还得开着")
-
-    def test_it_does_not_commit_the_callers_transaction(self) -> None:
-        """回滚之后授权要回到原样——说明那次撤销没有被这个读口顺手提交掉。"""
-        with self.web.journeys.storage.connect() as conn:
-            conn.execute("BEGIN IMMEDIATE")
-            conn.execute("UPDATE web_households SET generated_photos = 0 WHERE household_id = ?", (self.household_id,))
-            self.illustrations.consent_in(conn, self.owner.user_id, self.pet)
-            conn.rollback()
-
-        self.assertTrue(self.illustrations.opted_in(self.owner.user_id, self.pet), "回滚之后授权应当还在")
-
-    def test_a_pet_without_a_household_is_refused(self) -> None:
-        """没有家庭的居民一律不生图：授权不明时宁可少发一张，也不发出付费调用。"""
-        with self.web.journeys.storage.connect() as conn:
-            self.assertFalse(self.illustrations.consent_in(conn, self.owner.user_id, "PJ-NOBODY"))
-            self.assertFalse(self.illustrations.consent_in(conn, self.owner.user_id, None))
 
 
 class PhotoChainWiringTests(WebPlatformTestBase):
@@ -149,17 +96,40 @@ class PhotoChainWiringTests(WebPlatformTestBase):
         """没接的话 C 会直接抛 photo_not_wired——宁可不拍，也不留下“镜头没响、队列里却多一张图”的孤儿任务。"""
         self.assertIsNotNone(self.journeys.photo_request_in, "组合根没有接上同事务登记口")
 
-    def test_generation_is_on_only_when_the_provider_and_the_household_both_say_yes(self) -> None:
+    def test_generation_now_depends_only_on_the_provider(self) -> None:
+        """用户 2026-09-23 取消了逐次授权询问，所以这里**只看供应商可用**，不再问家庭开没开。
+
+        这一条钉的是取消后的实际契约；要是哪天有人把那道询问悄悄加回来，它会红。
+        """
         visit, journey = self.visit_and_journey("local:cafe")
 
         self.web.illustrations.available = lambda: False
         self.assertFalse(self.journeys.photo_generation_on(visit, journey), "没配生图供应商就不该走拍照这条路")
 
         self.web.illustrations.available = lambda: True
-        self.assertTrue(self.journeys.photo_generation_on(visit, journey), "供应商可用 ＋ 这家开了生成照片")
+        self.assertTrue(self.journeys.photo_generation_on(visit, journey), "供应商可用就该走")
 
         self.assertEqual(self.owner.patch("/settings", {"generated_photos": False}).status_code, 200)
-        self.assertFalse(self.journeys.photo_generation_on(visit, journey), "这家关掉之后就不该再生成")
+        self.assertTrue(self.journeys.photo_generation_on(visit, journey),
+                        "逐次询问已取消：家庭设置不再决定走不走这条路")
+
+    def test_cancelling_the_prompt_did_not_take_the_other_protections_with_it(self) -> None:
+        """取消的是**询问**，不是额度、身份、幂等那些保护。
+
+        摘一处接线时最容易顺手把邻近的也摘掉，而那种损失没有任何症状——
+        照片照出，只是不该出的那些也出了。所以逐个钉住。
+        """
+        checks = {
+            "身份与成员关系（谁能看这只宠物）": self.web.illustrations.can_view_pet,
+            "事实代数（排队期间事实被更正就不出图）": self.web.illustrations.visit_revision_of,
+            "参考照来源（拿不准就 hold，不冒名主人原照）": self.web.illustrations.reference_origin_of,
+            "同连接结果读口（分得开没画成与结果未确认）": self.web.communicator.illustration_outcome_in,
+            "额度预占（付费调用发出前原子占用）": self.web.illustrations.reserve,
+            "同事务登记（不留孤儿任务）": self.journeys.photo_request_in,
+        }
+        missing = [name for name, hook in checks.items() if hook is None]
+
+        self.assertEqual(missing, [], f"这些保护不该跟着「取消询问」一起消失：{missing}")
 
     def test_a_cafe_visit_carries_the_scene_key_and_the_verified_fact(self) -> None:
         payload = self.enqueue("local:cafe")

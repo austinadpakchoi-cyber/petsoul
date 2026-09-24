@@ -237,10 +237,10 @@
   gap: var(--space-2);
   color: var(--paper-ink);
 }
-/* 纸质卡片夜里也保持暖纸配深墨：次要文字用纸面的次墨色，不用主题的浅灰 */
-.ds-license-mini .ps-muted,
-.ds-photo .ps-muted {
-  color: var(--paper-secondary-ink);
+/* 报名卡（教练卡后面的那张纸卡）：愿望引语原来用主题的 --c-ink，深色下在纸面上几乎看不见，改用纸墨。
+   纸卡里的次要字（报名卡、驾照小卡、领证合影的 .ps-muted）交给 ui.css 的 .ps-card--paper .ps-muted，这里不再重复。 */
+.ds-coach ~ .ps-card--paper .ds-quote {
+  color: var(--paper-ink);
 }
 .ds-lessons details {
   border-bottom: 1px solid var(--c-surface-stroke);

@@ -28,4 +28,8 @@ def google_state(settings) -> tuple[bool, str]:
 
 
 def image_ready(settings) -> bool:
-    return _enabled(settings) and settings.image_provider_type == "volcengine" and bool(settings.doubao_api_key or settings.image_api_key)
+    if not _enabled(settings):
+        return False
+    if settings.image_provider_type == "volcengine":
+        return bool(settings.doubao_api_key or settings.image_api_key)
+    return settings.image_provider_type in {"openai", "openai-compatible"} and bool(settings.image_api_key)

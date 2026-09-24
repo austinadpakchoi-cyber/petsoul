@@ -21,6 +21,7 @@ from ..schemas.web.farm import CropInfo, FarmWatch, NeighborHomeSummary, Neighbo
 from ..schemas.web.common import DataOrigin
 from ..schemas.web.home import PlotStage, PlotSummary, WalletSummary
 from ..schemas.web.pets import PetPresence, PetSpecies
+from ..content_overlay import OverlayCatalog
 from ..storage import JourneyStorage
 from ..utils import iso, parse_dt, utcnow
 from ..web_economy import WebEconomy, WebInventory
@@ -31,14 +32,30 @@ CATCH_CHANCE = {FarmWatch.owner_patrol: 1.0, FarmWatch.pet_awake: 0.75, FarmWatc
 MAX_CATCH = 0.9  # 几只宠物一起在家也不是绝对防偷
 PATROL_MINUTES = 10
 PATROL_COOLDOWN_MINUTES = 30
-CROPS: dict[str, CropInfo] = {
+CROP_CONTENT_TYPE = "crop"
+# 可发布的字段**只有这三项**，而且每一项都有"为什么改了不会改写既有批次"的理由：
+# - label / unit_value：展示名与杂货铺此刻的收购价。收购价本来就是"现在的价"，已完成的买卖记在账本里，不受影响；
+# - grow_seconds：只在 plant() 那一刻读，成熟时间以 ripe_at 落在地块行上，改了不影响已经种下的批次。
+# **不可发布**：yield_units、steal_total、requires_seed。前两项在 harvest()/_summary() 里是**实时读**的，
+# 改了就等于静默改写进行中的批次；第三项改了会让种子账目对不上。要开放它们必须先在种植时冻结版本（列为剩余项）。
+CROP_PUBLISHABLE_FIELDS = ("label", "unit_value", "grow_seconds")
+
+
+def merge_crop(base: CropInfo, body: dict) -> CropInfo:
+    update = {field: body[field] for field in CROP_PUBLISHABLE_FIELDS if body.get(field) is not None}
+    return base.model_copy(update=update) if update else base
+
+
+CROPS: dict[str, CropInfo] = OverlayCatalog(CROP_CONTENT_TYPE, merge_crop, {
     "sun_pea": CropInfo(crop_key="sun_pea", label="太阳豌豆", grow_seconds=180, yield_units=4, unit_value=2, steal_total=1),
     "star_tomato": CropInfo(crop_key="star_tomato", label="星星番茄", grow_seconds=600, yield_units=6, unit_value=2, steal_total=2),
     "moon_radish": CropInfo(crop_key="moon_radish", label="月光萝卜", grow_seconds=1800, yield_units=8, unit_value=3, steal_total=3),
     # 稀有作物：种子只能从旅行带回（连接旅行与家园），种下时消耗一颗。
     "sea_salt_pea": CropInfo(crop_key="sea_salt_pea", label="海盐豌豆", grow_seconds=900, yield_units=6, unit_value=4, steal_total=2, requires_seed=True),
     "sakura_radish": CropInfo(crop_key="sakura_radish", label="樱色萝卜", grow_seconds=1200, yield_units=8, unit_value=5, steal_total=3, requires_seed=True),
-}
+})
+
+BUILT_IN_CROPS = frozenset(dict.keys(CROPS))
 
 
 class FarmError(Exception):
