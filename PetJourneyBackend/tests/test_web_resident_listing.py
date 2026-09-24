@@ -1,7 +1,7 @@
 """撤下 / 放回待领养居民：玩家那一侧的整体用例（迁移 0260；方案第九批 adm1 与 I 对过，这是 I 补的两处加强）。
 
 加强之二：撤下之后，**所有**对外列出待领养居民的地方与领养入口都拿不到 TA——领养卡（/adoption/candidates）、
-访客页名单（/public/residents）、访客页单只（/public/pets/{id}）、居民对应的领养卡（candidate_for_pet，注册前选中伙伴的人靠它看还能不能领养）、
+访客页名单（/public/residents）、访客页单只（/public/pets/{id} 不再标成可领养、不带驿站信息——主页本身照旧公开）、居民对应的领养卡（candidate_for_pet，注册前选中伙伴的人靠它看还能不能领养）、
 领养（/adoption/adopt → 找不到）；放回之后全都回来，领养照常成功。
 加强之一：设置函数的结果分清「改了 / 本来就是这个状态 / 不符合条件 / 没有这位」。
 
@@ -35,17 +35,19 @@ class ResidentListingTests(WebPlatformTestBase):
         return outcome
 
     def seen(self, viewer, pet_id: str, candidate_id: str) -> dict[str, bool]:
+        page = self.client.get(f"{PREFIX}/public/pets/{pet_id}")
         return {
             "adoption_cards": candidate_id in {c["candidate_id"] for c in viewer.get("/adoption/candidates").json()},
             "visitor_list": pet_id in {r["pet_id"] for r in self.client.get(f"{PREFIX}/public/residents").json()},
-            "visitor_page": self.client.get(f"{PREFIX}/public/pets/{pet_id}").status_code == 200,
+            # 单只主页：居民的主页本来就是公开的（像别的公开宠物一样还能打开），撤下的是「可领养」与驿站信息，不是这页本身
+            "visitor_page_adoptable": page.status_code == 200 and page.json()["adoptable"] and page.json()["resident"] is not None,
             "pending_adoption": self.web.pets.candidate_for_pet(pet_id) == candidate_id,
         }
 
     def test_delisting_hides_the_resident_everywhere_and_relisting_brings_it_back(self):
         pet_id, candidate_id = self.available_resident()
         viewer = self.user("listing-viewer")
-        everywhere = {"adoption_cards": True, "visitor_list": True, "visitor_page": True, "pending_adoption": True}
+        everywhere = {"adoption_cards": True, "visitor_list": True, "visitor_page_adoptable": True, "pending_adoption": True}
         self.assertEqual(self.seen(viewer, pet_id, candidate_id), everywhere, "对照：撤下之前每一处都看得到 TA")
 
         self.assertEqual(self.set_listed(candidate_id, False), "changed")
