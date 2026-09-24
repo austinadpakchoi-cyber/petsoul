@@ -17,10 +17,13 @@ import { Button, Card, Chip, DataOriginBadge, EmptyState, Icon, Page, QueryView,
 import { fixtureFulfill, fixtureMarket, fixtureSell } from "@/fixtures/home";
 import { fixtureCollection } from "@/fixtures/social";
 import { delay } from "@/fixtures/world";
+import { boundChipText, kindText, LicenseMemento, schoolDemoKeepsakes, useKeepsakePet, VoucherUse } from "./schoolKeepsakes";
+import { ArrivalPostcard, demoArrivalPostcard, isArrivalPostcard } from "./ArrivalPostcard";
 import "./collection.css";
 
-const KIND_TEXT: Record<string, string> = { postcard: "明信片", seed: "稀有种子（可种进菜园）", badge: "勋章", shared_memory: "共同听看的回忆" };
 const MARKET_KEY = ["economy", "market"] as const;
+/** 集市里家与家之间互相买卖还没开放时的那一句（玩家能懂的说法；不提开发安排）。 */
+export const LISTING_CLOSED = "和别的家之间互相买卖还没开放；这里是杂货铺收购和居民订单。";
 
 function CollectionPage() {
   const { economy } = useServices();
@@ -28,6 +31,7 @@ function CollectionPage() {
   const [params] = useSearchParams();
   const sourceEventId = params.get("source_event_id");
   const petId = pet?.pet_id ?? null;
+  const keepsakePet = useKeepsakePet();
   const query = useQuery({
     queryKey: env.dataMode === "fixture" ? queryKeys.collection : queryKeys.collectionFor(userId ?? "-", petId ?? "-"),
     queryFn: ({ signal }) => economy.collection(petId, signal),
@@ -51,14 +55,17 @@ function CollectionPage() {
             {(sourceEventId ? items.filter((item) => item.source_event_id === sourceEventId) : items).length === 0
               ? <EmptyState icon="mail" title="这段经历还没有收藏">目前没有与这条世界事件关联的明信片或纪念品；不替 TA 补一张。</EmptyState>
               : (sourceEventId ? items.filter((item) => item.source_event_id === sourceEventId) : items).map((item) => (
-                <Card key={item.item_id} paper={item.kind === "postcard"} className="ps-collection-item">
-                  <div className="ps-collection-item__head"><div><strong>{item.title}</strong><div className="ps-muted">{KIND_TEXT[item.kind] ?? item.kind}{item.place ? ` · ${item.place}` : ""}</div></div><DataOriginBadge origin={item.data_origin} /></div>
-                  {item.kind === "postcard" ? <>
+                <Card key={item.item_id} paper={item.kind === "postcard" || item.kind === "license_photo"} className="ps-collection-item">
+                  <div className="ps-collection-item__head"><div><strong>{item.title}</strong><div className="ps-muted">{kindText(item.kind)}{item.place ? ` · ${item.place}` : ""}</div></div><DataOriginBadge origin={item.data_origin} /></div>
+                  {item.kind === "car_voucher" ? <VoucherUse item={item} /> : null}
+                  {item.kind === "license_photo" ? <LicenseMemento item={item} pet={keepsakePet} /> : null}
+                  {isArrivalPostcard(item) ? <ArrivalPostcard item={item} pet={keepsakePet} /> : null}
+                  {item.kind === "postcard" && !isArrivalPostcard(item) ? <>
                     {item.image_url && item.image_status === "ready" ? <figure className="ps-collection-item__image"><img src={item.image_url} alt={`TA 从${item.place ?? item.city ?? "旅途"}寄来的虚构旅行自拍`} loading="lazy" /><figcaption>AI 生成的虚构旅行自拍，不是真实到店照片</figcaption></figure> : <div className="ps-collection-item__envelope" aria-label="明信片尚无可展示的自拍"><Icon name="mail" size={30} /><span>{item.image_status === "processing" ? "自拍冲洗中" : item.image_status === "failed" ? "自拍未生成成功" : item.image_status === "unknown" ? "自拍状态待确认" : "这张明信片没有自拍"}</span></div>}
                     {item.note ? <p className="ps-collection-item__note">“{item.note}”</p> : null}
                   </> : null}
                   <div className="ps-row" style={{ flexWrap: "wrap" }}>
-                    {item.bound_to_pet ? <Chip>个人纪念，不可交易</Chip> : item.tradable ? <Chip tone="leaf">可种植</Chip> : null}
+                    {item.bound_to_pet ? <Chip>{boundChipText(item.kind, keepsakePet.name)}</Chip> : item.tradable ? <Chip tone="leaf">可种植</Chip> : null}
                   </div>
                 </Card>
               ))}
@@ -96,10 +103,10 @@ function PantryRow({ item, petId }: { item: InventoryItem; petId: string | null 
         <strong>
           {item.label} ×{item.qty}
         </strong>
-        <div className="ps-muted">杂货铺收购价 {item.unit_price} 旅费/个</div>
+        <div className="ps-muted">杂货铺收购价 {item.unit_price} 星币/个</div>
         {sell.isError ? (
           <div role="alert" className="ps-muted" style={{ color: "var(--c-danger)" }}>
-            {toApiError(sell.error).message}
+            {toApiError(sell.error).playerMessage}
           </div>
         ) : null}
       </div>
@@ -127,11 +134,11 @@ function OrderRow({ order, petId }: { order: ResidentOrder; petId: string | null
           {order.resident}想要 {order.qty} 个{order.item_label}
         </strong>
         <div className="ps-muted">
-          出价 {order.reward} 旅费（卖给杂货铺是 {order.shop_value}）· 今天有效
+          出价 {order.reward} 星币（卖给杂货铺是 {order.shop_value} 星币）· 今天有效
         </div>
         {fulfill.isError ? (
           <div role="alert" className="ps-muted" style={{ color: "var(--c-danger)" }}>
-            {toApiError(fulfill.error).message}
+            {toApiError(fulfill.error).playerMessage}
           </div>
         ) : null}
       </div>
@@ -161,13 +168,13 @@ function MarketPage() {
   });
   return (
     <Page>
-      <TopBar title="集市" subtitle="把仓库里的收成换成旅费" back="/garden" />
+      <TopBar title="集市" subtitle="把仓库里的收成换成星币" back="/garden" />
       <QueryView query={query}>
         {(market) => (
           <div className="ps-stack">
             <Card className="ps-row ps-market-wallet" style={{ justifyContent: "space-between" }}>
               <span>
-                <Icon name="coin" /> 旅费
+                <Icon name="coin" /> 星币
               </span>
               <strong style={{ fontSize: "var(--fs-lg)" }}>{market.wallet.balance}</strong>
             </Card>
@@ -202,7 +209,8 @@ function MarketPage() {
             </Card>
             <Card flat className="ps-row">
               <Icon name="lock" />
-              <span className="ps-muted">{market.player_listing_note}</span>
+              {/* 没开放时用前端自己的一句：后端这句原话带着开发安排（“主线稳定后再评估……”），不给玩家看（2026-09-24 巡检 P1）。 */}
+              <span className="ps-muted">{market.player_listing_enabled ? market.player_listing_note : LISTING_CLOSED}</span>
             </Card>
             <DataOriginBadge origin={market.data_origin} />
           </div>
@@ -220,12 +228,17 @@ export default defineModule({
   ],
   services: {
     economy: {
-      fixture: () => ({
-        collection: () => delay(fixtureCollection()),
-        market: () => delay(fixtureMarket()),
-        sell: async (itemKey, qty, key) => delay(fixtureSell(itemKey, qty, key)),
-        fulfill: async (orderId) => delay(fixtureFulfill(orderId)),
-      }),
+      fixture: () => {
+        // 驾校演示物品只在整页带 ?school_demo=licensed 时才有（建服务时读一次）；借车券比其余演示收藏都早，排在后面，和后端“新的在前”一致。
+        // 到站明信片是入住时寄的，最早，放在最后（手写的一张，演示里不拿任何图冒充 AI 自拍）。
+        const school = schoolDemoKeepsakes();
+        return {
+          collection: () => delay([...fixtureCollection(), ...school, demoArrivalPostcard()]),
+          market: () => delay(fixtureMarket()),
+          sell: async (itemKey, qty, key) => delay(fixtureSell(itemKey, qty, key)),
+          fulfill: async (orderId) => delay(fixtureFulfill(orderId)),
+        };
+      },
       live: ({ api }) => ({
         collection: (petId, signal) => api.request<CollectionItem[]>("/collection", { query: { pet_id: petId }, signal }),
         // 集市按宠物分（仓库、旅费、订单都是这只宠物的家的）：一家有两只时不带 pet_id 后端回 409 pet_required，所以三条都显式带上当前宠物。

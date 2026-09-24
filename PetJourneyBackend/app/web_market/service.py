@@ -29,7 +29,7 @@ ORDER_SLOTS = 2
 ORDER_PREMIUM = 1.5
 RESIDENTS = ("鹦鹉邮差", "松鼠面包师", "刺猬花匠", "水獭船长", "兔子裁缝")
 COMMON_CROPS = ("sun_pea", "star_tomato", "moon_radish")
-PLAYER_LISTING_NOTE = "玩家之间的挂牌交易还没开放（主线稳定后再评估一种物资的固定价挂牌）；这里是杂货铺和居民订单，都是星球居民。"
+PLAYER_LISTING_NOTE = "家与家之间的买卖还没开放；这里可以卖给杂货铺，也可以接居民的订单，买家都是星球居民。"
 
 
 class MarketError(Exception):
@@ -98,7 +98,7 @@ class WebMarket:
         coins = qty * crop.unit_value
         wallet, _ = self.economy.apply(target, coins, EconomyTransactionType.web_farm_harvest, f"web:shop:{home.home_id}:{operation_key}",
                                        reason=f"把 {qty} 个{crop.label}卖给杂货铺", source="web.market.sell", now=now)
-        return MarketResult(wallet=wallet, pantry=self.pantry(home.home_id), gained_coins=coins, message=f"杂货铺收下了 {qty} 个{crop.label}，+{coins} 旅费。")
+        return MarketResult(wallet=wallet, pantry=self.pantry(home.home_id), gained_coins=coins, message=f"杂货铺收下了 {qty} 个{crop.label}，+{coins} 星币。")
 
     def fulfill(self, home: HomeRef, order_id: str, now: datetime | None = None, pet_id: str | None = None) -> MarketResult:
         now = now or utcnow()
@@ -121,4 +121,4 @@ class WebMarket:
         wallet, _ = self.economy.apply(target, row["reward"], EconomyTransactionType.web_reward, f"web:order:{order_id}",
                                        reason=f"{row['resident']}的订单：{row['qty']} 个{crop.label}", source="web.market.order", now=now)
         return MarketResult(wallet=wallet, pantry=self.pantry(home.home_id), gained_coins=row["reward"],
-                            message=f"{row['resident']}收到了 {row['qty']} 个{crop.label}，付了 {row['reward']} 旅费。")
+                            message=f"{row['resident']}收到了 {row['qty']} 个{crop.label}，付了 {row['reward']} 星币。")

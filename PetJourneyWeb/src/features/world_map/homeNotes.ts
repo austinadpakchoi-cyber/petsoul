@@ -17,7 +17,8 @@ import type { PanelNote } from "./panelNotes";
 
 export const CATCHING_UP_TEXT = "世界正在更新，工钱和来信稍后出现。";
 
-export function useHomeNotes(petId: string | null): PanelNote[] {
+/** 面板上这只自己的家园快照（live、自己家的宠物才读）。和 useActiveHome 同键同读法，共用缓存。 */
+function usePanelHome(petId: string | null) {
   const services = useServices();
   const household = useOptionalCurrentHousehold();
   const userId = household?.userId ?? null;
@@ -30,6 +31,17 @@ export function useHomeNotes(petId: string | null): PanelNote[] {
     enabled,
     refetchInterval: 60_000,
   });
+  return { enabled, home };
+}
+
+/** 面板上这只的家在哪座城市（家园快照 place.city）：寻味那一行按它说“在附近 / 到{city}后”。读不到、演示里都是 null。 */
+export function useHomeCity(petId: string | null): string | null {
+  const { enabled, home } = usePanelHome(petId);
+  return enabled && home.isSuccess ? home.data.place?.city?.trim() || null : null;
+}
+
+export function useHomeNotes(petId: string | null): PanelNote[] {
+  const { enabled, home } = usePanelHome(petId);
   if (!enabled || !petId || !home.isSuccess) return [];
   const notes: PanelNote[] = [];
   const unread = home.data.unread?.messages ?? 0;

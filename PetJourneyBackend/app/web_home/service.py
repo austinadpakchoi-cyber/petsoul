@@ -121,7 +121,7 @@ class WebHomeService(HomeOnboardingMixin):
             except Exception:  # noqa: BLE001 - 并发下已被种上
                 pass
         self.economy.apply(home.pet_id, WELCOME_GIFT, EconomyTransactionType.web_reward, f"web:welcome_gift:{home.home_id}",
-                           reason="入住欢迎旅费（每个家一次，不可交易）", source="web.home.move_in", now=home.activated_at)
+                           reason="入住欢迎星币（每个家一次，不可交易）", source="web.home.move_in", now=home.activated_at)
 
     def set_public_posts(self, household_id: str, public_posts: bool) -> None:
         with self.storage.connect() as conn:

@@ -309,7 +309,9 @@ describe("生活片段页", () => {
       ["认识了新朋友豆包", "08:00"],
     ]);
     expect(days[2].rows.map((row) => row.title)).toEqual(["出发：坐船去澳门"]);
-    expect(days[3].rows.map((row) => [row.title, row.detail])).toEqual([["拿到星球居民证", "PS-ID-2025-ABCD"]]);
+    // 证件那条的小字是证件编号（一串代码）：不显示（2026-09-24 全站文字清理；编号在证件页上照样有）
+    expect(days[3].rows.map((row) => [row.title, row.detail])).toEqual([["拿到星球居民证", null]]);
+    expect(document.body.textContent).not.toContain("PS-ID-2025-ABCD");
     // 小字照原文；没有小字的不画空行。
     expect(days[0].rows.map((row) => row.detail)).toEqual(["在咖啡馆帮工的工钱", null, "厦门"]);
     expect(days[1].rows.map((row) => row.detail)).toEqual([null, "海边咖啡馆"]);

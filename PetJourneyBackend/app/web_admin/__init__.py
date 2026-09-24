@@ -85,6 +85,18 @@ def _tables_ready(storage: JourneyStorage) -> bool:
     return found == len(names)
 
 
+def _mount_once(app: FastAPI, router) -> None:
+    """挂一个路由；它的路径已经**全部**挂在应用上（标准入口登记过）就跳过，不重复挂。
+
+    **它只防「整组已挂」，不防「半挂」**（Q 2026-09-24 指出）：只挂上一部分路径时，这里会把整组再挂一遍，已挂的那几条就重复了。
+    今天安全，是因为标准入口 `WEB_ROUTER_MODULES` 总是整个路由器一起 `include`，不会出现半挂状态。
+    哪天有人改成按单条路由挂、或把一个路由器拆成分批注册，这里要改成按「路径＋方法」逐条判、只补缺的。
+    """
+    mounted = {getattr(route, "path", None) for route in app.routes}
+    if not {route.path for route in router.routes} <= mounted:
+        app.include_router(router)
+
+
 def install_admin_platform(app: FastAPI, *, storage: JourneyStorage, settings) -> AdminServices:
     """在 `app.state.web` 装配好之后调用。装配 + 装错误处理 + 装执行点 + 挂路由。"""
     admin_settings = load_admin_settings(getattr(settings, "web_environment", "dev"), bool(getattr(settings, "web_cookie_secure", True)))
@@ -147,11 +159,15 @@ def install_admin_platform(app: FastAPI, *, storage: JourneyStorage, settings) -
     from ..routers.web.report_outcomes import router as report_outcomes_router
     for router in ADMIN_ROUTERS:
         app.include_router(router)
-    app.include_router(announcements_router)  # 玩家侧消费入口（/api/v1/web/announcements）
-    app.include_router(report_outcomes_router)  # 举报人看自己的举报结果（/api/v1/web/reports/mine）
+    # 两个玩家侧入口（公告 /api/v1/web/announcements、举报人看处理结果 /api/v1/web/reports/mine）的正式归宿是
+    # routers/web 的 WEB_ROUTER_MODULES（共享入口，归 I）：只有登记在那里，/meta 的能力表才收得到它们声明的能力
+    # （Q 2026-09-24 报：platform.announcements / platform.public_assets / social.report_outcomes 前端查不到）。
+    # 登记之前由这里挂；登记之后这里自动跳过，免得同一路径挂两遍——两边不必同时改。
+    _mount_once(app, announcements_router)
+    _mount_once(app, report_outcomes_router)
 
     if not services.tables_ready:
-        logger.warning("admin tables missing: 迁移 1500–1560 尚未全部应用，后台接口会如实回 NOT_CONFIGURED")
+        logger.warning("admin tables missing: 迁移 1500–1580 尚未全部应用，后台接口会如实回 NOT_CONFIGURED")
     return services
 
 

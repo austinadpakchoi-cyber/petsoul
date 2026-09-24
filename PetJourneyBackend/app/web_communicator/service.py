@@ -295,6 +295,28 @@ class WebCommunicatorService(StayHomeReader):
                 (f"msg-{uuid.uuid4().hex[:12]}", pet_id, dedupe_key, text, iso(now), iso(now), composed_by, topic.value if topic else None, household_id),
             ).rowcount == 1
 
+    def pet_note_in(self, conn, *, pet_id: str, household_id: str, text: str, dedupe_key: str, now: datetime,
+                    photo_task_id: str | None = None, composed_by: str = "template", user_id: str = FAMILY) -> bool:
+        """在**调用方的写事务里**写 TA 的一条消息，可带一张正在画的照片（例如到站自拍）。同一件事只写一次。
+
+        - `user_id` 不传（FAMILY）：家庭频道，全家可见，记 household_id（与 `_insert_event` 同口径）；
+        - 给出某位家人：写**这位家人和 TA 的私聊**（界面默认打开的「我和 TA」）：channel='private'、household_id 为空，
+          与现有私聊同口径。先在同一事务里用 `_member_in` 复核他仍是有效成员，不是就不写、返回 False。
+        照片由插画回调按任务号回填（`illustration_ready` / `illustration_failed`）；这里在同一个事务里先读一次终态，
+        与 `_insert_event` 同一套判断——任务可能已经跑完。调用方负责确认这只宠物此刻确实在 household_id 这个家。
+        只跳过重复（`UNIQUE(pet_id, source_event_id)`）；NOT NULL／CHECK 违例照常抛给调用方，不像 `INSERT OR IGNORE` 那样悄悄不写。
+        """
+        private = user_id != FAMILY
+        if private and not self._member_in(conn, user_id, pet_id):
+            return False
+        photo_status, photo = self._photo_at_insert(conn, photo_task_id) if photo_task_id else (None, None)
+        return conn.execute(
+            "INSERT INTO web_messages (message_id, user_id, pet_id, sender, source_event_id, text, photo_url, created_at, available_at, composed_by, "
+            "photo_status, photo_task_id, channel, household_id) VALUES (?, ?, ?, 'pet', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING",
+            (f"msg-{uuid.uuid4().hex[:12]}", user_id, pet_id, dedupe_key, text, photo, iso(now), iso(now), composed_by, photo_status, photo_task_id,
+             "private" if private else "family", None if private else household_id),
+        ).rowcount == 1
+
     def proactive_state(self, user_id: str, pet_id: str, since: datetime) -> tuple[int, set[str], datetime | None, datetime | None]:
         """(since 之后的主动消息条数, 已用过的去重键, 主人最后一条消息时间, TA 最后一条消息时间)。"""
         with self.storage.connect() as conn:

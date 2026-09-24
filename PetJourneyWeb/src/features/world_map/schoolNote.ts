@@ -1,6 +1,6 @@
 /**
  * 地图主状态面板里的驾校提醒（方案 v2.1 第 8.1 / 8.2 节：驾校平时不占首屏）。
- * - wish（TA 自己想学）：「TA 说想学开车：“<服务端 wish_text 原文>”」；
+ * - wish（TA 自己想学）：「<名字>说想学开车：“<服务端 wish_text 原文>”」，例如“团子说想学开车：…”；拿不到名字时才说“TA 说想学开车”；
  * - enrolled：按服务端四科状态说一句进度——有没考完的考试 / 哪一科可以约考 / 等到什么时候可以再约；
  * - license_pending（服务端含义：四科已过、驾照正在签发）：如实说驾照正在签发；
  * - licensed 且领证仪式还没做（有驾照、ceremony_done=false）：“领证仪式在等你们”，点它去驾校自己的仪式入口 /school/ceremony
@@ -55,11 +55,13 @@ function enrolledProgress(status: DrivingSchoolStatus): string | null {
   }
 }
 
-/** 面板提醒这一行说什么、点了去哪；这一阶段不该出现、或服务端字段不够说清楚时为 null。 */
-export function schoolNoteContent(status: DrivingSchoolStatus): { text: string; to: string } | null {
+/** 面板提醒这一行说什么、点了去哪；这一阶段不该出现、或服务端字段不够说清楚时为 null。petName 是这只宠物的名字，没有就说“TA”。 */
+export function schoolNoteContent(status: DrivingSchoolStatus, petName?: string | null): { text: string; to: string } | null {
   switch (status.stage) {
-    case "wish":
-      return { text: status.wish_text ? `TA 说想学开车：“${status.wish_text}”` : "TA 说想学开车", to: "/school" };
+    case "wish": {
+      const who = petName?.trim() ? petName.trim() : "TA ";
+      return { text: status.wish_text ? `${who}说想学开车：“${status.wish_text}”` : `${who}说想学开车`, to: "/school" };
+    }
     case "enrolled": {
       const progress = enrolledProgress(status);
       return progress ? { text: `驾校 · ${progress}`, to: "/school" } : null;
@@ -75,15 +77,19 @@ export function schoolNoteContent(status: DrivingSchoolStatus): { text: string; 
 }
 
 /** 只要这一行的文字（测试与读屏核对用）。 */
-export function schoolNoteText(status: DrivingSchoolStatus): string | null {
-  return schoolNoteContent(status)?.text ?? null;
+export function schoolNoteText(status: DrivingSchoolStatus, petName?: string | null): string | null {
+  return schoolNoteContent(status, petName)?.text ?? null;
 }
 
-/** 当前宠物的驾校提醒（只关于这一只：面板点到别的宠物时由上层滤掉）。 */
-export function useSchoolNote(): PanelNote | null {
+/**
+ * 当前宠物的驾校提醒（只关于这一只：面板点到别的宠物时由上层滤掉）。
+ * 名字：live 用当前宠物的名字；演示没有家庭上下文，用上层给的（面板上那只，演示里就是那一只）。
+ */
+export function useSchoolNote(petNameHint?: string | null): PanelNote | null {
   const services = useServices();
   const selection = useOptionalCurrentHousehold();
   const petId = selection?.pet?.pet_id ?? null;
+  const petName = selection?.pet?.name ?? petNameHint ?? null;
   const userId = selection?.userId ?? null;
   const status = useQuery({
     queryKey: env.dataMode === "fixture" ? queryKeys.drivingStatus : queryKeys.drivingStatusFor(userId ?? "-", petId ?? "-"),
@@ -96,6 +102,6 @@ export function useSchoolNote(): PanelNote | null {
     enabled: env.dataMode === "fixture" || Boolean(userId && petId),
   });
   if (!status.isSuccess) return null;
-  const content = schoolNoteContent(status.data);
+  const content = schoolNoteContent(status.data, petName);
   return content ? { id: "school", kind: "school", ...content, petId: petId ?? undefined } : null;
 }

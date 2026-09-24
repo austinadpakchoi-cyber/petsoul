@@ -1,12 +1,16 @@
 /**
  * 旅行心愿的两个页面，与攻略手账列表里的“想去 / 准备中”（TRV-06，claude-6c2b 分身）。
  * - /guides/wish：当前活动心愿（GET /travel/wish，合同 §23.4，已可接 live）；资料还在查、还没有计划的心愿只能从这里进。
- * - /guides/plan/:planId：某一份计划（GET /travel/plans/{plan_id}，还没落地）：现在只有演示计划；live 只说“还在搭建中”，不造假。
- * - 页面只认 PlanView（./model）；数据从 ./data 来。标题有宠物名字就用名字，拿不到才写“TA”。
- * - 文字负责好用，手账图负责好看：地名、时间、金额、来源全是页面文字；手账图只占一块留白，没有 / 在画 / 没画成 / 结果未确认 / 没有配图时文字照常；
- *   手账这一页上写的字（标题、一句话、站点、提醒、雨天备选）在图外照常可读（TRV-07：屏幕先显示图外文字）；
- *   只有没画成、结果未确认且后端给了重画票时才说“稍后可以重画”——重画命令的路由还没建，这里只是一句说明、不是按钮，不假装能点；
+ * - /guides/plan/:planId：某一份计划。live 读 GET /travel/plans/{plan_id}（2026-09-24 23:2x 接上，显式带当前宠物），
+ *   再和 GET /travel/wish 的当前心愿按 wish_id 对上（对不上只按计划本身说）；演示仍用演示计划（各带自己的心愿）。
+ *   404 plan_not_found（别人家的、不存在的、还没发布过计划的心愿）说“这份计划还没写好，或者已经不在了”；后端没有这条路的路由级 404 不算这一种，走统一错误态。
+ * - 页面只认 PlanView（./model）；数据从 ./data 来。标题有宠物名字就用名字，拿不到才写“TA”。数据里没有的块整块不显示，不写“没有写 / 未提供”。
+ * - 文字负责好用，手账图负责好看：地名、时间、金额、来源全是页面文字；手账图只占一块留白，没有 / 画着 / 没画成 / 结果未确认 / 没有配图时文字照常；
+ *   手账这一页上写的字（标题、一句话、站点、提醒、雨天备选）在图外照常可读（TRV-07：屏幕先显示图外文字），时间用这一页自己的；
+ *   只有没画成、结果未确认且后端给了重画凭据时才说“稍后可以重画”——重画命令（合同 §7 POST …/journal/redraw）后端还没挂、契约里也没有，
+ *   这里只是一句说明、不是按钮，不假装能点；挂上以后换成主人自己点的按钮（付费生图：绝不自动触发）。
  *   配图被拒的拒绝码、“不画 TA”的原因码只进“技术信息”（平时收起）。
+ * - 用了驾校借车券（fare_waived）：写“用了驾校借车券，这趟不用租车费”，标价划掉显示，不把标价说成付过的钱（合同 §30）。
  * - 外链一律新窗口、rel="noopener noreferrer"，只收 http(s)（./model 的 safeHref）：资料来源，和后端给的地图链接 nav_url（不拿 lat/lng 自己拼）。
  */
 import { useId, type ReactNode } from "react";
@@ -14,9 +18,9 @@ import { Link, useParams } from "react-router";
 import { toApiError } from "@/shared/api/errors";
 import { env } from "@/shared/config/env";
 import { useOptionalCurrentHousehold } from "@/shared/session/householdContext";
-import { Chip, DataOriginBadge, DisabledState, EmptyState, ErrorState, Icon, LoadingState, Page, TopBar } from "@/shared/ui";
-import { isPetRequired, isPlanNotFound, useCurrentWish, useDemoPlans, type Read } from "./data";
-import { viewOfPlan, viewOfWish, type JournalTextView, type LineView, type PlaceStamp, type PlaceView, type PlanView, type ViewOptions } from "./model";
+import { Chip, DataOriginBadge, EmptyState, ErrorState, Icon, LoadingState, Page, TopBar } from "@/shared/ui";
+import { isPetRequired, isPlanNotFound, useCurrentWish, useDemoPlans, useLivePlan, type Read } from "./data";
+import { viewOfPlan, viewOfPlanOnly, viewOfWish, type JournalTextView, type LineView, type PlaceStamp, type PlaceView, type PlanView, type ViewOptions } from "./model";
 import "./plan.css";
 
 /** 当前宠物的名字；拿不到（演示世界的家庭上下文没有当前宠物）就是 null，页面写“TA”。 */
@@ -90,8 +94,8 @@ function PlaceItem({ place }: { place: PlaceView }) {
 }
 
 /**
- * 重画入口：后端给了重画票（只有没画成 / 结果未确认才有）才出现。重画命令的路由还没建，
- * 所以这里只是一句说明，不是按钮——不假装能点。路由建好后换成按钮，由主人自己点（不自动重画）。
+ * 重画入口：后端给了重画凭据（redraw_ticket，只有没画成 / 结果未确认才有）才出现。重画命令（合同 §7 POST …/journal/redraw）
+ * 后端还没挂、契约里也没有，所以这里只是一句说明，不是按钮——不假装能点。挂上以后换成按钮，由主人自己点（付费生图，绝不自动重画）。
  */
 function RedrawNote() {
   return (
@@ -156,17 +160,16 @@ export function PlanContent({ view }: { view: PlanView }) {
         <p className="ps-plan-hero__summary">{view.summary}</p>
       </header>
 
-      <section className="ps-plan-section" aria-labelledby={h("why")}>
-        <h2 id={h("why")}>我为什么想去</h2>
-        {view.reason ? (
+      {/* 数据里没有的整块不显示，不写“没有写 / 未提供”（只按计划本身说时，TA 的理由在心愿里，这里不编）。 */}
+      {view.reason ? (
+        <section className="ps-plan-section" aria-labelledby={h("why")}>
+          <h2 id={h("why")}>我为什么想去</h2>
           <blockquote className="ps-plan-quote">
             <p>“{view.reason}”</p>
             <footer>TA 自己说的</footer>
           </blockquote>
-        ) : (
-          <p className="ps-plan-muted">TA 这次没有写原因。</p>
-        )}
-      </section>
+        </section>
+      ) : null}
 
       {view.stage === "wish" || view.stage === "ready" ? (
         <section className="ps-plan-section" aria-labelledby={h("waiting")}>
@@ -209,40 +212,44 @@ export function PlanContent({ view }: { view: PlanView }) {
         </section>
       ) : null}
 
-      <section className="ps-plan-section" aria-labelledby={h("steps")}>
-        <h2 id={h("steps")}>行动安排</h2>
-        {view.validity ? <p className="ps-plan-note">按这一天的资料安排：{view.validity}</p> : null}
-        {view.arrangement ? (
-          <p className="ps-plan-arrangement">{view.arrangement}</p>
-        ) : view.planLink ? (
-          <p className="ps-plan-muted">
-            计划已经写好了。<Link to={view.planLink}>看这份计划</Link>
-          </p>
-        ) : (
-          <p className="ps-plan-muted">{view.planWritten ? "这份计划没有写行动安排。" : "TA 查好资料以后，路线和提醒会写在这里。"}</p>
-        )}
-      </section>
+      {view.arrangement || view.validity || view.planLink || !view.planWritten ? (
+        <section className="ps-plan-section" aria-labelledby={h("steps")}>
+          <h2 id={h("steps")}>行动安排</h2>
+          {view.validity ? <p className="ps-plan-note">按这一天的资料安排：{view.validity}</p> : null}
+          {view.arrangement ? (
+            <p className="ps-plan-arrangement">{view.arrangement}</p>
+          ) : view.planLink ? (
+            <p className="ps-plan-muted">
+              计划已经写好了。<Link to={view.planLink}>看这份计划</Link>
+            </p>
+          ) : view.planWritten ? null : (
+            <p className="ps-plan-muted">TA 查好资料以后，路线和提醒会写在这里。</p>
+          )}
+        </section>
+      ) : null}
 
       <section className="ps-plan-section" aria-labelledby={h("main")}>
         <h2 id={h("main")}>主目的地</h2>
         <PlaceItem place={view.main} />
       </section>
 
-      <section className="ps-plan-section" aria-labelledby={h("along")}>
-        <h2 id={h("along")}>顺路建议</h2>
-        <p className="ps-plan-note">顺路看看的地方，只是建议，不算到访。</p>
-        {view.suggestions.length ? (
-          <ul className="ps-plan-places">
-            {view.suggestions.map((place) => (
-              <li key={place.id}>
-                <PlaceItem place={place} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="ps-plan-muted">{view.planWritten ? "这份计划没有顺路建议。" : "TA 查好资料以后，再看有没有顺路的地方。"}</p>
-        )}
-      </section>
+      {view.suggestions.length || !view.planWritten ? (
+        <section className="ps-plan-section" aria-labelledby={h("along")}>
+          <h2 id={h("along")}>顺路建议</h2>
+          <p className="ps-plan-note">顺路看看的地方，只是建议，不算到访。</p>
+          {view.suggestions.length ? (
+            <ul className="ps-plan-places">
+              {view.suggestions.map((place) => (
+                <li key={place.id}>
+                  <PlaceItem place={place} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="ps-plan-muted">TA 查好资料以后，再看有没有顺路的地方。</p>
+          )}
+        </section>
+      ) : null}
 
       {view.reminders.length ? (
         <section className="ps-plan-section" aria-labelledby={h("tips")}>
@@ -275,6 +282,12 @@ export function PlanContent({ view }: { view: PlanView }) {
                   游戏里的星币
                 </span>
                 <strong>{view.coins.text}</strong>
+                {/* 用了驾校借车券：标价划掉显示，它不是付过的钱。 */}
+                {view.coins.listPrice ? (
+                  <small className="ps-plan-money__list-price">
+                    标价 <s>{view.coins.listPrice}</s>
+                  </small>
+                ) : null}
                 {view.coins.detail ? <small>{view.coins.detail}</small> : null}
               </div>
             ) : null}
@@ -299,73 +312,79 @@ export function PlanContent({ view }: { view: PlanView }) {
         </section>
       ) : null}
 
-      <section className="ps-plan-section" aria-labelledby={h("journal")}>
-        <h2 id={h("journal")}>{view.journal.heading}</h2>
-        <figure className={`ps-plan-journal ps-plan-journal--${view.journal.state}`} data-journal={view.journal.state}>
-          {view.journal.imageUrl ? (
-            <img src={view.journal.imageUrl} alt={`${view.journal.heading}的画面`} loading="lazy" />
-          ) : (
-            <div className="ps-plan-journal__blank" aria-hidden="true">
-              <Icon name="bookmark" size={26} />
-            </div>
-          )}
-          <figcaption>
-            <strong>{view.journal.caption}</strong>
-            {view.journal.staleNote ? <span className="ps-plan-journal__stale">{view.journal.staleNote}</span> : null}
-            {view.journal.identity ? <span className="ps-plan-journal__identity">{view.journal.identity}</span> : null}
-            {view.journal.state === "ready" ? null : <span>文字都在这一页，照常可以看。</span>}
-            {view.journal.tech ? <TechLine text={view.journal.tech} /> : null}
-          </figcaption>
-        </figure>
-        {view.journal.canRedraw ? <RedrawNote /> : null}
-        {view.journal.text ? <JournalPage text={view.journal.text} /> : null}
-      </section>
+      {/* 还没有手账（这一版没有 journals，或心愿还没有计划）：整块不显示。 */}
+      {view.journal.text ? (
+        <section className="ps-plan-section" aria-labelledby={h("journal")}>
+          <h2 id={h("journal")}>{view.journal.heading}</h2>
+          <figure className={`ps-plan-journal ps-plan-journal--${view.journal.state}`} data-journal={view.journal.state}>
+            {view.journal.imageUrl ? (
+              <img src={view.journal.imageUrl} alt={`${view.journal.heading}的画面`} loading="lazy" />
+            ) : (
+              <div className="ps-plan-journal__blank" aria-hidden="true">
+                <Icon name="bookmark" size={26} />
+              </div>
+            )}
+            <figcaption>
+              <strong>{view.journal.caption}</strong>
+              {view.journal.staleNote ? <span className="ps-plan-journal__stale">{view.journal.staleNote}</span> : null}
+              {view.journal.identity ? <span className="ps-plan-journal__identity">{view.journal.identity}</span> : null}
+              {view.journal.state === "ready" ? null : <span>文字都在这一页，照常可以看。</span>}
+              {view.journal.time ? <small className="ps-plan-journal__time">{view.journal.time}</small> : null}
+              {view.journal.tech ? <TechLine text={view.journal.tech} /> : null}
+            </figcaption>
+          </figure>
+          {view.journal.canRedraw ? <RedrawNote /> : null}
+          <JournalPage text={view.journal.text} />
+        </section>
+      ) : null}
 
-      <section className="ps-plan-section" aria-labelledby={h("sources")}>
-        <h2 id={h("sources")}>资料来源</h2>
-        {view.sources.length ? (
-          <ul className="ps-plan-sources">
-            {view.sources.map((source) => (
-              <li key={source.id} data-pending={source.pendingText ? "true" : "false"}>
-                <div className="ps-plan-sources__head">
-                  <span>{source.topic}</span>
-                  {source.pendingText ? <PendingTag>{source.pendingText}</PendingTag> : <span className="ps-plan-tag ps-plan-tag--ok">已核对</span>}
-                </div>
-                {source.detail ? <p className="ps-plan-sources__value">{source.detail}</p> : null}
-                {source.refs.map((ref) => (
-                  <div key={ref.key} className="ps-plan-sources__ref">
-                    <p>
-                      来源：
-                      {ref.href ? (
-                        <a href={ref.href} target="_blank" rel="noopener noreferrer">
-                          {ref.publisher}
-                        </a>
-                      ) : (
-                        ref.publisher
-                      )}
-                    </p>
-                    {ref.times.map((time) => (
-                      <small key={time}>{time}</small>
-                    ))}
+      {view.sources.length || !view.planWritten ? (
+        <section className="ps-plan-section" aria-labelledby={h("sources")}>
+          <h2 id={h("sources")}>资料来源</h2>
+          {view.sources.length ? (
+            <ul className="ps-plan-sources">
+              {view.sources.map((source) => (
+                <li key={source.id} data-pending={source.pendingText ? "true" : "false"}>
+                  <div className="ps-plan-sources__head">
+                    <span>{source.topic}</span>
+                    {source.pendingText ? <PendingTag>{source.pendingText}</PendingTag> : <span className="ps-plan-tag ps-plan-tag--ok">已核对</span>}
                   </div>
-                ))}
-                {source.times.map((time) => (
-                  <small key={time}>{time}</small>
-                ))}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="ps-plan-muted">{view.planWritten ? "这份计划没有列出资料来源。" : "还没有资料来源：TA 正在准备。"}</p>
-        )}
-      </section>
+                  {source.detail ? <p className="ps-plan-sources__value">{source.detail}</p> : null}
+                  {source.refs.map((ref) => (
+                    <div key={ref.key} className="ps-plan-sources__ref">
+                      <p>
+                        来源：
+                        {ref.href ? (
+                          <a href={ref.href} target="_blank" rel="noopener noreferrer">
+                            {ref.publisher}
+                          </a>
+                        ) : (
+                          ref.publisher
+                        )}
+                      </p>
+                      {ref.times.map((time) => (
+                        <small key={time}>{time}</small>
+                      ))}
+                    </div>
+                  ))}
+                  {source.times.map((time) => (
+                    <small key={time}>{time}</small>
+                  ))}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="ps-plan-muted">还没有资料来源：TA 正在准备。</p>
+          )}
+        </section>
+      ) : null}
     </article>
   );
 }
 
 /**
- * 读的几种状态：读不了（默认说还在搭建中，不造假；whenUnavailable 可以换成专门的说法）、加载中、
- * 出错（可重试；whenError 可以把某些错误换成专门的说法）、读到了。
+ * 读的几种状态：读不了（whenUnavailable：两个页面都是“需要先选一只宠物”）、加载中、
+ * 出错（能重试的给重试；whenError 可以把某些错误换成专门的说法）、读到了。
  */
 function ReadGate<T>({
   read,
@@ -379,21 +398,14 @@ function ReadGate<T>({
   read: Read<T>;
   found: boolean;
   empty: ReactNode;
-  whenUnavailable?: ReactNode;
+  whenUnavailable: ReactNode;
   whenError?: (error: unknown) => ReactNode | null;
   onRetry?: () => void;
   children: ReactNode;
 }) {
-  if (read.state === "unavailable") {
-    if (whenUnavailable) return <>{whenUnavailable}</>;
-    return (
-      <DisabledState title="这里还在搭建中">
-        <p className="ps-plan-muted">TA 的旅行计划接上以后，会在这里出现。</p>
-      </DisabledState>
-    );
-  }
+  if (read.state === "unavailable") return <>{whenUnavailable}</>;
   if (read.state === "loading") return <LoadingState lines={3} label="正在翻开 TA 的计划…" />;
-  if (read.state === "error") return <>{whenError?.(read.error) ?? <ErrorState error={read.error} onRetry={onRetry} />}</>;
+  if (read.state === "error") return <>{whenError?.(read.error) ?? <ErrorState error={read.error} onRetry={onRetry ?? read.retry} />}</>;
   return <>{found ? children : empty}</>;
 }
 
@@ -415,15 +427,27 @@ function TechLine({ text }: { text: string }) {
 }
 
 /**
- * 这份计划不在了：演示里没有这份计划；或者（第③期接上 GET /travel/plans/{plan_id} 以后）后端答 404 plan_not_found——
- * 找不到、或不属于这只宠物（I 已定）。原因码只收进“技术信息”，玩家只看人话。
+ * 这份计划还没写好，或者已经不在了：后端答 404 plan_not_found——别人家的、不存在的、还没发布过计划的心愿，三种不可区分（合同 §7）；
+ * 演示里没有这一份也这样说（演示没有原因码，不出“技术信息”）。原因码只收进“技术信息”，玩家只看人话。
+ * 后端没有这条路（路由级 404，不带 reason）不走这里：照常是统一错误态（“没有找到……或者这里暂时还没开放”）。
+ * 说了“回到手账列表看看”，就在这句下面给去手账列表（/guides，这一页的上级）的按钮；“技术信息”排在按钮后面（同统一错误态）。
  */
 export function PlanMissing({ error }: { error?: unknown }) {
   const tech = error === undefined ? "" : techLine(error);
   return (
-    <EmptyState icon="bookmark" title="这份计划不在了">
-      它可能已经换了一版，或者不是这只宠物的计划。回到手账列表看看。
-      {tech ? <TechLine text={tech} /> : null}
+    <EmptyState
+      icon="bookmark"
+      title="这份计划还没写好，或者已经不在了"
+      action={
+        <>
+          <Link className="ps-btn ps-btn--primary" to="/guides">
+            回到手账列表
+          </Link>
+          {tech ? <TechLine text={tech} /> : null}
+        </>
+      }
+    >
+      回到手账列表看看。
     </EmptyState>
   );
 }
@@ -466,21 +490,44 @@ export function WishPage() {
   );
 }
 
-/** /guides/plan/:planId：某一份计划（GET /travel/plans/{plan_id} 还没落地：只有演示计划）。 */
+/**
+ * /guides/plan/:planId：某一份计划。
+ * - live：GET /travel/plans/{plan_id}（带当前宠物）＋ GET /travel/wish。两边 wish_id 对得上才放在一起（viewOfPlan）；
+ *   对不上、或者心愿读不到，都只按计划本身说（viewOfPlanOnly）——计划本身不因为心愿读不到而不显示；
+ *   心愿还在读时先等它，免得先按计划本身说、一会儿又换成心愿的状态（页面跳一下）。
+ * - 演示：演示计划各带自己的心愿（PlanBundle）；演示里没有这一份，就说计划还没写好或者已经不在了。
+ */
 export function PlanPage() {
   const { planId } = useParams();
+  const fixture = env.dataMode === "fixture";
   const plans = useDemoPlans();
+  const livePlan = useLivePlan(planId);
+  const wish = useCurrentWish();
   const options = useViewOptions();
-  const bundle = plans.state === "ready" ? (plans.data.find((candidate) => candidate.plan.plan_id === planId) ?? null) : null;
-  const view = bundle ? viewOfPlan(bundle, options) : null;
+  let read: Read<unknown>;
+  let view: PlanView | null = null;
+  if (fixture) {
+    read = plans;
+    const bundle = plans.state === "ready" ? (plans.data.find((candidate) => candidate.plan.plan_id === planId) ?? null) : null;
+    view = bundle ? viewOfPlan(bundle, options) : null;
+  } else if (livePlan.state === "ready" && wish.state === "loading") {
+    read = { state: "loading" };
+  } else {
+    read = livePlan;
+    if (livePlan.state === "ready") {
+      const current = wish.state === "ready" && wish.data && wish.data.wish_id === livePlan.data.wish_id ? wish.data : null;
+      view = current ? viewOfPlan({ wish: current, plan: livePlan.data }, options) : viewOfPlanOnly(livePlan.data, options);
+    }
+  }
   return (
     <Page className="ps-plan-page">
       <TopBar title={<h1 className="ps-plan-title">{view?.title ?? "旅行计划"}</h1>} back="/guides" />
       <ReadGate
-        read={plans}
+        read={read}
         found={Boolean(view)}
         empty={<PlanMissing />}
-        whenError={(error) => (isPlanNotFound(error) ? <PlanMissing error={error} /> : null)}
+        whenUnavailable={<PetRequired />}
+        whenError={(error) => (isPlanNotFound(error) ? <PlanMissing error={error} /> : isPetRequired(error) ? <PetRequired error={error} /> : null)}
       >
         {view ? <PlanContent view={view} /> : null}
       </ReadGate>

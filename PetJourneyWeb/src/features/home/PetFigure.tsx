@@ -162,7 +162,7 @@ export function AdjustCharacter({ petId, state }: { petId: string; state: Charac
         <Button variant="ghost" size="sm" loading={adjust.isPending} onClick={() => adjust.mutate()}>{label}</Button>
       ) : null}
       {adjust.data && !adjust.data.accepted ? <p className="ps-character-adjust__note" role="status">{reasonText(adjust.data.reason) ?? "这次没有排上。"}</p> : null}
-      {adjust.isError ? <p className="ps-character-adjust__note" role="alert">提交结果还没确认：{toApiError(adjust.error).message} 再点一次会沿用同一次请求，不会重复扣费。</p> : null}
+      {adjust.isError ? <p className="ps-character-adjust__note" role="alert">提交结果还没确认：{toApiError(adjust.error).playerMessage} 再点一次会沿用同一次请求，不会重复扣费。</p> : null}
       <IdPhotoAdjust petId={petId} idPhoto={state.id_photo} canRequest={state.can_regenerate === true} blockedReason={state.blocked_reason} characterBusy={pending} />
     </div>
   );
@@ -244,7 +244,7 @@ export function IdPhotoAdjust({ petId, idPhoto, canRequest, blockedReason = null
         ) : null}
         {request.data?.accepted ? <p className="ps-character-adjust__note" role="status">证件照已经在准备了。</p> : null}
         {request.data && !request.data.accepted ? <p className="ps-character-adjust__note" role="status">{idPhotoReasonText(request.data.reason) ?? "这次没有排上。"}</p> : null}
-        {request.isError ? <p className="ps-character-adjust__note" role="alert">提交结果还没确认：{toApiError(request.error).message} 再点一次会沿用同一次请求，不会重复扣费。</p> : null}
+        {request.isError ? <p className="ps-character-adjust__note" role="alert">提交结果还没确认：{toApiError(request.error).playerMessage} 再点一次会沿用同一次请求，不会重复扣费。</p> : null}
       </div>
     </div>
   );

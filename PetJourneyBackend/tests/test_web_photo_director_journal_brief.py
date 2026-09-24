@@ -85,7 +85,7 @@ class Counterexamples(unittest.TestCase):
         for status, reason in (("unverified", "fact_unverified"), ("conflicting", "fact_conflicting"),
                                ("stale", "fact_stale"), ("maybe", "fact_unverified")):
             with self.subTest(status=status):
-                facts = (replace(FACTS[0], verification=status),) + FACTS[1:]
+                facts = (replace(FACTS[0], verdict=status),) + FACTS[1:]
                 brief = compile_journal_brief(make(facts=facts))
                 self.assertIn(("f-lighthouse", reason), brief.excluded)
                 self.assertNotIn(FACTS[0].visual_feature, brief.prompt)

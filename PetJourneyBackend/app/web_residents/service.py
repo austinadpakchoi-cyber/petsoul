@@ -60,7 +60,8 @@ class ResidentService:
                 "SELECT r.pet_id, r.candidate_id, r.public_since, s.label AS residence, s.city, c.name, c.species, c.personality, c.dream, c.origin, c.source_note "
                 "FROM web_residents r JOIN web_residences s ON s.residence_id = r.residence_id "
                 "JOIN web_adoption_candidates c ON c.candidate_id = r.candidate_id "
-                "WHERE r.status = 'resident' AND r.kind = 'adoptable' AND c.availability = 'available' ORDER BY r.public_since, r.pet_id").fetchall()
+                "WHERE r.status = 'resident' AND r.kind = 'adoptable' AND c.availability = 'available' AND c.listed = 1 "  # 后台撤下的不上访客页（迁移 0260）
+                "ORDER BY r.public_since, r.pet_id").fetchall()
         return [{"pet_id": r["pet_id"], "candidate_id": r["candidate_id"], "name": r["name"], "species": r["species"], "personality": r["personality"],
                  "dream": r["dream"], "origin": r["origin"], "source_note": r["source_note"], "residence": r["residence"], "city": r["city"],
                  "living_since": parse_dt(r["public_since"])} for r in rows]

@@ -95,17 +95,25 @@ class WebCollectionService:
         note = self.note_writer(journey, visit)
         task_id = self.selfie_request(journey, visit, f"postcard:{journey.journey_id}")
         title = f"来自{journey.city}的明信片"
-        # 任务先入队、这里后插行：中间 worker 可能已经跑完。同一个写事务里先读一次终态（见 photo_display）。
         with unit_of_work(self.storage) as conn:
-            settled = settled_photo(conn, task_id, self.image_outcome_in) if task_id else None
-            status, url = settled if settled is not None else ("processing" if task_id else None, None)
-            conn.execute(
-                "INSERT OR IGNORE INTO web_collection_items (item_id, user_id, pet_id, kind, item_key, title, tradable, bound_to_pet, source_event_id, obtained_at, "
-                "note, image_status, image_task_id, place, city, image_url) VALUES (?, ?, ?, 'postcard', NULL, ?, 0, 1, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (f"it-{uuid.uuid4().hex[:12]}", journey.user_id, journey.pet_id, title, event.source_event_id, iso(event.occurred_at), note,
-                 status, task_id, visit.place["name"], journey.city, url),
-            )
+            self.postcard_in(conn, user_id=journey.user_id, pet_id=journey.pet_id, source_event_id=event.source_event_id, title=title, note=note,
+                             place=visit.place["name"], city=journey.city, task_id=task_id, now=event.occurred_at)
         self.on_postcard(journey, title)
+
+    def postcard_in(self, conn, *, user_id: str, pet_id: str, source_event_id: str, title: str, note: str, place: str | None, city: str | None,
+                    task_id: str | None, now: datetime) -> bool:
+        """在**调用方的写事务里**寄一张明信片（回程邮局明信片、到站明信片共用这一份）；按 (pet_id, source_event_id, kind) 只寄一次。
+
+        task_id：写实自拍的生图任务，没有就是一张手写明信片（image_status 为空，页面显示纸质卡片）。
+        任务可能先入队、这里后插行，中间 worker 已经跑完：同一个写事务里先读一次终态（见 photo_display）。
+        """
+        settled = settled_photo(conn, task_id, self.image_outcome_in) if task_id else None
+        status, url = settled if settled is not None else ("processing" if task_id else None, None)
+        return conn.execute(
+            "INSERT OR IGNORE INTO web_collection_items (item_id, user_id, pet_id, kind, item_key, title, tradable, bound_to_pet, source_event_id, obtained_at, "
+            "note, image_status, image_task_id, place, city, image_url) VALUES (?, ?, ?, 'postcard', NULL, ?, 0, 1, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (f"it-{uuid.uuid4().hex[:12]}", user_id, pet_id, title, source_event_id, iso(now), note, status, task_id, place, city, url),
+        ).rowcount == 1
 
     def image_ready(self, task_id: str, url: str, conn=None) -> None:
         execute_in(self.storage, conn, "UPDATE web_collection_items SET image_url = ?, image_status = 'ready' WHERE image_task_id = ?", (url, task_id))

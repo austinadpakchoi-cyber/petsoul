@@ -41,6 +41,7 @@ from ..transport_world.registry import WorldServiceRegistry
 from ..transport_world.timeline import leg_progress, position_along
 from ..utils import parse_dt, utcnow
 from .repository import JourneyRecord, LegRecord, VisitRecord
+from .trip_titles import going_to
 
 MODE_TEXT = {"flight": "飞机", "train": "火车", "ferry": "轮船", "drive": "汽车", "taxi": "出租车", "transit": "公交", "walk": "步行"}
 ACTIVITY_TEXT = {"listening": "在听歌", "watching": "在看剧", "resting": "在休息", "window_gazing": "在看窗外", "dining": "在吃东西", "writing_postcard": "在写明信片"}
@@ -224,7 +225,7 @@ class JourneySnapshotBuilder:
             doing = f"，{ACTIVITY_TEXT[scheduled.kind.value]}" if scheduled else ""
             headline = f"TA 正在{'等' if current.kind == 'wait' else '坐'}{ride}{doing}" if current.mode != "walk" else f"TA 正在步行{doing}"
         else:
-            headline = f"TA 在去{journey.title}的路上"
+            headline = f"TA 在去{going_to(journey.title)}的路上"
         return JourneyBrief(journey_id=journey.journey_id, itinerary_version=journey.itinerary_version, headline=headline,
                             current_visit_id=visit.visit_id if visit and visit.starts_at <= now < visit.ends_at else None,
                             current_leg_id=current.leg_id if current else None)

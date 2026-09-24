@@ -1,6 +1,8 @@
 /**
  * 成绩单里的回放：用服务端保存的操作记录在本地重新复算（同一套确定性代码），逐 tick 还原车的位置；
  * 时间轴上标出每一次扣分、红线与到位，点标记跳到发生前 1.5 秒。
+ * 看得懂错在哪一刻：播到扣分那一刻，画面里在车（或锥桶）上方贴“−5 压线”这类牌子，下面一行写明“第几秒 · 什么事”；
+ * 拖动时间轴会先暂停播放。
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DriveItemProgress } from "@/shared/contracts";
@@ -8,7 +10,10 @@ import { Button } from "@/shared/ui";
 import { Replay } from "../sim/replay";
 import type { Course, InputEventT, RouteState, SimEventT } from "../sim/types";
 import { formatTicks, reducedMotion } from "../text";
-import { type Camera, draw, fitCamera, followCamera, type Palette, readPalette } from "./render";
+import { type Camera, createStaticLayerCache, drawCached, DRIVE_SPRITE_URLS, type DriveSprites, fitCamera, followCamera, type FrameMark, loadDriveSprites, type Palette, readPalette } from "./render";
+
+/** 扣分标记在回放里停留的 tick 数（与考局里一致：1.5 秒） */
+const MARK_TICKS = 45;
 
 interface FrameRec {
   x: number;
@@ -48,8 +53,24 @@ function record(course: Course, events: InputEventT[], upto: number): { frames: 
   return { frames, knocked: replay.knocked, sim: replay.events };
 }
 
-export function ReplayViewer({ items, reasons }: { items: DriveItemProgress[]; reasons: Record<string, string> }) {
+/**
+ * 回放定位（给成绩单“错在哪 → 看回放”用）：item 是项目键（如 "reverse_park"），tick 是事发那一刻（扣分明细里的 t），
+ * nonce 每次点都换一个值（同一处可以重复点）。收到后切到那一项、跳到事发前约 1.5 秒，停在那里等玩家点播放。
+ * 找不到这一项时不动。
+ */
+export interface ReplaySeek {
+  item: string;
+  tick: number;
+  nonce: number;
+}
+
+/** 事发前留出的 tick 数（1.5 秒） */
+export const SEEK_LEAD_TICKS = 45;
+
+export function ReplayViewer({ items, reasons, seek }: { items: DriveItemProgress[]; reasons: Record<string, string>; seek?: ReplaySeek | null }) {
   const [itemIndex, setItemIndex] = useState(0);
+  // 切项目时 tick 默认回到 0；定位要跳到别的项目时，先把目标 tick 放在这里，切完项目再用
+  const pendingTick = useRef<number | null>(null);
   const item = items[itemIndex];
   const course = item.course as unknown as Course;
   const data = useMemo(() => record(course, item.events as InputEventT[], item.committed_tick), [course, item]);
@@ -58,12 +79,49 @@ export function ReplayViewer({ items, reasons }: { items: DriveItemProgress[]; r
   const [speed, setSpeed] = useState(2);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const paletteRef = useRef<Palette | null>(null);
+  // 素材只加载一次（useRef 的初值每次渲染都会求值，写成 useRef(loadDriveSprites(...)) 会在回放的每个 tick 新建一批图片）；
+  // 每到一张就重画一次
+  const [spritesLoaded, setSpritesLoaded] = useState(0);
+  const spritesRef = useRef<DriveSprites | null>(null);
+  const staticRef = useRef(createStaticLayerCache());
+  spritesRef.current ??= loadDriveSprites(DRIVE_SPRITE_URLS, undefined, undefined, () => setSpritesLoaded((n) => n + 1));
   const last = data.frames.length - 1;
+  // 每个扣分 / 红线事件的标记位置：碰锥标在锥桶上，其余标在那一刻的车身中心
+  const eventMarks = useMemo(() => {
+    const car = course.car;
+    const mid = (car.wheelbase + car.front - car.rear) / 2;
+    return data.sim
+      .filter((e) => e.p > 0 || e.f)
+      .map((e) => {
+        const cone = e.k === "cone" ? course.cones.find((c) => c.id === e.ref) : undefined;
+        const f = data.frames[Math.min(e.t, data.frames.length - 1)];
+        const label = reasons[e.k] ?? e.k;
+        const at = cone ? { x: cone.x, y: cone.y } : { x: f.x + f.hx * mid, y: f.y + f.hy * mid };
+        return { ...at, tick: e.t, text: e.p > 0 ? `−${e.p} ${label}` : label, tone: "bad" as const };
+      });
+  }, [data, course, reasons]);
+  const showing = eventMarks.filter((m) => tick >= m.tick && tick - m.tick < MARK_TICKS);
 
   useEffect(() => {
-    setTick(0);
+    setTick(pendingTick.current ?? 0);
+    pendingTick.current = null;
     setPlaying(false);
   }, [itemIndex]);
+
+  // 定位：切到那一项、跳到事发前 1.5 秒、停住
+  useEffect(() => {
+    if (!seek) return;
+    const index = items.findIndex((it) => it.item === seek.item);
+    if (index < 0) return;
+    const target = Math.max(0, Math.min(items[index].committed_tick, seek.tick - SEEK_LEAD_TICKS));
+    setPlaying(false);
+    if (index === itemIndex) setTick(target);
+    else {
+      pendingTick.current = target;
+      setItemIndex(index);
+    }
+    // 只在收到新的定位（nonce 变了）时跳；切项目本身不该再触发一次，所以依赖里不放 itemIndex、items
+  }, [seek?.nonce, seek?.item, seek?.tick]);
 
   useEffect(() => {
     if (!playing) return;
@@ -106,7 +164,7 @@ export function ReplayViewer({ items, reasons }: { items: DriveItemProgress[]; r
     const route: RouteState | null = course.route
       ? { checks: [], moved: f.moved, stop_ok: 0, stop_done: 0, cw_tick: f.cw, light_done: 0, turned: 0, invite_tick: null, invite_done: 0, speeding: 0 }
       : null;
-    draw(ctx, w, h, cam, {
+    drawCached(ctx, w, h, cam, {
       course,
       pose: p,
       steer: f.s,
@@ -120,8 +178,9 @@ export function ReplayViewer({ items, reasons }: { items: DriveItemProgress[]; r
       practice: false,
       predicted: null,
       blinkOn: reducedMotion() || Math.floor(tick / 12) % 2 === 0,
-    }, paletteRef.current);
-  }, [tick, data, course, last]);
+      marks: eventMarks.filter((m) => tick >= m.tick && tick - m.tick < MARK_TICKS).map(({ x, y, text, tone }): FrameMark => ({ x, y, text, tone })),
+    }, paletteRef.current, spritesRef.current, staticRef.current, dpr);
+  }, [tick, data, course, last, eventMarks, spritesLoaded]);
 
   const marks = data.sim.filter((e) => e.p > 0 || e.f || e.k === "done");
   return (
@@ -136,8 +195,24 @@ export function ReplayViewer({ items, reasons }: { items: DriveItemProgress[]; r
         </div>
       ) : null}
       <canvas ref={canvasRef} className="ds-canvas ds-canvas--replay" role="img" aria-label={`${item.title}回放，第 ${formatTicks(tick)}`} />
+      {/* 播到扣分那一刻，下面写明“第几秒 · 什么事”（读屏会念出来） */}
+      <p className="ds-replay__now" aria-live="polite">
+        {showing.length ? showing.map((m) => `第 ${formatTicks(m.tick)} · ${m.text}`).join("；") : " "}
+      </p>
       <div className="ds-timeline">
-        <input type="range" min={0} max={last} value={tick} aria-label="回放时间" onChange={(e) => setTick(Number(e.target.value))} />
+        <input
+          type="range"
+          min={0}
+          max={last}
+          value={tick}
+          aria-label="回放时间"
+          aria-valuetext={`第 ${formatTicks(tick)}，共 ${formatTicks(last)}`}
+          onChange={(e) => {
+            // 拖动时先停下，免得播放和手指抢位置
+            setPlaying(false);
+            setTick(Number(e.target.value));
+          }}
+        />
         <div className="ds-timeline__marks" aria-hidden="true">
           {marks.map((e, i) => (
             <span key={i} className={`ds-mark ${e.k === "done" ? "is-good" : "is-bad"}`} style={{ left: `${(e.t / Math.max(1, last)) * 100}%` }} />
@@ -149,8 +224,8 @@ export function ReplayViewer({ items, reasons }: { items: DriveItemProgress[]; r
           <Button size="sm" variant="primary" icon={playing ? "pause" : "play"} onClick={() => (tick >= last ? (setTick(0), setPlaying(true)) : setPlaying(!playing))}>
             {playing ? "暂停" : "播放"}
           </Button>
-          <Button size="sm" onClick={() => setSpeed(speed === 1 ? 2 : speed === 2 ? 4 : 1)}>
-            ×{speed}
+          <Button size="sm" aria-label={`播放速度 ${speed} 倍，点一下换`} onClick={() => setSpeed(speed === 1 ? 2 : speed === 2 ? 4 : 1)}>
+            {speed} 倍速
           </Button>
         </div>
         <span className="ps-muted">

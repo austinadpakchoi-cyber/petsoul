@@ -62,6 +62,9 @@ from .web_social.friends import FriendService
 from .web_credentials import CredentialService
 from .web_credentials_wiring import wire_documents
 from .web_agent.brain_wiring import wire_brain
+from .web_arrival import ArrivalService
+from .web_communicator.persona import build_proactive, clean_reply
+from .web_communicator.service import FAMILY
 from .web_driving import DrivingService
 
 logger = logging.getLogger("petsoul.web.composition")
@@ -103,6 +106,7 @@ class WebServices:
     credentials: CredentialService
     driving: DrivingService
     travel: TravelServices  # 旅行心愿与自动手账（TRV-00 §6 装配）
+    arrival: ArrivalService  # 到站自拍：TA 第一次住进家时，在家庭频道和到站明信片里发来同一张自拍
     ticker: WorldTicker  # 世界线（结算与确定性下游）
     cognition: WorldTicker  # 认知线（可能调模型的表达与回复）
     projector: object | None = None  # 每宠运行投影（只读）
@@ -563,6 +567,35 @@ def build_web_services(storage: JourneyStorage, settings: Settings, economy_engi
     # **不能因为「有计划」就绕过既有闸**，那会变成第五条出门路径。
     agent.life.ready_plan_of = bind_ready_plan(travel.wishes, storage)
 
+    # ---- 到站自拍（用户 2026-09-24：每个用户注册完成后，都会收到宠物在聊天框和明信片里发来的到站自拍）----
+    # 入住接口只登记；**认知线**的轮次再写话、排自拍、发消息与明信片（写话可能调模型，不能拖慢入住）。
+    # 自拍走插画服务的正门 `request_photo_in`：额度、每宠上限、幂等、unknown 不自动重画全部沿用，不另开付费通道。
+    arrival = ArrivalService(storage)
+
+    def arrival_place(pet_id: str):
+        home = homes.by_pet(pet_id)
+        return agent.home_places.get(home.home_id) if home is not None else None  # 家的真实片区（没选过的家是默认片区）
+
+    def arrival_note(pet_id: str, place) -> str | None:
+        """到站明信片上 TA 写的话：家庭第一位管理员开着“模型回信”、模型可用时由模型按 DNA 写；否则 None（用模板）。只写真实的片区。"""
+        chat = providers.chat
+        if not (chat.available and agent.proactive.family_model_enabled(pet_id)):
+            return None
+        persona = agent.persona_of(FAMILY, pet_id)
+        if persona is None:
+            return None
+        messages = build_proactive(persona, [], "postcard")
+        messages[0]["content"] += (f"\n真实情况：你刚刚搬到{place.city}的{place.area_label}，住进了新家；"
+                                   "这是你到站后寄回家的第一张明信片。只写这件事，不要编造别的地点和经历。")
+        return clean_reply(chat.complete(messages, max_tokens=120, temperature=0.9).text)
+
+    arrival.place_of = arrival_place
+    arrival.note_writer = arrival_note
+    arrival.selfie_request_in = illustrations.request_photo_in
+    arrival.postcard_in = collection.postcard_in
+    arrival.pet_note_in = communicator.pet_note_in  # 给家人写私聊（到站消息进「我和 TA」）
+    agent.cognition.jobs.append(("arrival", arrival.run))
+
     web = WebServices(identity=identity, households=households, entries=entries, residents=residents, pets=pets, homes=homes, economy=economy, inventory=inventory, market=market, farm=farm, reception=reception, journeys=journeys, snapshots=snapshots,
                       registry=registry, media=media, food=food, social=social, communicator=communicator, collection=collection, postcards=postcards, intent=intent,
                       providers=providers, illustrations=illustrations,
@@ -572,7 +605,7 @@ def build_web_services(storage: JourneyStorage, settings: Settings, economy_engi
                           storage, settings.web_private_media_dir, tasks, pets=pets,
                           illustrator=providers.illustrator, settings=settings, meter=providers.meter)),
                       dna=agent.dna, home_places=agent.home_places, moments=agent.moments,
-                      proactive=agent.proactive, life=agent.life, guides=agent.guides, friends=agent.friends, credentials=docs.credentials, driving=docs.driving, travel=travel,
+                      proactive=agent.proactive, life=agent.life, guides=agent.guides, friends=agent.friends, credentials=docs.credentials, driving=docs.driving, travel=travel, arrival=arrival,
                       ticker=agent.ticker, cognition=agent.cognition, projector=agent.projector, shadow=agent.shadow, profile_of=agent.profile_of,
                       # 进程内那一个线程要同时泵插画与角色：`illustrations.run_pending` 里写死了 kind="illustration"，
                       # 角色任务永远不会被它领取（上传排了队、库里有行，却没人执行）。`ImageWorkPump` 逐个泵、逐个兜异常。

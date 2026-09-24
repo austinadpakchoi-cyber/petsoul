@@ -71,7 +71,7 @@ function CropPicker({ onPick, onClose, busy, error }: { onPick: (crop: CropInfo)
   });
   const seeds = (key: string) => (items.data ?? []).filter((i) => i.kind === "seed" && i.item_key === key).length;
   return (
-    <Sheet className="ps-crop-sheet" title="种点什么" subtitle="成熟后收进仓库，卖掉或交订单变成旅费" onClose={onClose}>
+    <Sheet className="ps-crop-sheet" title="种点什么" subtitle="成熟后收进仓库，卖掉或交订单变成星币" onClose={onClose}>
       {crops.isError ? <ErrorState error={crops.error} onRetry={() => void crops.refetch()} /> : null}
       <ul className="ps-crop-list">
         {(crops.data ?? []).map((crop) => {
@@ -84,7 +84,7 @@ function CropPicker({ onPick, onClose, busy, error }: { onPick: (crop: CropInfo)
               <div style={{ flex: 1, minWidth: 0 }}>
                 <strong>{crop.label}</strong>
                 <div className="ps-muted">
-                  {growText(crop.grow_seconds)}成熟 · 收 {crop.yield_units} 个（杂货铺约 {crop.yield_units * crop.unit_value} 旅费）· 邻居合计最多摘 {crop.steal_total}
+                  {growText(crop.grow_seconds)}成熟 · 收 {crop.yield_units} 个（杂货铺约 {crop.yield_units * crop.unit_value} 星币）· 邻居合计最多摘 {crop.steal_total}
                 </div>
                 {crop.requires_seed ? <Chip tone={count ? "leaf" : "neutral"} icon="gift">{count ? `旅行带回的种子 ×${count}` : "需要旅行带回的种子"}</Chip> : null}
               </div>
@@ -115,7 +115,7 @@ function PatrolControl({ snapshot }: { snapshot: HomeSnapshot }) {
       <Button size="sm" variant="secondary" icon="home" disabled={Boolean(guard.next_patrol_at)} loading={patrol.isPending} onClick={() => patrol.mutate()}>
         {guard.next_patrol_at ? `${clock(guard.next_patrol_at)} 后可以再巡院` : "去院子里巡一圈（守 10 分钟）"}
       </Button>
-      {patrol.isError ? <span role="alert" className="ps-muted" style={{ color: "var(--c-danger)" }}>{toApiError(patrol.error).message}</span> : null}
+      {patrol.isError ? <span role="alert" className="ps-muted" style={{ color: "var(--c-danger)" }}>{toApiError(patrol.error).playerMessage}</span> : null}
     </div>
   );
 }
@@ -294,7 +294,7 @@ export function MyGarden({ snapshot }: { snapshot: HomeSnapshot }) {
       {done === "harvest" && action.data?.gained_items.length ? (
         <p key={`h${harvest?.n ?? 0}`} className="ps-steal-receipt" role="status">
           {/* 服务端原话形如「星星番茄 ×6 进了仓库」 */}
-          {action.data.gained_items.join("、")}。旅费未因收获增加。
+          {action.data.gained_items.join("、")}。星币没有变，卖掉或交订单时才会增加。
         </p>
       ) : null}
       {done === "plant" ? (
@@ -304,7 +304,7 @@ export function MyGarden({ snapshot }: { snapshot: HomeSnapshot }) {
       ) : null}
       {action.isError && !picking ? (
         <p className="ps-steal-problem" role="alert">
-          {toApiError(action.error).message}
+          {toApiError(action.error).playerMessage}
         </p>
       ) : null}
       <nav className="ps-garden-actions" aria-label="菜园去处">
@@ -316,7 +316,7 @@ export function MyGarden({ snapshot }: { snapshot: HomeSnapshot }) {
         </Link>
       </nav>
       <PatrolControl snapshot={snapshot} />
-      <p className="ps-muted">点熟了的菜就收，点空地选种子。收成先进仓库，卖掉或交居民订单才变成旅费。</p>
+      <p className="ps-muted">点熟了的菜就收，点空地选种子。收成先进仓库，卖掉或交居民订单才变成星币。</p>
       {picking ? <CropPicker busy={action.isPending} error={action.error} onClose={() => setPicking(null)} onPick={(crop) => run(picking, "plant", crop.crop_key)} /> : null}
     </div>
   );
@@ -332,7 +332,7 @@ export function GardenPage() {
         back="/map"
         right={
           wallet ? (
-            <Link to="/market" className="ps-garden-wallet" aria-label={`旅费 ${wallet.balance}，去仓库与集市`}>
+            <Link to="/market" className="ps-garden-wallet" aria-label={`${wallet.balance} 星币，去仓库与集市`}>
               <Icon name="coin" size={16} />
               <strong>{wallet.balance}</strong>
             </Link>

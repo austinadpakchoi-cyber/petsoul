@@ -4,24 +4,28 @@
   align-items: center;
   gap: 12px;
   min-height: 58px;
-  padding: 7px 16px;
+  padding: 6px 16px;
   border-bottom: 1px solid var(--c-surface-stroke);
   background: var(--c-surface);
 }
 
 .ps-current-pet-bar > span {
   flex: 0 1 84px;
+  min-width: 0;
   color: var(--c-ink-2);
   font-size: 10px;
   line-height: 1.35;
 }
 
+/* 宠物多了（窄屏上第三只放不下）就横向滑：贴边吸附，滑到头不带着页面走。 */
 .ps-current-pet-bar > div {
   display: flex;
   flex: 1;
   gap: 7px;
   min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
   scrollbar-width: none;
 }
 
@@ -29,18 +33,20 @@
   display: none;
 }
 
+/* 每个按钮至少 40px 高（巡检：原来 69×38）。 */
 .ps-current-pet-bar button {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 5px;
-  min-height: 38px;
-  padding: 3px 10px 3px 4px;
+  gap: 6px;
+  min-height: 44px;
+  padding: 4px 12px 4px 5px;
   border: 1px solid var(--c-surface-stroke);
   border-radius: 22px;
   background: var(--c-surface-2);
   color: var(--c-ink);
   cursor: pointer;
+  scroll-snap-align: start;
 }
 
 .ps-current-pet-bar button[aria-pressed="true"] {
@@ -56,4 +62,103 @@
 .ps-current-pet-bar strong {
   font-size: 11px;
   white-space: nowrap;
+}
+
+/* 整屏场景页（小窝、菜园）：切换栏收成浮在场景上方的小胶囊。
+   锚点零高度，留在原来切换栏的位置，所以场景不再被往下推 58px；胶囊按页面自己的顶部布局放在右上：
+   小窝在“庭院 / 屋内”下面，菜园在顶栏下面的天空里（左上是“TA 的菜园”牌子）。
+   层级 5：盖过场景里的物件（菜园最高 4），不盖小窝点开的小气泡（6）和各种弹层。 */
+.ps-pet-capsule-anchor {
+  position: relative;
+  z-index: 5;
+  height: 0;
+}
+
+.ps-pet-capsule-anchor--home {
+  --ps-pet-capsule-top: 108px;
+}
+
+.ps-pet-capsule-anchor--garden {
+  --ps-pet-capsule-top: 66px;
+}
+
+.ps-current-pet-bar--capsule {
+  position: absolute;
+  top: var(--ps-pet-capsule-top, 12px);
+  right: 12px;
+  max-width: calc(100% - 24px);
+  min-height: 0;
+  padding: 4px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 999px;
+  box-shadow: 0 6px 16px -8px var(--c-shadow);
+}
+
+.ps-current-pet-bar--capsule > div {
+  gap: 4px;
+}
+
+.ps-current-pet-bar--capsule button {
+  min-height: 40px;
+  padding: 3px 12px 3px 4px;
+  border-color: transparent;
+  background: transparent;
+}
+
+/* 小窝的屋门随画面缩放，右缘约在宽度的 54%（390 宽 211px、320 宽 173px）：胶囊只占屋门右边那一块，放不下就在胶囊里横向滑。 */
+.ps-pet-capsule-anchor--home .ps-current-pet-bar--capsule {
+  max-width: calc(45% - 16px);
+}
+
+/* 地图：宠物分在不止一个家时才有，只切家。地图满屏固定，所以这里也固定在视口顶部正中，
+   让开左上的小窝 / 菜园和右上的“我的” / 定位（各约 56px 宽）；与它们上下居中对齐。
+   层级 12：高于地图图层与角落按钮（5–6），低于底部面板（30）与弹层（60）。 */
+.ps-household-switch {
+  position: fixed;
+  z-index: 12;
+  top: calc(var(--safe-top) + 8px);
+  left: 50%;
+  display: flex;
+  gap: 4px;
+  max-width: calc(100% - 152px);
+  padding: 4px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 999px;
+  background: var(--c-surface);
+  box-shadow: 0 6px 16px -8px var(--c-shadow);
+  transform: translateX(-50%);
+  scrollbar-width: none;
+}
+
+.ps-household-switch::-webkit-scrollbar {
+  display: none;
+}
+
+.ps-household-switch button {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ps-household-switch button[aria-pressed="true"] {
+  border-color: var(--c-sun);
+  background: var(--c-sun-soft);
+  color: var(--c-ink);
+}
+
+.ps-household-switch button:focus-visible {
+  outline: 3px solid var(--c-sun);
+  outline-offset: 2px;
 }

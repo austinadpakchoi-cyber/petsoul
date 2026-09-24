@@ -18,12 +18,13 @@ function nextSaturday(): string {
   return d.toISOString().slice(0, 10);
 }
 
-function ArrivalSummary({ ctx, simulateDelay }: { ctx: PetArrivalContext; simulateDelay: boolean }) {
+/** 行程版本号只用来判断推荐是否过期（见下面 stale），不写给玩家看。 */
+function ArrivalSummary({ ctx }: { ctx: PetArrivalContext }) {
   return (
     <Card flat className="ps-food-ctx">
       <Icon name="pin" />
       <div>
-        <strong>按 TA 的行程（第 {ctx.itinerary_version + (simulateDelay ? 1 : 0)} 版）</strong>
+        <strong>按 TA 的行程</strong>
         <div className="ps-muted">
           {ctx.city} · 可行到达 {formatLocalTime(ctx.feasible_arrival_utc, ctx.destination_timezone)} · 可停留 {formatLocalTime(ctx.stay_window_start_utc, ctx.destination_timezone)}–
           {formatLocalTime(ctx.stay_window_end_utc, ctx.destination_timezone)}
@@ -113,7 +114,7 @@ export function FoodDiscoveryPage() {
         {mode === "pet_virtual_explore" ? (
           arrival ? (
             <>
-              <ArrivalSummary ctx={arrival} simulateDelay={simulateDelay} />
+              <ArrivalSummary ctx={arrival} />
               {fixture ? (
                 <label className="ps-check ps-muted">
                   <input type="checkbox" checked={simulateDelay} onChange={(e) => setSimulateDelay(e.target.checked)} /> 演示：行程延误（版本变化后旧推荐待复核，交通不会为餐厅缩短）
@@ -158,7 +159,7 @@ export function FoodDiscoveryPage() {
         {recs.data ? (
           <>
             <div className="ps-row" style={{ justifyContent: "space-between" }}>
-              <span className="ps-muted">偏好：{recs.data.preference.label} · 第 {recs.data.preference.version} 版</span>
+              <span className="ps-muted">偏好：{recs.data.preference.label}</span>
               <DataOriginBadge origin={recs.data.data_origin} label="演示资料，不是真实口碑" />
             </div>
             {recs.data.items.length === 0 ? <EmptyState title="暂时没有合适的候选">没有合格资料时不编造推荐。</EmptyState> : null}

@@ -339,6 +339,12 @@ const ALLOWED: Array<{ why: string; match: (hit: Hit) => boolean; mustExist?: bo
     match: (h) => h.file === "src/features/household/HouseholdPage.tsx" && h.text === "/home" && h.lineText.includes("回家看看"),
     mustExist: true,
   },
+  {
+    why: "切换栏按路由归类的清单（路由写法，不是跳转去处）",
+    match: (h) =>
+      h.file === "src/shared/session/householdContext.tsx" && h.text === "/home" && (h.lineText.includes("capsule:") || h.lineText.includes("CAPSULE_PLACEMENT")),
+    mustExist: true,
+  },
 ];
 
 describe("不再有散落的 \"/home\" 路由字面量（静态扫描 src 下 .ts/.tsx）", () => {
@@ -557,7 +563,7 @@ describe("入住叮嘱：同一套规则", () => {
     fireEvent.click(screen.getByRole("button", { name: "这样记就对了" }));
     expect(await screen.findByRole("heading", { name: "这次没有保存成功" })).toBeTruthy();
     expect(screen.getByRole("link", { name: label }).getAttribute("href")).toBe(expected);
-    expect(document.querySelector(".ps-notes-saved p")?.textContent).toBe(`便笺没有写进去。可以回到接待再试一次，或${tail}。`);
+    expect(document.querySelector(".ps-notes-saved p")?.textContent).toBe(`叮嘱没有存进去。可以回到接待再试一次，或${tail}。`);
   });
 });
 

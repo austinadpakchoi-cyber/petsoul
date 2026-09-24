@@ -73,6 +73,8 @@
   font-size: var(--fs-sm);
   line-height: 1.7;
   overflow-wrap: anywhere;
+  /* 说明句只有一两行：别让最后一行只剩一个字（390 宽时“画。”单独掉到第二行） */
+  text-wrap: pretty;
 }
 .ps-look-keep {
   white-space: nowrap;
@@ -89,6 +91,75 @@
 }
 .ps-look-card .ps-idphoto-adjust {
   justify-self: stretch;
+}
+
+/* ---------- 补一张照片（只在一张照片都没有的自己的宠物上出现） ---------- */
+.ps-look-photo h3 {
+  margin: 0 0 4px;
+  color: var(--c-ink);
+  font-size: var(--fs-lg);
+  line-height: 1.35;
+}
+.ps-look-photo__lead {
+  margin: 0 0 12px;
+  color: var(--c-ink-2);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  /* 320 宽时最后一个字（“张。”）别单独掉到第二行 */
+  text-wrap: pretty;
+}
+.ps-look-photo__preview {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  margin: 0 0 12px;
+  border-radius: 16px;
+  background: var(--c-surface-2);
+  object-fit: contain;
+}
+.ps-look-photo__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ps-look-photo__actions > .ps-btn {
+  flex: 1 1 0;
+  min-width: 128px;
+  min-height: 44px;
+}
+.ps-look-photo__pick {
+  position: relative;
+  border-color: var(--c-surface-stroke);
+  background: var(--c-surface-2);
+  color: var(--c-ink);
+  cursor: pointer;
+}
+/* 选图的真控件是藏起来的 file 输入框：键盘聚焦到它时，外面这颗按钮给出焦点框 */
+.ps-look-photo__pick:focus-within {
+  outline: 3px solid var(--c-sun);
+  outline-offset: 2px;
+}
+.ps-look-photo__pick.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.ps-look-photo__privacy {
+  margin: 10px 0 0;
+  color: var(--c-ink-2);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+.ps-look-photo .ps-form-error {
+  margin: 10px 0 0;
+}
+.ps-look-photo-note {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--c-leaf-soft);
+  color: var(--c-ink);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
 }
 
 /* 演示模式、暂时看不了：一张安静的说明卡。 */

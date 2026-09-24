@@ -9,7 +9,7 @@
  * - 顺路建议单独标出（虚线卡）；出发前不盖章（数据里混进事件也不盖，带对照）；到访只认这一版计划的回忆手账站点上的真实事件
  *   （计划阶段的站点、别的版本都不认）；已回来没去成写“下次”；同一版里地点的键是 plan_revision + station_id（空时用序号）。
  * - 手账从这一版修订的 journals 里取（有回忆页显示回忆页，同一种页取最新一版）；图没有 / 在画 / 没画成 / 结果未确认 / 没有配图各说各的，
- *   unknown 不说没画成；只有 failed / unknown 且有重画票才说“稍后可以重画”——路由还没建，是一句说明、不是按钮；
+ *   unknown 不说没画成；正在画写“画着呢”；只有 failed / unknown 且有重画凭据才说“稍后可以重画”——重画命令后端还没挂，是一句说明、不是按钮；
  *   被拒的拒绝码、“不画 TA”的原因码只进“技术信息”；画里的 TA 从哪来说人话（不露 photo / none）；手账这一页上的字在图外照常可读。
  * - 出发前会再确认的资料（preconditions）：想去 / 可以出发时列出来，过期的标出来，找不到的照实说。
  * - 钱：攒钱目标不是路费（绝不拿它当路费）；路费只认这一版计划上的行程摘要（fare 是标价，fare_waived 为真＝用了券、实付 0）；
@@ -20,7 +20,8 @@
  * - 演示数据处处有“演示”。
  * - 路由：/guides/wish（当前心愿；没有计划的只能从这里进）与 /guides/plan/:planId；列表两块、点卡片进、返回 /guides；
  *   “去过的”在演示下不再是一直转的骨架屏（修的是 fixture 下查询不发的 bug）；计划不在了、要先选宠物都有人话。
- * - live：/guides/wish 走 GET /travel/wish（visits.travelWish，显式带当前宠物）；没有心愿、出错都不造假；计划页只说还在搭建中。
+ * - live：/guides/wish 走 GET /travel/wish（visits.travelWish，显式带当前宠物）；没有心愿、出错都不造假；
+ *   计划页走 GET /travel/plans/{plan_id}（visits.travelPlan，同样显式带当前宠物；2026-09-24 23:3x 接上，详细用例在 claude-6c2b-plan-live.test.tsx）。
  * - 地图面板那一行：“想去 {目的地} · {还差什么第一条}”，点进 /guides/wish；排在驾校之后；只关于这只宠物（petId）。
  * - 切宠物时停在 /guides/wish、/guides/plan/… 都退回 /guides。
  */
@@ -577,9 +578,9 @@ describe("手账从这一版的 journals 里取；图没有 / 在画 / 没画成
     expectTextIntact(container, b);
   });
 
-  it("正在画（processing）写“手账在画”、不给重画；没接插画（null）与还没有手账都写“只有文字”、不给重画", () => {
+  it("正在画（processing）写“画着呢”、不给重画；没接插画（null）与还没有手账都写“只有文字”、不给重画", () => {
     const szb = renderView(planView(demoPlan("fx-plan-shenzhen-bay")));
-    expect(text(szb.container.querySelector("figure.ps-plan-journal"))).toContain("手账在画");
+    expect(text(szb.container.querySelector("figure.ps-plan-journal"))).toContain("画着呢");
     expect(redrawOf(szb.container)).toBeNull();
     cleanup();
     const nullStatus = demoPlan("fx-plan-west-kowloon");
@@ -763,15 +764,16 @@ describe("星币：攒钱目标不是路费；路费只认这一版计划上的�
     expect(ready).toContain("已经攒够");
   });
 
-  it("演示：出发前的几份计划都还没关联行程（journey 为 null）；已出发那趟用了借车券、省下 20 星币，已回来那趟路费 8 星币", () => {
+  it("演示：出发前的几份计划都还没关联行程（journey 为 null）；已出发那趟用了驾校借车券（这趟不用租车费、标价 20 星币划掉），已回来那趟路费 8 星币", () => {
     for (const id of ["fx-plan-tokyo", "fx-plan-macau", "fx-plan-west-kowloon", "fx-plan-airport"]) expect(rev(demoPlan(id)).journey, id).toBeNull();
     expect(rev(demoPlan("fx-plan-shenzhen-bay")).journey).toEqual({ journey_id: "fx-journey-shenzhen-bay", fare: 20, fare_waived: true });
-    expect(coinsText(planView(demoPlan("fx-plan-shenzhen-bay")))).toContain("用了借车券，省下 20 星币");
+    expect(coinsText(planView(demoPlan("fx-plan-shenzhen-bay")))).toContain("用了驾校借车券，这趟不用租车费");
+    expect(coinsText(planView(demoPlan("fx-plan-shenzhen-bay")))).toContain("标价 20 星币");
     expect(coinsText(planView(demoPlan("fx-plan-harbour-cafe")))).toContain("路费 8 星币");
   });
 
   it.each([
-    ["用了券（fare 仍是标价，实付 0）", "用了借车券，省下 20 星币", { journey_id: "j-1", fare: 20, fare_waived: true }],
+    ["用了驾校借车券（fare 仍是标价，实付 0）", "用了驾校借车券，这趟不用租车费", { journey_id: "j-1", fare: 20, fare_waived: true }],
     ["没用券、fare > 0", "路费 8 星币", { journey_id: "j-1", fare: 8, fare_waived: false }],
     ["fare 为 0（散步、打工）", "这趟不花路费", { journey_id: "j-1", fare: 0, fare_waived: false }],
     ["fare 为 0 又标着用券（产生不出来的组合）：不写“省下 0”", "这趟不花路费", { journey_id: "j-1", fare: 0, fare_waived: true }],
@@ -783,10 +785,19 @@ describe("星币：攒钱目标不是路费；路费只认这一版计划上的�
     }
   });
 
-  it("用券那趟不算作花出去的钱：不出现“路费 N 星币”“花了”“付过”，fare 只作为省下的数出现", () => {
+  it("用券那趟不算作花出去的钱：不出现“路费 N 星币”“花了”“付过”“实付”，fare 只作为划掉的标价出现", () => {
     const out = coinsText(planView(demoPlan("fx-plan-shenzhen-bay")))!;
-    expect(out).toContain("省下 20 星币");
+    expect(out).toContain("用了驾校借车券，这趟不用租车费");
     expect(out).not.toMatch(/路费 \d+ 星币|花了|付过|实付/);
+    // 标价只在划线里：<s> 里就是 fare，前面写明“标价”。
+    const { container } = renderView(planView(demoPlan("fx-plan-shenzhen-bay")));
+    const struck = container.querySelectorAll('[data-money="coins"] s');
+    expect(struck).toHaveLength(1);
+    expect(text(struck[0])).toBe("20 星币");
+    expect(text(struck[0].parentElement)).toBe("标价 20 星币");
+    // 没用券的那趟没有划线。
+    cleanup();
+    expect(renderView(planView(demoPlan("fx-plan-harbour-cafe"))).container.querySelector('[data-money="coins"] s')).toBeNull();
   });
 
   it("journey 为 null（还没关联行程）：出发之后也不显示路费", () => {
@@ -1166,23 +1177,39 @@ describe("攻略手账列表分两块；点卡片进心愿页 / 计划页，返�
     await waitFor(() => expect(router.state.location.pathname).toBe("/guides"));
   });
 
-  it("fixture 里没有这份计划：说“这份计划不在了”（演示没有原因码，不出“技术信息”），返回仍去 /guides", async () => {
-    const { container } = renderApp("/guides/plan/fx-plan-nowhere");
-    const title = await screen.findByText("这份计划不在了");
+  it("fixture 里没有这份计划：说“这份计划还没写好，或者已经不在了”（演示没有原因码，不出“技术信息”），返回仍去 /guides；那句下面的“回到手账列表”点了就回 /guides", async () => {
+    const { container, router } = renderApp("/guides/plan/fx-plan-nowhere");
+    const title = await screen.findByText("这份计划还没写好，或者已经不在了");
     expect(title.closest(".ps-state")?.querySelector("details")).toBeNull();
     expect(container.querySelector("details.ps-state__tech")).toBeNull();
     expect(screen.getByRole("link", { name: "返回" }).getAttribute("href")).toBe("/guides");
+    const toList = screen.getByRole("link", { name: "回到手账列表" });
+    expect(toList.getAttribute("href")).toBe("/guides");
+    expect(toList.closest(".ps-state")).toBe(title.closest(".ps-state"));
+    fireEvent.click(toList);
+    await waitFor(() => expect(router.state.location.pathname).toBe("/guides"));
   });
 
-  it("I 已定：计划接口答 404 + plan_not_found（形状同 no_journey）→“这份计划不在了”，错误码与原因码只收进默认收起的“技术信息”", () => {
+  it("I 已定：计划接口答 404 + plan_not_found（形状同 no_journey）→“这份计划还没写好，或者已经不在了”，错误码与原因码只收进默认收起的“技术信息”", () => {
     const notFound = new ApiError({ kind: "http", status: 404, code: "NOT_FOUND", message: "没有这份计划。", requestId: "req-9", details: { reason: "plan_not_found" } });
     expect(isPlanNotFound(notFound)).toBe(true);
     // 对照：别的 404 原因、别的状态、不是接口错误，都不算“计划不在了”（照常走出错页，可重试）。
     expect(isPlanNotFound(new ApiError({ kind: "http", status: 404, code: "NOT_FOUND", message: "x", details: { reason: "no_journey" } }))).toBe(false);
     expect(isPlanNotFound(new ApiError({ kind: "http", status: 409, code: "CONFLICT", message: "x", details: { reason: "plan_not_found" } }))).toBe(false);
     expect(isPlanNotFound(new Error("boom"))).toBe(false);
-    const { container } = render(<PlanMissing error={notFound} />);
-    expect(text(container.querySelector(".ps-state__title"))).toBe("这份计划不在了");
+    const { container } = render(
+      <MemoryRouter>
+        <PlanMissing error={notFound} />
+      </MemoryRouter>,
+    );
+    expect(text(container.querySelector(".ps-state__title"))).toBe("这份计划还没写好，或者已经不在了");
+    // 说了“回到手账列表看看”，这句下面就有去手账列表（/guides）的按钮；“技术信息”排在按钮后面。
+    const toList = within(container).getByRole("link", { name: "回到手账列表" });
+    expect(toList.getAttribute("href")).toBe("/guides");
+    const sentence = [...container.querySelectorAll(".ps-state div")].find((el) => el.textContent === "回到手账列表看看。")!;
+    expect(sentence).toBeTruthy();
+    expect(sentence.compareDocumentPosition(toList) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(toList.compareDocumentPosition(container.querySelector("details")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const tech = container.querySelector("details")!;
     expect(tech.hasAttribute("open")).toBe(false);
     expect(text(tech.querySelector("summary"))).toBe("技术信息");
@@ -1265,11 +1292,11 @@ const liveWish = (over: Partial<TravelWish> = {}): TravelWish => ({
   ...over,
 });
 
-function renderLive(path: string, element: ReactElement, routePath: string, travelWish: VisitService["travelWish"]) {
+function renderLive(path: string, element: ReactElement, routePath: string, travelWish: VisitService["travelWish"], travelPlan?: VisitService["travelPlan"]) {
   mode.dataMode = "live";
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const guides = vi.fn(async () => [guide("g-1")]);
-  const services = { households: { list: async () => [household] }, transport: { guides }, visits: { travelWish } } as unknown as ServiceMap;
+  const services = { households: { list: async () => [household] }, transport: { guides }, visits: { travelWish, ...(travelPlan ? { travelPlan } : {}) } } as unknown as ServiceMap;
   render(
     <QueryClientProvider client={client}>
       <ServicesProvider services={services}>
@@ -1284,7 +1311,7 @@ function renderLive(path: string, element: ReactElement, routePath: string, trav
   return { guides };
 }
 
-describe("live：心愿走 GET /travel/wish（显式带当前宠物）；没有、出错、要先选宠物都不造假；计划页还在搭建中", () => {
+describe("live：心愿走 GET /travel/wish（显式带当前宠物）；没有、出错、要先选宠物都不造假；计划页走 GET /travel/plans/{plan_id}", () => {
   it("journey 模块的 live 服务：GET /travel/wish，带当前宠物；fixture 实现给演示心愿", async () => {
     const request = vi.fn(async () => null);
     const ctx = { mode: "live", api: { request, base: "/api/v1/web" } as unknown as ApiClient } as ServiceContext;
@@ -1391,10 +1418,14 @@ describe("live：心愿走 GET /travel/wish（显式带当前宠物）；没有�
     expect(plainText(document.body)).not.toMatch(/pet_required|CONFLICT/);
   });
 
-  it("/guides/plan/:planId：计划接口还没落地，只说还在搭建中，不拿演示数据顶上", async () => {
-    renderLive("/guides/plan/fx-plan-tokyo", <PlanPage />, "/guides/plan/:planId", vi.fn(async () => null));
-    expect(await screen.findByText("这里还在搭建中")).toBeTruthy();
-    expect(document.body.textContent).not.toMatch(/演示|东京|星币/);
+  it("/guides/plan/:planId：live 读 GET /travel/plans/{plan_id}（显式带当前宠物），不拿演示数据顶上；404 plan_not_found 说人话（详细用例见 claude-6c2b-plan-live.test.tsx）", async () => {
+    const travelPlan = vi.fn(async (_planId: string, _petId: string | null, _signal?: AbortSignal) => {
+      throw new ApiError({ kind: "http", status: 404, code: "NOT_FOUND", message: "没有这份计划。", details: { reason: "plan_not_found" } });
+    });
+    renderLive("/guides/plan/fx-plan-tokyo", <PlanPage />, "/guides/plan/:planId", vi.fn(async () => null), travelPlan);
+    expect(await screen.findByText("这份计划还没写好，或者已经不在了")).toBeTruthy();
+    expect(travelPlan).toHaveBeenCalledWith("fx-plan-tokyo", "p-1", expect.anything());
+    expect(document.body.textContent).not.toMatch(/演示|东京|星币|这里暂时还没开放/);
     expect(screen.getByRole("link", { name: "返回" }).getAttribute("href")).toBe("/guides");
   });
 });

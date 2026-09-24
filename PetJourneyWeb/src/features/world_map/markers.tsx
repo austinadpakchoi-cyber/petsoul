@@ -6,8 +6,9 @@
  * - 目的地：小旗，名字点到才显示。
  * 阶段变化时由上层换 key，让出门 / 到达 / 回家的小动画重新播放一次。任何宠物（家里的、朋友的、公开的）都用同一套。
  */
-import type { CSSProperties } from "react";
-import { Icon } from "@/shared/ui";
+import type { CSSProperties, ReactNode } from "react";
+import type { TransportMode } from "@/shared/contracts";
+import { Icon, type IconName } from "@/shared/ui";
 import { PetMoodAvatar } from "@/features/pets/PetMoodAvatar";
 import type { WorldPet } from "./model";
 
@@ -29,26 +30,63 @@ export function homeMarkerShift(size: number = HOME_MARKER_SIZE): { x: number; y
   return { x: round(size * (0.5 - baseX / canvas)), y: round(size * (1 - baseY / canvas)) };
 }
 
-export function PetMarkerView({ pet, selected, onSelect, label }: { pet: WorldPet; selected: boolean; onSelect: () => void; label: string }) {
-  const { kind, phase, pose } = pet.activity;
+/** 交通方式角标（第 2 步）：图标与读屏说法。走路不给角标（头像本身有步态和小爪印）。 */
+const MODE_BADGE: Record<Exclude<TransportMode, "walk">, { icon: IconName; word: string }> = {
+  flight: { icon: "plane", word: "坐飞机" },
+  train: { icon: "train", word: "坐火车" },
+  ferry: { icon: "ship", word: "坐船" },
+  drive: { icon: "car", word: "自己开车" },
+  taxi: { icon: "car", word: "坐出租车" },
+  transit: { icon: "train", word: "坐公共交通" },
+};
+
+/** 标记上要不要交通方式角标：只在路上（去 / 回）、W1 给了这一段的交通方式、而且不是走路时。 */
+export function modeBadgeOf(pet: WorldPet): Exclude<TransportMode, "walk"> | null {
+  const { phase } = pet.activity;
+  const mode = pet.legMode ?? null;
+  if ((phase !== "going" && phase !== "returning") || !mode || mode === "walk") return null;
+  return mode;
+}
+
+/** 交通方式角标本身（地图标记、主状态面板的头像共用；装饰，读屏说法由各处自己带）。 */
+export function ModeBadge({ mode }: { mode: Exclude<TransportMode, "walk"> }) {
   return (
-    <button
-      type="button"
-      className={`ps-wmap-pet is-${phase}${selected ? " is-selected" : ""}`}
-      data-kind={kind}
-      data-pose={pose}
-      aria-label={label}
-      aria-pressed={selected}
-      onClick={(event) => {
-        event.stopPropagation();
-        onSelect();
-      }}
-    >
-      <span className="ps-wmap-pet__ring">
-        <PetMoodAvatar name={pet.name} photoUrl={pet.photoUrl} mood={pose} size={44} />
-      </span>
-      <span className="ps-wmap-pet__shadow" aria-hidden="true" />
-    </button>
+    <span className="ps-wmap-pet__mode" data-mode={mode} aria-hidden="true">
+      <Icon name={MODE_BADGE[mode].icon} size={12} />
+    </span>
+  );
+}
+
+/**
+ * 宠物标记。badge：贴在标记右上角的活动徽标（一起听 / 一起看，companion_media 的 ActivityBadgeFor，由上层只给面板上那只）——
+ * 它自己是按钮，所以放在标记按钮外面、作为兄弟节点（按钮里不能再套按钮）。
+ * 在路上坐车船飞机时，右下角的小徽标换成交通方式角标（./modeBadgeOf），读屏名字后面加一句“坐火车”之类。
+ */
+export function PetMarkerView({ pet, selected, onSelect, label, badge = null }: { pet: WorldPet; selected: boolean; onSelect: () => void; label: string; badge?: ReactNode }) {
+  const { kind, phase, pose } = pet.activity;
+  const mode = modeBadgeOf(pet);
+  return (
+    <>
+      <button
+        type="button"
+        className={`ps-wmap-pet is-${phase}${selected ? " is-selected" : ""}`}
+        data-kind={kind}
+        data-pose={pose}
+        aria-label={mode ? `${label}，${MODE_BADGE[mode].word}` : label}
+        aria-pressed={selected}
+        onClick={(event) => {
+          event.stopPropagation();
+          onSelect();
+        }}
+      >
+        <span className="ps-wmap-pet__ring">
+          <PetMoodAvatar name={pet.name} photoUrl={pet.photoUrl} mood={pose} size={44} badge={!mode} />
+          {mode ? <ModeBadge mode={mode} /> : null}
+        </span>
+        <span className="ps-wmap-pet__shadow" aria-hidden="true" />
+      </button>
+      {badge ? <span className="ps-wmap-pet__activity">{badge}</span> : null}
+    </>
   );
 }
 

@@ -105,6 +105,7 @@ import type {
 import type { ApiClient } from "@/shared/api/client";
 import type { DataMode } from "@/shared/config/env";
 import type { TravelWish } from "@/shared/contracts";
+import type { TravelPlan } from "@/shared/contracts";
 
 /** 地图范围（WGS-84）与容器尺寸（CSS 像素），用于请求真实底图。 */
 export interface BasemapRequest {
@@ -177,6 +178,11 @@ export interface VisitService {
   choose(visitId: string, body: VisitChoiceRequest, idempotencyKey: string): Promise<JourneyMapSnapshot>;
   /** TRV-06：GET /travel/wish（合同 §23.4）——当前宠物的活动心愿；没有活动心愿时返回 200 + null，不包对象（I 已定）。 */
   travelWish(petId: string | null, signal?: AbortSignal): Promise<TravelWish | null>;
+  /**
+   * TRV-06 第③期：GET /travel/plans/{plan_id}（合同 §23.4）——一个心愿的计划全集（每一版都在，current_revision 指最新发布的一版）。
+   * 别人家的、不存在的、还没发布过计划的心愿一律 404 + details.reason = plan_not_found；petId 与 travelWish 同一口径（live 只传当前宠物）。
+   */
+  travelPlan(planId: string, petId: string | null, signal?: AbortSignal): Promise<TravelPlan>;
 }
 
 /** 统一物资与账本：钱包只从 HomeSnapshot.wallet 读取；这里是库存/收藏。 */
@@ -219,9 +225,10 @@ export interface PetsService {
   publicPet(petId: string): Promise<PublicPetView>;
   publicPetPosts(petId: string, cursor?: string): Promise<PostPage>;
   adoptionCandidates(): Promise<AdoptionCandidate[]>;
-  adopt(candidateId: string, idempotencyKey: string): Promise<AdoptResult>;
+  adopt(candidateId: string, idempotencyKey: string, householdId: string | null): Promise<AdoptResult>;
   /** 上传自己的宠物：照片私有存储，只经鉴权接口访问。 */
   createOwn(input: NewPetInput, idempotencyKey: string): Promise<PetPrivateSummary>;
+  addPhoto(petId: string, photo: File, idempotencyKey: string): Promise<PetPrivateSummary>;
   publicProfile(petId: string): Promise<PetPublicProfile>;
   /** 专属世界形象：纯读，绝不触发生成（首次形象由有授权的上传自动排队）。 */
   character(petId: string, signal?: AbortSignal): Promise<CharacterState>;

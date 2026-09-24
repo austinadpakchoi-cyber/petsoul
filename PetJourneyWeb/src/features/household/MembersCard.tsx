@@ -194,7 +194,7 @@ export function MembersCard({ detail, userId }: { detail: HouseholdDetail; userI
         </div>
       ) : null}
       {soleAdminIsYou ? <p className="ps-family-fine">你是这个家唯一的管理员；想交出管理员，先把另一位家人设为管理员。</p> : null}
-      <p className="ps-family-fine">角色与权限由家庭服务端判定；称呼只属于你与当前宠物，不改变家人权限。</p>
+      <p className="ps-family-fine">家人能做什么由角色决定；称呼只属于你与当前宠物，不改变家人权限。</p>
     </Card>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
-import type { CandidateKind, CareNoteDecision, IntakeCandidate, IntakeConfirmationResult, MemoryPurpose, SaveTarget, SessionState } from "@/shared/contracts";
+import type { CandidateKind, CareNoteDecision, IntakeCandidate, IntakeConfirmationResult, MemoryPurpose, OnboardingState, SaveTarget, SessionState } from "@/shared/contracts";
 import { newIdempotencyKey } from "@/shared/api/idempotency";
 import { toApiError } from "@/shared/api/errors";
 import { env } from "@/shared/config/env";
@@ -14,6 +14,9 @@ import { fixtureReceptionControls } from "./service";
 import { leaveSupplement, notesTrail, SUPPLEMENT_PARENT, type NotesTrail } from "./trail";
 import receptionWorld from "./assets/reception-world-v1.webp";
 import "./reception.css";
+
+/** 补充叮嘱的接待（给当前宠物，不是入住阶段里那只）。 */
+const SUPPLEMENT_RECEPTION = "/onboarding/reception?mode=supplement";
 
 /** 普通左键点击才由页面接管（修饰键 / 中键交给浏览器按链接地址打开），与 TopBar 的返回一致。 */
 function plainClick(event: MouseEvent): boolean {
@@ -67,7 +70,7 @@ function NoteCard({ candidate, draft, onChange }: { candidate: IntakeCandidate; 
       </div>
       {showSource ? <blockquote className="ps-note__source">“{candidate.source_excerpt}”</blockquote> : null}
       <label className="visually-hidden" htmlFor={`note-text-${candidate.candidate_id}`}>
-        便笺内容
+        叮嘱内容
       </label>
       <textarea id={`note-text-${candidate.candidate_id}`} className="ps-textarea ps-note__text" value={draft.text} maxLength={500} onChange={(e) => onChange({ ...draft, text: e.target.value })} />
       <div className="ps-note__targets" role="radiogroup" aria-label="这条怎么处理">
@@ -105,16 +108,25 @@ function NoteCard({ candidate, draft, onChange }: { candidate: IntakeCandidate; 
   );
 }
 
+/**
+ * 这次整理是不是“补充”（live 才分得出来），以数据为准：入住阶段已经是 active（都住进来了），
+ * 或者这次接待的宠物不是入住阶段里记着的那只——第二只还在接待 / 入住时，给已经住进来的第一只补充
+ * （2026-09-24 巡检 P1：原来只看 step，这时会写“入住准备 · 03 / 04”，存好后“带 TA 去新家”去了第二只的入住页）。
+ */
+function isSupplement(onboarding: OnboardingState | null | undefined, sessionPetId: string): boolean {
+  return env.dataMode === "live" && Boolean(onboarding) && (onboarding!.step === "active" || onboarding!.pet_id !== sessionPetId);
+}
+
 /** 保存结果只讲去向；确认编号只留给排查（data 属性），不作为给主人看的文案。 */
-function Saved({ result, trail }: { result: IntakeConfirmationResult; trail: NotesTrail | null }) {
+function Saved({ result, trail, sessionPetId }: { result: IntakeConfirmationResult; trail: NotesTrail | null; sessionPetId: string }) {
   const navigate = useNavigate();
   const given = result.notes.filter((n) => n.target === "give_to_pet").length;
   const kept = result.notes.filter((n) => n.target === "keep_here").length;
   const persisted = result.persist_state === "persisted";
-  const home = result.onboarding.step === "active";
-  // 已入住后再来补充的叮嘱（live 才分得出来）存好后离开补充流程：站内有来路就回来路（从通讯器来回通讯器），
-  // 直接打开时回上级页“我的”（链接地址也是它）；入住中照旧按入住阶段去入住；演示模式的保存结果总是“已入住”，按入住阶段回地图首页。
-  const supplementDone = home && env.dataMode === "live";
+  const live = env.dataMode === "live";
+  // 补充的叮嘱存好后离开补充流程：站内有来路就回来路（从通讯器来回通讯器），直接打开时回上级页“我的”（链接地址也是它）；
+  // 入住中照旧按入住阶段去入住；演示模式的保存结果总是“已入住”，按入住阶段回地图首页。按确认后的入住阶段与这次接待的宠物判断。
+  const supplementDone = isSupplement(result.onboarding, sessionPetId);
   const next = supplementDone ? SUPPLEMENT_PARENT : onboardingRoute(result.onboarding);
   const backSteps = supplementDone ? trail?.leaveSteps ?? 0 : 0;
   const onDone = (event: MouseEvent) => {
@@ -128,28 +140,27 @@ function Saved({ result, trail }: { result: IntakeConfirmationResult; trail: Not
       <h2>{persisted ? "记下了" : "这次没有保存成功"}</h2>
       {/* 失败说明与下面按钮同一套条件：入住中“先去入住”，补充叮嘱回“我的”，演示回地图。
           契约允许 persist_state = failed，但目前后端只回 persisted、演示的保存失败直接报错，这个分支暂时走不到。 */}
-      <p>{persisted ? `交给 TA ${given} 条 · 只留在这里 ${kept} 条。以后还能在“我的”里补充。` : `便笺没有写进去。可以回到接待再试一次，或${!home ? "先去入住" : env.dataMode === "live" ? "先回“我的”" : "先回地图"}。`}</p>
-      <DataOriginBadge origin={result.data_origin} label={result.data_origin === "fixture" ? "演示：只保存在本浏览器标签页，不是服务器保存" : undefined} />
+      <p>{persisted ? `交给 TA ${given} 条 · 只留在这里 ${kept} 条。以后还能在“我的”里补充。` : `叮嘱没有存进去。可以回到接待再试一次，或${supplementDone ? "先回“我的”" : live ? "先去入住" : "先回地图"}。`}</p>
+      <DataOriginBadge origin={result.data_origin} label={result.data_origin === "fixture" ? "演示：只存在这个浏览器标签页里，关掉就没有了" : undefined} />
       <Link className="ps-btn ps-btn--primary ps-btn--block" to={next} onClick={onDone}>
         {/* 文字跟着去向走：补充叮嘱存好就是“完成”（回来路或“我的”）；演示模式回地图首页；入住中照旧“带 TA 去新家”。 */}
-        {home ? (env.dataMode === "live" ? "完成" : "回地图") : "带 TA 去新家"}
+        {supplementDone ? "完成" : live ? "带 TA 去新家" : "回地图"}
       </Link>
     </section>
   );
 }
 
-/** 一句都没交代时：不给一个永远点不了的确认按钮，而是给两条真实出路。 */
-function NothingToConfirm({ sessionId, trail }: { sessionId: string; trail: NotesTrail | null }) {
+/** 一句都没交代时：不给一个永远点不了的确认按钮，而是给两条真实出路。supplement 由页面按数据算好传进来（见 isSupplement）。 */
+function NothingToConfirm({ sessionId, trail, supplement }: { sessionId: string; trail: NotesTrail | null; supplement: boolean }) {
   const { reception } = useServices();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const account = useSessionState();
-  const active = account.data?.onboarding?.step === "active";
   const skip = useMutation({
     mutationFn: () => reception.skip(sessionId),
     onSuccess: async () => {
-      // 已入住后来补充叮嘱：离开补充流程——站内有来路就回来路，直接打开时回“我的”；演示模式回地图首页；入住中照旧去入住。
-      if (active) return leaveSupplement(navigate, trail?.leaveSteps ?? 0);
+      // 补充叮嘱：离开补充流程——站内有来路就回来路，直接打开时回“我的”；演示模式回地图首页；入住中照旧去入住。
+      // 第二只待入住时给第一只补充也走这一支，不去第二只的入住页。
+      if (supplement) return leaveSupplement(navigate, trail?.leaveSteps ?? 0);
       if (env.dataMode !== "live") return navigate("/map");
       await queryClient.invalidateQueries({ queryKey: queryKeys.session });
       navigate("/onboarding/move-in");
@@ -165,12 +176,12 @@ function NothingToConfirm({ sessionId, trail }: { sessionId: string; trail: Note
     <section className="ps-notes-empty">
       <span className="ps-notes-empty__icon" aria-hidden="true"><Icon name="bookmark" size={22} /></span>
       <h2>还没有要确认的叮嘱</h2>
-      <p>在接待那里说一件关于 TA 的小事，这里就会出现一条待你确认的便笺。不说也完全可以。</p>
+      <p>在接待那里说一件关于 TA 的小事，这里就会出现一条待你确认的叮嘱。不说也完全可以。</p>
       <div className="ps-notes-empty__actions">
-        <Link className="ps-btn ps-btn--secondary ps-btn--block" to={active ? "/onboarding/reception?mode=supplement" : "/onboarding/reception"} onClick={backToReception}>回到接待说一件小事</Link>
-        <Button variant="primary" block icon={active ? "back" : env.dataMode === "live" ? "home" : "pin"} loading={skip.isPending} onClick={() => skip.mutate()}>{active ? "先回去" : env.dataMode === "live" ? "先去入住" : "先去地图看看"}</Button>
+        <Link className="ps-btn ps-btn--secondary ps-btn--block" to={supplement ? SUPPLEMENT_RECEPTION : "/onboarding/reception"} onClick={backToReception}>回到接待说一件小事</Link>
+        <Button variant="primary" block icon={supplement ? "back" : env.dataMode === "live" ? "home" : "pin"} loading={skip.isPending} onClick={() => skip.mutate()}>{supplement ? "先回去" : env.dataMode === "live" ? "先去入住" : "先去地图看看"}</Button>
       </div>
-      {skip.isError ? <p role="alert" className="ps-form-error"><strong>这一步没能完成，可以再点一次。</strong> {toApiError(skip.error).message}</p> : null}
+      {skip.isError ? <p role="alert" className="ps-form-error"><strong>这一步没能完成，可以再点一次。</strong> {toApiError(skip.error).playerMessage}</p> : null}
     </section>
   );
 }
@@ -183,10 +194,12 @@ export function CareNotesPage() {
   const [params] = useSearchParams();
   const account = useSessionState();
   const trail = notesTrail(location);
-  // 已入住后来补充（live 才分得出来）：不再写“入住准备 · 03 / 04”和四站步骤条。
-  const supplement = env.dataMode === "live" && account.data?.onboarding?.step === "active";
   const sessionId = params.get("session") ?? "";
   const session = useQuery({ queryKey: queryKeys.reception(sessionId), queryFn: () => reception.get(sessionId), enabled: Boolean(sessionId) });
+  // 补充（live 才分得出来）：不再写“入住准备 · 03 / 04”和四站步骤条，出口回补充的接待和“我的”，不去入住。
+  // 以数据为准（isSupplement：入住阶段 + 这次接待的宠物）；接待还没读到时，先按接待页带来的 ?mode=supplement 显示（只作辅助）。
+  const supplement = session.data ? isSupplement(account.data?.onboarding, session.data.pet_id) : env.dataMode === "live" && params.get("mode") === "supplement";
+  const receptionPath = supplement ? SUPPLEMENT_RECEPTION : `/onboarding/reception${session.data?.branch === "adopted" ? "?branch=adopted" : ""}`;
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [failNext, setFailNext] = useState(false);
   const keyRef = useRef(newIdempotencyKey("reception-confirm"));
@@ -221,9 +234,9 @@ export function CareNotesPage() {
   const empty = Boolean(session.data && session.data.candidates.length === 0);
   return (
     <Page bare className="ps-entry-page ps-notes-page">
-      <TopBar title="生活叮嘱" subtitle="这样记对吗？每一条都由你决定" back={`/onboarding/reception${session.data?.branch === "adopted" ? "?branch=adopted" : ""}`} />
+      <TopBar title="生活叮嘱" subtitle="这样记对吗？每一条都由你决定" back={receptionPath} />
       <div className="ps-notes-band" aria-hidden="true"><img src={receptionWorld} alt="" /></div>
-      <EntryHeading step={supplement ? undefined : 3} kicker={supplement ? "再记下几件小事" : entryStepKicker(3)} title="把重要的小事记下来" description="这页只写你确认过的话；每条便笺的去向与用途都可单独决定。" />
+      <EntryHeading step={supplement ? undefined : 3} kicker={supplement ? "再记下几件小事" : entryStepKicker(3)} title="把重要的小事记下来" description="这页只写你确认过的话；每条叮嘱的去向与用途都可单独决定。" />
       {!sessionId ? (
         <ErrorState error={toApiError(new Error("缺少接待会话"))} />
       ) : session.isError ? (
@@ -231,9 +244,9 @@ export function CareNotesPage() {
       ) : !session.data ? (
         <LoadingState lines={3} />
       ) : confirm.data ? (
-        <Saved result={confirm.data} trail={trail} />
+        <Saved result={confirm.data} trail={trail} sessionPetId={session.data.pet_id} />
       ) : empty ? (
-        <NothingToConfirm sessionId={sessionId} trail={trail} />
+        <NothingToConfirm sessionId={sessionId} trail={trail} supplement={supplement} />
       ) : (
         <>
           <div className="ps-stack">
@@ -247,8 +260,8 @@ export function CareNotesPage() {
             )}
             {confirm.isError ? (
               <Card className="ps-save-error" role="alert">
-                <strong>{toApiError(confirm.error).code === "VERSION_CONFLICT" ? "便笺在别处更新过" : "保存没有成功"}</strong>
-                <div className="ps-muted">{toApiError(confirm.error).message} 你的修改都还在，可以直接重试。</div>
+                <strong>{toApiError(confirm.error).code === "VERSION_CONFLICT" ? "叮嘱在别处更新过" : "保存没有成功"}</strong>
+                <div className="ps-muted">{toApiError(confirm.error).playerMessage} 你的修改都还在，可以直接重试。</div>
               </Card>
             ) : null}
             {env.dataMode === "fixture" ? (
@@ -267,7 +280,7 @@ export function CareNotesPage() {
               这样记就对了
             </Button>
             {/* 从接待页点“整理”来的：回接待是退一步，不再压一页新的接待（否则接待页的“先回去”会退回这里）。 */}
-            <Button variant="ghost" block onClick={() => (env.dataMode !== "live" ? navigate("/map") : trail ? navigate(-1) : navigate("/onboarding/reception"))}>
+            <Button variant="ghost" block onClick={() => (env.dataMode !== "live" ? navigate("/map") : trail ? navigate(-1) : navigate(receptionPath))}>
               {env.dataMode === "live" ? "回到接待" : "先去地图看看"}
             </Button>
           </div>

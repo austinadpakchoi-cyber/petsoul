@@ -11,16 +11,23 @@
   border-color: color-mix(in srgb, var(--c-sun) 22%, var(--c-surface-stroke));
   box-shadow: 0 14px 22px -22px var(--c-shadow);
 }
+/* 卡片顶上的小标签：原来是“朋友圈 JOURNAL”，混着英文（2026-09-24 巡检 P1），改成纯中文；字号跟着放到 12px、字距收小。
+   字色：浅色下单用 --c-coral 在这条暖底上只有约 2.9:1，掺 40% --c-ink 到约 5.3:1；深色下恢复 --c-coral（约 5.5:1），深色段写在后面。 */
 .ps-post::before {
-  content: "朋友圈 JOURNAL";
+  content: "朋友圈";
   display: block;
   margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-3);
   padding: 7px var(--space-4);
   background: color-mix(in srgb, var(--c-sun-soft) 58%, var(--c-surface));
-  color: var(--c-coral);
-  font-size: 10px;
+  color: color-mix(in srgb, var(--c-coral) 60%, var(--c-ink));
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: .14em;
+  letter-spacing: .08em;
+}
+@media (prefers-color-scheme: dark) {
+  .ps-post::before {
+    color: var(--c-coral);
+  }
 }
 /* 宠物名是行内链接（两个字约 30×21）：上下内边距只扩大点按区、不改行高；左右内边距用等量负外边距抵消 */
 .ps-actor a {

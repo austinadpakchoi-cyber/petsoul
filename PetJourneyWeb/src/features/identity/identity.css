@@ -6,11 +6,17 @@
   justify-content: space-between;
   width: 100%;
   max-width: 520px;
-  min-height: calc(100dvh - 26px);
+  /* 铺满整屏（2026-09-24 巡检 P2：原来一律扣掉 26px，生产环境没有顶上的模式条，屏幕底部露出一条浅色边） */
+  min-height: 100dvh;
   padding: 0 !important;
   overflow: hidden;
   background: #241a14;
   color: #fffaf1;
+}
+
+/* 演示 / 开发时顶上有一条模式条：扣掉它的高度，影片区正好一屏（与原来一样） */
+.ps-ribbon + .ps-welcome-page {
+  min-height: calc(100dvh - 26px);
 }
 
 .ps-welcome-film,
@@ -92,11 +98,12 @@
   padding: 0 24px max(28px, calc(env(safe-area-inset-bottom) + 20px));
 }
 
+/* 眉标原是英文小字（WELCOME TO THE LIVING WORLD），2026-09-24 全站文字清理改成中文，字号放到 12px、字距收小 */
 .ps-welcome-eyebrow {
   color: #f4cf95;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.08em;
 }
 
 .ps-welcome-bottom h1 {
@@ -179,8 +186,10 @@
   font-size: var(--fs-sm);
 }
 
+/* 入住流程各页的底色跟着主题（2026-09-24：原来写死 #fffbf5，深色下页面是浅的、里面的卡片却是深的）。
+   注册 / 登录（.ps-auth-page）有自己的固定暖纸底，不受这一条影响；“认识 TA”（pets 的 .ps-own-pet-page）也跟着主题，头图遮罩用当前主题的面色（见 pets.css）。 */
 .ps-entry-page {
-  background: #fffbf5;
+  background: var(--c-surface);
 }
 
 .ps-auth-page {
@@ -410,7 +419,7 @@
 .ps-entry-heading {
   margin: 13px 0 17px;
   padding: 9px 4px 5px;
-  color: #292827;
+  color: var(--c-ink);
 }
 
 .ps-entry-heading__top {
@@ -424,7 +433,7 @@
 
 .ps-entry-heading__kicker {
   margin-left: auto;
-  color: #a47a55;
+  color: color-mix(in srgb, var(--c-sun) 50%, var(--c-ink));
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -441,7 +450,7 @@
 .ps-entry-heading p {
   max-width: 25em;
   margin: 0;
-  color: #7e756d;
+  color: var(--c-ink-2);
   font-size: 13px;
   line-height: 1.65;
 }
@@ -456,11 +465,44 @@
 .ps-entry-heading__steps span {
   height: 3px;
   border-radius: 4px;
-  background: #eadfd1;
+  background: color-mix(in srgb, var(--c-ink) 12%, transparent);
 }
 
 .ps-entry-heading__steps span.is-active {
+  background: var(--c-sun);
+}
+
+/* 固定暖纸底上的标题（注册 / 登录的纸色表单）：沿用原来的深墨，深色主题下也不变浅（“认识 TA”页已跟着主题，不在这里） */
+.ps-auth-sheet .ps-entry-heading {
+  color: #292827;
+}
+
+.ps-auth-sheet .ps-entry-heading__kicker {
+  color: #a47a55;
+}
+
+.ps-auth-sheet .ps-entry-heading p {
+  color: #7e756d;
+}
+
+.ps-auth-sheet .ps-entry-heading__steps span {
+  background: #eadfd1;
+}
+
+.ps-auth-sheet .ps-entry-heading__steps span.is-active {
   background: #dba258;
+}
+
+/* 深色主题下，页面跟着变深的入住页（如“专属领养”“认识 TA”）：标题区的深绿字标换成浅色（与欢迎页影片上的做法相同），不然看不见；
+   注册 / 登录的纸色表单里照旧用原色（那里不显示字标） */
+@media (prefers-color-scheme: dark) {
+  .ps-entry-page .ps-entry-heading .ps-brand-logo > img {
+    filter: grayscale(1) invert(1) brightness(1.5);
+  }
+
+  .ps-auth-sheet .ps-entry-heading .ps-brand-logo > img {
+    filter: none;
+  }
 }
 
 .ps-entry-card {
@@ -532,7 +574,8 @@
   gap: 8px;
   margin: 18px calc(-1 * var(--page-gutter)) calc(-1 * (var(--safe-bottom) + var(--space-6)));
   padding: 16px calc(var(--page-gutter) + var(--safe-right)) calc(var(--safe-bottom) + 14px) calc(var(--page-gutter) + var(--safe-left));
-  background: linear-gradient(180deg, rgba(255, 251, 245, 0) 0, rgba(255, 251, 245, 0.94) 22px, #fffbf5 40px);
+  /* 渐变收在页面底色上（入住页的底色不同，用 --entry-dock-bg 告诉它） */
+  background: linear-gradient(180deg, transparent 0, color-mix(in srgb, var(--entry-dock-bg, var(--c-surface)) 94%, transparent) 22px, var(--entry-dock-bg, var(--c-surface)) 40px);
 }
 
 .ps-entry-dock > .ps-btn {
@@ -547,7 +590,7 @@
 
 .ps-entry-dock__hint {
   margin: 0 2px;
-  color: #7b7065;
+  color: var(--c-ink-2);
   font-size: 12px;
   line-height: 1.5;
   text-align: center;
@@ -561,24 +604,25 @@
 }
 
 .ps-entry-dock__error span {
-  color: #8d5b52;
+  color: var(--c-ink-2);
   font-size: 12px;
 }
 
 /* 入住（04/04）：头图就是入住后第一屏的家园庭院，TA 站在门廊；只用真实照片或“暂无照片”。 */
 .ps-movein-page {
-  background: #fbf6ec;
+  --entry-dock-bg: var(--c-bg);
+  background: var(--c-bg);
 }
 
 .ps-movein-hero {
   position: relative;
   overflow: hidden;
   margin: 8px 0 22px;
-  border: 1px solid #e6dac7;
+  border: 1px solid var(--c-surface-stroke);
   border-radius: 26px;
-  background: #fffdf8;
-  color: #2a2926;
-  box-shadow: 0 18px 36px -28px rgba(76, 54, 34, 0.55);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  box-shadow: 0 18px 36px -28px var(--c-shadow);
 }
 
 .ps-movein-hero__scene {
@@ -598,11 +642,11 @@
   width: clamp(78px, 23vw, 112px);
   aspect-ratio: 1;
   overflow: hidden;
-  border: 4px solid #fff9eb;
+  border: 4px solid var(--c-surface);
   border-radius: 20px;
-  background: #f1e5d5;
-  color: #795d49;
-  box-shadow: 0 14px 22px -12px rgba(79, 58, 43, 0.75);
+  background: var(--c-surface-2);
+  color: var(--c-ink-2);
+  box-shadow: 0 14px 22px -12px var(--c-shadow);
   transform: translate(-50%, -50%);
 }
 
@@ -624,8 +668,8 @@
   bottom: 0;
   left: 0;
   padding: 3px 2px;
-  background: rgba(255, 250, 242, 0.9);
-  color: #413b35;
+  background: color-mix(in srgb, var(--c-surface) 90%, transparent);
+  color: var(--c-ink);
   font-size: 9px;
   font-weight: 700;
   text-align: center;
@@ -639,7 +683,7 @@
 }
 
 .ps-movein-hero__kicker {
-  color: #a47a55;
+  color: color-mix(in srgb, var(--c-sun) 50%, var(--c-ink));
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -654,7 +698,7 @@
 
 .ps-movein-hero p {
   margin: 0;
-  color: #7e756d;
+  color: var(--c-ink-2);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -665,7 +709,7 @@
 
 .ps-movein-section {
   margin: 0 0 20px;
-  color: #2f2b27;
+  color: var(--c-ink);
 }
 
 .ps-movein-section h2 {
@@ -676,14 +720,14 @@
 
 .ps-movein-note {
   margin: 0 0 12px;
-  color: #6f665d;
+  color: var(--c-ink-2);
   font-size: 13px;
   line-height: 1.6;
 }
 
 .ps-movein-closed {
   margin: 10px 2px 0;
-  color: #93897e;
+  color: var(--c-ink-2);
   font-size: 11px;
   line-height: 1.5;
 }
@@ -701,13 +745,13 @@
   gap: 3px;
   min-width: 0;
   padding: 7px 7px 11px;
-  border: 1px solid #e3d8c7;
+  border: 1px solid var(--c-surface-stroke);
   border-radius: 18px;
-  background: #fffdf8;
-  color: #2f2b27;
+  background: var(--c-surface);
+  color: var(--c-ink);
   text-align: left;
   cursor: pointer;
-  box-shadow: 0 12px 24px -22px rgba(76, 54, 34, 0.6);
+  box-shadow: 0 12px 24px -22px var(--c-shadow);
   transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast), box-shadow var(--dur-fast);
 }
 
@@ -716,13 +760,13 @@
 }
 
 .ps-habitat-card:focus-visible {
-  outline: 3px solid #dba258;
+  outline: 3px solid var(--c-sun);
   outline-offset: 2px;
 }
 
 .ps-habitat-card.is-selected {
-  border-color: #3f6b4f;
-  box-shadow: inset 0 0 0 1px #3f6b4f, 0 14px 26px -20px rgba(34, 70, 48, 0.6);
+  border-color: var(--c-leaf);
+  box-shadow: inset 0 0 0 1px var(--c-leaf), 0 14px 26px -20px var(--c-shadow);
 }
 
 .ps-habitat-card__art {
@@ -733,19 +777,19 @@
   aspect-ratio: 4 / 5;
   margin-bottom: 7px;
   border-radius: 13px;
-  background: linear-gradient(180deg, #efe6d6, #e3d6c0);
-  color: rgba(74, 60, 44, 0.55);
+  background: linear-gradient(180deg, var(--c-surface-2), var(--c-bg-soft));
+  color: color-mix(in srgb, var(--c-ink) 55%, transparent);
 }
 
 .ps-habitat-card.is-seaside .ps-habitat-card__art,
 .ps-habitat-card.is-lakeside .ps-habitat-card__art {
-  background: linear-gradient(180deg, #e6eef0 0%, #cfe0e4 58%, #eadfca 100%);
-  color: rgba(47, 94, 112, 0.6);
+  background: linear-gradient(180deg, var(--c-sky-soft) 0%, color-mix(in srgb, var(--c-sea) 22%, var(--c-surface)) 58%, var(--c-bg-soft) 100%);
+  color: color-mix(in srgb, var(--c-sea) 70%, transparent);
 }
 
 .ps-habitat-card.is-city .ps-habitat-card__art {
-  background: linear-gradient(180deg, #f1e6da 0%, #e6d6c6 60%, #d9cbbb 100%);
-  color: rgba(104, 76, 56, 0.6);
+  background: linear-gradient(180deg, var(--c-surface-2) 0%, var(--c-bg-soft) 60%, color-mix(in srgb, var(--c-ink) 10%, var(--c-bg-soft)) 100%);
+  color: color-mix(in srgb, var(--c-ink) 55%, transparent);
 }
 
 .ps-habitat-card__art img {
@@ -765,8 +809,8 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: #3f6b4f;
-  color: #fffdf6;
+  background: var(--c-leaf);
+  color: var(--c-surface);
   opacity: 0;
   transform: scale(0.7);
   transition: opacity var(--dur-fast), transform var(--dur-fast) var(--ease-out);
@@ -784,7 +828,7 @@
 
 .ps-habitat-card small {
   padding: 0 4px;
-  color: #82766b;
+  color: var(--c-ink-2);
   font-size: 11px;
   line-height: 1.4;
 }
@@ -796,9 +840,9 @@
   gap: 14px;
   min-height: 64px;
   padding: 13px 14px;
-  border: 1px solid #e6dccd;
+  border: 1px solid var(--c-surface-stroke);
   border-radius: 16px;
-  background: #fffdf8;
+  background: var(--c-surface);
   cursor: pointer;
 }
 
@@ -810,13 +854,13 @@
 }
 
 .ps-switch-row strong {
-  color: #2f2b27;
+  color: var(--c-ink);
   font-size: 14px;
   line-height: 1.4;
 }
 
 .ps-switch-row small {
-  color: #7f766c;
+  color: var(--c-ink-2);
   font-size: 11px;
   line-height: 1.5;
 }
@@ -828,7 +872,7 @@
   height: 28px;
   margin: 0;
   border-radius: 999px;
-  background: #d9cfc1;
+  background: color-mix(in srgb, var(--c-ink) 22%, var(--c-surface));
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
@@ -843,13 +887,13 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #fffdf8;
-  box-shadow: 0 2px 5px rgba(46, 36, 25, 0.28);
+  background: var(--c-on-deep);
+  box-shadow: 0 2px 5px var(--c-shadow);
   transition: transform var(--dur-fast) var(--ease-out);
 }
 
 .ps-switch:checked {
-  background: #3f6b4f;
+  background: var(--c-leaf);
 }
 
 .ps-switch:checked::after {
@@ -857,7 +901,7 @@
 }
 
 .ps-switch:focus-visible {
-  outline: 3px solid #dba258;
+  outline: 3px solid var(--c-sun);
   outline-offset: 2px;
 }
 
@@ -865,16 +909,16 @@
   display: grid;
   gap: 2px;
   padding: 11px 13px;
-  border: 1px solid #e3cfa9;
+  border: 1px solid color-mix(in srgb, var(--c-sun) 40%, var(--c-surface-stroke));
   border-radius: 14px;
-  background: #fbf0dc;
-  color: #6c5433;
+  background: var(--c-sun-soft);
+  color: color-mix(in srgb, var(--c-sun) 35%, var(--c-ink));
   font-size: 12px;
   line-height: 1.5;
 }
 
 .ps-movein-away strong {
-  color: #4f3b20;
+  color: var(--c-ink);
   font-size: 14px;
 }
 

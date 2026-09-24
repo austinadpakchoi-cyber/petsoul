@@ -21,6 +21,7 @@ from ...schemas.web.public import EntryRoute, PublicEntry, PublicPetView, Public
 from ...schemas.web.social import Post, PostPage
 from ...utils import utcnow
 from ...web_platform import WebAPIError
+from ...web_journey.trip_titles import going_to
 from ...web_social import Viewer
 from ._shared import cap, web_of, web_router
 
@@ -121,13 +122,23 @@ def _resident(request: Request, row: dict) -> PublicResident:
     if presence is PetPresence.visiting and place:
         doing = f"在{place}"
     elif presence is PetPresence.in_transit and journey is not None:
-        doing = f"在去{journey.title}的路上"
+        # 行程标题本身常带方位词（「在花店帮忙」「去附近喝一杯」），直接拼会成「在去在…」「在去去…」（6c2b 实测前一半、C 补出后一半）；
+        # 与旅程快照共用 C 的 `going_to`，口径只有一处
+        doing = f"在去{going_to(journey.title)}的路上"
     else:
         doing = DOING.get(presence, "在驿站休息")
     return PublicResident(pet_id=row["pet_id"], candidate_id=row["candidate_id"], name=row["name"], species=PetSpecies(row["species"]),
                           personality=row["personality"], dream=row["dream"], origin=PetOrigin(row["origin"]), source_note=row["source_note"],
                           residence=row["residence"], city=row["city"], living_since=row["living_since"], presence=presence, doing=doing, place_name=place,
-                          recent_posts=_posts(request, row["pet_id"], 3))
+                          recent_posts=_posts(request, row["pet_id"], 3), avatar_url=_resident_photo(web, row["pet_id"]))
+
+
+def _resident_photo(web, pet_id: str) -> str | None:
+    """居民的形象照地址：有照片且主页公开才给（与领养卡同一条规则）；没有照片为 null，不给一个打不开的地址。"""
+    record = web.pets.profile(pet_id)
+    if record is None or not record.photo_ref or record.visibility != ProfileVisibility.public:
+        return None
+    return f"/api/v1/web/public/media/pets/{pet_id}/photo"
 
 
 @router.get("/public/world", response_model=PublicWorld)

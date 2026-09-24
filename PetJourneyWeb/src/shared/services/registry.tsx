@@ -23,12 +23,12 @@ const SERVICE_KEYS: ServiceKey[] = [
 ];
 
 /** 未接入的服务：任何方法都返回 CAPABILITY_UNAVAILABLE，绝不回退到 fixture。 */
-function unavailableService<K extends ServiceKey>(key: K, mode: string): ServiceMap[K] {
+function unavailableService<K extends ServiceKey>(key: K, _mode: string): ServiceMap[K] {
   return new Proxy({} as ServiceMap[K], {
     get(_target, prop) {
       if (prop === "fixtureScenarios" || prop === "fixtureVariants") return () => [];
       if (prop === "then") return undefined;
-      return () => Promise.reject(ApiError.capability(`${key}.${String(prop)}`, `这项能力在 ${mode} 模式下尚未接入。`));
+      return () => Promise.reject(ApiError.capability(`${key}.${String(prop)}`, "这里暂时还没开放。"));
     },
   });
 }

@@ -362,6 +362,20 @@
           "title": "Pet Id",
           "x-additive": true
         },
+        "photo_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TA 的形象照（公开路由，访客可看）；只在仍可领养时给，没有照片为 null。平台原创居民的形象是生成的原创设计，不是真实照片",
+          "title": "Photo Url",
+          "x-additive": true
+        },
         "residence": {
           "anyOf": [
             {
@@ -9881,6 +9895,20 @@
       "additionalProperties": false,
       "description": "一位还在星球上生活、可以领养的居民。住处是星球居民驿站（世界规则提供食宿，不是某位真实用户的家）。",
       "properties": {
+        "avatar_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TA 的照片（公开路由，访客可看）；没有照片为 null。与 `PublicPetView.profile.avatar_url` 同一个地址、同一条规则。平台原创居民的形象是生成的原创设计，不是真实照片",
+          "title": "Avatar Url",
+          "x-additive": true
+        },
         "candidate_id": {
           "title": "Candidate Id",
           "type": "string"
@@ -11737,8 +11765,8 @@
           "x-additive": true
         },
         "model_replies": {
-          "default": false,
-          "description": "主人开启后，TA 的私信回复由对话模型按已确认的叮嘱撰写；默认关闭",
+          "default": true,
+          "description": "开启时，由对话模型按已确认的叮嘱撰写：TA 给你的私信回复与主动来信、明信片上的话、攻略的措辞；家里第一位管理员的这项选择，还决定家庭频道的措辞、到站明信片上的话，以及运营开启自主决策时 TA 的思考用不用模型；运营开启自主决策时，你的叮嘱也会按用途交给模型参考。**默认开启**（2026-09-24 起），主人可随时关掉，关掉即撤回上述全部模型授权",
           "title": "Model Replies",
           "type": "boolean",
           "x-additive": true

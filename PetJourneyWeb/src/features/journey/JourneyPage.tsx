@@ -33,6 +33,8 @@ import {
   ToggleChip,
 } from "@/shared/ui";
 import { resetFixtureEpoch } from "@/fixtures/world";
+import { useVisitSetting } from "@/features/venue/useVisitSetting";
+import type { VisitSetting } from "@/features/venue/visitKind";
 import { JourneyAtHome } from "./DepartureStation";
 import "./journey.css";
 
@@ -59,22 +61,27 @@ function clock(iso: number, timeZone: string): string {
   }
 }
 
-/** 旅途状态：只从服务端给的行程事实推导，不替 TA 编理由。 */
-export function tripState(snapshot: JourneyMapSnapshot, nowMs: number) {
+/**
+ * 旅途状态：只从服务端给的行程事实推导，不替 TA 编理由。
+ * visitSetting：这次到访是什么地方（见 venue/visitKind，按到访的场景模板判断，不按名字猜）。
+ * 只有确定是门店（cafe / restaurant）才说“在店里”；小路、公园、打工的地方，以及还没读到、读不到时，都说“到了”，不写“店”字。
+ */
+export function tripState(snapshot: JourneyMapSnapshot, nowMs: number, visitSetting: VisitSetting | null = null) {
   const leg = currentLeg(snapshot);
   const first = snapshot.legs[0];
   const day = first ? Math.max(1, Math.floor((nowMs - effectiveDeparture(first.times)) / 86_400_000) + 1) : 1;
   const visiting = Boolean(snapshot.current_visit_id);
+  const atShop = visiting && visitSetting === "shop";
   const moving = Boolean(leg && MOVING.includes(leg.phase) && remainingMs(leg.times, nowMs) > 0);
   const index = leg ? snapshot.legs.findIndex((item) => item.leg_id === leg.leg_id) : -1;
   const next = leg && (moving || leg.phase === "scheduled" || leg.phase === "waiting") ? leg : snapshot.legs[index + 1];
   const place = visiting ? snapshot.destination_title ?? (leg ? clean(leg.destination.name) : null) : leg ? clean(moving ? leg.destination.name : leg.phase === "arrived" ? leg.destination.name : leg.origin.name) : null;
-  const state = visiting ? "在店里" : moving ? "在路上" : leg?.phase === "waiting" || leg?.phase === "scheduled" ? "等出发" : "停留";
-  return { leg, day, visiting, moving, next, place, state };
+  const state = visiting ? (atShop ? "在店里" : "到了") : moving ? "在路上" : leg?.phase === "waiting" || leg?.phase === "scheduled" ? "等出发" : "停留";
+  return { leg, day, visiting, atShop, moving, next, place, state };
 }
 
-function TripStatusChip({ home, snapshot, nowMs }: { home: HomeSnapshot | undefined; snapshot: JourneyMapSnapshot; nowMs: number }) {
-  const { day, place, state } = tripState(snapshot, nowMs);
+function TripStatusChip({ home, snapshot, nowMs, visitSetting }: { home: HomeSnapshot | undefined; snapshot: JourneyMapSnapshot; nowMs: number; visitSetting: VisitSetting | null }) {
+  const { day, place, state } = tripState(snapshot, nowMs, visitSetting);
   const pet = home?.pet;
   return (
     <div className="ps-trip-chip" data-testid="trip-chip">
@@ -88,9 +95,9 @@ function TripStatusChip({ home, snapshot, nowMs }: { home: HomeSnapshot | undefi
   );
 }
 
-function TripStatusCard({ home, snapshot, nowMs }: { home: HomeSnapshot | undefined; snapshot: JourneyMapSnapshot; nowMs: number }) {
+function TripStatusCard({ home, snapshot, nowMs, visitSetting }: { home: HomeSnapshot | undefined; snapshot: JourneyMapSnapshot; nowMs: number; visitSetting: VisitSetting | null }) {
   const [open, setOpen] = useState(false);
-  const { leg, moving, next, visiting, state } = tripState(snapshot, nowMs);
+  const { leg, moving, next, visiting, atShop, state } = tripState(snapshot, nowMs, visitSetting);
   const activity = snapshot.activities.find((item) => item.state === "active");
   const headline = home?.journey?.headline ?? (snapshot.destination_title ? `这趟去 ${snapshot.destination_title}` : "TA 在旅途中");
   const meta = [
@@ -101,7 +108,7 @@ function TripStatusCard({ home, snapshot, nowMs }: { home: HomeSnapshot | undefi
   return (
     <section className={`ps-trip-card${open ? " is-open" : ""}`} aria-label="TA 此刻的旅途">
       <button type="button" className="ps-trip-card__head" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
-        <span className="ps-trip-card__icon" aria-hidden="true"><Icon name={visiting ? "cup" : moving ? (leg?.mode === "walk" ? "compass" : "journey") : "pin"} size={20} /></span>
+        <span className="ps-trip-card__icon" aria-hidden="true"><Icon name={visiting ? (atShop ? "cup" : "pin") : moving ? (leg?.mode === "walk" ? "compass" : "journey") : "pin"} size={20} /></span>
         <span className="ps-trip-card__text">
           <span className="ps-trip-card__eyebrow"><i aria-hidden="true" />TA {state}{activity && !headline.includes(ACTIVITY_TEXT[activity.kind].slice(1)) ? ` · ${ACTIVITY_TEXT[activity.kind]}` : ""}</span>
           <strong>{headline}</strong>
@@ -202,6 +209,8 @@ function JourneyMap({
     [snapshot.legs],
   );
   const overlayProps: JourneyOverlayProps = { snapshot, nowMs, openSheet };
+  // 在不在店里要看这次到访的场景模板（快照里没有），和到访页共用一份到访数据
+  const visitSetting = useVisitSetting(snapshot.current_visit_id);
 
   return (
     <>
@@ -216,10 +225,10 @@ function JourneyMap({
           >
             <Slot name="journey.map.overlay" props={overlayProps} />
           </SchematicMapSurface>
-          <TripStatusChip home={home} snapshot={snapshot} nowMs={nowMs} />
+          <TripStatusChip home={home} snapshot={snapshot} nowMs={nowMs} visitSetting={visitSetting} />
         </div>
         {snapshot.catching_up ? <p className="ps-journey-catching-up" role="status">TA 的位置继续按时间移动；刚到站的小事还在补记，来信与结算稍后会出现。</p> : null}
-        <TripStatusCard home={home} snapshot={snapshot} nowMs={nowMs} />
+        <TripStatusCard home={home} snapshot={snapshot} nowMs={nowMs} visitSetting={visitSetting} />
       </div>
       <div className="ps-row" style={{ marginTop: 8 }}>
         <DataOriginBadge

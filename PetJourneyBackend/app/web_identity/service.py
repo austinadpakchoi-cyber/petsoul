@@ -22,6 +22,9 @@ from .passwords import DUMMY_HASH, hash_password, verify_password
 DEFAULT_TIMEZONE = "Asia/Hong_Kong"
 # 这几项是"用途授权"：改了就要让在途的结论重新复核。时区只是显示口径，不在其列
 PURPOSE_PREFS = ("model_replies", "generated_photos", "pet_messages")
+# 模型回信「从没选过」时的取值（2026-09-24 起开启）。读（没有行时）与 touch_active 建行时共用这一个值：
+# 表的列默认值还是 0150 定的 0，建行时不显式写就会把"没选过"存成"关"（见迁移 0190）
+MODEL_REPLIES_DEFAULT = True
 
 
 def _households_of(conn: sqlite3.Connection, user_id: str) -> list[str]:
@@ -148,9 +151,16 @@ class WebIdentityService:
             return False
         return parse_dt(row["expires_at"]) > utcnow() - timedelta(seconds=0)
 
-    # ---- 账号偏好（默认全部关闭）----
+    # ---- 账号偏好 ----
     def prefs(self, user_id: str) -> dict:
-        """model_replies / generated_photos 默认关闭（需主人明确开启）；pet_messages 默认开启；timezone 默认香港。"""
+        """model_replies、pet_messages 默认开启；generated_photos 默认关闭（需主人明确开启）；timezone 默认香港。
+
+        **model_replies 2026-09-24 改为默认开启**（用户：「跟宠物的聊天都是固定的，ds 没有参与，请修复」）。
+        原先默认关闭、需要主人去设置页手动打开，于是配好了 DeepSeek 的环境里聊天照样是模板。
+        它同时是「这只宠物能不能用模型」的授权（家庭频道主动消息的措辞、大脑是否可用模型都读它），
+        所以**只改「从没选过」时的默认**：主人明确关掉的（库里存了 0）照旧尊重，撤权接口语义不变；
+        大脑另受运营总闸 `web_brain_mode`（默认 off）与每宠每日上限约束，这里不绕过。
+        """
         with self.storage.connect() as conn:
             return self._prefs_in(conn, user_id)
 
@@ -166,7 +176,7 @@ class WebIdentityService:
         """在调用方的连接上读（写事务里的"读改写"要用这个，不能另开连接）。"""
         row = conn.execute("SELECT model_replies, generated_photos, pet_messages, timezone, last_active_at FROM web_user_prefs WHERE user_id = ?",
                            (user_id,)).fetchone()
-        return {"model_replies": bool(row and row["model_replies"]), "generated_photos": bool(row and row["generated_photos"]),
+        return {"model_replies": MODEL_REPLIES_DEFAULT if row is None else bool(row["model_replies"]), "generated_photos": bool(row and row["generated_photos"]),
                 "pet_messages": True if row is None else bool(row["pet_messages"]), "timezone": (row["timezone"] if row else None) or DEFAULT_TIMEZONE,
                 "last_active_at": parse_dt(row["last_active_at"]) if row and row["last_active_at"] else None}
 
@@ -202,12 +212,17 @@ class WebIdentityService:
         return {**merged, "last_active_at": current["last_active_at"]}
 
     def touch_active(self, user_id: str, now: datetime) -> None:
-        """记录主人最近来过（每 10 分钟最多写一次）；主动消息据此判断要不要发。"""
+        """记录主人最近来过（每 10 分钟最多写一次）；主动消息据此判断要不要发。
+
+        这里会替从没改过设置的人**建出偏好行**，所以建行时要显式写模型回信的默认值——不写就落到列默认值 0，
+        读取端从此把"没选过"当成"关"（打开页面、发第一条私信都会走到这里，发生在回信之前）。
+        已有的行只改 last_active_at，不碰任何授权值。
+        """
         with self.storage.connect() as conn:
             conn.execute(
-                "INSERT INTO web_user_prefs (user_id, updated_at, last_active_at) VALUES (?, ?, ?) "
+                "INSERT INTO web_user_prefs (user_id, model_replies, updated_at, last_active_at) VALUES (?, ?, ?, ?) "
                 "ON CONFLICT(user_id) DO UPDATE SET last_active_at = excluded.last_active_at "
                 "WHERE web_user_prefs.last_active_at IS NULL OR web_user_prefs.last_active_at < ?",
-                (user_id, iso(now), iso(now), iso(now - timedelta(minutes=10))),
+                (user_id, int(MODEL_REPLIES_DEFAULT), iso(now), iso(now), iso(now - timedelta(minutes=10))),
             )
 

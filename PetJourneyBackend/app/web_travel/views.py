@@ -75,6 +75,10 @@ class JournalView:
     event_ids: tuple[str, ...]
     layout: dict  # 版式：站点（station_id 只在这一版内有效）、提醒、来源、文字区、image_refused
     image: Any  # journal.JournalImage(status, url, ticket)
+    created_at: str  # 这一页自己的时间：回忆页建得比计划页晚，不能拿计划的时间顶替
+    updated_at: str
+    identity_note: str | None
+    template_revision: str  # TRV-07 的版式号（如 t1）
 
 
 @dataclass(frozen=True, slots=True)
@@ -154,4 +158,6 @@ def _fact(row: sqlite3.Row) -> FactView:
 def _journal(conn: sqlite3.Connection, row: sqlite3.Row, image_in) -> JournalView:
     return JournalView(journal_id=row["journal_id"], journal_revision=int(row["journal_revision"]), plan_revision=int(row["plan_revision"]),
                        phase=row["phase"], identity_mode=row["identity_mode"], event_ids=tuple(json.loads(row["event_ids_json"])),
-                       layout=json.loads(row["layout_json"]), image=image_in(conn, row["image_task_id"]))
+                       layout=json.loads(row["layout_json"]), image=image_in(conn, row["image_task_id"]),
+                       created_at=row["created_at"], updated_at=row["updated_at"], identity_note=row["identity_note"],
+                       template_revision=row["template_revision"])

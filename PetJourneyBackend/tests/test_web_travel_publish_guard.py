@@ -109,6 +109,35 @@ class WishWritePointTests(unittest.TestCase):
         self.assertEqual(computed, {name: [True] for name in COMPUTED}, "这两处的 status 必须是 status_for 现算的；" + MESSAGE)
 
 
+PLAN_MESSAGE = ("计划表的写入点变了。「这版计划已被别的旅程关联」那道守卫（service.link_journey_in 里 link_plan_in 返回 False）走不到，"
+                "靠的就是这张表：先想清楚它是不是因此可达；可达就给它补一条真触发用例，再更新本表。")
+PLAN_WRITE_VERBS = ("UPDATE WEB_TRAVEL_PLANS", "DELETE FROM WEB_TRAVEL_PLANS", "INTO WEB_TRAVEL_PLANS")
+
+
+class PlanWritePointTests(unittest.TestCase):
+    """「这版计划已被别的旅程关联」那道守卫为什么走不到：计划行的 journey_id 只在心愿同一事务里变成 linked 时写入，
+    而 linked 回不到 ready（下面 ClosedStateTests）。这里钉前一半的地基：
+    计划表只有一处 UPDATE、只被关联调用；插计划只有研究发布一处；新计划出生时不带旅程。"""
+
+    def test_a_plans_journey_is_written_only_by_linking(self) -> None:
+        sql, links, inserts, birth = set(), set(), set(), []
+        for rel, tree in _trees():
+            for owner, node in _walk(tree):
+                if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    text = " ".join(node.value.split()).upper()
+                    if any(verb in text for verb in PLAN_WRITE_VERBS):
+                        sql.add((rel, owner))
+                if rel == "web_travel/facts.py" and owner == "build_plan" and isinstance(node, ast.Dict):
+                    birth += [ast.unparse(v) for k, v in zip(node.keys, node.values) if isinstance(k, ast.Constant) and k.value == "journey_id"]
+            links |= {(rel, owner) for owner, _ in _calls(tree, "link_plan_in")}
+            inserts |= {(rel, owner) for owner, _ in _calls(tree, "insert_plan_in")}
+
+        self.assertEqual(sql, {("web_travel/store.py", "link_plan_in")}, PLAN_MESSAGE)
+        self.assertEqual(links, {("web_travel/service.py", "link_journey_in")}, PLAN_MESSAGE)
+        self.assertEqual(inserts, {("web_travel/research.py", "_publish_in")}, PLAN_MESSAGE)
+        self.assertEqual(birth, ["None"], "新计划出生时不带旅程；" + PLAN_MESSAGE)
+
+
 class ClosedStateTests(unittest.TestCase):
     def test_a_closed_wish_never_reopens_by_recomputing_its_status(self) -> None:
         """`status_for` 对非开放状态原样返回：关联、完成、取消后，等待原因怎么变都回不到 active／ready。

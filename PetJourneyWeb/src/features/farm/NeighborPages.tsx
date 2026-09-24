@@ -264,7 +264,7 @@ export function NeighborHomePage() {
               {extra.length ? <div className="ps-garden-overflow">{extra.map((entry, i) => bed(entry, placed.length + i))}</div> : null}
               {last ? (
                 <p key={`${last.plot.plot_id}:${picks}`} className="ps-steal-receipt" role="status">
-                  {last.message} 卖给杂货铺或交居民订单就能换成旅费。
+                  {last.message} 卖给杂货铺或交居民订单就能换成星币。
                 </p>
               ) : null}
               {problem ? (

@@ -7,6 +7,10 @@ import type { JourneyOverlayProps } from "@/shared/slots/names";
 import { Card, Icon } from "@/shared/ui";
 import { VisitPage } from "./VisitPage";
 
+/**
+ * 旅途卡片入口。快照里没有地点类型（是店、小路还是公园要打开到访才知道），live 的说法不写“到店 / 座位 / 饮品”；
+ * 演示到访固定是示例咖啡馆，保留原说法。
+ */
 function VisitEntryCard({ snapshot }: JourneyOverlayProps) {
   const visitId = snapshot.current_visit_id ?? snapshot.planned_visit_id;
   if (!visitId && snapshot.data_origin !== "fixture") return null;
@@ -19,9 +23,10 @@ function VisitEntryCard({ snapshot }: JourneyOverlayProps) {
           <Icon name="seat" />
         </span>
         <span style={{ flex: 1 }}>
-          <strong>{snapshot.data_origin === "fixture" ? "看看 TA 在店里（演示到访）" : atVenue ? "TA 已到店，进去看看" : "这趟到店计划"}</strong>
+          <strong>{snapshot.data_origin === "fixture" ? "看看 TA 在店里（演示到访）" : atVenue ? "TA 已经到了" : "这趟要去的地方"}</strong>
+          {/* live 的副标题控制在一行（320 宽约 12 个字），不把一个词折成两半 */}
           <span className="ps-muted" style={{ display: "block" }}>
-            {snapshot.data_origin === "fixture" ? "示例咖啡馆 · 选座、点饮品、合影" : atVenue ? "座位、饮品与合影按真实到访状态变化" : "尚未到店；行动要等 TA 抵达后才开放"}
+            {snapshot.data_origin === "fixture" ? "示例咖啡馆 · 选座、点饮品、合影" : atVenue ? "去看看 TA 在那儿做什么" : "到了以后才能开始活动"}
           </span>
         </span>
         <Icon name="chevron" />

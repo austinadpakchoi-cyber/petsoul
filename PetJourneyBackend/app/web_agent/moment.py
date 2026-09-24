@@ -8,6 +8,7 @@ from typing import Callable
 from zoneinfo import ZoneInfo
 
 from ..schemas.web.pets import PetPresence
+from ..web_journey.trip_titles import going_to
 
 HOME_TZ = "Asia/Hong_Kong"
 SLEEP_START = time(23, 30)
@@ -76,7 +77,7 @@ class MomentBuilder:
             planned = self.journeys.repo.active_for_pet(pet_id) if presence is PetPresence.at_home else None
             if planned is not None and now < planned.departed_at:  # 行程定好了，出门时间还没到（按开船时间反推）
                 leave = planned.departed_at.astimezone(_zone(tz)).strftime("%H:%M")
-                return PetMoment(presence, f"在家收拾东西，{leave} 出门去{planned.title}", "家", tz, local, False, False, wake=window[1],
+                return PetMoment(presence, f"在家收拾东西，{leave} 出门去{going_to(planned.title)}", "家", tz, local, False, False, wake=window[1],
                                  journey_title=planned.title)
             return PetMoment(presence, "在家睡觉" if asleep else "在家", "家", tz, local, asleep, False, wake=window[1])
         visit = self.journeys.repo.visit_for_journey(journey.journey_id)
@@ -88,7 +89,7 @@ class MomentBuilder:
         leg = next((l for l in legs if l.starts_at <= now < l.ends_at), None)
         if leg is None:
             tz = HOME_TZ
-            return PetMoment(presence, f"在去{journey.title}的路上", None, tz, now.astimezone(_zone(tz)), False, False, journey_title=journey.title)
+            return PetMoment(presence, f"在去{going_to(journey.title)}的路上", None, tz, now.astimezone(_zone(tz)), False, False, journey_title=journey.title)
         tz = leg.origin.get("timezone") or HOME_TZ
         dest = leg.destination.get("name", "").replace("（示意）", "")
         at = leg.origin.get("name", "").replace("（示意）", "")

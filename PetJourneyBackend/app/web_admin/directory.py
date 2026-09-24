@@ -16,6 +16,7 @@ from typing import Any
 
 from ..storage import JourneyStorage
 from ..utils import parse_dt
+from ..web_identity.service import DEFAULT_TIMEZONE, MODEL_REPLIES_DEFAULT
 
 
 @dataclass(frozen=True, slots=True)
@@ -152,10 +153,11 @@ class AdminDirectory:
                 (user_id,),
             ).fetchone()
             prefs = {
-                "model_replies": bool(prefs_row and prefs_row["model_replies"]),
+                # 没有偏好行＝从没选过，按身份模块的默认值显示（2026-09-24 起默认开启），与玩家设置页一致
+                "model_replies": MODEL_REPLIES_DEFAULT if prefs_row is None else bool(prefs_row["model_replies"]),
                 "generated_photos": bool(prefs_row and prefs_row["generated_photos"]),
                 "pet_messages": True if prefs_row is None else bool(prefs_row["pet_messages"]),
-                "timezone": (prefs_row["timezone"] if prefs_row else None) or "Asia/Hong_Kong",
+                "timezone": (prefs_row["timezone"] if prefs_row else None) or DEFAULT_TIMEZONE,
                 "last_active_at": _dt(prefs_row["last_active_at"]) if prefs_row else None,
             }
             sessions = [

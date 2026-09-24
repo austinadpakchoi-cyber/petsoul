@@ -1,13 +1,14 @@
 """科目一（路边小课堂）与科目四（路上的小事）的固定题库：经过审核的内容，不由模型临时编题。
 
 - 科一：10 个知识点 × 3 道题，题型有看场景选择（choice）、拖放标志（match）、判断先后（order），每题 10 分；
-  正式卷每个知识点抽 1 题共 10 题，补考换题，覆盖范围与难度相同；练习每次 5 题，答完立刻讲解。
+  正式卷每个知识点抽 1 题共 10 题，补考换题，覆盖范围与难度相同；练习每次 5 题、三种题型每张都有，答完立刻讲解。
 - 科四：5 类情境 × 2 个版本，每段两个判断（choice），共 10 个判断；补考换另一个版本。
 这些都是 PetSoul 世界的游戏题目，参考大家熟悉的安全常识，不代表现实驾考题库。
 """
 
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass, field
 
 BANK_VERSION = "paw-quiz-2026.2"
@@ -200,11 +201,38 @@ ALL: dict[str, Quiz] = {q.question_id: q for bank in S1_BANK.values() for q in b
 ALL.update({q.question_id: q for pair in S4_BANK.values() for scenario in pair for q in scenario})
 
 
+QUIZ_KINDS = ("choice", "match", "order")
+
+
+def _practice_paper(number: int) -> list[Quiz]:
+    """科一练习卷：5 个不同知识点，**选择、拖放、排序三种题型每张至少一道**。
+
+    为什么（6c2b 驾校巡检 2026-09-24）：旧规则前 4 次练习 20 题里拖放 0 道、排序 1 道，第一次正式卷却有拖放 1、排序 3——
+    玩家第一次见到拖放界面就是在正式考试里。
+    怎么抽：窗口每次挪 2 个知识点、每两次再多挪 1 个；缺哪种题型，就在卷里挑一个知识点换成它那一型的题
+    （候选按练习次数轮换；不会把某一型仅有的一道换走）。这组参数是穷举选的：每张三型齐、知识点不重复，
+    而且**任意连续 12 次练习必把 30 道题全练到**（从第 1 次起 11 次练全）——不会有题永远练不到。正式卷的抽法不变。
+    """
+    start = (2 * number + number // 2) % len(S1_TOPICS)
+    topics = [S1_TOPICS[(start + i) % len(S1_TOPICS)] for i in range(5)]
+    picks = [(2 * number + 2 * i) % len(S1_BANK[topic]) for i, topic in enumerate(topics)]
+    for kind in QUIZ_KINDS:
+        have = Counter(S1_BANK[topic][pick].kind for topic, pick in zip(topics, picks))
+        if have[kind]:
+            continue
+        swaps = [(i, j) for i, topic in enumerate(topics) for j, quiz in enumerate(S1_BANK[topic])
+                 if quiz.kind == kind and have[S1_BANK[topic][picks[i]].kind] > 1]
+        if swaps:
+            i, j = swaps[number % len(swaps)]
+            picks[i] = j
+    return [S1_BANK[topic][pick] for topic, pick in zip(topics, picks)]
+
+
 def paper(subject: str, number: int, practice: bool = False) -> list[Quiz]:
     """一套卷：number 决定抽哪一组（正式卷＝(轮次-1)*2+第几次；练习＝第几次练习），补考与首次必然不同。"""
     if subject == "s1":
         if practice:
-            return [S1_BANK[S1_TOPICS[(number * 5 + i) % 10]][(number + i) % 3] for i in range(5)]
+            return _practice_paper(number)
         return [S1_BANK[topic][(number + index) % 3] for index, topic in enumerate(S1_TOPICS)]
     return [q for index, slot in enumerate(S4_SLOTS) for q in S4_BANK[slot][(number + index) % 2]]
 

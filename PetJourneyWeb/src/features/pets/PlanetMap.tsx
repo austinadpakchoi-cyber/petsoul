@@ -1,169 +1,91 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
-import type { LatLng, PublicResident } from "@/shared/contracts";
-import { MapAnchor, SchematicMapSurface } from "@/shared/map";
-import { Icon, Sheet } from "@/shared/ui";
-import { PawMark, petPortraitUrl } from "./PetPortrait";
-
-const SPECIES_NAMES: Record<string, string> = { cat: "猫", dog: "狗", rabbit: "兔子", hamster: "仓鼠", bird: "鸟", parrot: "鹦鹉", other: "动物" };
+import type { PetSpecies } from "@/shared/contracts";
 
 /**
- * 居民驿站在世界里的概念位置：与后端迁移 m0240_residents 写入 web_residences 的坐标一致（片区里的概念地点，不对应门牌）。
- * 公开接口目前不下发任何坐标（见本窗口 CHANGE_REQUEST）；接口补上居民实时位置后，以接口为准并删除这张表。
+ * 访客星球的头图（2026-09-24 起替代原来的示意地图）。
+ *
+ * 为什么不是地图：公开接口（/public/world、/public/residents）里居民**没有任何坐标**，
+ * 只显示后台事实、不拿假位置顶替，所以不在地图上画居民；空着的底图只会重演“半屏空地图”。
+ * 原来按驿站名配的一张坐标表（STATION_ANCHORS）也一并删掉——那是前端自己写的坐标。
+ * 等后端给出公开的驿站 / 居民位置（字段见交接），再换回地图首页同一组件的访客模式。
+ *
+ * 这张图纯装饰（aria-hidden）：一颗小星球、两座驿站小屋、几棵树；站在星球上的是**这些居民的物种插画**
+ * （一位居民一只，最多 6 只，不写名字、不按位置排），只表示“这里住着猫、狗、兔子……”，不代表任何一位的样子。
+ * 颜色全部来自主题令牌（planet.css），深色下自然变成夜里的星球；没有动画。
  */
-const STATION_ANCHORS: Record<string, LatLng> = {
-  "星球居民驿站·中环": { lat: 22.2819, lng: 114.1581 },
-  "星球居民驿站·西贡海边": { lat: 22.3818, lng: 114.2719 },
-};
+const CX = 195;
+const CY = 640;
+const R = 500;
 
-export interface PlanetPin {
-  resident: PublicResident;
-  /** 驿站概念点；位置依据只是“住在哪个驿站”，不是实时定位。 */
-  at: LatLng;
-  /** 围着驿站排开的屏幕像素偏移：同一驿站的居民在任何缩放下都不互相压住。 */
-  offset: { x: number; y: number };
+/** 星球表面在 x 处的高度（viewBox 坐标，只是画画用的几何，不是地理坐标）。 */
+function rimY(x: number): number {
+  return CY - Math.sqrt(R * R - (x - CX) * (x - CX));
 }
 
-export interface PlanetStation {
-  name: string;
-  at: LatLng;
-  pins: PlanetPin[];
-}
+const SLOTS: Array<{ x: number; size: number; flip: boolean }> = [
+  { x: 64, size: 46, flip: false },
+  { x: 326, size: 46, flip: true },
+  { x: 116, size: 40, flip: true },
+  { x: 274, size: 40, flip: false },
+  { x: 30, size: 36, flip: false },
+  { x: 360, size: 36, flip: true },
+];
 
-function clusterOffsets(count: number): Array<{ x: number; y: number }> {
-  if (count === 1) return [{ x: 0, y: 0 }];
-  const radius = Math.min(104, 56 + count * 6);
-  return Array.from({ length: count }, (_, index) => {
-    const angle = (2 * Math.PI * index) / count - Math.PI / 2;
-    return { x: Math.round(radius * Math.cos(angle)), y: Math.round(radius * 0.82 * Math.sin(angle)) };
-  });
-}
+const STARS: Array<[number, number, number]> = [
+  [34, 38, 1.4], [78, 18, 1.1], [132, 48, 1.6], [176, 22, 1.1], [228, 40, 1.3], [262, 14, 1.1], [300, 56, 1.2], [356, 30, 1.5], [206, 70, 1], [96, 76, 1.1],
+];
 
-export function planetStations(residents: PublicResident[]): { stations: PlanetStation[]; unplaced: PublicResident[] } {
-  const groups = new Map<string, PublicResident[]>();
-  const unplaced: PublicResident[] = [];
-  for (const resident of residents) {
-    if (!STATION_ANCHORS[resident.residence]) unplaced.push(resident);
-    else groups.set(resident.residence, [...(groups.get(resident.residence) ?? []), resident]);
-  }
-  const stations = [...groups.entries()].map(([name, members]) => {
-    const at = STATION_ANCHORS[name];
-    const offsets = clusterOffsets(members.length);
-    return { name, at, pins: members.map((resident, index) => ({ resident, at, offset: offsets[index] })) };
-  });
-  return { stations, unplaced };
-}
-
-/** 气泡只说服务端给的真实状态：此刻在做什么，或 TA 最近一条公开动态。 */
-export function bubbleText(resident: PublicResident, round: number): string {
-  const post = resident.recent_posts[0]?.text?.trim();
-  if (post && round % 2 === 1) return `“${post.length > 38 ? `${post.slice(0, 38)}…` : post}”`;
-  const where = resident.place_name ?? (resident.presence === "at_home" ? null : resident.city);
-  return where ? `${resident.doing} · ${where}` : resident.doing;
-}
-
-function usePrefersReducedMotion(): boolean {
-  const [reduce, setReduce] = useState(() => typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  useEffect(() => {
-    if (typeof window.matchMedia !== "function") return undefined;
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduce(query.matches);
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
-  return reduce;
-}
-
-/** 居民头像：还没有公开照片字段——演示模式用授权小灰猫，live 用爪印占位；不写名字首字。 */
-function ResidentMark() {
-  const src = petPortraitUrl(null);
-  return src ? <img src={src} alt="" aria-hidden="true" /> : <PawMark size={18} />;
-}
-
-/** 点中后的轻量相遇卡：此刻、性格、小愿望、最近一条公开小事。不是领养页；想多了解再进 TA 的公开手账。 */
-export function EncounterCard({ resident, onClose }: { resident: PublicResident; onClose: () => void }) {
-  const post = resident.recent_posts[0] ?? null;
-  const where = resident.place_name ?? (resident.presence === "at_home" ? resident.residence : resident.city);
+function House({ x, scale = 1 }: { x: number; scale?: number }) {
+  const y = rimY(x) + 2;
   return (
-    <Sheet title={<span className="ps-encounter__title">和 {resident.name} 打了个照面</span>} subtitle={`星球居民 · ${SPECIES_NAMES[resident.species] ?? "动物"}`} onClose={onClose} className="ps-encounter">
-      <div className="ps-encounter__body" data-testid="encounter-card">
-        <div className="ps-encounter__who">
-          <span className="ps-encounter__portrait" aria-label={`${resident.name}暂无公开照片`}><ResidentMark /><small>暂无公开照片</small></span>
-          <div>
-            <span className="ps-encounter__now"><i aria-hidden="true" className={resident.presence === "at_home" ? "is-home" : "is-out"} />此刻</span>
-            <strong>{resident.doing}</strong>
-            <small>{where}</small>
-          </div>
-        </div>
-        <p className="ps-encounter__line">{resident.personality}</p>
-        {resident.dream ? <p className="ps-encounter__dream"><span>TA 的小愿望</span>{resident.dream}</p> : null}
-        {post ? <blockquote className="ps-encounter__post">{post.text}</blockquote> : null}
-        <Link className="ps-encounter__more" to={`/world/residents/${encodeURIComponent(resident.pet_id)}`}>
-          看看 TA 的公开手账 <Icon name="chevron" size={15} />
-        </Link>
-      </div>
-    </Sheet>
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      <rect className="ps-world-scene__wall" x={-15} y={-24} width={30} height={24} rx={2} />
+      <path className="ps-world-scene__roof" d="M-19 -22 L0 -38 L19 -22 Z" />
+      <rect className="ps-world-scene__window" x={-9} y={-17} width={7} height={7} rx={1.5} />
+      <rect className="ps-world-scene__window" x={3} y={-17} width={7} height={11} rx={1.5} />
+    </g>
   );
 }
 
-export function PlanetMap({ residents, onEncounter, paused, realBasemap }: { residents: PublicResident[]; onEncounter: (resident: PublicResident) => void; paused: boolean; realBasemap: boolean }) {
-  const { stations } = useMemo(() => planetStations(residents), [residents]);
-  const pins = useMemo(() => stations.flatMap((station) => station.pins), [stations]);
-  const reduceMotion = usePrefersReducedMotion();
-  const [turn, setTurn] = useState(0);
-  useEffect(() => {
-    if (paused || pins.length === 0) return undefined;
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") setTurn((value) => value + 1);
-    }, reduceMotion ? 9000 : 5200);
-    return () => window.clearInterval(timer);
-  }, [paused, pins.length, reduceMotion]);
-  const bounds = useMemo<LatLng[]>(() => {
-    const points = stations.length ? stations.map((station) => station.at) : Object.values(STATION_ANCHORS);
-    // 只有一处驿站时也留出周边，免得地图缩到一个点上。
-    const pad = 0.035;
-    const lats = points.map((p) => p.lat);
-    const lngs = points.map((p) => p.lng);
-    return [{ lat: Math.min(...lats) - pad, lng: Math.min(...lngs) - pad }, { lat: Math.max(...lats) + pad, lng: Math.max(...lngs) + pad }];
-  }, [stations]);
-  const speaking = pins.length ? pins[turn % pins.length] : null;
+function Tree({ x, scale = 1 }: { x: number; scale?: number }) {
+  const y = rimY(x) + 2;
   return (
-    <SchematicMapSurface bounds={bounds} routes={[]} places={[]} realBasemap={realBasemap} label="星球示意图">
-      {stations.map((station) => (
-        <MapAnchor key={station.name} at={station.at} z={1}>
-          <span className="ps-planet-station" aria-hidden="true"><i />{station.name.replace("星球居民驿站·", "")} 驿站</span>
-        </MapAnchor>
-      ))}
-      {pins.map((pin) => (
-        <MapAnchor key={pin.resident.pet_id} at={pin.at} offsetX={pin.offset.x} offsetY={pin.offset.y} z={pin === speaking ? 4 : 2}>
-          <button
-            type="button"
-            className={`ps-planet-pin${pin.resident.presence === "at_home" ? " is-home" : " is-out"}${pin === speaking ? " is-speaking" : ""}`}
-            data-map-interactive
-            data-testid="planet-pin"
-            aria-label={`${pin.resident.name}，${pin.resident.doing}，驿站一带，打开相遇卡`}
-            onClick={() => onEncounter(pin.resident)}
-          >
-            <span className="ps-planet-pin__avatar"><ResidentMark /></span>
-            <span className="ps-planet-pin__name">{pin.resident.name}</span>
-          </button>
-        </MapAnchor>
-      ))}
-      {speaking && !paused ? (
-        <MapAnchor at={speaking.at} offsetX={speaking.offset.x} offsetY={speaking.offset.y} z={5}>
-          <button
-            key={`${speaking.resident.pet_id}-${turn}`}
-            type="button"
-            className="ps-planet-bubble"
-            data-map-interactive
-            data-testid="planet-bubble"
-            onClick={() => onEncounter(speaking.resident)}
-          >
-            <span className="ps-planet-bubble__who">{speaking.resident.name}</span>
-            <span className="ps-planet-bubble__text">{bubbleText(speaking.resident, Math.floor(turn / pins.length))}</span>
-          </button>
-        </MapAnchor>
-      ) : null}
-    </SchematicMapSurface>
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      <rect className="ps-world-scene__trunk" x={-1.5} y={-12} width={3} height={12} rx={1} />
+      <circle className="ps-world-scene__leaves" cx={0} cy={-18} r={9} />
+    </g>
+  );
+}
+
+export function PlanetScene({ species }: { species: PetSpecies[] }) {
+  const figures = species.slice(0, SLOTS.length).map((kind, index) => ({ kind, ...SLOTS[index] }));
+  return (
+    // 视口 390×250 与 390 宽手机上的头图等比（不裁两边）；更矮的屏只从天空那头裁，星球表面始终在。
+    <svg className="ps-world-scene" viewBox="0 -30 390 250" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false" data-testid="planet-scene">
+      {STARS.map(([x, y, r]) => <circle key={`${x}-${y}`} className="ps-world-scene__star" cx={x} cy={y} r={r} />)}
+      <circle className="ps-world-scene__sun" cx={322} cy={86} r={15} />
+      <g className="ps-world-scene__cloud">
+        <ellipse cx={82} cy={104} rx={26} ry={9} />
+        <ellipse cx={100} cy={97} rx={16} ry={10} />
+        <ellipse cx={246} cy={82} rx={20} ry={7} />
+      </g>
+      <circle className="ps-world-scene__halo" cx={CX} cy={CY} r={R + 10} />
+      <circle className="ps-world-scene__land" cx={CX} cy={CY} r={R} />
+      <Tree x={92} scale={0.9} />
+      <Tree x={146} />
+      <House x={176} />
+      <House x={218} scale={0.86} />
+      <Tree x={246} scale={0.85} />
+      <Tree x={300} scale={0.95} />
+      {figures.map((figure, index) => {
+        const y = rimY(figure.x) + 4;
+        return (
+          <g key={index} transform={`translate(${figure.x} ${y}) scale(${figure.flip ? -1 : 1} 1)`} data-species={figure.kind}>
+            <ellipse className="ps-world-scene__shadow" cx={0} cy={-1} rx={figure.size * 0.3} ry={3} />
+            {/* 插画四边各留约 10% 透明边：往下挪一成，脚才踩在星球表面上 */}
+            <image href={`/ui-assets/UI-ASSET-002/v1/species-${figure.kind}.webp`} x={-figure.size / 2} y={-figure.size * 0.9} width={figure.size} height={figure.size} />
+          </g>
+        );
+      })}
+    </svg>
   );
 }

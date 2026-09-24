@@ -1,143 +1,163 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router";
+import { Link } from "react-router";
 import type { PublicResident } from "@/shared/contracts";
 import { env } from "@/shared/config/env";
 import { queryKeys } from "@/shared/query/queryClient";
 import { useServices } from "@/shared/services/registry";
-import { PawMark, petPortraitUrl } from "./PetPortrait";
 import { routeAfterSession, useSessionState } from "@/shared/session/onboarding";
-import { DataOriginBadge, ErrorState, Icon, LoadingState, Page, Sheet, TopBar } from "@/shared/ui";
-import { BrandLogo } from "@/shared/ui/BrandLogo";
-import { EncounterCard, PlanetMap } from "./PlanetMap";
-import "./pets.css";
+import { DataOriginBadge, ErrorState, Icon, LoadingState, Page } from "@/shared/ui";
+import { ResidentPortrait } from "./ResidentPortrait";
+import { WorldHero } from "./WorldHero";
+import { ResidentHome } from "./ResidentHome";
+import { agoText, extraPosts, nowLine, presenceGroup, presenceSummary, speciesName } from "./residentView";
 import "./planet.css";
 
-const SPECIES_NAMES: Record<string, string> = { cat: "猫", dog: "狗", rabbit: "兔子", hamster: "仓鼠", bird: "鸟", parrot: "鹦鹉", other: "动物" };
+// 居民公开主页 2026-09-24 第二批整页重做，挪到 ResidentPage.tsx；从这里转出，路由（module.tsx）的引用不用改。
+export { PublicPetPage } from "./ResidentPage";
 
-function ResidentCard({ resident, index }: { resident: PublicResident; index: number }) {
+/**
+ * 一位居民：谁（照片或同物种插画、名字、物种、性格）、此刻在做什么、住在哪、梦想、最近一条公开小事。
+ * “认识 TA”是卡片唯一的链接（整张卡都能点）；读屏先读到名字，链接名里也带着名字。
+ */
+function ResidentCard({ resident, nowMs }: { resident: PublicResident; nowMs: number }) {
+  const post = resident.recent_posts[0] ?? null;
+  const titleId = `world-resident-${resident.pet_id}`;
   return (
-    <Link className="ps-public-resident" to={`/world/residents/${encodeURIComponent(resident.pet_id)}`}>
-      {/* 居民还没有公开照片字段：演示模式用授权小灰猫，live 用爪印占位；不写名字首字。 */}
-      <span className="ps-public-resident__portrait" aria-label={`${resident.name}暂无公开照片`}>
-        <span>{petPortraitUrl(null) ? <img src={petPortraitUrl(null)!} alt="" /> : <PawMark size={22} />}</span>
-        <small>暂无公开照片</small>
-      </span>
-      <span className="ps-public-resident__body">
-        <small className="ps-public-resident__number">居民 / {String(index + 1).padStart(2, "0")} · {SPECIES_NAMES[resident.species] ?? "动物"}</small>
-        <strong>{resident.name}</strong>
-        <span>{resident.personality}</span>
-        <em>{resident.doing} · {resident.city}</em>
-      </span>
-      <span className="ps-public-resident__arrow" aria-hidden="true">↗</span>
-    </Link>
+    <li>
+      <article className="ps-world-resident" aria-labelledby={titleId} data-testid="resident-card">
+        <div className="ps-world-resident__head">
+          <ResidentPortrait name={resident.name} species={resident.species} photoUrl={resident.avatar_url} origin={resident.origin} size={64} />
+          <div className="ps-world-resident__who">
+            <div className="ps-world-resident__name">
+              <h3 id={titleId}>{resident.name}</h3>
+              <span className="ps-world-resident__species">{speciesName(resident.species)}</span>
+            </div>
+            <p>{resident.personality}</p>
+          </div>
+        </div>
+        <dl className="ps-world-resident__facts">
+          <div className={`ps-world-resident__now is-${presenceGroup(resident.presence)}`}>
+            <dt>此刻</dt>
+            <dd>{nowLine(resident)}</dd>
+          </div>
+          <div>
+            <dt>住在</dt>
+            <dd>
+              <ResidentHome resident={resident} />
+            </dd>
+          </div>
+          {resident.dream ? (
+            <div>
+              <dt>梦想</dt>
+              <dd>{resident.dream}</dd>
+            </div>
+          ) : null}
+        </dl>
+        {post ? (
+          <blockquote className="ps-world-resident__post">
+            <p>{post.text}</p>
+            <footer>{agoText(post.created_at, nowMs)}</footer>
+          </blockquote>
+        ) : null}
+        <Link className="ps-world-resident__more" to={`/world/residents/${encodeURIComponent(resident.pet_id)}`} aria-label={`认识 TA：${resident.name}`}>
+          认识 TA <Icon name="chevron" size={16} />
+        </Link>
+      </article>
+    </li>
   );
 }
 
 /**
- * 星球（访客“先去星球上逛逛”）：几乎全屏的地图，居民在各自生活；每隔一会儿有一位冒出此刻的状态。
- * 点中只弹一张轻量相遇卡，不直接进领养页。列表作为地图之外的无障碍入口放在“看全部居民”。
- * 访客没有底图权限（/map/basemap 需要登录），显示示意图；登录后才尝试真实底图。
+ * 访客星球（/world，不登录也能看）：一进来先看到居民——此刻在做什么、住在哪、梦想、最近的公开小事；
+ * 主要动作是“认识 TA”（进居民主页）和“寻找我的 TA”（注册，登录后由你确认才领养），另有“已经有 TA 了？登录”。
+ * 头图是装饰插画而不是地图：公开接口没有居民坐标，不画假位置（见 PlanetMap.tsx）。
  */
 export function PublicWorldPage() {
   const { pets } = useServices();
   const session = useSessionState();
   const world = useQuery({ queryKey: queryKeys.publicWorld, queryFn: () => pets.publicWorld(), staleTime: 30_000 });
-  const [encounter, setEncounter] = useState<PublicResident | null>(null);
-  const [listOpen, setListOpen] = useState(false);
   const signedIn = env.dataMode === "live" && Boolean(session.data?.authenticated);
   const residents = world.data?.residents ?? [];
   const canRegister = world.data?.entries.some((entry) => entry.route === "own_pet") ?? false;
   const back = signedIn && session.data ? routeAfterSession(session.data) : "/welcome";
+  const stillLooking = signedIn && session.data?.onboarding?.step === "needs_companion";
+  const serverNow = world.data ? Date.parse(world.data.server_time) : Number.NaN;
+  const nowMs = Number.isFinite(serverNow) ? serverNow : Date.now();
+  const summary = presenceSummary(residents);
+  const morePosts = world.data ? extraPosts(world.data.recent_posts, residents) : [];
+  const title = world.isPending
+    ? "星球正在亮起来…"
+    : world.isError
+      ? "暂时看不到星球上的居民"
+      : residents.length
+        ? `此刻有 ${world.data?.living_residents ?? residents.length} 位居民在星球上生活`
+        : "今天暂时没有可认识的居民";
   return (
-    <Page bare className="ps-planet-page">
-      <div className="ps-planet-map" data-testid="planet-map">
+    <Page bare className="ps-world-page">
+      <WorldHero back={back} species={residents.map((resident) => resident.species)} />
+      <section className="ps-world-sheet" aria-labelledby="world-title">
+        <div className="ps-world-sheet__head">
+          <h1 id="world-title">{title}</h1>
+          {residents.length ? <p>他们住在星球居民驿站，各自过着自己的一天，也在等一个家。</p> : null}
+          {summary.length ? (
+            <ul className="ps-world-now" aria-label="大家此刻在哪">
+              {summary.map((item) => (
+                <li key={item.group} className={`is-${item.group}`}>{item.text}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
         {world.isPending ? (
-          <div className="ps-planet-map__state"><LoadingState lines={2} label="正在看星球上的今天…" /></div>
+          <LoadingState lines={3} label="正在看星球上的今天…" />
         ) : world.isError ? (
-          <div className="ps-planet-map__state"><ErrorState error={world.error} onRetry={() => void world.refetch()} /></div>
+          <ErrorState error={world.error} onRetry={() => void world.refetch()} />
+        ) : residents.length ? (
+          <>
+            {/* 读屏的标题层级：页面 h1 → 居民列表 h2（只给读屏）→ 每位居民 h3 */}
+            <h2 className="visually-hidden" id="world-residents-title">星球上的居民</h2>
+            <ul className="ps-world-residents" id="residents" aria-labelledby="world-residents-title">
+              {residents.map((resident) => (
+                <ResidentCard key={resident.pet_id} resident={resident} nowMs={nowMs} />
+              ))}
+            </ul>
+          </>
         ) : (
-          <PlanetMap residents={residents} onEncounter={setEncounter} paused={Boolean(encounter) || listOpen} realBasemap={signedIn} />
+          <p className="ps-world-empty">居民们回来后，会出现在这里。</p>
         )}
-        <header className="ps-planet-top">
-          <Link to={back} className="ps-planet-top__back" aria-label="返回"><Icon name="back" size={20} /></Link>
-          <div className="ps-planet-top__title">
-            <BrandLogo size="compact" />
-            <span>{world.data ? (residents.length ? `今天有 ${world.data.living_residents} 位居民在星球上生活` : "今天暂时没有可认识的居民") : "星球正在亮起来…"}</span>
-          </div>
-        </header>
-      </div>
-      <section className="ps-planet-dock" aria-label="在星球上">
-        <p className="ps-planet-dock__note">{residents.length ? "点一位居民，和 TA 打个照面。居民画在所住驿站一带，不是实时定位。" : "居民回来后，会出现在地图上。"}</p>
-        <div className="ps-planet-dock__actions">
-          <button type="button" className="ps-btn ps-btn--secondary" disabled={!residents.length} onClick={() => setListOpen(true)}>
-            看全部居民{residents.length ? ` · ${residents.length}` : ""}
-          </button>
-          {signedIn ? (
-            <Link className="ps-btn ps-btn--primary" to={back}>回到我的家</Link>
-          ) : canRegister ? (
-            <Link className="ps-btn ps-btn--primary" to="/register">寻找我的 TA</Link>
-          ) : null}
-        </div>
-        {!signedIn ? <Link className="ps-planet-dock__login" to="/login">已经找到 TA 了？登录</Link> : null}
-        {world.data ? <DataOriginBadge origin={world.data.data_origin} label="内部演示居民与场景" /> : null}
+        {morePosts.length ? (
+          <section className="ps-world-posts" aria-labelledby="world-posts-title">
+            <h2 id="world-posts-title">星球上最近的小事</h2>
+            <ul>
+              {morePosts.map((post) => (
+                <li key={post.post_id}>
+                  <strong>{post.author.display_name}</strong>
+                  <p>{post.text}</p>
+                  <small>{agoText(post.created_at, nowMs)}</small>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+        {/* 写给访客的话：已登录的人不显示 */}
+        {world.data && !signedIn ? <p className="ps-world-sheet__note">注册不会自动领养，也不会自动加入别人的家；每一步都由你确认。</p> : null}
+        {world.data ? <DataOriginBadge origin={world.data.data_origin} label="演示居民" /> : null}
       </section>
-      {encounter ? <EncounterCard resident={encounter} onClose={() => setEncounter(null)} /> : null}
-      {listOpen && world.data ? (
-        <Sheet title="星球上的居民" subtitle="此刻在做什么，来自公开状态" onClose={() => setListOpen(false)} className="ps-planet-list">
-          <div className="ps-public-residents" id="residents">
-            {residents.map((resident, index) => <ResidentCard key={resident.pet_id} resident={resident} index={index} />)}
-          </div>
-          {world.data.recent_posts.length ? (
-            <section className="ps-public-posts">
-              <span className="ps-public-kicker">星球来信</span>
-              <h2>最近发生的小事</h2>
-              {world.data.recent_posts.map((post) => <article key={post.post_id}><strong>{post.author.display_name}</strong><p>{post.text}</p></article>)}
-            </section>
-          ) : null}
-          <p className="ps-planet-list__note">注册不会自动领养或加入家庭；邀请仍需在登录后确认。</p>
-        </Sheet>
-      ) : null}
-    </Page>
-  );
-}
-
-export function PublicPetPage() {
-  const { petId } = useParams();
-  const { pets } = useServices();
-  const session = useSessionState();
-  const pet = useQuery({ queryKey: queryKeys.publicPet(petId ?? "-"), queryFn: () => pets.publicPet(petId!), enabled: Boolean(petId), staleTime: 30_000 });
-  if (!petId) return <Page bare><p>没有找到这位居民。</p></Page>;
-  const data = pet.data;
-  const canContinue = session.data?.authenticated && session.data.onboarding?.step === "needs_companion";
-  const entryQuery = `entry=adopt&pet_id=${encodeURIComponent(petId)}`;
-  return (
-    <Page bare className="ps-entry-page ps-public-page">
-      <TopBar title="认识居民" back="/world" />
-      {pet.isPending ? <LoadingState lines={3} label="正在打开居民手账…" /> : pet.isError ? <ErrorState error={pet.error} onRetry={() => void pet.refetch()} /> : data ? (
-        <div className="ps-public-profile">
-          <div className="ps-public-profile__image">
-            {petPortraitUrl(data.profile.avatar_url) ? <img src={petPortraitUrl(data.profile.avatar_url)!} alt={data.profile.display_name} /> : <div><PawMark size={40} /><span>暂无公开照片</span></div>}
-          </div>
-          <span className="ps-public-kicker">星球居民 / {SPECIES_NAMES[data.profile.species] ?? "动物"}</span>
-          <h1>{data.profile.display_name}</h1>
-          {data.resident ? <p className="ps-public-profile__living">{data.resident.doing} · {data.resident.residence}</p> : null}
-          {data.profile.bio ? <p className="ps-public-profile__bio">{data.profile.bio}</p> : null}
-          {data.resident ? <div className="ps-public-profile__dream"><span>TA 的小愿望</span><strong>{data.resident.dream}</strong></div> : null}
-          {data.resident?.source_note ? <p className="ps-public-profile__source">来源：{data.resident.source_note}</p> : null}
-          {data.posts.length ? <section className="ps-public-posts"><h2>TA 最近的小事</h2>{data.posts.map((post) => <article key={post.post_id}><p>{post.text}</p></article>)}</section> : <p className="ps-public-profile__quiet">TA 还没有公开的生活手账，不能替 TA 编造一段旅程。</p>}
-          {data.adoptable ? (
-            <div className="ps-public-profile__actions">
-              {canContinue ? <Link className="ps-btn ps-btn--primary ps-btn--block" to={`/onboarding/choice?pet_id=${encodeURIComponent(petId)}`}>继续认识 {data.profile.display_name}</Link> : !session.data?.authenticated ? <>
-                <Link className="ps-btn ps-btn--primary ps-btn--block" to={`/register?${entryQuery}`}>注册后，确认迎接 TA</Link>
-                <Link className="ps-public-profile__login" to={`/login?${entryQuery}`}>已经有账号？登录后继续</Link>
-              </> : <p className="ps-public-profile__quiet">为已有家庭迎接新伙伴的入口仍在接入中；这里不会自动领养 TA。</p>}
-              <p>选择会被记住；是否领养，登录后仍由你确认。</p>
-            </div>
-          ) : <p className="ps-public-profile__quiet">TA 暂时不能被领养。你仍可以继续看看星球。</p>}
-          <Link className="ps-public-profile__back" to="/world">← 再看看其他居民</Link>
-        </div>
-      ) : null}
+      <footer className="ps-world-cta">
+        {signedIn ? (
+          <Link className="ps-btn ps-btn--leaf ps-btn--block" to={back}>
+            {stillLooking ? "继续寻找我的 TA" : "回到我的家"}
+          </Link>
+        ) : canRegister ? (
+          <Link className="ps-btn ps-btn--leaf ps-btn--block" to="/register">
+            寻找我的 TA
+          </Link>
+        ) : null}
+        {!signedIn ? (
+          <Link className="ps-world-cta__login" to="/login">
+            已经有 TA 了？登录
+          </Link>
+        ) : null}
+      </footer>
     </Page>
   );
 }

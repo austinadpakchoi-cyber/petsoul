@@ -56,7 +56,8 @@ describe("0.4.1 household and visual identity", () => {
       world: { home },
     } as unknown as ServiceMap;
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(<QueryClientProvider client={client}><ServicesProvider services={services}><MemoryRouter>
+    // 切换栏只在按宠物区分的页面出现（2026-09-24）：挂在小窝上，它的切换是浮在场景上的小胶囊，按钮与名字照旧。
+    render(<QueryClientProvider client={client}><ServicesProvider services={services}><MemoryRouter initialEntries={["/home"]}>
       <HouseholdProvider userId="owner-1"><Probe /></HouseholdProvider>
     </MemoryRouter></ServicesProvider></QueryClientProvider>);
 

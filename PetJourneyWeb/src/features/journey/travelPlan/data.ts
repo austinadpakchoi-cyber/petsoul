@@ -3,20 +3,22 @@
  * - 当前活动心愿：GET /travel/wish（合同 §23.4，已可接 live）。fixture 与 live 都走 visits 服务的 travelWish（journey 模块提供，
  *   fixture 实现按需加载演示数据）。服务在查询函数里才取：服务不论以哪种方式失败（没接入、报错、根本不在），
  *   都只落到这条查询的错误态——地图面板与列表照常，只是没有心愿那一行（照 world_map/schoolNote 的做法）。
- * - 计划：GET /travel/plans/{plan_id} 还没接（TravelPlan 已生成，路由未落地），只有 fixture 的演示计划（动态 import，单独一个 chunk，
- *   主包里没有演示数据）；live 返回 unavailable，调用方只说“还在搭建中”，不造假。第③期在这里换成服务调用：
- *   计划页 = 这份计划（手账在它当前那一版的 journals 里）+ GET /travel/wish 的心愿（业务状态 status、TA 的理由 owner_reason，I 定）。
- *   I 已定：找不到、或不属于这只宠物时 404，原因码 plan_not_found（形状同 no_journey），页面说“这份计划不在了”（见 isPlanNotFound）。
+ * - 计划（第③期，2026-09-24 23:2x 接上）：live 走 visits 服务的 travelPlan（GET /travel/plans/{plan_id}，I 已实现，能力表 travel.plan 可用），
+ *   与心愿同一口径——只在拿到当前宠物以后才读、显式带 pet_id；演示仍是 fixture 的演示计划（动态 import，单独一个 chunk，主包里没有演示数据），
+ *   每份演示计划各带自己的心愿（PlanBundle）。计划页 = 这份计划（手账在它当前那一版的 journals 里）+ GET /travel/wish 的心愿
+ *   （业务状态 status、TA 的理由 owner_reason；只有 wish_id 对得上才放在一起，对不上就只按计划本身说，见 ./model 的 viewOfPlanOnly）。
+ *   别人家的、不存在的、还没发布过计划的心愿都是 404 + plan_not_found（见 isPlanNotFound）；后端没有这条路（路由级 404）不算这一种。
  */
 import { useQuery } from "@tanstack/react-query";
-import type { TravelWish } from "@/shared/contracts";
-import { toApiError } from "@/shared/api/errors";
+import type { TravelPlan, TravelWish } from "@/shared/contracts";
+import { isApiError, toApiError } from "@/shared/api/errors";
 import { env } from "@/shared/config/env";
 import { useServices } from "@/shared/services/registry";
 import { useOptionalCurrentHousehold } from "@/shared/session/householdContext";
 import type { PlanBundle } from "./model";
 
-export type Read<T> = { state: "unavailable" } | { state: "loading" } | { state: "error"; error: unknown } | { state: "ready"; data: T };
+/** 读的几种状态。出错时 retry 只在值得再试时给（后端说明不可重试的，如 404，不给重试键）。 */
+export type Read<T> = { state: "unavailable" } | { state: "loading" } | { state: "error"; error: unknown; retry?: () => void } | { state: "ready"; data: T };
 
 /**
  * 当前宠物的活动心愿；没有活动心愿时 data 为 null（I 已定：GET /travel/wish 此时返回 200 + null）。
@@ -46,9 +48,38 @@ function reasonOf(error: unknown): string | null {
   return typeof reason === "string" ? reason : null;
 }
 
-/** GET /travel/plans/{plan_id} 答“这份计划不在了”：404 + details.reason = plan_not_found（形状同 no_journey）。第③期接上计划接口后才会出现。 */
+/**
+ * GET /travel/plans/{plan_id} 答“这份计划还没写好，或者已经不在了”：404 + details.reason = plan_not_found（形状同 no_journey）。
+ * 后端没有这条路的路由级 404 不带 details，不算这一种（照常走统一错误态）。
+ */
 export function isPlanNotFound(error: unknown): boolean {
   return toApiError(error).status === 404 && reasonOf(error) === "plan_not_found";
+}
+
+/**
+ * live 的某一份计划（GET /travel/plans/{plan_id}）。与 useCurrentWish 同一口径：只在拿到当前宠物以后才读、显式带 pet_id（不拿 null 让后端去推）；
+ * 键带账号、宠物与计划号（切宠物就是另一条）。演示模式不走这里（state 恒为 unavailable），演示计划见 useDemoPlans。
+ */
+export function useLivePlan(planId: string | undefined): Read<TravelPlan> {
+  const services = useServices();
+  const household = useOptionalCurrentHousehold();
+  const live = env.dataMode === "live";
+  const userId = household?.userId ?? null;
+  const petId = household?.pet?.pet_id ?? null;
+  const enabled = live && Boolean(userId && petId && planId);
+  const query = useQuery({
+    queryKey: ["travel", "plan", userId ?? "-", petId ?? "-", planId ?? "-"],
+    queryFn: ({ signal }) => services.visits.travelPlan(planId!, petId, signal),
+    enabled,
+  });
+  if (!enabled) return { state: "unavailable" };
+  if (query.isPending) return { state: "loading" };
+  if (query.isError) {
+    // 后端说明不可重试的（如 404）不给重试键；网络断了、服务忙这类可以再试。
+    const retry = isApiError(query.error) && !query.error.retryable ? undefined : () => void query.refetch();
+    return { state: "error", error: query.error, retry };
+  }
+  return { state: "ready", data: query.data };
 }
 
 /** 旅行路由没法确定是哪只宠物：409 + details.reason = pet_required（require_pet 的惯例，§29.5）。页面说“需要先选一只宠物”，不白屏、不一直转。 */
@@ -56,7 +87,7 @@ export function isPetRequired(error: unknown): boolean {
   return toApiError(error).status === 409 && reasonOf(error) === "pet_required";
 }
 
-/** 演示计划（只在 fixture）；live 还没有计划接口。 */
+/** 演示计划（只在 fixture；每份各带自己的心愿）；live 的计划见 useLivePlan。 */
 export function useDemoPlans(): Read<readonly PlanBundle[]> {
   const fixture = env.dataMode === "fixture";
   const query = useQuery({

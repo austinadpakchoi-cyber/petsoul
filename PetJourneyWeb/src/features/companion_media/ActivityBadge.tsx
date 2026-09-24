@@ -62,6 +62,14 @@ export function ActivityBadge({
   );
 }
 
+/**
+ * 徽标放在交通工具的右下方（原来在右上方 30, -38）。地名写在地点上方（MapSurface 的文字 y=-12，旅途页的 journey.css 再往上挪 18px），
+ * TA 走到目的地、或刚从家出发时，车正压在地点上，右上方的徽标就盖住地名（2026-09-24 巡检截图 W20：音符盖住“家附近的星球小路”）。
+ * 放右下方：不碰车身（车是 52px 的圆，半径 26），也碰不到车所在地点的地名；徽标上的小音符往上飘到车身中线附近就淡出，飘不进地名。
+ * 几何用例：tests/claude-6c2b-journey-fixes.test.tsx（车在目的地上、车在起点）。
+ */
+const BADGE_OFFSET = { x: 50, y: 30 } as const;
+
 export function ActivityBadgeLayer({
   snapshot,
   nowMs,
@@ -89,7 +97,7 @@ export function ActivityBadgeLayer({
       }
     : entry;
   return (
-    <MapAnchor at={anchor.point} offsetX={30} offsetY={-38} z={3}>
+    <MapAnchor at={anchor.point} offsetX={BADGE_OFFSET.x} offsetY={BADGE_OFFSET.y} z={3}>
       <ActivityBadge
         entry={currentEntry}
         onOpen={() => openSheet("media", sessionId)}

@@ -58,7 +58,7 @@ def _road(geo, mode: str, origin: dict, destination: dict, now: datetime, label:
     args = ("amap", mode, (origin["lat"], origin["lng"]), (destination["lat"], destination["lng"]))
     estimate = geo.route(*args, max_age=max_age) if max_age is not None else geo.route(*args)
     if estimate is None or estimate.duration_seconds <= 0:
-        raise PlanUnavailable("route_unavailable", f"{label}的路线估算现在拿不到（地图服务不可用或超出当日额度），这趟先不出发。")
+        raise PlanUnavailable("route_unavailable", f"{label}的路线现在估算不出来，这趟先不出发。")
     fetched = getattr(estimate, "fetched_at", None) or iso(now)
     expires = iso(datetime.fromisoformat(fetched.replace("Z", "+00:00")) + ROUTE_VALID)
     minutes = max(1, math.ceil(estimate.duration_seconds / 60))
@@ -94,7 +94,7 @@ def plan_macau_day_trip(home, geo, now: datetime, *, fee: int, stay_minutes: int
     if home.city != "香港":
         raise PlanUnavailable("not_supported_here", "坐船去澳门目前只从香港的家出发。")
     if geo is None or not geo.configured("amap"):
-        raise PlanUnavailable("map_unavailable", "地图服务没有接通，没法估算去码头的时间，这趟先不出发。")
+        raise PlanUnavailable("map_unavailable", "现在找不到去码头的路线，没法估算时间，这趟先不出发。")
     hk, mo = hub("hk-macau-ferry-terminal"), hub("macau-outer-harbour-ferry-terminal")
     home_node, hk_node, mo_node = home.node(), hk.node(), mo.node()
     to_pier = _road(geo, "drive", home_node, hk_node, now, "去港澳码头", road_max_age)

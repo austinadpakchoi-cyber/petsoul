@@ -4,7 +4,7 @@
  * - running：科一科四用答题界面，科二科三用驾驶界面；回来时按服务端保存的作答或操作接着来；
  * - 离开：练习直接结束；正式考试可以先离开（考局保留）或放弃（二次确认，计为不通过）。
  */
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import type { InputChunk, SchoolCurriculum, SchoolSession } from "@/shared/contracts";
@@ -13,10 +13,21 @@ import { queryKeys } from "@/shared/query/queryClient";
 import { useServices } from "@/shared/services/registry";
 import { WorldGate } from "@/features/world_map/WorldGate";
 import { Button, Chip, ErrorState, LoadingState, Page } from "@/shared/ui";
-import { type DriveBackend, DriveRunner } from "../drive/DriveRunner";
+import type { DriveBackend } from "../drive/DriveRunner";
 import { practiceHints, useCurriculum, useInvalidateSchool, useSchoolPetId, useSchoolStatus } from "../hooks";
-import { QuizRunner } from "../quiz/QuizRunner";
 import { attemptText, SUBJECT_SHORT } from "../text";
+
+// 驾驶和答题按考局类型分开按需加载（巡检第 5 批：进驾驶考局也会下载答题组件）；加载中留在考局底色上显示过渡，不闪白。
+const DriveRunner = lazy(() => import("../drive/DriveRunner").then((m) => ({ default: m.DriveRunner })));
+const QuizRunner = lazy(() => import("../quiz/QuizRunner").then((m) => ({ default: m.QuizRunner })));
+
+function RunnerLoading() {
+  return (
+    <div className="ds-exam ds-exam--loading">
+      <LoadingState label="正在进入考场…" />
+    </div>
+  );
+}
 
 const VOID_TEXT: Record<string, string> = {
   not_started: "建立后一小时内没有开始，这场考局已经作废，不计次。",
@@ -25,7 +36,54 @@ const VOID_TEXT: Record<string, string> = {
   replaced: "这次练习已经被新的练习替换。",
 };
 
-function Prepare({ session, curriculum, onBegin, onLeave, busy }: { session: SchoolSession; curriculum: SchoolCurriculum; onBegin: () => void; onLeave: () => void; busy: boolean }) {
+/**
+ * 练习按这一局实际的内容说明（题数、通过线、练哪几项），不照搬正式考试的“10 道题 / 三项连考”。
+ * 算法与服务端判分一致（grading.py）：答题每题 10 分，达标线＝科目通过线 × 实际满分 ÷ 100（向下取整）；驾驶满分 100。
+ */
+export function practiceSummary(session: SchoolSession): string {
+  if (session.quiz) {
+    const count = session.quiz.questions.length;
+    const max = count * 10;
+    const pass = Math.floor((session.pass_score * max) / 100);
+    return `这一局练习 ${count} 道题，每题 10 分，达到 ${pass} 分（满分 ${max}）算练习达标；每答一题马上讲解，不计成绩。`;
+  }
+  const items = session.drive?.items ?? [];
+  if (items.length === 1) return `这一局只练「${items[0].title}」：完成这一项、达到 ${session.pass_score} 分算练习达标，不计成绩。`;
+  return `这一局连着练 ${items.map((it) => `「${it.title}」`).join("")}：${items.length} 项都完成、综合达到 ${session.pass_score} 分算练习达标，不计成绩。`;
+}
+
+/** 出错的那一行：写在按钮下面、读屏会念（role=alert）；矮屏上按钮常在首屏最下面，出错后把这一行滚进视野 */
+function PrepareError({ text }: { text: string | null }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (text) ref.current?.scrollIntoView?.({ block: "nearest" });
+  }, [text]);
+  return text ? (
+    <p className="ds-error" role="alert" ref={ref}>
+      {text}
+    </p>
+  ) : null;
+}
+
+function Prepare({
+  session,
+  curriculum,
+  onBegin,
+  onLeave,
+  busy,
+  beginError,
+  leaveError,
+}: {
+  session: SchoolSession;
+  curriculum: SchoolCurriculum;
+  onBegin: () => void;
+  onLeave: () => void;
+  busy: boolean;
+  /** “开始”没成功：给玩家看的一句（写在“开始”按钮下面） */
+  beginError: string | null;
+  /** “不练了 / 先不考了”没成功：写在那颗按钮下面 */
+  leaveError: string | null;
+}) {
   const [ready, setReady] = useState(false);
   const info = curriculum.subjects.find((s) => s.subject === session.subject)!;
   useEffect(() => {
@@ -44,18 +102,30 @@ function Prepare({ session, curriculum, onBegin, onLeave, busy }: { session: Sch
       <div className="ps-stack">
         <Chip tone={formal ? "sun" : "leaf"}>{formal ? `正式考试 · 本轮${attemptText(session.attempt_kind)}` : "练习 · 不计成绩"}</Chip>
         <h1 className="ps-h1">{session.title}</h1>
-        <p className="ps-muted">
-          {info.format}。{info.pass_rule}。
-        </p>
+        <p className="ps-muted">{formal ? `${info.format}。${info.pass_rule}。` : practiceSummary(session)}</p>
         {info.red_lines.length ? (
           <div className="ds-redlines">
-            <strong>红线（自动制动，本次不通过）</strong>
+            <strong>{formal ? "红线（自动制动，本次不通过）" : "红线（自动制动，这一局练习到此结束）"}</strong>
             <ul className="ds-list">
               {info.red_lines.map((l) => (
                 <li key={l}>{l}</li>
               ))}
             </ul>
           </div>
+        ) : null}
+        {/* 规格 §4.3：扣分项和红线都要在开考前列出来（数据用课程里现成的 deductions，不另写） */}
+        {info.deductions.length ? (
+          <section className="ds-prepare__deductions" aria-labelledby="ds-prepare-deductions">
+            <strong id="ds-prepare-deductions">扣分项</strong>
+            <ul className="ds-list ds-deduction-list">
+              {info.deductions.map((d) => (
+                <li key={d.label}>
+                  <span>{d.label}</span>
+                  <span className="ds-prepare__points">−{d.points}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
         {info.kind === "drive" ? (
           <ul className="ds-list ps-muted">
@@ -71,9 +141,11 @@ function Prepare({ session, curriculum, onBegin, onLeave, busy }: { session: Sch
         <Button variant="primary" block disabled={!ready} loading={busy} onClick={onBegin}>
           {formal ? "开始考试" : "开始练习"}
         </Button>
+        <PrepareError text={beginError} />
         <Button variant="ghost" block onClick={onLeave}>
           {formal ? "先不考了（不计次）" : "不练了"}
         </Button>
+        <PrepareError text={leaveError} />
       </div>
     </Page>
   );
@@ -82,6 +154,21 @@ function Prepare({ session, curriculum, onBegin, onLeave, busy }: { session: Sch
 function ExitDialog({ session, onStay, onLeave, onAbandon, busy, error }: { session: SchoolSession; onStay: () => void; onLeave: () => void; onAbandon: () => void; busy: boolean; error: string | null }) {
   const [confirm, setConfirm] = useState(false);
   const practice = session.mode === "practice";
+  // 键盘：Esc 等于“回去接着考 / 接着练”；会结束或放弃的那一步，焦点落在“回去 / 接着练”上（误按回车也不会放弃），
+  // 只有“先离开，回来接着考”（考局保留）这一步焦点落在主按钮上
+  useEffect(() => {
+    if (practice || confirm) document.querySelector<HTMLButtonElement>(".ds-overlay--page [data-stay]")?.focus();
+  }, [practice, confirm]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onStay();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onStay]);
   return (
     <div className="ds-overlay ds-overlay--page">
       <div className="ds-overlay__card" role="alertdialog" aria-label={practice ? "结束练习" : "离开考场"}>
@@ -96,8 +183,8 @@ function ExitDialog({ session, onStay, onLeave, onAbandon, busy, error }: { sess
         ) : !confirm ? (
           <>
             <strong className="ps-h2">要离开考场吗？</strong>
-            <p className="ps-muted">先离开：考局保留，已经保存的作答、操作和扣分都在，回来接着考。</p>
-            <Button variant="primary" block onClick={onLeave}>
+            <p className="ps-muted">先离开：这场考试会保留，已经保存的作答、操作和扣分都在，回来接着考。</p>
+            <Button variant="primary" block autoFocus onClick={onLeave}>
               先离开，回来接着考
             </Button>
             <Button variant="danger" block onClick={() => setConfirm(true)}>
@@ -121,7 +208,7 @@ function ExitDialog({ session, onStay, onLeave, onAbandon, busy, error }: { sess
             {error}
           </p>
         ) : null}
-        <Button variant="ghost" block onClick={onStay}>
+        <Button variant="ghost" block data-stay="" onClick={onStay}>
           {practice ? "接着练" : "回去接着考"}
         </Button>
       </div>
@@ -236,7 +323,7 @@ function SessionBody() {
     <ExitDialog
       session={session}
       busy={abandon.isPending}
-      error={abandon.error ? toApiError(abandon.error).message : null}
+      error={abandon.error ? toApiError(abandon.error).playerMessage : null}
       onStay={() => setExiting(false)}
       onLeave={() => {
         invalidate();
@@ -247,21 +334,24 @@ function SessionBody() {
   ) : null;
 
   if (session.state === "preparing") {
+    // 出错的那一行放进准备页、写在对应按钮下面（原来画在准备页外面，贴着屏幕左下角；“不练了”失败时哪里都不显示）
     return (
-      <>
-        <Prepare session={session} curriculum={curriculum.data} busy={begin.isPending || abandon.isPending} onBegin={() => begin.mutate()} onLeave={() => abandon.mutate()} />
-        {begin.error ? (
-          <p className="ds-error" role="alert">
-            {toApiError(begin.error).message}
-          </p>
-        ) : null}
-      </>
+      <Prepare
+        session={session}
+        curriculum={curriculum.data}
+        busy={begin.isPending || abandon.isPending}
+        onBegin={() => begin.mutate()}
+        onLeave={() => abandon.mutate()}
+        beginError={begin.error ? toApiError(begin.error).playerMessage : null}
+        leaveError={abandon.error ? toApiError(abandon.error).playerMessage : null}
+      />
     );
   }
 
   const labels = curriculum.data.reasons;
   return (
     <div className="ds-session">
+      <Suspense fallback={<RunnerLoading />}>
       {session.quiz ? (
         <QuizRunner
           session={session}
@@ -294,6 +384,7 @@ function SessionBody() {
           }}
         />
       )}
+      </Suspense>
       {exitDialog}
     </div>
   );

@@ -95,7 +95,10 @@ class BoundaryContractCases:
         pet = owner.upload_pet("年糕", "cat").json()["pet_id"]
         owner.move_in()
         assert owner.pet_id == pet, "入住的应当就是刚上传的那只"
-        assert owner.patch("/settings", {"model_replies": True}).status_code == 200
+        # **断言结果，不依赖「这一步有没有产生变化」**：模型回信默认开了之后这是同值写入，
+        # 不换代、也不会顺带把 web_entity_runtime 那一行建出来（旧写法就是靠那个副作用）。
+        prefs = owner.patch("/settings", {"model_replies": True})
+        assert prefs.status_code == 200 and prefs.json()["model_replies"], "这一步之后模型回信必须是开着的"
         if coins:
             self.web.economy.apply(owner.pet_id, coins, EconomyTransactionType.web_reward, f"q-grant:{owner.pet_id}",
                                    reason="Q 合同备用旅费", source="q.contract")
@@ -103,8 +106,12 @@ class BoundaryContractCases:
 
     def _runtime_row(self, pet_id: str) -> dict:
         row = self._sql("SELECT last_decision_by, next_review_at, silence_reason FROM web_entity_runtime WHERE pet_id = ?", (pet_id,))
-        # next_review_at 返回原值（不是 bool）：判「有没有新增或改变」要比较取值本身
-        return {"last_decision_by": row[0][0], "next_review_at": row[0][1], "silence_reason": row[0][2]} if row else {}
+        # next_review_at 返回原值（不是 bool）：判「有没有新增或改变」要比较取值本身。
+        # **行不存在时三个键都给 None，不给空字典**：「没有行」就等于「什么都没记过」，
+        # 比较语义不变而且更严——接管那轮若错写了 next_review_at，非 None ≠ None 照样红。
+        # 空字典会让调用方按键取值直接 KeyError，那是探针坏了，不是被测对象错了。
+        return ({"last_decision_by": row[0][0], "next_review_at": row[0][1], "silence_reason": row[0][2]} if row
+                else {"last_decision_by": None, "next_review_at": None, "silence_reason": None})
 
     def _epochs(self, pet_id: str) -> dict:
         """这只宠物此刻的语义版本（最终提交那道复核就是比这几个数）。"""
@@ -329,7 +336,11 @@ class BoundaryContractCases:
                 and fenced["reservations"][0]["outcome"] != "not_sent",
             "B **已发出调用的费用事实保留**：每宠额度层照记": fenced["pet_used_units"] >= 1,
             "B **已发出调用的费用事实保留**：供应商层本轮增量也照记": fenced["provider_used_delta"] >= 1,
-            "B 决策编号留给合法执行者复用": fenced["open_operation_id"] == fenced["reservations"][0]["operation_id"],
+            # 先判非空再取下标：围栏若失效，被接管那轮会把预占结算掉、这里就是空列表。
+            # 裸下标会抛 IndexError，合同变成 ERROR（未得到合同结论）——读起来像探针坏了，
+            # 而不是「保护失效」。留一句能读的 FAIL 比一个异常有用。
+            "B 决策编号留给合法执行者复用": bool(fenced["reservations"])
+                and fenced["open_operation_id"] == fenced["reservations"][0]["operation_id"],
             "C 正常路径对照：同一条路径真的写进去了": control["model_calls"] == 1 and control["journeys"] == 1
                 and control["runtime"]["last_decision_by"] == "model",
             "C 正常路径对照：费用也照记（两层都看，供应商层取增量）": control["pet_used_units"] >= 1

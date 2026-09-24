@@ -159,7 +159,7 @@ def local_plan(key: str, home, geo=None, demo: bool = False) -> LocalPlan | None
         lat, lng, category, basis = home.lat + (0.0045 if mode == "walk" else 0.03), home.lng + 0.003, None, "demo_fixture"
     else:
         if kind is not None and kind.key in NEEDS_REAL_PLACE:
-            raise LocalUnavailable("map_unavailable", f"{kind.title}要去现实里的地方，地图服务现在不可用，这趟先不去。")
+            raise LocalUnavailable("map_unavailable", f"{kind.title}要去现实里的地方，现在找不到路线，这趟先不去。")
         workplace = f"星球{job.label.removeprefix('在').removeprefix('去')}的地方" if job else None
         name = workplace or WORLD_SPOT[kind.key]
         lat, lng, category, basis = home.lat + 0.0045, home.lng + 0.003, None, "world_rule"

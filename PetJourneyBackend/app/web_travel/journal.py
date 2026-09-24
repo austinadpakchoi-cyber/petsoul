@@ -8,7 +8,8 @@
   - **回忆页**（T10）：旅程结束（`returned_home`）时按计划出一页回忆，**只给真实发生的到访事件盖章**（事件号 `<旅程>:<事件键>`）；
     顺路建议永远不盖章，没去成就没有章；画面与计划页相同 → 复用背景。关联着这趟旅程的心愿随之 `completed`。
 
-模板号 `TEMPLATE_REVISION` 是 r7k 的 TRV-07 版式规范落地前的**明示占位**；落地后换成规范给的号，画面摘要随之变化、需要新图。
+模板号与纸笔照 r7k 的 TRV-07（`TRV-07-layout-spec-r7k.md`）：版式 `t1`，首批默认 `cream` 米白旧纸＋`watercolor` 淡水彩；
+`kraft/grid`、`pencil/ink` 是以后可选的封闭变体，首批不并行生产多套。换模板号或纸笔会让画面摘要变化、需要新图。
 """
 
 from __future__ import annotations
@@ -32,8 +33,8 @@ from . import store, views
 from .model import PHASE_MEMORY, PHASE_PLAN
 
 STYLE = "travel_journal"
-TEMPLATE_REVISION = "journal-t0"  # 明示占位：r7k 的 TRV-07 落地前
-PAPER, BRUSH, MOOD = "cream", "pencil", "calm"
+TEMPLATE_REVISION = "t1"  # TRV-07 基础版式 t1
+PAPER, BRUSH, MOOD = "cream", "watercolor", "calm"  # TRV-07 首批默认纸笔
 VISUAL = re.compile(r"[一-鿿，、]{2,24}\Z")  # 能画的特征：纯中文短语、不带数字（与 P 的 FEATURE 同口径）
 VISUAL_CATEGORIES = ("feature", "landmark")
 VERIFICATION = {"verified": "verified", "unverified": "unverified", "stale": "stale", "conflicting": "conflicting", "rejected": "unverified"}

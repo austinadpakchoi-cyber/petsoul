@@ -1,5 +1,9 @@
 .ps-shell {
   min-height: 100dvh;
+  /* 底栏占高（不含安全区，用它的地方都另加 --safe-bottom）= 胶囊 + 离底 10px。
+     胶囊高 = 上下内边距 6+6 + 标签内边距 6/5 + 图标 20 + 图文间距 2 + 11px 字的行高（正文行高 1.55，global.css）= 62.05px。
+     地图、回忆页的胶囊（world_map 的 .ps-wmap-tabs）是同一套尺寸，所以两边的页面留白一样。 */
+  --tabbar-h: calc(6px + 6px + 20px + 2px + 11px * 1.55 + 5px + 6px + 10px);
 }
 /* 二级页不显示底栏（方案 2.2，RootLayout 的 isTabPath）：底栏高度按 0 算，
    页面底部留白、贴底的输入框、菜园场景高度等凡是用 --tabbar-h 的地方一起收回。 */
@@ -36,47 +40,44 @@
   padding-top: 0;
 }
 
+/*
+ * 外壳底栏（通讯器等标签页）：和地图、回忆页的底栏胶囊一模一样（用户 2026-09-25 同意改）。
+ * 数值逐项照 world_map/world-map.css 的 .ps-wmap-tabs / .ps-wmap-tab，位置照地图外层 .ps-wmap-bottom：
+ * 左右各 12px、离底 10px + 安全区、最宽 --page-max 居中；内边距 6、圆角 22、深绿底 0.93、阴影；
+ * 标签内边距 6/5、圆角 16、图标 20（RootLayout.tsx）、字号 11；选中是浅色衬底、白字、600 字重。
+ * 胶囊不跟主题换色（深浅色都是深绿底浅字，和地图那份相同）。深色下未选中的字对胶囊底 ≥ 4.5、选中 ≥ 7，
+ * 两套组件合并前，改一边要同步另一边：tests/claude-6c2b-nav.test.tsx 逐项比对并实算对比度。
+ */
 .ps-tabbar {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--safe-bottom) + 10px);
   z-index: 50;
   display: grid;
   /* 有几个标签就平分几列（现在三栏）；写死 repeat(4, 1fr) 时新底栏右边会空出四分之一。 */
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
-  height: calc(var(--tabbar-h) + var(--safe-bottom));
-  padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
-  background: color-mix(in srgb, var(--c-surface) 92%, transparent);
-  backdrop-filter: saturate(1.4) blur(14px);
-  -webkit-backdrop-filter: saturate(1.4) blur(14px);
-  border-top: 1px solid var(--c-surface-stroke);
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 6px;
+  border-radius: 22px;
+  background: rgba(32, 49, 41, 0.93);
+  box-shadow: 0 10px 26px rgba(32, 49, 41, 0.25);
 }
 .ps-tab {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 2px;
-  min-height: 44px;
+  padding: 6px 0 5px;
+  border-radius: 16px;
+  color: rgba(251, 247, 239, 0.66);
   font-size: 11px;
-  font-weight: 600;
-  color: var(--c-ink-3);
   text-decoration: none;
 }
 .ps-tab.is-active {
-  color: var(--c-leaf);
-}
-@media (min-width: 600px) {
-  .ps-tabbar {
-    left: 50%;
-    right: auto;
-    width: var(--page-max);
-    transform: translateX(-50%);
-    border-left: 1px solid var(--c-surface-stroke);
-    border-right: 1px solid var(--c-surface-stroke);
-    border-top-left-radius: 18px;
-    border-top-right-radius: 18px;
-  }
+  background: rgba(251, 247, 239, 0.14);
+  color: #fff;
+  font-weight: 600;
 }

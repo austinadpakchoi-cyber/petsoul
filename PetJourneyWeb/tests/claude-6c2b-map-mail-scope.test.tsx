@@ -305,7 +305,7 @@ describe("C84A-MAP-MAIL-SCOPE-01：信箱提醒属于面板上显示的那只宠
   });
 
   it("护栏：点标记只是换看哪只——当前宠物还是栗子、没写当前宠物、世界状态不重读、地图不重挂", async () => {
-    const { state } = renderMapApp({ unread: { "p-1": 7 } });
+    const { state, router } = renderMapApp({ unread: { "p-1": 7 } });
     await screen.findByRole("region", { name: "栗子此刻" });
     await waitFor(() => expect(FakeMap.all).toHaveLength(1));
     const reads = state.mock.calls.length;
@@ -315,7 +315,11 @@ describe("C84A-MAP-MAIL-SCOPE-01：信箱提醒属于面板上显示的那只宠
     expect(state.mock.calls.length).toBe(reads);
     expect(FakeMap.all).toHaveLength(1);
     expect(window.sessionStorage.getItem("petsoul:current-pet:u-1")).toBeNull();
-    expect(screen.getByRole("button", { name: /^查看 栗子/ }).getAttribute("aria-pressed")).toBe("true");
+    // 地图上不再有按宠物的切换栏（2026-09-24：一个家的几只画在同一张图上，只有分在不止一个家时才有切家的小控件）。
+    // 断言不变，只换找按钮的地方：到同一张路由表里有切换栏的小窝，“查看 栗子”仍是按下的——点标记没有改当前宠物。
+    expect(screen.queryByRole("group", { name: "切换当前宠物" })).toBeNull();
+    await act(async () => { await router.navigate("/home"); });
+    expect((await screen.findByRole("button", { name: /^查看 栗子/ })).getAttribute("aria-pressed")).toBe("true");
   });
 
   it.each([

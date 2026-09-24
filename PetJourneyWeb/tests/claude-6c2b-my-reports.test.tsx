@@ -5,7 +5,7 @@
  * - 处理结果只显示服务端的 message 原文，不按 outcome / status 自己拼（它们只决定颜色）；开头放服务端的 note 原文；
  *   主人自己写的理由原样给。不露内部编号与原始代码：report_id、target_id、status、outcome、理由代码（owner_reported）
  *   都不出现在页面文字里，编号也不进页面属性。
- * - 空：你还没有举报过。能力未接入（没装运营后台，503 NOT_CONFIGURED）：“这里还在搭建中”，不编内容、不说“你还没有举报过”。
+ * - 空：你还没有举报过。能力未接入（没装运营后台，503 NOT_CONFIGURED）：“这里暂时还没开放”（2026-09-24 前叫“这里还在搭建中”），不编内容、不说“你还没有举报过”。
  *   出错：可重试，重试成功后显示列表。
  * - live 经真实服务装配（假的 ApiClient）：请求 /reports/mine、在服务里就过解析；外层坏了显示可重试的出错。
  * - 演示模式经真实路由表：能力未接入（不编举报记录）；“我的”页“账号”一组里有“我的举报”，指向 /me/reports，点进去就是这页。
@@ -309,12 +309,12 @@ describe("我的举报：页面", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("能力未接入（没装运营后台，503 NOT_CONFIGURED）：这里还在搭建中；不编内容，不说“你还没有举报过”；能力名收在“技术信息”里", async () => {
+  it("能力未接入（没装运营后台，503 NOT_CONFIGURED）：这里暂时还没开放；不编内容，不说“你还没有举报过”；能力名收在“技术信息”里", async () => {
     const { services } = liveWith(async () => {
       throw notConfigured();
     });
     renderReports(services);
-    expect(await screen.findByText("这里还在搭建中")).toBeTruthy();
+    expect(await screen.findByText("这里暂时还没开放")).toBeTruthy();
     expect(screen.queryByText("你还没有举报过")).toBeNull();
     expect(screen.queryByRole("list", { name: "你的举报" })).toBeNull();
     expect(screen.queryByText(NOTE)).toBeNull();
@@ -364,7 +364,7 @@ describe("我的举报：页面", () => {
 /* ---------------- 演示模式与入口（真实路由表与演示服务） ---------------- */
 
 describe("我的举报：演示模式与入口", () => {
-  it("“我的”页“形象与账号”一组里有“我的举报”（在账号与设置前面），指向 /me/reports；点进去：演示模式没有举报记录，显示“这里还在搭建中”，不编记录", async () => {
+  it("“我的”页“形象与账号”一组里有“我的举报”（在账号与设置前面），指向 /me/reports；点进去：演示模式没有举报记录，显示“这里暂时还没开放”，不编记录", async () => {
     const router = renderApp("/me");
     const accountGroup = await screen.findByRole("list", { name: "形象与账号" });
     const links = within(accountGroup).getAllByRole("link");
@@ -373,7 +373,7 @@ describe("我的举报：演示模式与入口", () => {
     expect(entry.getAttribute("href")).toBe("/me/reports");
     expect(entry.textContent).toContain("举报过的内容和处理结果");
     fireEvent.click(entry);
-    expect(await screen.findByText("这里还在搭建中")).toBeTruthy();
+    expect(await screen.findByText("这里暂时还没开放")).toBeTruthy();
     expect(router.state.location.pathname).toBe("/me/reports");
     expect(screen.getByRole("heading", { level: 1, name: "我的举报" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "返回我的" }).getAttribute("href")).toBe("/me");

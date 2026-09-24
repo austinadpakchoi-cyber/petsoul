@@ -83,6 +83,15 @@ AREAS = {area.key: (habitat, area) for habitat, (_, areas) in HABITATS.items() f
 DEFAULT_AREA = "hk_central"
 OPEN_AREAS = frozenset({"hk_central", "hk_saikung"})  # 新家可分配的片区（真实交通与地点已接通）
 FUZZ_METERS = 900
+# 片区里**核实过在陆地上**的锚点（WGS-84）。原先家在片区参考点周围随机偏移最多 900 米——中环北边是维港、西贡东南边是海，
+# 家和出门的路线都会落进海里（6c2b 2026-09-24 巡检截图）。2026-09-24 用 OpenStreetMap 反查逐个核过：返回的最近对象离锚点
+# 都在 30 米内（楼宇、道路、学校）；**同一方法对海里的点会返回 400–500 米外的码头**，据此分得开水陆，离岸太近的点没收。
+# 有锚点的片区：家落在某个锚点 40 米内；没有锚点的片区照旧按参考点偏移（那些片区还没开放）。
+LAND_ANCHORS: dict[str, tuple[tuple[float, float], ...]] = {
+    "hk_central": ((22.2819, 114.1581), (22.2805, 114.1575), (22.2795, 114.1560)),  # 德辅道中电车站、皇后大道中、上亚厘毕道
+    "hk_saikung": ((22.3818, 114.2719), (22.3825, 114.2705), (22.3810, 114.2700), (22.3802, 114.2712)),  # 万年街、普通道两处、德隆前街
+}
+ANCHOR_FUZZ_METERS = 40
 
 
 @dataclass(frozen=True)
@@ -118,6 +127,27 @@ def fuzz(lat: float, lng: float, seed: str, meters: float = FUZZ_METERS) -> tupl
     return round(lat + dlat, 5), round(lng + dlng, 5)
 
 
+def land_point(area_key: str, seed: str) -> tuple[float, float] | None:
+    """有陆地锚点的片区：按种子选一个锚点、在它 40 米内取一点（同一个种子每次同一点）；没有锚点返回 None。"""
+    anchors = LAND_ANCHORS.get(area_key)
+    if not anchors:
+        return None
+    lat, lng = anchors[int(_unit(seed + ":anchor") * len(anchors)) % len(anchors)]
+    return fuzz(lat, lng, seed, meters=ANCHOR_FUZZ_METERS)
+
+
+def nearby_spot(place: HomePlace, seed: str) -> tuple[float, float]:
+    """家附近「星球内」的一个去处（散步、喝一杯、打工没有真实地点时用）：有锚点的片区取**另一个**陆地锚点附近，
+    不会落进海里；没有锚点的片区沿用原来的固定偏移（北约 500 米、东约 300 米）。同一个种子每次同一点。"""
+    anchors = LAND_ANCHORS.get(place.area_key)
+    if not anchors or len(anchors) < 2:
+        return round(place.lat + 0.0045, 5), round(place.lng + 0.003, 5)
+    nearest = min(range(len(anchors)), key=lambda i: (anchors[i][0] - place.lat) ** 2 + (anchors[i][1] - place.lng) ** 2)
+    others = [a for i, a in enumerate(anchors) if i != nearest]
+    lat, lng = others[int(_unit(seed + ":spot") * len(others)) % len(others)]
+    return fuzz(lat, lng, seed, meters=ANCHOR_FUZZ_METERS)
+
+
 def default_place() -> HomePlace:
     habitat, area = AREAS[DEFAULT_AREA]
     return HomePlace(habitat, HABITATS[habitat][0], area.key, area.label, area.city, area.lat, area.lng, area.timezone, False)
@@ -131,7 +161,7 @@ def _fuzzed(place: HomePlace, seed: str) -> HomePlace:
     种子用 `home_id` / `residence_id`：`fuzz` 是纯函数，**同一个家每次算出同一点**，
     不是每次随机——地图上不会自己漂。
     """
-    lat, lng = fuzz(place.lat, place.lng, seed)
+    lat, lng = land_point(place.area_key, seed) or fuzz(place.lat, place.lng, seed)
     return replace(place, lat=lat, lng=lng)
 
 
@@ -182,7 +212,7 @@ class HomePlaceStore:
                 raise ValueError(f"{HABITATS[habitat][0]}还没开放：这类地方的真实交通和地点还没接通，先选海边或城市（香港）。")
         seed = f"{home_id}:{habitat}:{iso(now)}"
         area = areas[int(_unit(seed) * len(areas)) % len(areas)]
-        lat, lng = fuzz(area.lat, area.lng, seed)
+        lat, lng = land_point(area.key, seed) or fuzz(area.lat, area.lng, seed)
         with self.storage.connect() as conn:
             conn.execute(
                 "INSERT INTO web_home_places (home_id, habitat, area_key, lat, lng, chosen_at) VALUES (?, ?, ?, ?, ?, ?) "

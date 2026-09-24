@@ -49,7 +49,7 @@ class RealisticMediaTests(MediaTestBase):
         self.assertEqual(card["image_status"], "ready")
         self.assertTrue(card["image_url"].startswith("/api/v1/web/media/illustrations/"))
         prompt = self.illustrator.prompts[-1]
-        for rule in ("写实摄影照片", "邮筒", "不是卡通", "不要出现人、人手或手机", "不要出现任何招牌、商标、品牌标志"):
+        for rule in ("写实摄影照片", "邮筒", "不是卡通", "不要出现人、人手或手机", "牌子和显示屏保持空白"):
             self.assertIn(rule, prompt)
 
     # ---- 生不出图时不冒充：触发条件换过一次，见下 ----

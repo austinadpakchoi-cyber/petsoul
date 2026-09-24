@@ -441,9 +441,9 @@ export function HomeScene({
         );
       case "memento":
         return object ? (
-          <Bubble {...common} name={object.text} detail="你为 TA 留下的叮嘱" place="right">
+          <Bubble {...common} name={object.text} detail="你为 TA 留下的生活叮嘱" place="right">
             <Link className="ps-home-bubble__action" to="/onboarding/reception?mode=supplement">
-              查看与补充叮嘱 <Icon name="chevron" size={14} />
+              补充叮嘱 <Icon name="chevron" size={14} />
             </Link>
           </Bubble>
         ) : null;
@@ -500,7 +500,7 @@ export function HomeScene({
         <Link
           to="/market"
           className="ps-living-wallet"
-          aria-label={`旅费 ${snapshot.wallet.balance}，查看仓库与集市`}
+          aria-label={`${snapshot.wallet.balance} 星币，查看仓库与集市`}
         >
           <Icon name="coin" size={17} />
           <strong data-testid="home-wallet">{snapshot.wallet.balance}</strong>

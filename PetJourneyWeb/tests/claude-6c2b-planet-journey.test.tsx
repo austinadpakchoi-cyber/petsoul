@@ -1,90 +1,13 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { JourneyLeg, JourneyMapSnapshot, PublicResident } from "@/shared/contracts";
-import { ServicesProvider } from "@/shared/services/registry";
-import type { ServiceMap } from "@/shared/services/types";
-import { bubbleText, EncounterCard, PlanetMap, planetStations } from "@/features/pets/PlanetMap";
+import { describe, expect, it, vi } from "vitest";
+import type { JourneyLeg, JourneyMapSnapshot } from "@/shared/contracts";
 import { tripState } from "@/features/journey/JourneyPage";
 
 vi.mock("@/shared/config/env", () => ({ env: { dataMode: "live", isDev: false, apiBase: "/api/v1/web" } }));
 
-class FixedResizeObserver {
-  constructor(private readonly callback: ResizeObserverCallback) {}
-  observe() {
-    this.callback([{ contentRect: { width: 390, height: 640 } } as ResizeObserverEntry], this as unknown as ResizeObserver);
-  }
-  disconnect() {}
-  unobserve() {}
-}
-
-beforeEach(() => vi.stubGlobal("ResizeObserver", FixedResizeObserver));
-afterEach(() => {
-  cleanup();
-  vi.unstubAllGlobals();
-});
-
-function resident(overrides: Partial<PublicResident>): PublicResident {
-  return {
-    pet_id: "PJ-1", candidate_id: "c-1", name: "云朵", species: "dog", personality: "热情、走路会蹦", dream: "想当一次小小飞行员",
-    origin: "adopted_original", source_note: null, residence: "星球居民驿站·中环", city: "香港", living_since: "2026-09-22T00:00:00Z",
-    presence: "at_home", doing: "在驿站休息", place_name: null, recent_posts: [], ...overrides,
-  } as PublicResident;
-}
-
-describe("planet map: residents live around their station", () => {
-  it("groups by station, keeps every pin apart, and never places an unknown residence", () => {
-    const { stations, unplaced } = planetStations([
-      resident({ pet_id: "a", name: "阿绒" }),
-      resident({ pet_id: "b", name: "豆豆" }),
-      resident({ pet_id: "c", name: "海海", residence: "星球居民驿站·西贡海边" }),
-      resident({ pet_id: "d", name: "不明", residence: "某个还没登记的驿站" }),
-    ]);
-    expect(stations.map((s) => [s.name, s.pins.length])).toEqual([["星球居民驿站·中环", 2], ["星球居民驿站·西贡海边", 1]]);
-    expect(unplaced.map((r) => r.name)).toEqual(["不明"]);
-    const [first, second] = stations[0].pins.map((pin) => pin.offset);
-    expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThan(56);
-    expect(stations[1].pins[0].offset).toEqual({ x: 0, y: 0 });
-  });
-
-  it("bubbles only say what the server says: current doing/place, or TA's own public post", () => {
-    const walking = resident({ presence: "in_transit", doing: "在去码头的路上", city: "香港" });
-    expect(bubbleText(walking, 0)).toBe("在去码头的路上 · 香港");
-    const visiting = resident({ presence: "visiting", doing: "在海边咖啡馆", place_name: "海边咖啡馆" });
-    expect(bubbleText(visiting, 0)).toBe("在海边咖啡馆 · 海边咖啡馆");
-    const posting = resident({ recent_posts: [{ post_id: "p", text: "今天在码头看了很久的船。" } as PublicResident["recent_posts"][number]] });
-    expect(bubbleText(posting, 0)).toBe("在驿站休息");
-    expect(bubbleText(posting, 1)).toBe("“今天在码头看了很久的船。”");
-  });
-
-  it("tapping a resident opens an encounter, not an adoption page", () => {
-    const onEncounter = vi.fn();
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const services = { platform: { basemap: vi.fn() } } as unknown as ServiceMap;
-    render(
-      <QueryClientProvider client={client}><ServicesProvider services={services}><MemoryRouter>
-        <PlanetMap residents={[resident({ pet_id: "a", name: "阿绒" }), resident({ pet_id: "b", name: "豆豆" })]} onEncounter={onEncounter} paused={false} realBasemap={false} />
-      </MemoryRouter></ServicesProvider></QueryClientProvider>,
-    );
-    expect(screen.getAllByTestId("planet-pin")).toHaveLength(2);
-    expect(screen.getByTestId("planet-bubble").textContent).toContain("阿绒");
-    fireEvent.click(screen.getByRole("button", { name: /豆豆，在驿站休息/ }));
-    expect(onEncounter).toHaveBeenCalledWith(expect.objectContaining({ pet_id: "b" }));
-    expect(services.platform.basemap).not.toHaveBeenCalled();
-  });
-
-  it("the encounter card shows the moment and links to the public journal without adopting", () => {
-    render(<MemoryRouter><EncounterCard resident={resident({ pet_id: "PJ-9", recent_posts: [{ post_id: "p", text: "今天在码头看船。" } as PublicResident["recent_posts"][number]] })} onClose={vi.fn()} /></MemoryRouter>);
-    const card = screen.getByTestId("encounter-card");
-    expect(card.textContent).toContain("在驿站休息");
-    expect(card.textContent).toContain("想当一次小小飞行员");
-    expect(card.textContent).toContain("今天在码头看船。");
-    expect(screen.getByRole("link", { name: /看看 TA 的公开手账/ }).getAttribute("href")).toBe("/world/residents/PJ-9");
-    expect(card.textContent).not.toMatch(/领养|迎接/);
-  });
-});
-
+// 2026-09-24（claude-6c2b 星球访客页分身）：原来这里的四条“planet map”用例钉的是旧的示意地图——
+// 按驿站名配的前端坐标表（planetStations）、地图气泡（bubbleText）、地图上的居民按钮（PlanetMap）和相遇卡（EncounterCard）。
+// 公开接口没有居民坐标、前端不许自己写坐标，示意地图连同坐标表已删；新访客页的用例在 tests/claude-6c2b-planet.test.tsx。
+// 下面旅途状态的两条与星球无关，原样保留。
 function leg(overrides: Partial<JourneyLeg>): JourneyLeg {
   return {
     leg_id: "l1", journey_id: "j1", sequence: 1, kind: "main", mode: "walk", role: "walker", world_service: null,
@@ -109,7 +32,9 @@ describe("journey state is derived from the itinerary, not invented", () => {
 
   it("inside the café: in the shop, and the next stop is the way home", () => {
     const snapshot = { ...base, current_visit_id: "v1", legs: [leg({ phase: "arrived" }), leg({ leg_id: "l2", sequence: 2, phase: "scheduled", origin: leg({}).destination, destination: leg({}).origin })] };
-    const state = tripState(snapshot, Date.parse("2026-09-24T02:00:00Z"));
+    // 2026-09-24 第六批（驾校·页面分身，主窗口授权）：是不是店改由这次到访的场景模板决定（venue/visitKind），
+    // 快照本身没有模板；这里是咖啡馆，按页面的做法把“门店”传进来，断言不变。不传时的说法见 tests/claude-6c2b-journey-fixes.test.tsx。
+    const state = tripState(snapshot, Date.parse("2026-09-24T02:00:00Z"), "shop");
     expect(state.state).toBe("在店里");
     expect(state.place).toBe("海边咖啡馆");
     expect(state.next?.destination.name).toBe("家");

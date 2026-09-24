@@ -3,7 +3,7 @@
  * 原因：这几处查询都要求 userId 才启用，演示模式下 HouseholdProvider 给的 userId 是 null，查询永远不启用、一直 pending。
  * 修法照 useActiveHome：演示下不因 userId 为空而停用（键的账号位是 "-"），照样问演示服务——
  * - 演示服务有数据就显示；
- * - 演示服务答“能力未接入”：给一句明确的说明（演示模式没有……），不转骨架屏、不说“这里还在搭建中”、也不误说“还没有家庭”；
+ * - 演示服务答“能力未接入”：给一句明确的说明（演示模式没有……），不转骨架屏、不说“这里暂时还没开放”（旧说法“这里还在搭建中”）、也不误说“还没有家庭”；
  * - live 的键、请求与启用条件一点不变：仍按 userId 分键；live 的“能力未接入”照旧走统一错误态。
  */
 import type { ReactElement } from "react";
@@ -146,8 +146,8 @@ describe("演示站：不再停在骨架屏", () => {
     expect(router.state.location.pathname).toBe("/photos");
     expect(screen.getByText("演示模式里拍不了真实照片，这里先看看有哪些拍法。")).toBeTruthy();
     expect(screen.getByText("住进来以后，给 TA 拍的照片会在这里。")).toBeTruthy();
-    // 不当成出错：没有“这里还在搭建中”、没有重试，也不说“暂时读不到照片许可”。
-    expect(document.body.textContent).not.toMatch(/这里还在搭建中|暂时读不到照片许可|正在读取照片结果|正在确认这个家的照片许可/);
+    // 不当成出错：没有“这里暂时还没开放”（旧说法“这里还在搭建中”）、没有重试，也不说“暂时读不到照片许可”。
+    expect(document.body.textContent).not.toMatch(/这里暂时还没开放|这里还在搭建中|暂时读不到照片许可|正在读取照片结果|正在确认这个家的照片许可/);
     expect(screen.queryByRole("button", { name: "重试" })).toBeNull();
     expect((screen.getByRole("button", { name: "给我拍一张" }) as HTMLButtonElement).disabled).toBe(true);
     // 键：演示没有账号（账号位 "-"）；照片记录按演示家园快照里的那只宠物（与“回忆”页同一个键）。
@@ -161,7 +161,7 @@ describe("演示站：不再停在骨架屏", () => {
     expect(await screen.findByText("演示模式没有真实的家庭资料", {}, { timeout: 4000 })).toBeTruthy();
     expect(screen.getByText("住进来以后，家人、邀请和约定都在这里。")).toBeTruthy();
     await waitFor(() => expect(busy()).toEqual([]));
-    expect(document.body.textContent).not.toMatch(/还没有家庭|这里还在搭建中|正在翻开家庭档案/);
+    expect(document.body.textContent).not.toMatch(/还没有家庭|这里暂时还没开放|这里还在搭建中|正在翻开家庭档案/);
     expect(screen.getByRole("link", { name: "返回" }).getAttribute("href")).toBe("/me");
     expect(hasKey(client, queryKeys.householdDetail("-", ""))).toBe(true);
   });
@@ -211,7 +211,7 @@ describe("live：键、请求与启用条件照旧（按 userId 分键）", () =
     expect(anonymous).toEqual([]);
   });
 
-  it("/photos：live 的“能力未接入”照旧走统一错误态（这里还在搭建中），不冒充演示说明", async () => {
+  it("/photos：live 的“能力未接入”照旧走统一错误态（这里暂时还没开放），不冒充演示说明", async () => {
     mode.dataMode = "live";
     renderPage(<PhotoRequestsPage />, "/photos", {
       households: { list: async () => [BRIEF], detail: async () => DETAIL },
@@ -220,7 +220,7 @@ describe("live：键、请求与启用条件照旧（按 userId 分键）", () =
       transport: {},
     }, "owner-1");
     const list = await screen.findByText("申请记录");
-    await waitFor(() => expect(document.body.textContent).toContain("这里还在搭建中"));
+    await waitFor(() => expect(document.body.textContent).toContain("这里暂时还没开放"));
     expect(list).toBeTruthy();
     expect(screen.queryByText("演示模式没有照片记录")).toBeNull();
   });
@@ -230,7 +230,7 @@ describe("live：键、请求与启用条件照旧（按 userId 分键）", () =
     const client = renderPage(<HouseholdPage />, "/households/manage", {
       households: { list: async () => [BRIEF], detail: async () => { throw capability("households.detail"); }, invites: async () => [] },
     }, "owner-1");
-    expect(await screen.findByText("这里还在搭建中")).toBeTruthy();
+    expect(await screen.findByText("这里暂时还没开放")).toBeTruthy();
     expect(screen.queryByText("演示模式没有真实的家庭资料")).toBeNull();
     expect(hasKey(client, queryKeys.householdDetail("owner-1", "house-1"))).toBe(true);
     expect(within(document.body).queryByText("还没有家庭")).toBeNull();

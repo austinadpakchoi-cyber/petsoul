@@ -1,458 +1,715 @@
-/* 星球（访客地图）：地图几乎铺满，底部一条安静的行动区。居民头像只用首字（公开接口没有公开照片），不画通用动物。 */
-.ps-planet-page.ps-page {
+/*
+ * 访客星球（/world，2026-09-24 重做）：上面一张装饰头图（小星球），下面像地图首页的底部面板一样叠上来一张“居民面板”，
+ * 一进来先看到居民；底部固定一条行动区（寻找我的 TA / 已经有 TA 了？登录）。
+ * 颜色全部来自主题令牌：浅色是午后的星球，深色是夜里的星球；正文对比度两种模式都 ≥ 4.5。
+ * 没有动画（全站的“减少动态效果”规则另外兜底）。
+ */
+.ps-world-page.ps-page {
+  --world-sky-1: color-mix(in srgb, var(--c-sky-soft) 78%, var(--c-surface));
+  --world-sky-2: color-mix(in srgb, var(--c-sun-soft) 80%, var(--c-surface));
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
   padding: 0;
-  background: #efe6d4;
+  background: var(--c-bg);
+  color: var(--c-ink);
 }
 
-.ps-planet-map {
+/* ---------- 头图 ---------- */
+.ps-world-hero {
   position: relative;
-  flex: 1 1 auto;
-  height: calc(100dvh - 164px - var(--safe-bottom));
-  min-height: 380px;
+  flex: none;
+  /* 刘海屏以独立应用打开时顶部有安全区：头图连同它一起加高，返回键和品牌字不压到星球与头像 */
+  height: calc(clamp(164px, 30vh, 250px) + var(--safe-top));
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--world-sky-1) 0%, var(--world-sky-2) 100%);
 }
 
-.ps-planet-map .ps-map {
-  min-height: 0;
-  border-radius: 0 0 26px 26px;
-  background: #f3ecdd url("../journey/assets/schematic-paper-v1.webp") center / cover no-repeat;
-  box-shadow: 0 16px 30px -26px rgba(61, 46, 28, 0.7);
+/* 矮屏（如 320×568）：头图再矮一些，首屏留给第一位居民 */
+@media (max-height: 640px) {
+  .ps-world-hero {
+    height: calc(140px + var(--safe-top));
+  }
 }
 
-/* 示意图下露出纸纹；真实底图（登录后可用时）不受影响。 */
-.ps-planet-map .ps-map[data-basemap="schematic"] .ps-map__base > rect:first-of-type {
-  opacity: 0;
-}
-
-.ps-planet-map .ps-map__controls {
-  top: calc(var(--safe-top) + 76px);
-}
-
-.ps-planet-map__state {
-  padding: calc(var(--safe-top) + 96px) 16px 16px;
-}
-
-.ps-planet-top {
+.ps-world-hero__bar {
   position: absolute;
   top: 0;
   right: 0;
   left: 0;
-  z-index: 8;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: calc(var(--safe-top) + 12px) 14px 18px 12px;
-  background: linear-gradient(180deg, rgba(251, 246, 236, 0.95) 0%, rgba(251, 246, 236, 0.7) 62%, rgba(251, 246, 236, 0) 100%);
-  pointer-events: none;
+  padding: calc(var(--safe-top) + 10px) calc(12px + var(--safe-right)) 0 calc(12px + var(--safe-left));
 }
 
-.ps-planet-top > * {
-  pointer-events: auto;
-}
-
-.ps-planet-top__back {
+.ps-world-hero__back {
   display: grid;
   flex: none;
   place-items: center;
   width: 44px;
   height: 44px;
-  border: 1px solid rgba(47, 58, 44, 0.14);
-  border-radius: 14px;
-  background: rgba(255, 252, 245, 0.9);
-  color: #2f3a2c;
-  box-shadow: 0 6px 14px -10px rgba(40, 32, 20, 0.6);
-}
-
-.ps-planet-top__title {
-  display: grid;
-  gap: 1px;
-  min-width: 0;
-}
-
-.ps-planet-top__title .ps-brand-logo {
-  width: 104px;
-}
-
-.ps-planet-top__title span {
-  overflow: hidden;
-  color: #55503f;
-  font-size: 12px;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ps-planet-dock {
-  display: grid;
-  gap: 9px;
-  padding: 12px calc(16px + var(--safe-right)) calc(var(--safe-bottom) + 14px) calc(16px + var(--safe-left));
-  background: #efe6d4;
-}
-
-.ps-planet-dock__note {
-  margin: 0;
-  color: #7b7263;
-  font-size: 11px;
-  line-height: 1.5;
-  text-align: center;
-}
-
-.ps-planet-dock__actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
-  gap: 8px;
-}
-
-.ps-planet-dock__actions .ps-btn {
-  min-height: 50px;
-  border-radius: 15px;
-  font-size: 14px;
-}
-
-.ps-planet-dock__actions .ps-btn--secondary {
-  border-color: #dccfb9;
-  background: #fffaf0;
-  color: #3b4636;
-}
-
-.ps-planet-dock__actions .ps-btn--primary {
-  background: #305d43;
-  color: #fffdf5;
-}
-
-/* 点按区 40px；上下 -4px 外边距把多出的 8px 抵消掉：地图高度按底栏 164px 计算，
-   底栏不能变高，否则 320 宽（说明折两行）时登录链接会被挤出首屏 */
-.ps-planet-dock__login {
-  justify-self: center;
-  display: inline-flex;
-  align-items: center;
-  min-height: 40px;
-  margin: -4px 0;
-  color: #5b5448;
-  font-size: 12px;
-  text-underline-offset: 3px;
-}
-
-/* 底栏是昼夜不变的纸色：“内部演示居民与场景”标记若用主题的 --c-sun，浅色约 1.9:1、深色约 1.45:1，
-   这里掺入纸墨，两种模式都在 4:1 以上 */
-.ps-planet-dock .ps-origin {
-  color: color-mix(in srgb, var(--c-sun) 40%, var(--paper-ink));
-}
-
-/* 320 宽：两个按钮原本 1 : 1.15，左边的“看全部居民 · 2”会把数字挤到第二行；窄屏改为等分 */
-@media (max-width: 350px) {
-  .ps-planet-dock__actions {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-  .ps-planet-dock__actions .ps-btn {
-    padding: 0 12px;
-  }
-}
-
-/* 驿站地标：居民围着它排开 */
-.ps-planet-station {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px 3px 5px;
-  border-radius: 999px;
-  background: rgba(47, 74, 56, 0.86);
-  color: #fdf8ec;
-  font-size: 10px;
-  font-weight: 700;
-  white-space: nowrap;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 6px 14px -8px rgba(30, 40, 30, 0.8);
-}
-
-.ps-planet-station i {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #f1c983;
-  box-shadow: 0 0 0 3px rgba(241, 201, 131, 0.3);
-}
-
-/* 居民头像：锚点对准头像圆心；状态点绿=在驿站，琥珀=在外面。 */
-.ps-planet-pin {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: grid;
-  justify-items: center;
-  gap: 3px;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  transform: translate(-50%, -24px);
-}
-
-.ps-planet-pin__avatar {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border: 3px solid #fffaf0;
-  border-radius: 50%;
-  background: #f1e3cf;
-  color: #7a5b43;
-  box-shadow: 0 9px 18px -9px rgba(60, 40, 20, 0.7);
-  transition: transform var(--dur-med) var(--ease-out);
-}
-
-.ps-planet-pin__avatar strong {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 21px;
-  line-height: 1;
-}
-
-.ps-planet-pin__avatar::after {
-  content: "";
-  position: absolute;
-  right: -1px;
-  bottom: 1px;
-  width: 12px;
-  height: 12px;
-  border: 2px solid #fffaf0;
-  border-radius: 50%;
-  background: #6f9a6a;
-}
-
-.ps-planet-pin.is-out .ps-planet-pin__avatar::after {
-  background: #e3a24c;
-}
-
-.ps-planet-pin__name {
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: rgba(255, 250, 240, 0.94);
-  color: #3a3a30;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-  box-shadow: 0 3px 8px -5px rgba(60, 40, 20, 0.6);
-}
-
-.ps-planet-pin.is-speaking .ps-planet-pin__avatar {
-  transform: scale(1.1);
-  box-shadow: 0 0 0 4px rgba(227, 162, 76, 0.28), 0 10px 20px -9px rgba(60, 40, 20, 0.75);
-}
-
-.ps-planet-pin:focus-visible {
-  outline: none;
-}
-
-.ps-planet-pin:focus-visible .ps-planet-pin__avatar {
-  box-shadow: 0 0 0 4px #dba258;
-}
-
-/* 状态气泡：从说话的头像上方冒出，点一下同样打开相遇卡。 */
-.ps-planet-bubble {
-  position: absolute;
-  bottom: 34px;
-  left: 0;
-  display: grid;
-  gap: 1px;
-  width: max-content;
-  max-width: 212px;
-  padding: 8px 12px 9px;
-  border: 1px solid rgba(88, 70, 44, 0.12);
-  border-radius: 16px;
-  background: #fffdf7;
-  color: #2f2b27;
-  text-align: left;
-  cursor: pointer;
-  box-shadow: 0 12px 24px -14px rgba(56, 40, 22, 0.55);
-  transform: translateX(-50%);
-  transform-origin: 50% 100%;
-  animation: ps-planet-bubble-in 420ms var(--ease-out);
-}
-
-.ps-planet-bubble::after {
-  content: "";
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  width: 12px;
-  height: 12px;
-  border-right: 1px solid rgba(88, 70, 44, 0.12);
-  border-bottom: 1px solid rgba(88, 70, 44, 0.12);
-  background: #fffdf7;
-  transform: translateX(-50%) rotate(45deg);
-}
-
-.ps-planet-bubble__who {
-  color: #a47a55;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-}
-
-.ps-planet-bubble__text {
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-@keyframes ps-planet-bubble-in {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(6px) scale(0.92);
-  }
-}
-
-/* 相遇卡 */
-.ps-encounter__title {
-  font-size: 17px;
-}
-
-.ps-encounter__body {
-  display: grid;
-  gap: 12px;
-  padding: 2px 0 6px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-control);
+  background: var(--c-surface);
   color: var(--c-ink);
+  box-shadow: 0 6px 18px var(--c-shadow);
 }
 
-.ps-encounter__who {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+.ps-world-hero__back:focus-visible,
+.ps-world-resident__more:focus-visible,
+.ps-world-cta__login:focus-visible,
+.ps-world-cta__home:focus-visible {
+  outline: 3px solid var(--c-sun);
+  outline-offset: 2px;
 }
 
-.ps-encounter__portrait {
-  display: grid;
-  flex: 0 0 72px;
-  place-items: center;
-  width: 72px;
-  height: 80px;
-  border-radius: 18px;
-  background: #f1e3cf;
-  color: #7a5b43;
+/* 品牌字是深绿色：垫一枚昼夜不变的纸色小牌，夜里的深色天空上也看得清 */
+.ps-world-hero__bar .ps-brand-logo {
+  width: 112px;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
 }
 
-.ps-encounter__portrait strong {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 30px;
-  line-height: 1;
+.ps-world-scene {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.ps-encounter__portrait small {
-  font-size: 9px;
+.ps-world-scene__star {
+  fill: var(--c-ink-3);
+  opacity: 0.22;
 }
 
-.ps-encounter__who > div {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
+.ps-world-scene__sun {
+  fill: var(--c-sun);
+  opacity: 0.85;
 }
 
-.ps-encounter__now {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: #8a7a62;
-  font-size: 11px;
-  font-weight: 700;
+.ps-world-scene__cloud ellipse {
+  fill: var(--c-surface);
+  opacity: 0.75;
 }
 
-.ps-encounter__now i {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #6f9a6a;
+.ps-world-scene__halo {
+  fill: none;
+  stroke: var(--c-surface);
+  stroke-width: 12;
+  opacity: 0.45;
 }
 
-.ps-encounter__now i.is-out {
-  background: #e3a24c;
+.ps-world-scene__land {
+  fill: color-mix(in srgb, var(--c-leaf-soft) 72%, var(--c-leaf));
 }
 
-.ps-encounter__who strong {
-  font-size: 17px;
+.ps-world-scene__wall {
+  fill: var(--c-surface);
+}
+
+.ps-world-scene__roof {
+  fill: var(--c-coral);
+}
+
+.ps-world-scene__window {
+  fill: var(--c-sun);
+}
+
+.ps-world-scene__trunk {
+  fill: color-mix(in srgb, var(--c-ink-2) 70%, var(--c-sun));
+}
+
+.ps-world-scene__leaves {
+  fill: var(--c-leaf);
+}
+
+.ps-world-scene__shadow {
+  fill: var(--c-deep-ink);
+  opacity: 0.18;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ps-world-scene__star {
+    fill: var(--c-sun);
+    opacity: 0.8;
+  }
+  .ps-world-scene__sun {
+    fill: var(--c-ink);
+    opacity: 0.8;
+  }
+  .ps-world-scene__cloud ellipse {
+    opacity: 0.5;
+  }
+  .ps-world-scene__shadow {
+    opacity: 0.45;
+  }
+}
+
+/* ---------- 居民面板：像地图首页的底部面板，圆角压在头图上 ---------- */
+.ps-world-sheet {
+  position: relative;
+  z-index: 1;
+  flex: 1 0 auto;
+  margin-top: -22px;
+  padding: 20px calc(16px + var(--safe-right)) 16px calc(16px + var(--safe-left));
+  border-radius: 24px 24px 0 0;
+  background: var(--c-bg);
+  box-shadow: 0 -12px 24px -20px var(--c-shadow);
+}
+
+.ps-world-sheet__head h1 {
+  margin: 0;
+  color: var(--c-ink);
+  font-size: 21px;
   line-height: 1.35;
 }
 
-.ps-encounter__who small {
+.ps-world-sheet__head p {
+  margin: 6px 0 0;
+  color: var(--c-ink-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.ps-world-now {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ps-world-now li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* 状态点只是辅助：旁边一定有文字（在驿站 / 在外面 / 在路上） */
+.ps-world-now li::before,
+.ps-world-resident__now dt::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--world-dot, var(--c-ink-3));
+}
+
+.ps-world-page .is-home {
+  --world-dot: var(--c-leaf);
+}
+
+.ps-world-page .is-out {
+  --world-dot: var(--c-sun);
+}
+
+.ps-world-page .is-road {
+  --world-dot: var(--c-sky);
+}
+
+.ps-world-page .is-unknown {
+  --world-dot: var(--c-ink-3);
+}
+
+.ps-world-sheet > .ps-stack,
+.ps-world-sheet > .ps-state {
+  margin-top: 16px;
+}
+
+/* ---------- 居民卡 ---------- */
+.ps-world-residents {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  scroll-margin-top: 16px;
+}
+
+.ps-world-resident {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-card);
+  background: var(--c-surface);
+  box-shadow: 0 10px 24px -20px var(--c-shadow);
+}
+
+.ps-world-resident__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ps-world-resident__who {
+  min-width: 0;
+}
+
+.ps-world-resident__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+}
+
+.ps-world-resident__name h3 {
+  margin: 0;
+  color: var(--c-ink);
+  font-size: 19px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.ps-world-resident__species {
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-2);
+  color: var(--c-ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.ps-world-resident__who p {
+  margin: 3px 0 0;
+  color: var(--c-ink-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ps-world-resident__facts {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.ps-world-resident__facts > div {
+  display: grid;
+  grid-template-columns: 3.4em minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ps-world-resident__facts dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--c-ink-2);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ps-world-resident__facts dd {
+  margin: 0;
+  color: var(--c-ink);
+  overflow-wrap: anywhere;
+}
+
+.ps-world-resident__post {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--c-sun);
+  border-radius: 4px 14px 14px 4px;
+  background: var(--c-surface-2);
+}
+
+.ps-world-resident__post p {
+  margin: 0;
+  color: var(--c-ink);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.ps-world-resident__post footer {
+  margin-top: 4px;
   color: var(--c-ink-2);
   font-size: 12px;
 }
 
-.ps-encounter__line {
-  margin: 0;
-  color: var(--c-ink-2);
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.ps-encounter__dream {
-  display: grid;
-  gap: 3px;
-  margin: 0;
-  padding: 11px 13px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--c-sun-soft) 70%, var(--c-surface));
-  font-size: 14px;
-}
-
-.ps-encounter__dream span {
-  color: #a47a55;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-}
-
-.ps-encounter__post {
-  margin: 0;
-  padding: 2px 0 2px 12px;
-  border-left: 3px solid #dba258;
-  color: var(--c-ink-2);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.ps-encounter__more {
+/* 卡片唯一的链接；::after 铺满整张卡，点卡片任何地方都进居民主页 */
+.ps-world-resident__more {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-height: 46px;
-  border: 1px solid var(--c-surface-stroke);
-  border-radius: 14px;
-  background: var(--c-surface-2);
-  color: var(--c-leaf);
-  font-size: 14px;
+  min-height: 44px;
+  border-radius: var(--r-control);
+  background: var(--c-leaf-soft);
+  color: color-mix(in srgb, var(--c-leaf) 72%, var(--c-ink));
+  font-size: 15px;
   font-weight: 700;
   text-decoration: none;
 }
 
-.ps-planet-list .ps-public-residents {
-  margin-top: 4px;
+.ps-world-resident__more::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-card);
 }
 
-.ps-planet-list__note {
-  margin: 14px 2px 4px;
-  color: var(--c-ink-3);
-  font-size: 11px;
+/* “（城市）”整体不断行 */
+.ps-world-nowrap {
+  white-space: nowrap;
+}
+
+/* ---------- 头像：照片，或同物种插画（角上标“插画”） ---------- */
+.ps-resident-portrait {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--c-surface-2);
+}
+
+.ps-resident-portrait > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ps-resident-portrait.is-species {
+  background: color-mix(in srgb, var(--c-sun-soft) 70%, var(--c-surface));
+}
+
+.ps-resident-portrait.is-species > .ps-species-art {
+  width: 84%;
+  height: 84%;
+  object-fit: contain;
+}
+
+.ps-resident-portrait > small {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  padding: 0 5px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-ink-2);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+/* ---------- 星球上最近的小事 ---------- */
+.ps-world-posts {
+  margin-top: 24px;
+}
+
+.ps-world-posts h2 {
+  margin: 0 0 10px;
+  color: var(--c-ink);
+  font-size: 17px;
+}
+
+.ps-world-posts ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ps-world-posts li {
+  padding: 12px 14px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-card);
+  background: var(--c-surface);
+}
+
+.ps-world-posts strong {
+  color: var(--c-ink);
+  font-size: 14px;
+}
+
+.ps-world-posts p {
+  margin: 4px 0;
+  color: var(--c-ink);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.ps-world-posts small {
+  color: var(--c-ink-2);
+  font-size: 12px;
+}
+
+.ps-world-empty {
+  margin: 16px 0 0;
+  color: var(--c-ink-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.ps-world-sheet__note {
+  margin: 20px 0 8px;
+  color: var(--c-ink-2);
+  font-size: 12px;
+  line-height: 1.5;
   text-align: center;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ps-planet-bubble {
-    animation: none;
-  }
+/* ---------- 底部行动区（贴底） ---------- */
+.ps-world-cta {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: grid;
+  gap: 2px;
+  padding: 10px calc(16px + var(--safe-right)) calc(var(--safe-bottom) + 8px) calc(16px + var(--safe-left));
+  border-top: 1px solid var(--c-surface-stroke);
+  background: var(--c-bg);
+}
 
-  .ps-planet-pin__avatar {
-    transition: none;
+.ps-world-cta .ps-btn {
+  min-height: 48px;
+  font-size: 16px;
+}
+
+.ps-world-cta__login {
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+  min-height: 40px;
+  padding: 0 12px;
+  color: var(--c-ink-2);
+  font-size: 14px;
+  text-underline-offset: 3px;
+}
+
+/* 已登录、可以迎接时，“回到我的家”退到迎接按钮下面，样子和登录链接一样 */
+.ps-world-cta__home {
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+  min-height: 40px;
+  padding: 0 12px;
+  color: var(--c-ink-2);
+  font-size: 14px;
+  text-underline-offset: 3px;
+}
+
+/*
+ * 共用的“迎接 TA”（adoptFlow.tsx，不归本页改）放进贴底行动区时，只在这里调颜色：
+ * - 主按钮和本页主按钮一样用叶绿色：深墨色主按钮在深色下几乎看不出是个按钮（禁用态由 ui.css 更高优先级的规则接管，不受影响）；
+ * - 确认框标题用正文色：pets.css 里是 --c-deep-ink，深色下压在深绿底上约 1.5:1 看不清（已报主窗口，领养页同样受影响）。
+ */
+.ps-world-cta .ps-btn--primary {
+  background: var(--c-leaf);
+  color: var(--c-on-deep);
+}
+
+@media (prefers-color-scheme: dark) {
+  .ps-world-cta .ps-btn--primary {
+    color: var(--c-deep-ink);
   }
 }
 
-@media (min-width: 600px) {
-  .ps-planet-page.ps-page {
-    max-width: var(--page-max);
-  }
+.ps-world-cta .ps-adopt-confirm strong {
+  color: var(--c-ink);
+}
+
+/* ---------- 居民主页（/world/residents/:petId）：同一套头图 + 面板 + 贴底行动区；头像压在头图下沿 ---------- */
+/* 头像往上压 72px：头图至少 140px 高，头像上沿才落在返回键与品牌字下方（320×568 实测曾压住品牌字） */
+.ps-resident-page .ps-world-hero {
+  height: calc(clamp(140px, 22vh, 190px) + var(--safe-top));
+}
+
+.ps-resident-page__head {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin-top: -72px;
+  text-align: center;
+}
+
+.ps-resident-page__head .ps-resident-portrait {
+  border: 4px solid var(--c-bg);
+  border-radius: 28px;
+  box-shadow: 0 14px 30px -18px var(--c-shadow);
+}
+
+.ps-resident-page__name {
+  justify-content: center;
+}
+
+.ps-resident-page__name h1 {
+  margin: 0;
+  color: var(--c-ink);
+  font-size: 26px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.ps-resident-page__source {
+  margin: 0;
+  color: var(--c-ink-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ps-resident-page__now {
+  display: grid;
+  gap: 4px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-card);
+  background: var(--c-surface);
+}
+
+.ps-resident-page__now h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--c-ink-2);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ps-resident-page__now h2::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--world-dot, var(--c-ink-3));
+}
+
+.ps-resident-page__doing {
+  margin: 0;
+  color: var(--c-ink);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.ps-resident-page__home {
+  margin: 0;
+  color: var(--c-ink-2);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.ps-resident-page__section {
+  margin-top: 22px;
+}
+
+.ps-resident-page__section h2 {
+  margin: 0 0 8px;
+  color: var(--c-ink);
+  font-size: 17px;
+}
+
+.ps-resident-page__section p {
+  margin: 0 0 8px;
+  color: var(--c-ink);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.ps-resident-page__section .ps-resident-page__trait {
+  font-weight: 600;
+}
+
+.ps-resident-page__section .ps-resident-page__dream {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--c-sun-soft);
+  color: var(--c-ink);
+}
+
+.ps-resident-page__posts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ps-resident-page__posts li {
+  padding: 12px 14px;
+  border: 1px solid var(--c-surface-stroke);
+  border-left: 3px solid var(--c-sun);
+  border-radius: 4px 14px 14px 4px;
+  background: var(--c-surface);
+}
+
+.ps-resident-page__section .ps-resident-page__posts p {
+  margin: 0;
+}
+
+.ps-resident-page__posts small {
+  display: block;
+  margin-top: 4px;
+  color: var(--c-ink-2);
+  font-size: 12px;
+}
+
+.ps-resident-page__section .ps-resident-page__quiet,
+.ps-resident-page__missing p {
+  color: var(--c-ink-2);
+  font-size: 14px;
+}
+
+.ps-resident-page__note {
+  margin: 22px 0 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--c-surface-2);
+  color: var(--c-ink-2);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.ps-resident-page__missing h1,
+.ps-resident-page__error-title {
+  margin: 8px 0 6px;
+  color: var(--c-ink);
+  font-size: 21px;
+  line-height: 1.35;
+}
+
+.ps-resident-page__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 44px;
+  margin: 18px 0 8px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-control);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ps-resident-page__more:focus-visible {
+  outline: 3px solid var(--c-sun);
+  outline-offset: 2px;
 }

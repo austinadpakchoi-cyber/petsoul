@@ -189,7 +189,7 @@ export function saveFailureText(error: unknown): string {
   if (error.isAuth) return "登录状态过期了，重新登录后再保存。";
   if (error.code === "VALIDATION_FAILED") return "有一栏写得太长或太多了，改短一点再保存。";
   if (error.code === "NOT_FOUND") return "找不到 TA 的档案了，回到上一页再进来看看。";
-  return error.message || "没保存上，再试一次。";
+  return error.playerMessage || "没保存上，再试一次。";
 }
 
 /* ---------------- 行为倾向 ---------------- */

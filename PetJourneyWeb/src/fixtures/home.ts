@@ -106,7 +106,7 @@ export function fixtureSell(itemKey: string, qty: number, key: string): MarketRe
   const coins = qty * (LABELS[itemKey]?.price ?? 1);
   state.balance += coins;
   const label = LABELS[itemKey]?.label ?? itemKey;
-  const result: MarketResult = { wallet: wallet(), pantry: pantryList(), gained_coins: coins, message: "杂货铺收下了 " + qty + " 个" + label + "，+" + coins + " 旅费。（演示）" };
+  const result: MarketResult = { wallet: wallet(), pantry: pantryList(), gained_coins: coins, message: "杂货铺收下了 " + qty + " 个" + label + "，+" + coins + " 星币。（演示）" };
   marketSettled.set(key, result);
   return result;
 }
@@ -120,7 +120,7 @@ export function fixtureFulfill(orderId: string): MarketResult {
     state.balance += order.reward;
     state.fulfilled.add(orderId);
   }
-  return { wallet: wallet(), pantry: pantryList(), gained_coins: order.reward, message: order.resident + "收到了 " + order.qty + " 个" + order.item_label + "。（演示）" };
+  return { wallet: wallet(), pantry: pantryList(), gained_coins: order.reward, message: order.resident + "收到了 " + order.qty + " 个" + order.item_label + "，付了 " + order.reward + " 星币。（演示）" };
 }
 
 

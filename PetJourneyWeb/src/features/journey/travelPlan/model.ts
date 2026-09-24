@@ -8,13 +8,17 @@
  * - 手账：在这一版修订的 journals 里（TravelJournal，phase 分 plan 计划页、memory 回忆页；图状态复用 PhotoStatus，外加 redraw_ticket、image_refused）。
  * contracts 里的 TravelGuide / TravelGuideStop（旧攻略）与 TravelActivity / TravellerRole（别的模块）不是这一套，别混用。
  * 本文件只多一个本地组合 PlanBundle（计划 + 它的心愿）。页面（./PlanPage）、列表（../GuideBookPage）、地图那一行（./wishNote）只认 PlanView。
+ * live 的计划页（2026-09-24 23:2x 接上 GET /travel/plans/{plan_id}）：心愿（GET /travel/wish）的 wish_id 与计划对得上才放在一起（viewOfPlan）；
+ * 对不上（以前的心愿）就只按计划本身说（viewOfPlanOnly）：状态只从计划推（有回忆页＝已回来，关联了行程＝已出发，都没有＝状态待确认），
+ * TA 的理由、还差什么、攒钱目标这些只有心愿才有的不显示，也不编。
  *
  * 状态到玩家说法的换算全在这里：玩家只看人话。§5.2 的十二个原因码每个配一句；不认识的码只说中性的话，不露码。
  * 语义不混（§5.2、§11.5）：missing_funds ≠ quota_denied（平台的次数）；research_unknown ≠ 搜不到；fact_stale ≠ 地名不存在；
  * 手账图 unknown ≠ failed（unknown 可能已经画了并计费，只说“还没确认”）；重画入口只在 failed / unknown 且后端给了 redraw_ticket 时出现。
  * 核验：结论只看 verdict；verification 是核验方法，conclusion 是端口自己的说法（只记录、不照单全收），页面都不显示。
  * 三种钱分开：攒钱目标（funds_goal、target_coins，游戏星币）不是路费；路费只认计划这一版上的行程摘要
- * （TravelJourneySummary：fare 是标价、用没用券都不变，fare_waived 为真＝用了券、实付 0，§30）；
+ * （TravelJourneySummary：fare 是标价、用没用券都不变，fare_waived 为真＝用了驾校借车券、实付 0，§30；
+ *  用券时写“用了驾校借车券，这趟不用租车费”，标价划掉显示，绝不把标价说成付过的钱）；
  * 现实参考费用挂在价钱类事实上（value 是 {amount, currency, estimated}）：只报已核实、三样都认得出、有日期的，标币种、日期、是否估算；
  * 没核实写“还没核实”，认不出来（包括没写 estimated）整条不报金额，都不写 0；平台调用费用（研究收据）玩家页面永远不读。
  * 计划和回忆分开：出发前不盖到访章；顺路建议单独标出、不算到访；到访只认这一版计划的回忆手账站点上的真实事件
@@ -41,7 +45,7 @@ import type { ChipTone, IconName } from "@/shared/ui";
  * 计划页的读模型（本地组合，不是 DTO）：一份计划 + 它的心愿。I 定：
  * - 心愿的业务状态与 TA 的理由从 GET /travel/wish 读（TravelWish.status、owner_reason）；
  * - 计划从 GET /travel/plans/{plan_id} 读，手账在这一版修订的 journals 里。
- * （猜）第③期只在两边的 wish_id 对得上时把它们放在一起；对不上（比如以前的心愿）怎么拿状态，待 I 定。
+ * 第③期（live）只在两边的 wish_id 对得上时把它们放在一起；对不上（比如以前的心愿）不猜状态，只按计划本身说（viewOfPlanOnly）。
  */
 export interface PlanBundle {
   wish: TravelWish;
@@ -98,6 +102,8 @@ export interface LineView {
 export interface CoinView {
   text: string;
   detail: string | null;
+  /** 用了驾校借车券时这趟的标价（页面划掉显示）；其余情况为 null。它是标价，不是付过的钱。 */
+  listPrice: string | null;
 }
 
 export interface RealCostView {
@@ -147,6 +153,8 @@ export interface JournalView {
   identity: string | null;
   /** 手账这一页的文字；没有手账时为 null。 */
   text: JournalTextView | null;
+  /** 这一页自己的时间（TravelJournal.created_at，不拿计划的时间顶）：“这一页写于 …”；没有手账或认不出来时为 null。 */
+  time: string | null;
   /** 给“技术信息”的一行（拒绝码、身份说明码），平时收起；玩家只看人话。 */
   tech: string | null;
 }
@@ -419,7 +427,8 @@ interface Ctx {
   stage: PlanStage;
   zone: string;
   isDemo: boolean;
-  wish: TravelWish;
+  /** 这份计划的心愿；live 读到的当前心愿与计划对不上时为 null（只按计划本身说）。 */
+  wish: TravelWish | null;
   revision: TravelPlanRevision | null;
   facts: Map<string, TravelFact>;
   factList: TravelFact[];
@@ -436,11 +445,11 @@ function topicsWith(ctx: Ctx, verdicts: string[]): string | null {
   return topics.length ? topics.join("、") : null;
 }
 
-function waitingItem(code: string, index: number, ctx: Ctx): WaitingItem {
+function waitingItem(code: string, index: number, wish: TravelWish, ctx: Ctx): WaitingItem {
   const key = `${index}-${code}`;
   switch (code) {
     case "missing_funds": {
-      const { target_coins, current_coins, funds_goal, last_considered_at } = ctx.wish;
+      const { target_coins, current_coins, funds_goal, last_considered_at } = wish;
       const target = target_coins ?? funds_goal;
       if (target == null || current_coins == null) return { key, icon: "coin", text: `${COIN_UNIT}还没攒够`, detail: target != null ? `要攒到 ${target} ${COIN_UNIT}` : null };
       const short = Math.max(0, target - current_coins);
@@ -456,7 +465,7 @@ function waitingItem(code: string, index: number, ctx: Ctx): WaitingItem {
     case "quota_denied":
       return { key, icon: "refresh", text: "今天查资料的次数用完了，改天再查", detail: null };
     case "research_pending":
-      return { key, icon: "compass", text: ctx.wish.research_state === "running" ? "TA 正在查资料" : "资料还在准备", detail: null };
+      return { key, icon: "compass", text: wish.research_state === "running" ? "TA 正在查资料" : "资料还在准备", detail: null };
     case "research_unknown":
       return { key, icon: "refresh", text: "查资料的结果还没确认", detail: null };
     case "research_failed":
@@ -647,32 +656,34 @@ function preconditionViews(ctx: Ctx): PreconditionView[] {
 
 /**
  * 星币：出发前说攒钱目标（不是路费）；出发后只认这一版计划上的行程摘要（§30），绝不拿攒钱目标顶。
- * - fare 是这趟的标价，用没用券都不变；fare_waived 为真＝用了借车券、实付 0、省下 fare（这张券唯一能被看见的地方）；
- * - fare 为 0：这趟不花路费（带着券也一样，不写“省下 0”）；
+ * - fare 是这趟的标价，用没用券都不变；fare_waived 为真＝用了驾校借车券、实付 0：写“用了驾校借车券，这趟不用租车费”，
+ *   标价单独给出、页面划掉显示（驾校触点：这张券唯一能被看见的地方）——标价绝不写成付过的钱；
+ * - fare 为 0：这趟不花路费（带着券也一样，不划掉一个 0）；
  * - 形状不对（缺字段、fare 不是非负数）或还没关联行程：不显示路费。
- * 出发后才有这一行，包括出发后提前结束（取消但有行程）的回顾。
+ * 出发后才有这一行，包括出发后提前结束（取消但有行程）的回顾。攒钱目标只有心愿才有：只按计划本身说时不显示。
  */
 function coinView(journey: TravelJourneySummary | null, ctx: Ctx): CoinView | null {
   const { wish } = ctx;
   if (ctx.stage === "wish" || ctx.stage === "ready") {
+    if (!wish) return null;
     const goal = wish.target_coins ?? wish.funds_goal;
     if (goal == null) return null;
     const text = `攒钱目标 ${goal} ${COIN_UNIT}`;
-    if (ctx.stage === "ready") return { text, detail: "已经攒够" };
+    if (ctx.stage === "ready") return { text, detail: "已经攒够", listPrice: null };
     if (wish.waiting_reasons.includes("missing_funds") && wish.current_coins != null) {
       const at = formatMoment(wish.last_considered_at, ctx.zone);
-      return { text, detail: `${at ? `截至 ${at} ` : ""}有 ${wish.current_coins}，还差 ${Math.max(0, goal - wish.current_coins)}` };
+      return { text, detail: `${at ? `截至 ${at} ` : ""}有 ${wish.current_coins}，还差 ${Math.max(0, goal - wish.current_coins)}`, listPrice: null };
     }
-    return { text, detail: null };
+    return { text, detail: null, listPrice: null };
   }
   if (afterDeparture(ctx.stage)) {
     if (!journey) return null;
     const { fare, fare_waived: waived } = journey as Partial<TravelJourneySummary>;
     if (typeof fare !== "number" || !Number.isFinite(fare) || fare < 0 || typeof waived !== "boolean") return null;
-    if (fare === 0) return { text: "这趟不花路费", detail: null };
-    // 用了券：实付 0。fare 是省下的，不是花出去的。
-    if (waived) return { text: `用了借车券，省下 ${amountText(fare)} ${COIN_UNIT}`, detail: null };
-    return { text: `路费 ${amountText(fare)} ${COIN_UNIT}`, detail: "出发时从 TA 的星球银行卡付过" };
+    if (fare === 0) return { text: "这趟不花路费", detail: null, listPrice: null };
+    // 用了驾校借车券：实付 0。fare 只作为划掉的标价出现，不是花出去的。
+    if (waived) return { text: "用了驾校借车券，这趟不用租车费", detail: null, listPrice: `${amountText(fare)} ${COIN_UNIT}` };
+    return { text: `路费 ${amountText(fare)} ${COIN_UNIT}`, detail: "出发时从 TA 的星球银行卡付过", listPrice: null };
   }
   return null;
 }
@@ -707,27 +718,30 @@ function journalText(journal: TravelJournal, ctx: Ctx): JournalTextView {
 }
 
 function journalView(journal: TravelJournal | null, planRevision: number | null, ctx: Ctx): JournalView {
-  const none: JournalView = { state: "none", heading: "手账", caption: "这一页只有文字，没有手账图", imageUrl: null, staleNote: null, canRedraw: false, identity: null, text: null, tech: null };
+  const none: JournalView = { state: "none", heading: "手账", caption: "这一页只有文字，没有手账图", imageUrl: null, staleNote: null, canRedraw: false, identity: null, text: null, time: null, tech: null };
   if (!journal) return none;
   const heading = journal.phase === "memory" ? "回忆手账" : "计划手账";
   const text = journalText(journal, ctx);
+  // 这一页自己的时间（手账每一版一行，写下就不改；不拿计划的 created_at 顶）。
+  const written = formatMoment(journal.created_at, ctx.zone);
+  const time = written ? `这一页写于 ${written}` : null;
   // 重画入口只在 failed / unknown 且后端给了 redraw_ticket 时出现（有票才显示）。
   const ticket = Boolean(journal.redraw_ticket?.trim());
   const canRedraw = ticket && (journal.image_status === "failed" || journal.image_status === "unknown");
   const refused = journal.image_refused?.trim() || null;
   if (refused) {
     // 被拒：没有图，手账文字照样在；拒绝码只进“技术信息”。
-    return { state: "refused", heading, caption: "这次没有配图", imageUrl: null, staleNote: null, canRedraw, identity: null, text, tech: refused };
+    return { state: "refused", heading, caption: "这次没有配图", imageUrl: null, staleNote: null, canRedraw, identity: null, text, time, tech: refused };
   }
   // §11.5：“没有手账图”用 image_status 缺省表达（没接插画），不是 failed。
-  if (journal.image_status == null) return { ...none, heading, text };
+  if (journal.image_status == null) return { ...none, heading, text, time };
   // 画里的 TA 从哪来：只在有图或正在画时说；“不画 TA”的原因码只进“技术信息”。
   const identity = IDENTITY_TEXT[journal.identity_mode] ?? null;
   const identityTech = journal.identity_mode === "none" ? journal.identity_note?.trim() || null : null;
   switch (journal.image_status) {
     case "ready": {
       const url = safeImageUrl(journal.image_url);
-      if (!url) return { state: "unknown", heading, caption: "手账结果还没确认", imageUrl: null, staleNote: null, canRedraw, identity: null, text, tech: null };
+      if (!url) return { state: "unknown", heading, caption: "手账结果还没确认", imageUrl: null, staleNote: null, canRedraw, identity: null, text, time, tech: null };
       // 不变量：journals 挂在这一版修订上，按理 plan_revision 一定相同；万一不同，说一句按上一版画的。
       const stale = planRevision != null && journal.plan_revision !== planRevision;
       return {
@@ -739,16 +753,17 @@ function journalView(journal: TravelJournal | null, planRevision: number | null,
         canRedraw: false,
         identity,
         text,
+        time,
         tech: identityTech,
       };
     }
     case "processing":
-      return { state: "drawing", heading, caption: "手账在画", imageUrl: null, staleNote: null, canRedraw: false, identity, text, tech: identityTech };
+      return { state: "drawing", heading, caption: "画着呢", imageUrl: null, staleNote: null, canRedraw: false, identity, text, time, tech: identityTech };
     case "failed":
-      return { state: "failed", heading, caption: "这次手账没画成", imageUrl: null, staleNote: null, canRedraw, identity: null, text, tech: null };
+      return { state: "failed", heading, caption: "这次手账没画成", imageUrl: null, staleNote: null, canRedraw, identity: null, text, time, tech: null };
     default:
       // unknown 与不认识的状态：只说“还没确认”，不说失败（可能已经画了并计费，§11.5）；不自动重画。
-      return { state: "unknown", heading, caption: "手账结果还没确认", imageUrl: null, staleNote: null, canRedraw, identity: null, text, tech: null };
+      return { state: "unknown", heading, caption: "手账结果还没确认", imageUrl: null, staleNote: null, canRedraw, identity: null, text, time, tech: null };
   }
 }
 
@@ -785,9 +800,20 @@ function currentRevision(plan: TravelPlan | null): TravelPlanRevision | null {
   return plan.revisions.find((r) => r.plan_revision === plan.current_revision) ?? null;
 }
 
-function build(wish: TravelWish, plan: TravelPlan | null, key: string, href: string, options: ViewOptions): PlanView {
-  const stage = STAGE_OF[wish.status] ?? "unknown";
+/**
+ * 只按计划本身推状态（live 读到的心愿与这份计划对不上时）：这一版有回忆页＝已回来；关联了真实行程＝已出发；
+ * 都没有＝状态待确认——不猜“想去 / 可以出发 / 已取消”，那些只有心愿才说得准。
+ */
+function stageOfPlan(revision: TravelPlanRevision | null): PlanStage {
+  if (!revision) return "unknown";
+  if (latestJournal(revision, "memory")) return "back";
+  if (revision.journey) return "departed";
+  return "unknown";
+}
+
+function build(wish: TravelWish | null, plan: TravelPlan | null, key: string, href: string, options: ViewOptions): PlanView {
   const revision = currentRevision(plan);
+  const stage = wish ? (STAGE_OF[wish.status] ?? "unknown") : stageOfPlan(revision);
   const memoryJournal = latestJournal(revision, "memory");
   // 回来以后有回忆页就显示回忆页，否则显示计划页。
   const shownJournal = memoryJournal ?? latestJournal(revision, "plan");
@@ -808,25 +834,27 @@ function build(wish: TravelWish, plan: TravelPlan | null, key: string, href: str
 
   // 只有“想去”（active）才列“还差什么”；排序后的第一条同时决定状态标签、列表卡片那句和地图那一行。
   const ordered =
-    stage === "wish"
+    stage === "wish" && wish
       ? (wish.waiting_reasons ?? [])
           .map((code, index) => ({ code: String(code), index }))
           .sort((a, b) => (isReason(a.code) ? WAITING_ORDER[a.code] : 99) - (isReason(b.code) ? WAITING_ORDER[b.code] : 99) || a.index - b.index)
       : [];
-  const waiting = ordered.map(({ code, index }) => waitingItem(code, index, ctx));
+  const waiting = wish ? ordered.map(({ code, index }) => waitingItem(code, index, wish, ctx)) : [];
   const firstCode = ordered[0]?.code;
   const status = stage === "wish" ? (firstCode && isReason(firstCode) ? WAITING_REASON_CHIPS[firstCode] : { label: "还在准备", tone: "neutral" as ChipTone }) : STAGE_CHIP[stage];
 
   const stops = revision?.stops ?? [];
   const mainIndex = stops.findIndex((s) => s.role === "main");
+  // 目的地：心愿写的名字；只按计划说时用这一版主目的地的站名（计划里恒有一个主目的地），再没有才用这一版计划的标题。
+  const destination = wish?.destination_name?.trim() || (mainIndex >= 0 ? stops[mainIndex].name.trim() : "") || revision?.title?.trim() || "这个地方";
   const main: PlaceView =
     revision && mainIndex >= 0
       ? placeView(stops[mainIndex], mainIndex, revision, ctx)
-      : { id: `${wish.wish_id}:destination`, role: "main", name: wish.destination_name, why: null, tip: null, pending: false, verified: false, verifyText: "地点待确认", stamp: null, mapUrl: null };
+      : { id: `${key}:destination`, role: "main", name: destination, why: null, tip: null, pending: false, verified: false, verifyText: "地点待确认", stamp: null, mapUrl: null };
   const suggestions = revision ? stops.flatMap((s, i) => (i !== mainIndex && s.role === "suggested" ? [placeView(s, i, revision, ctx)] : [])) : [];
 
   const outcome = outcomeLine([main, ...suggestions], Boolean(memory));
-  const journeyId = plan ? (revision?.journey?.journey_id ?? wish.journey_id) : wish.journey_id;
+  const journeyId = revision?.journey?.journey_id ?? wish?.journey_id ?? null;
   const summary =
     stage === "wish"
       ? waiting.length
@@ -862,18 +890,18 @@ function build(wish: TravelWish, plan: TravelPlan | null, key: string, href: str
     planRevision: revision?.plan_revision ?? null,
     isDemo: ctx.isDemo,
     stage,
-    title: titleOf(stage, who, wish.destination_name),
-    destination: wish.destination_name,
+    title: titleOf(stage, who, destination),
+    destination,
     planTitle: revision?.title?.trim() || null,
     status,
     summary,
     cardLine,
-    reason: wish.owner_reason?.trim() || null,
+    reason: wish?.owner_reason?.trim() || null,
     waiting,
     preconditions: preconditionViews(ctx),
     arrangement: revision?.summary?.trim() || null,
     planWritten: Boolean(revision),
-    planLink: !revision && wish.plan_id ? `/guides/plan/${encodeURIComponent(wish.plan_id)}` : null,
+    planLink: !revision && wish?.plan_id ? `/guides/plan/${encodeURIComponent(wish.plan_id)}` : null,
     validity: revision ? rangeText(revision.valid_from, revision.valid_until, ctx.zone) : null,
     main,
     suggestions,
@@ -897,6 +925,14 @@ export function viewOfWish(wish: TravelWish, options: ViewOptions = {}): PlanVie
 /** /guides/plan/:planId：某一份计划（显示 current_revision 那一版）。 */
 export function viewOfPlan(bundle: PlanBundle, options: ViewOptions = {}): PlanView {
   return build(bundle.wish, bundle.plan, bundle.plan.plan_id, `/guides/plan/${encodeURIComponent(bundle.plan.plan_id)}`, options);
+}
+
+/**
+ * live 的 /guides/plan/:planId，读到的当前心愿（GET /travel/wish）与这份计划的 wish_id 对不上（以前的心愿）：只按计划本身说。
+ * 状态从计划推（见 stageOfPlan）；TA 的理由、还差什么、攒钱目标只有心愿才有，一律不显示、不编。
+ */
+export function viewOfPlanOnly(plan: TravelPlan, options: ViewOptions = {}): PlanView {
+  return build(null, plan, plan.plan_id, `/guides/plan/${encodeURIComponent(plan.plan_id)}`, options);
 }
 
 /** 地图主状态面板那一行（第②期）：只在想去 / 可以出发时出现，“想去 {目的地} · {还差什么第一条}”。 */

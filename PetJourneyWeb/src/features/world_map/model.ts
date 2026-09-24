@@ -4,6 +4,7 @@
  * 数据来自两处：live 读 W1（./worldState 只做形状转换）；fixture 由演示剧本生成（./demoScript，页面明示“演示”）。
  * 坐标一律 WGS-84；画到高德上时再换算（./coords）。
  */
+import type { TransportMode } from "@/shared/contracts";
 import type { PetMood } from "@/features/pets/PetMoodAvatar";
 import { distanceMeters } from "./coords";
 
@@ -72,6 +73,11 @@ export interface WorldPet {
   activity: MapActivity;
   /** 正在走的这一段（going / returning 才有）。 */
   leg: MapLeg | null;
+  /**
+   * 这一段的交通方式，照 W1 leg.mode 原样（契约 TransportMode；认不出的为 null）。和 leg 分开存：路线几何不够两点时 leg 为 null，
+   * 但 TA 坐什么还是知道的——标记上的交通方式角标（第 2 步）只看它。演示剧本只有走路，不给。
+   */
+  legMode?: TransportMode | null;
   position: MapLatLng | null;
   basis: MapPositionBasis;
   /** W1 这只宠物的状态版本（后台每记一件事就变）；行程快照据它和阶段、截止时刻判断要不要重读。演示为 0。 */

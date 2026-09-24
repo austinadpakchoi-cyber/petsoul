@@ -75,6 +75,9 @@ export default defineModule({
         createOwn: async () => {
           throw ApiError.capability("pets.create_own", "演示模式不上传照片，也不创建真实宠物。");
         },
+        addPhoto: async () => {
+          throw ApiError.capability("pets.add_photo", "演示模式不上传照片。");
+        },
         publicProfile: async (petId) => {
           const profile = fixturePublicProfile(petId);
           if (!profile) throw new ApiError({ kind: "http", status: 404, code: "NOT_FOUND", message: "没有找到这只宠物的公开主页。" });
@@ -99,7 +102,9 @@ export default defineModule({
         publicPet: (petId) => api.request<PublicPetView>(`/public/pets/${encodeURIComponent(petId)}`),
         publicPetPosts: (petId, cursor) => api.request<PostPage>(`/public/pets/${encodeURIComponent(petId)}/posts`, { query: { cursor } }),
         adoptionCandidates: () => api.request<AdoptionCandidate[]>("/adoption/candidates"),
-        adopt: (id, key) => api.request<AdoptResult>("/adoption/adopt", { method: "POST", body: { candidate_id: id }, idempotencyKey: key }),
+        // 给了 householdId 才带 household_id（迎进已有的家）；null 时请求体仍是 {candidate_id}，与原来逐字相同（新建家庭）。
+        adopt: (id, key, householdId) =>
+          api.request<AdoptResult>("/adoption/adopt", { method: "POST", body: householdId ? { candidate_id: id, household_id: householdId } : { candidate_id: id }, idempotencyKey: key }),
         createOwn: (input, key) => {
           const form = new FormData();
           form.set("name", input.name);
@@ -107,6 +112,12 @@ export default defineModule({
           if (input.photo) form.set("photo", input.photo);
           if (input.householdId) form.set("household_id", input.householdId);
           return api.request<PetPrivateSummary>("/pets", { method: "POST", body: form, idempotencyKey: key, timeoutMs: 30_000 });
+        },
+        // 入住时没带照片、之后补一张（add_pet_photo）：multipart 字段 photo；CSRF 由客户端对写操作自动回填，幂等键走请求头。只补不换，上传本身不生图。
+        addPhoto: (petId, photo, key) => {
+          const form = new FormData();
+          form.set("photo", photo);
+          return api.request<PetPrivateSummary>(`/pets/${encodeURIComponent(petId)}/photo`, { method: "PUT", body: form, idempotencyKey: key, timeoutMs: 30_000 });
         },
         publicProfile: (petId) => api.request<PetPublicProfile>(`/pets/${encodeURIComponent(petId)}/profile`),
         character: (petId, signal) => api.request<CharacterState>(`/pets/${encodeURIComponent(petId)}/character`, { signal }),

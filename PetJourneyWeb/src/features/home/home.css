@@ -1195,7 +1195,16 @@
   color: var(--paper-secondary-ink);
   font-size: 12px;
 }
-.ps-arrival__greeting figcaption {
+/* 叮嘱投影出的细节（2026-09-24 巡检 P2）：小标题“来自你确认过的生活叮嘱”只管下面这几项，
+   和上面的欢迎语隔一道虚线——欢迎语没有来源字段，不给它标出处 */
+.ps-arrival__notes {
+  display: grid;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--paper-shade);
+}
+.ps-arrival__notes p {
+  margin: 0;
   color: var(--paper-secondary-ink);
   font-size: 11px;
 }
@@ -1259,10 +1268,18 @@
   font-size: 17px;
   margin-bottom: 12px;
 }
+/* 没有细节时欢迎语就是最后一行，不留底边空白 */
+.ps-welcome__greeting:last-child {
+  margin-bottom: 0;
+}
+/* 细节在小标题下面（小标题只管这几项，见 HomeWelcomeBanner）；纸卡昼夜不变，字用纸墨（原来的 --c-ink-2 深色下在纸上约 1.9:1） */
+.ps-welcome__notes {
+  display: grid;
+  gap: 6px;
+}
 .ps-welcome__meta {
-  margin-top: 10px;
   font-size: 11px;
-  color: var(--c-ink-2);
+  color: var(--paper-secondary-ink);
 }
 @media (prefers-reduced-motion: reduce) {
   .ps-living-pet.is-photo,

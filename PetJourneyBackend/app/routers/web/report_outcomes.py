@@ -27,6 +27,11 @@ router = web_router("report_outcomes")
 
 
 def capabilities(settings) -> list[Capability]:
+    # **限定：这条声明不跟随后台表是否就绪**（Q 报、I 2026-09-24 定为维持现状并写明）。
+    # 下面 `/reports/mine` 的闸看的是 `admin.tables_ready`——迁移 1500–1580 有没有应用，是**库的状态**；
+    # 而能力声明的协议是 `capabilities(settings)`，只收设置、读不到库，写不出「跟着同一个开关走」，也不该拿设置猜一个近似条件。
+    # 所以迁移没跑全（例如用了没迁移的旧库）时，能力表照样说可用、接口会回 NOT_CONFIGURED：**能力表说可用不代表接口此刻可用**，
+    # 客户端仍要处理这个错误。正常部署里迁移随启动执行，这种情况出不来（`tests/test_admin_after10.py` 钉了「跑起来的应用里后台表一定就绪」）。
     return [cap("social.report_outcomes", "web_admin", CapabilityStatus.available,
                 "举报人查看自己举报的处理结果（固定措辞，不含员工身份与内部原因）")]
 

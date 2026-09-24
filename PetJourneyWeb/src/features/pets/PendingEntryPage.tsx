@@ -23,7 +23,7 @@ export function PendingEntryPage() {
   const keyRef = useRef(newIdempotencyKey("entry-adopt"));
   const pet = useQuery({ queryKey: queryKeys.publicPet(petId ?? "-"), queryFn: () => pets.publicPet(petId!), enabled: Boolean(petId && session.data?.authenticated), staleTime: 15_000 });
   const adopt = useMutation({
-    mutationFn: () => pets.adopt(pet.data!.resident!.candidate_id, keyRef.current),
+    mutationFn: () => pets.adopt(pet.data!.resident!.candidate_id, keyRef.current, null), // 入住流程：还没有家，新建家庭
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.session }),

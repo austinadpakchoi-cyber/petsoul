@@ -28,7 +28,7 @@
 }
 .ds-points {
   font-weight: 700;
-  color: var(--c-coral);
+  color: color-mix(in srgb, var(--c-danger) 80%, var(--c-ink));
   white-space: nowrap;
 }
 .ds-quote {
@@ -36,10 +36,21 @@
   color: var(--c-ink);
   font-weight: 600;
 }
+/* 出错红字：浅色下 --c-danger 在页面底只有 4.3:1，字色掺 25% 的 --c-ink（页面底 5.7:1、卡面 6.3:1）；深色保持 --c-danger（页面底 6.1:1、卡面 5.2:1）。
+   纸卡昼夜都是浅色纸面（深色下 --c-danger 在纸上只有 2.3:1）：纸卡里的出错字不论明暗都用纸面的深红（--paper-accent 掺 20% 的 --paper-ink，对纸面约 4.9:1）。
+   深色段须写在基础规则之后。 */
 .ds-error {
   margin: 0;
-  color: var(--c-danger);
+  color: color-mix(in srgb, var(--c-danger) 75%, var(--c-ink));
   font-size: var(--fs-sm);
+}
+@media (prefers-color-scheme: dark) {
+  .ds-error {
+    color: var(--c-danger);
+  }
+}
+.ps-card--paper .ds-error {
+  color: color-mix(in srgb, var(--paper-accent) 80%, var(--paper-ink));
 }
 .ds-footnote {
   font-size: var(--fs-xs);
@@ -49,7 +60,7 @@
   background: none;
   border: 0;
   padding: 6px 0;
-  min-height: 32px;
+  min-height: 44px;
   color: var(--c-leaf);
   font: inherit;
   font-size: var(--fs-sm);
@@ -58,13 +69,20 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+/* 红线说明：浅色下 --c-danger 压在浅红底上只有 3.6:1，字色掺 25% 的 --c-ink（4.8:1，和 ui.css 的警示标签同一做法）；
+   深色保持 --c-danger（5.4:1），深色段须写在这条之后。 */
 .ds-redlines {
   padding: var(--space-3);
   border-radius: var(--r-control);
   background: var(--c-danger-soft);
-  color: var(--c-danger);
+  color: color-mix(in srgb, var(--c-danger) 75%, var(--c-ink));
   display: grid;
   gap: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  .ds-redlines {
+    color: var(--c-danger);
+  }
 }
 .ds-redlines .ds-list {
   color: var(--c-ink);
@@ -79,7 +97,7 @@
   border: 1px solid var(--c-surface-stroke);
 }
 .ds-segmented button {
-  min-height: 36px;
+  min-height: 44px;
   padding: 0 12px;
   border: 0;
   border-radius: var(--r-pill);
@@ -113,6 +131,13 @@
 .ds-coach__face svg {
   width: 44px;
   height: 44px;
+}
+/* 龟教练头像（UI-ASSET-009 coach-turtle-portrait，本身在圆形安全区里） */
+.ds-coach__face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 .ds-turtle-shell {
   fill: var(--c-leaf);
@@ -148,6 +173,10 @@
   color: inherit;
   text-decoration: none;
   border-bottom: 1px solid var(--c-surface-stroke);
+}
+/* 科目行在 overflow:hidden 的卡片里（.ds-subjects）：键盘焦点框画在行内（负偏移），不被卡片左右裁掉 */
+.ds-subject-row:focus-visible {
+  outline-offset: -3px;
 }
 .ds-subject-row:last-child {
   border-bottom: 0;
@@ -232,14 +261,34 @@
   align-items: flex-start;
   font-size: var(--fs-sm);
 }
+/* 首页的驾照小卡：驾照正面底图（UI-ASSET-009 license-card-front-bg）铺底，字一律用纸墨色（压在底图的水彩上也 ≥ 4.5，
+   实测见报告）；底图加载失败就是原来的纸色卡。 */
 .ds-license-mini {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: grid;
   gap: var(--space-2);
   color: var(--paper-ink);
 }
-/* 报名卡（教练卡后面的那张纸卡）：愿望引语原来用主题的 --c-ink，深色下在纸面上几乎看不见，改用纸墨。
+/* 小卡比驾照本身小，底图左下角的水彩花叶会压到第二、三行字：淡到 0.55（实测字对底最坏像素见报告） */
+.ds-license-mini__art {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.55;
+}
+.ds-license-mini__meta {
+  color: var(--paper-ink);
+  font-size: var(--fs-sm);
+}
+/* 报名卡（纸卡）：愿望引语原来用主题的 --c-ink，深色下在纸面上几乎看不见，改用纸墨。
+   第三批起报名卡排在教练卡前面（加了横幅后首屏要看得到报名按钮），选择器从“教练卡后面的纸卡”改成按报名卡自己的类名，不再依赖先后。
    纸卡里的次要字（报名卡、驾照小卡、领证合影的 .ps-muted）交给 ui.css 的 .ps-card--paper .ps-muted，这里不再重复。 */
-.ds-coach ~ .ps-card--paper .ds-quote {
+.ds-enroll .ds-quote {
   color: var(--paper-ink);
 }
 .ds-lessons details {
@@ -270,6 +319,193 @@
 }
 .ds-exam-card p {
   margin: 0;
+}
+/* 总览顶上的“现在 / 下一步”卡：柔和的状态底色，卡里的字一律用 --c-ink
+   （在四种浅底上浅色 ≥ 11:1、深色 ≥ 10:1；--c-ink-2 压珊瑚浅底浅色只有 4.46:1，这里不用）。 */
+.ds-now {
+  display: grid;
+  gap: var(--space-2);
+  border-color: transparent;
+  color: var(--c-ink);
+}
+.ds-now--sun {
+  background: var(--c-sun-soft);
+}
+.ds-now--coral {
+  background: var(--c-coral-soft);
+}
+.ds-now--sky {
+  background: var(--c-sky-soft);
+}
+.ds-now--leaf {
+  background: var(--c-leaf-soft);
+}
+.ds-now__step {
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--c-ink);
+}
+.ds-now__title {
+  margin: 0;
+  font-size: var(--fs-xl);
+  line-height: 1.3;
+}
+.ds-now__detail {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+.ds-now .ps-btn {
+  margin-top: var(--space-1);
+}
+/* 报名卡：段落只靠栈间距分开，不再叠加 <p> 的默认外边距（原来引语和说明之间空白偏大） */
+.ds-enroll > p {
+  margin: 0;
+}
+/* 科目页顶上的三个入口（上课 / 练习 / 正式考试）：点了跳到那一段；320 宽也三列并排，字折行不溢出 */
+.ds-entries {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.ds-entry {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 2px;
+  min-height: 76px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-control);
+  border: 1px solid var(--c-surface-stroke);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ds-entry svg {
+  color: var(--c-leaf);
+}
+.ds-entry strong {
+  font-size: var(--fs-md);
+}
+.ds-entry span {
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+  color: var(--c-ink-2);
+  overflow-wrap: anywhere;
+}
+.ds-entry--exam.is-available,
+.ds-entry--exam.is-in_exam {
+  border-color: var(--c-leaf);
+  box-shadow: inset 0 0 0 1px var(--c-leaf);
+}
+.ds-entry--exam.is-cooldown svg {
+  color: var(--c-coral);
+}
+.ds-entry--exam.is-locked svg {
+  color: var(--c-ink-2);
+}
+.ds-jump-target {
+  scroll-margin-top: calc(var(--safe-top) + 64px);
+}
+/* 科目页的正式考试卡：第一行写结论（这次是第几次、几点能再约、通过的样子带对勾） */
+.ds-exam-card__big {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  line-height: 1.4;
+}
+.ds-exam-card__big svg {
+  flex: none;
+  color: var(--c-leaf);
+}
+.ds-exam-card.is-passed {
+  border-color: var(--c-leaf);
+}
+/* “上一次正式考试 · 看成绩单”：点按区 44px（.ds-link 只有 32px），字用墨色 */
+.ds-exam-card__last {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--c-ink);
+}
+/* 首页横幅（UI-ASSET-009 school-hero，780×320）：只作装饰（alt=""）；标题是页面文字，叠在左边约 40% 的天空和草地上，
+   下面衬一层从左往右变淡的主题底色渐变：字（--c-ink）在 0–42% 宽度内至少压着 72% 的底色，
+   按任意图片像素的最坏情况推算浅色 ≥ 6.9:1、深色（图片压暗到 0.72）≥ 7:1。宽高比固定，不跳版面；
+   320 宽下约 118px 高，“现在 / 下一步”卡和报名卡的主按钮仍在 320×568 首屏。图片加载失败时只剩柔和的底色和标题。 */
+.ds-hero {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 780 / 320;
+  border-radius: var(--r-card);
+  background: linear-gradient(120deg, var(--c-sky-soft), var(--c-leaf-soft));
+}
+.ds-hero__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ds-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c-bg) 90%, transparent) 0%, color-mix(in srgb, var(--c-bg) 72%, transparent) 42%, transparent 70%);
+}
+.ds-hero__text {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 42%;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 0 var(--space-2) 0 var(--space-4);
+  color: var(--c-ink);
+}
+.ds-hero__title {
+  margin: 0;
+  font-size: clamp(20px, 6.4vw, 26px);
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.ds-hero__tag {
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+/* 深色下横幅压暗一点，不刺眼 */
+@media (prefers-color-scheme: dark) {
+  .ds-hero__img {
+    filter: brightness(0.72) saturate(0.9);
+  }
+}
+/* 科目页上课处的龟教练（UI-ASSET-009 coach-turtle-explain），旁边的字写了教练名字 */
+.ds-lesson-coach {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) 0 var(--space-2);
+  border-bottom: 1px solid var(--c-surface-stroke);
+}
+.ds-lesson-coach img {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+.ds-lesson-coach p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--c-ink-2);
 }
 
 /* ---------- 考局外壳 ---------- */
@@ -331,9 +567,10 @@
   justify-items: center;
   min-width: 48px;
 }
+/* 顶栏小字“剩余 / 得分”：原来的 --c-ink-3 深色下只有 3.43:1（巡检第 6 批），换成 --c-ink-2（深色约 6.4、浅色约 5.6）。答题顶栏共用这条。 */
 .ds-exam__stat span {
   font-size: var(--fs-xs);
-  color: var(--c-ink-3);
+  color: var(--c-ink-2);
 }
 .ds-exam__stat strong {
   font-size: var(--fs-lg);
@@ -405,11 +642,18 @@
   background: var(--c-surface);
   color: var(--c-ink);
 }
-.ds-hold {
+/* 右上角一列：“到位、保持停稳”在上，扣分 / 到位提示在下；同一列里排，不会互相压住（原来“保持停稳”居中、提示靠右，320 宽会叠在一起） */
+.ds-field__feed {
   position: absolute;
   top: 40px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: var(--space-2);
+  left: var(--space-2);
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  pointer-events: none;
+}
+.ds-hold {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -426,13 +670,9 @@
   accent-color: var(--c-on-deep);
 }
 .ds-toasts {
-  position: absolute;
-  top: 40px;
-  right: var(--space-2);
   display: grid;
   gap: 4px;
   justify-items: end;
-  pointer-events: none;
 }
 .ds-toast {
   padding: 6px 10px;
@@ -485,11 +725,14 @@
   background: var(--c-leaf);
   color: var(--c-on-deep);
 }
+/* 视频邀请卡：用左右 0 ＋ 自动外边距居中，不用 transform——入场动画 ds-pop 的 from 帧写的是 transform，
+   原来会把 translateX(-50%) 盖掉，卡片斜着从右边滑进来（巡检第 3 批）。 */
 .ds-invite {
   position: absolute;
   top: 44px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  margin: 0 auto;
   width: min(320px, calc(100% - 24px));
   display: grid;
   gap: var(--space-2);
@@ -503,6 +746,36 @@
   margin: 2px 0 0;
   font-size: var(--fs-sm);
   color: var(--c-ink-2);
+}
+/* 矮屏（320×568、375×667、414×736 这类，场地不到约 480px 高）：邀请卡收成场地最上方一条 52px 高的窄条，
+   左边两行字、右边两个 44px 的键。原来的卡片从 44px 往下画到约 174px，科三车在右车道时盖住整条马路和车（巡检 R32）；
+   窄条底边在 56px，高过路口北侧那段路的上沿（约 60px）。窄条在的几秒里暂时盖住左上角的状态徽标，右上角的提示列挪到窄条下面。 */
+@media (max-height: 780px) {
+  .ds-invite {
+    top: 4px;
+    height: 52px;
+    box-sizing: border-box;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    padding: 4px 4px 4px var(--space-3);
+    border-radius: var(--r-control);
+  }
+  .ds-invite p {
+    margin: 0;
+    font-size: var(--fs-xs);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ds-invite .ps-row {
+    flex-wrap: nowrap;
+  }
+  .ds-invite .ps-btn {
+    min-height: 44px;
+  }
+  .ds-exam__field[data-invite] .ds-field__feed {
+    top: 60px;
+  }
 }
 .ds-overlay {
   position: absolute;
@@ -537,28 +810,152 @@
   border-radius: var(--r-control);
   background: var(--c-leaf-soft);
 }
+/* 驾驶顶栏（只作用在驾驶考局 .ds-exam，答题顶栏不受影响）：320 宽也不截断——“第几项”跟在项目名后，暂停键 44×44。 */
+.ds-exam > .ds-exam__top {
+  gap: 6px;
+  padding: 0 var(--space-2) 0 var(--space-3);
+}
+.ds-exam__step {
+  margin-left: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--c-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.ds-exam > .ds-exam__top .ps-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+/* 剩余 30 秒起剩余时间变红；刚扣分时分数变红（FLASH_MS 后恢复） */
+.ds-exam__stat[data-low] strong,
+.ds-exam__stat[data-hit] strong {
+  color: var(--c-danger);
+}
+.ds-exam__stat[data-hit] strong {
+  animation: ds-hit var(--dur-med) var(--ease-out);
+}
+@keyframes ds-hit {
+  from {
+    transform: scale(1.3);
+  }
+}
+/* 场地描边：扣分 / 红线描红，到位描绿；静音也看得出刚发生了什么 */
+.ds-exam__field[data-flash]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ds-exam__field[data-flash="bad"]::after {
+  box-shadow: inset 0 0 0 4px var(--c-danger);
+}
+.ds-exam__field[data-flash="good"]::after {
+  box-shadow: inset 0 0 0 4px var(--c-leaf);
+}
+/* 转向方式（方向盘 / 按钮）放在“开始”卡和暂停卡里，不放在拇指区 */
+.ds-steer-mode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.ds-steer-mode__label {
+  font-size: var(--fs-sm);
+  color: var(--c-ink-2);
+}
+.ds-exam .ds-segmented button {
+  min-width: 64px;
+  min-height: 44px;
+}
+/* 场地里的卡片放不下时可以滚动（不再被场地裁掉）；矮屏把练习提示留给场地底部那条，卡片更紧凑 */
+.ds-exam .ds-overlay {
+  overflow-y: auto;
+  align-items: safe center;
+}
+@media (max-height: 640px) {
+  .ds-exam .ds-overlay {
+    padding: var(--space-2);
+  }
+  .ds-exam .ds-overlay__card {
+    padding: var(--space-3);
+  }
+  .ds-exam .ds-overlay__hint {
+    display: none;
+  }
+}
+/* 深色下警示红、叶绿都变浅，浅色字压不住（约 2.6:1）：扣分、到位的提示、勾好的出发前检查改用深墨字 */
+@media (prefers-color-scheme: dark) {
+  .ds-toast--bad,
+  .ds-toast--good,
+  .ds-hold,
+  .ds-check[aria-pressed="true"] {
+    color: var(--c-deep-ink);
+  }
+  .ds-hold progress {
+    accent-color: var(--c-deep-ink);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-exam__stat[data-hit] strong {
+    animation: none;
+  }
+}
+/* 开考说明里的扣分项（规格 §4.3 要求开考前列出）：分值用正文墨色（珊瑚红字压页面底色不到 4.5:1） */
+.ds-prepare__deductions {
+  display: grid;
+  gap: 6px;
+  padding: var(--space-3);
+  border-radius: var(--r-control);
+  background: var(--c-surface);
+  border: 1px solid var(--c-surface-stroke);
+}
+.ds-prepare__points {
+  color: var(--c-ink);
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* 考局组件按需加载时的过渡：留在考局底色上，不闪白 */
+.ds-exam--loading {
+  justify-content: center;
+}
+/* 回放（ReplayViewer，驾驶组件的一部分）：播到扣分那一刻写明“第几秒 · 什么事”；其余回放样式在成绩单区段 */
+.ds-replay__now {
+  margin: 0;
+  min-height: 1.5em;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--c-ink);
+}
 
 /* ---------- 操作区 ---------- */
+/* 左手转向、右手挡位 / 转向灯 / 踏板；左右两列隔 16px，列内热区隔 10px，所有热区不小于 44px。
+   320×568 下操作区高 216px（内容 196px）：挡位 44 + 转向灯 44 + 踏板至少 88，加两道 10px 间距正好放下。 */
 .ds-controls {
   height: 100%;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-4);
 }
 .ds-controls__left,
 .ds-controls__right {
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 10px;
+}
+.ds-controls__left {
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
 }
 .ds-wheel-wrap {
   display: grid;
   justify-items: center;
-  gap: 4px;
+  gap: 10px;
 }
+/* 拖动时方向盘跟着手指转（不加过渡）；松手、键盘或“回正”换挡位时，用一个短过渡转到那一档 */
 .ds-wheel {
   width: min(128px, 34vw);
   aspect-ratio: 1;
@@ -566,6 +963,11 @@
   touch-action: none;
   cursor: grab;
   outline-offset: 4px;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.ds-wheel.is-dragging {
+  cursor: grabbing;
+  transition: none;
 }
 .ds-wheel svg {
   width: 100%;
@@ -589,15 +991,60 @@
   fill: var(--c-sun);
 }
 .ds-wheel__center {
-  min-height: 36px;
+  min-height: 44px;
+  min-width: 88px;
 }
+/* 深色面板上深墨方向盘几乎看不见（约 1.3:1）：换成次要墨色（约 6.4:1） */
+@media (prefers-color-scheme: dark) {
+  .ds-wheel__rim,
+  .ds-wheel__spoke {
+    stroke: var(--c-ink-2);
+  }
+  .ds-wheel__hub {
+    fill: var(--c-ink-2);
+  }
+}
+/* 按钮转向：上面一条方向表（打了几档一眼看到），左、右两个大键并排，“回正”单独一行在下面（不夹在左右键中间，免得误点） */
 .ds-steer-buttons {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto minmax(44px, 1fr) auto;
+  gap: 10px;
   width: 100%;
   flex: 1;
-  align-items: stretch;
+}
+.ds-key--center {
+  grid-column: 1 / -1;
+}
+.ds-steer-meter {
+  grid-column: 1 / -1;
+  position: relative;
+  height: 14px;
+  margin: 0 7px;
+}
+.ds-steer-meter::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-2);
+  box-shadow: inset 0 0 0 1px var(--c-ink-3);
+}
+.ds-steer-meter span {
+  position: absolute;
+  top: 0;
+  left: calc(var(--pos) * 100% - 7px);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--c-ink);
+}
+.ds-key[data-held] {
+  background: var(--c-sun);
+  color: var(--c-deep-ink);
 }
 .ds-key {
   min-height: 44px;
@@ -617,16 +1064,16 @@
   color: var(--c-ink);
   font-size: var(--fs-sm);
 }
+/* 挡位（D、R）一行，转向灯（科三）另起一行：每行两个键，各占一半 */
 .ds-gears {
-  display: flex;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
   width: 100%;
-  justify-content: space-between;
 }
 .ds-gear {
-  flex: 1;
   min-height: 44px;
-  min-width: 36px;
+  min-width: 44px;
   border-radius: var(--r-control);
   border: 1px solid var(--c-surface-stroke);
   background: var(--c-surface-2);
@@ -635,12 +1082,14 @@
   font-weight: 800;
   cursor: pointer;
 }
+/* 选中的挡位 / 转向灯：浅字压天蓝、暖黄只有约 2.4:1，改用深墨字（浅色约 5.4:1，深色约 9:1） */
 .ds-gear[aria-pressed="true"] {
   background: var(--c-sky);
-  color: var(--c-on-deep);
+  color: var(--c-deep-ink);
 }
 .ds-gear--blink {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
 }
 .ds-gear--blink[aria-pressed="true"] {
   background: var(--c-sun);
@@ -648,13 +1097,14 @@
 .ds-gear[aria-disabled="true"]:not([aria-pressed="true"]) {
   opacity: 0.45;
 }
+/* 刹车、油门隔开 16px（原来 8px，拇指一偏就踩错） */
 .ds-pedals {
   flex: 1;
   width: 100%;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  min-height: 96px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  min-height: 88px;
 }
 .ds-pedal {
   border-radius: var(--r-card);
@@ -667,8 +1117,9 @@
   cursor: pointer;
   transition: transform var(--dur-fast) var(--ease-out);
 }
+/* 刹车：浅色下浅字压珊瑚红只有约 3:1，底色换成警示红（约 4.5:1）；深色下红、绿都变浅，改用深墨字和深墨按下圈 */
 .ds-pedal--brake {
-  background: var(--c-coral);
+  background: var(--c-danger);
 }
 .ds-pedal--gas {
   background: var(--c-leaf);
@@ -677,43 +1128,64 @@
   transform: scale(0.96);
   box-shadow: inset 0 0 0 3px var(--c-on-deep);
 }
+@media (prefers-color-scheme: dark) {
+  .ds-pedal--brake {
+    background: var(--c-coral);
+  }
+  .ds-pedal {
+    color: var(--c-deep-ink);
+  }
+  .ds-pedal.is-active {
+    box-shadow: inset 0 0 0 3px var(--c-deep-ink);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-wheel {
+    transition: none;
+  }
+}
 
 /* ---------- 答题 ---------- */
 .ds-quiz .ds-exam__top {
   flex: 0 0 auto;
   min-height: 60px;
 }
+/* 题号：每个点按区 40×40（原来 30×30）。一行放得下就一行；放不下就平均折成几行（10 题在 320、390 宽都是 5 + 5），
+   列数由 QuizRunner 按这一行的实际宽度算好写进 --dot-cols——所有题号都在屏幕里（原来横向滑动，看不出后面还有题） */
 .ds-dots {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(var(--dot-cols, 10), 40px);
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 2px;
-  padding: 2px var(--space-3);
+  gap: 0;
+  padding: 0 var(--space-3);
 }
 .ds-dot {
-  width: 30px;
-  height: 30px;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   border: 0;
   background: none;
   display: grid;
   place-items: center;
   cursor: pointer;
 }
+/* 圈用次要墨色（浅 5.7 / 深 6.4:1），答过的实心绿（≥ 4.4:1），当前题再套一圈正文墨色——不只靠颜色 */
 .ds-dot::before {
   content: "";
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: var(--c-surface-stroke);
-  border: 2px solid var(--c-ink-3);
+  background: var(--c-surface);
+  border: 2px solid var(--c-ink-2);
 }
 .ds-dot[data-answered]::before {
   background: var(--c-leaf);
   border-color: var(--c-leaf);
 }
 .ds-dot[aria-current="step"]::before {
-  outline: 2px solid var(--c-sun);
-  outline-offset: 2px;
+  outline: 2px solid var(--c-ink);
+  outline-offset: 3px;
 }
 .ds-question {
   flex: 1;
@@ -723,6 +1195,10 @@
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-2) var(--page-gutter) var(--space-4);
+}
+/* 题目区内容多时整块滚动，不许把哪一块压扁：320×568 下场景插画原来被压到只剩一条、讲解出来后整个消失 */
+.ds-question > * {
+  flex-shrink: 0;
 }
 .ds-story {
   display: grid;
@@ -748,6 +1224,10 @@
   gap: var(--space-2);
 }
 .ds-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
   min-height: 52px;
   padding: 10px 14px;
   border-radius: var(--r-control);
@@ -758,17 +1238,82 @@
   text-align: left;
   cursor: pointer;
 }
+/* 单选圈：未选中是空圈，选中是实心点——不只靠边框颜色区分（圈与点用正文墨色，深浅两套都 ≥ 5:1） */
+.ds-option__mark {
+  flex: 0 0 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--c-ink-2);
+}
+.ds-option__text {
+  flex: 1;
+  min-width: 0;
+}
 .ds-option[aria-checked="true"] {
-  border-color: var(--c-sky);
+  border: 2px solid var(--c-sea);
+  padding: 9.5px 13.5px;
   background: var(--c-sky-soft);
 }
+.ds-option[aria-checked="true"] .ds-option__mark {
+  border-color: var(--c-ink);
+  background: var(--c-ink);
+  box-shadow: inset 0 0 0 3px var(--c-sky-soft);
+}
 .ds-option[data-verdict="right"] {
-  border-color: var(--c-leaf);
+  border: 2px solid var(--c-leaf);
+  padding: 9.5px 13.5px;
   background: var(--c-leaf-soft);
 }
 .ds-option[data-verdict="wrong"] {
-  border-color: var(--c-coral);
+  border: 2px solid var(--c-danger);
+  padding: 9.5px 13.5px;
   background: var(--c-coral-soft);
+}
+.ds-option[data-verdict="right"] .ds-option__mark {
+  box-shadow: inset 0 0 0 3px var(--c-leaf-soft);
+}
+.ds-option[data-verdict="wrong"] .ds-option__mark {
+  box-shadow: inset 0 0 0 3px var(--c-coral-soft);
+}
+/* 讲解出来后：没被选、也不是正确答案的选项退后一点（字仍是正文色，只去掉边框） */
+.ds-options[data-locked] .ds-option:not([data-verdict]) {
+  border-color: transparent;
+  background: var(--c-surface-2);
+  cursor: default;
+}
+.ds-option:disabled {
+  cursor: default;
+}
+/* 对错小标：图标＋字；字用正文墨色（彩色底上 ≥ 11:1），图标用对错色（≥ 3.7:1） */
+.ds-answer-tag {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px 2px 6px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ds-answer-tag[data-verdict="right"] svg {
+  color: var(--c-leaf);
+}
+.ds-answer-tag[data-verdict="wrong"] svg {
+  color: var(--c-danger);
+}
+/* 排序、拖放的格子本身是 surface 底：小标换成浅底色，和格子分得开 */
+.ds-order__item .ds-answer-tag,
+.ds-target .ds-answer-tag {
+  background: var(--c-surface-2);
+}
+.ds-saved {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
 }
 .ds-order {
   margin: 0;
@@ -798,9 +1343,47 @@
   font-weight: 800;
   font-size: var(--fs-sm);
 }
-.ds-order__text {
+/* 排先后：点两项交换。每一项的文字整块是一个按钮（≥ 44px 高）；选中的那项换底色加粗边框，其余项虚线提示“点我交换” */
+.ds-order-edit {
+  display: grid;
+  gap: var(--space-2);
+}
+.ds-order-edit > p {
+  margin: 0;
+}
+.ds-order__pick {
   flex: 1;
   min-width: 0;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--c-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ds-order__pick:disabled {
+  cursor: default;
+}
+.ds-order__item[data-picked] {
+  border: 2px solid var(--c-sea);
+  padding: 3px 5px 3px 9px;
+  background: var(--c-sky-soft);
+}
+.ds-order__item[data-picked] .ds-order__pick {
+  font-weight: 700;
+}
+.ds-order[data-picking] .ds-order__item:not([data-picked]) {
+  border: 1.5px dashed var(--c-sea);
+  padding: 3.5px 5.5px 3.5px 9.5px;
+}
+.ds-order__item[data-verdict="right"] {
+  border: 2px solid var(--c-leaf);
+}
+.ds-order__item[data-verdict="wrong"] {
+  border: 2px solid var(--c-danger);
 }
 .ds-mini {
   width: 44px;
@@ -829,71 +1412,131 @@
   gap: 6px;
 }
 .ds-sign-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   min-height: 44px;
   padding: 0 14px;
   border-radius: var(--r-pill);
-  border: 1.5px solid var(--c-sun);
+  /* 边框：琥珀色掺正文墨色（原来纯 --c-sun，浅色下对页面底只有 1.9:1）；浅色对页面底 3.8、对自身浅琥珀底 3.6，深色 ≥ 8:1 */
+  border: 1.5px solid color-mix(in srgb, var(--c-sun) 60%, var(--c-ink));
   background: var(--c-sun-soft);
   color: var(--c-ink);
   font: inherit;
   font-weight: 700;
+  /* 按住标志拖动时不让页面跟着滚；标志之外的地方照常滑动翻页 */
   touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
   cursor: grab;
 }
 .ds-sign-chip[aria-pressed="true"] {
   background: var(--c-sun);
   color: var(--c-deep-ink);
+  box-shadow: 0 0 0 3px var(--c-sun-soft);
 }
+/* 已经放好的标志：留在上面可以再拖一次换位置；虚线框＋“已放”字样，不再整块变淡（原来 0.45 透明度，字只剩约 2:1） */
 .ds-sign-chip[data-placed] {
-  opacity: 0.45;
+  border-style: dashed;
+  border-color: var(--c-ink-2);
+  background: var(--c-surface);
+  color: var(--c-ink-2);
+}
+.ds-sign-chip__where {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+.ds-sign-chip[data-dragging] {
+  border-style: dashed;
+  background: var(--c-surface);
+  color: var(--c-ink-2);
+}
+.ds-sign-chip:disabled {
+  cursor: default;
 }
 .ds-sign-chip--placed {
   cursor: pointer;
-  opacity: 1;
+  touch-action: manipulation;
+}
+.ds-sign-chip__x {
+  font-weight: 800;
 }
 .ds-match__targets {
   display: grid;
   gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 .ds-target {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: var(--space-2);
-  min-height: 56px;
+  min-height: 60px;
   padding: 6px 8px 6px 12px;
   border-radius: var(--r-control);
-  border: 1.5px dashed var(--c-ink-3);
+  /* 放标志的格子：虚线用次要墨色（原来 --c-ink-3，浅色下对页面底 2.6:1），浅色 ≥ 5:1 */
+  border: 1.5px dashed var(--c-ink-2);
   background: var(--c-surface);
 }
+/* 手里拿着标志（拖动中或已点选）：每个位置都亮出“可以放”的边框 */
+.ds-match[data-dragging] .ds-target,
+.ds-match[data-picking] .ds-target {
+  border-color: var(--c-sea);
+  cursor: pointer;
+}
+/* 手指正在它上面：实线加粗、换底色，松手就放进这一格 */
+.ds-match .ds-target[data-over] {
+  border: 2.5px solid var(--c-sea);
+  padding: 5px 7px 5px 11px;
+  background: var(--c-sky-soft);
+}
+.ds-target[data-verdict="right"] {
+  border: 2px solid var(--c-leaf);
+}
+.ds-target[data-verdict="wrong"] {
+  border: 2px solid var(--c-danger);
+}
 .ds-target__label {
+  flex: 1 1 8em;
+  min-width: 0;
   font-size: var(--fs-sm);
   font-weight: 600;
 }
 .ds-target__slot {
   min-height: 44px;
-  min-width: 88px;
+  min-width: 96px;
+  padding: 0 12px;
   border-radius: var(--r-pill);
-  border: 0;
+  border: 1.5px dashed var(--c-ink-2);
   background: var(--c-surface-2);
   color: var(--c-ink-2);
   font: inherit;
   font-size: var(--fs-sm);
   cursor: pointer;
 }
-.ds-target__slot:not(:disabled) {
+.ds-match[data-picking] .ds-target__slot,
+.ds-target[data-over] .ds-target__slot {
+  border: 1.5px solid var(--c-sea);
   background: var(--c-sky-soft);
   color: var(--c-ink);
+  font-weight: 700;
 }
 .ds-sign-ghost {
   position: fixed;
   z-index: 60;
-  transform: translate(-50%, -120%);
+  /* 浮在指尖上方，不被手指挡住 */
+  transform: translate(-50%, -130%);
   padding: 8px 14px;
   border-radius: var(--r-pill);
+  border: 2px solid var(--c-deep-ink);
   background: var(--c-sun);
   color: var(--c-deep-ink);
   font-weight: 800;
+  white-space: nowrap;
   pointer-events: none;
   box-shadow: 0 6px 16px var(--c-shadow);
 }
@@ -902,6 +1545,18 @@
   gap: 4px;
   padding: var(--space-3);
   border-radius: var(--r-control);
+  scroll-margin: var(--space-4);
+}
+.ds-feedback__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ds-feedback.is-right .ds-feedback__title svg {
+  color: var(--c-leaf);
+}
+.ds-feedback.is-wrong .ds-feedback__title svg {
+  color: var(--c-danger);
 }
 .ds-feedback p {
   margin: 0;
@@ -914,8 +1569,9 @@
 .ds-feedback.is-wrong {
   background: var(--c-coral-soft);
 }
+/* TA 的话：原来用 --c-ink-2，浅色下在答错的珊瑚底上只有 4.46:1，改用正文墨色（前面的“TA：”已经区分说话人） */
 .ds-pet-line {
-  color: var(--c-ink-2);
+  color: var(--c-ink);
 }
 .ds-quiz__nav {
   display: flex;
@@ -927,26 +1583,113 @@
 }
 
 /* 场景插画 */
-.sc-sky {
-  fill: var(--c-sky-soft);
+/* 全部用代码画、颜色全用主题令牌（深浅色自动跟随）。背景（天、远山、草地、树、房子、路面颗粒）只做氛围；
+   题目要看懂的东西（标志、信号灯、斑马线、停止线、居民、救援车、雨雾夜）画在最上层，对比度按令牌实算：
+   斑马线 / 停止线对路面浅色 ≥ 6、深色 ≥ 7；中心虚线对路面浅色 ≥ 3。 */
+.sc-sky-top {
+  stop-color: var(--c-sky-soft);
+}
+.sc-sky-bottom {
+  stop-color: color-mix(in srgb, var(--c-sky-soft) 55%, var(--c-surface));
 }
 .sc-sky--night {
   fill: var(--c-deep-ink);
 }
+.sc-moon {
+  fill: var(--c-sun);
+}
+.sc-star {
+  fill: var(--c-on-deep);
+  opacity: 0.85;
+}
+.sc-hill {
+  fill: color-mix(in srgb, var(--c-leaf) 28%, var(--c-leaf-soft));
+}
+.sc-grass {
+  fill: var(--c-leaf-soft);
+}
+.sc-tuft {
+  fill: none;
+  stroke: color-mix(in srgb, var(--c-leaf) 55%, var(--c-leaf-soft));
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sc-canopy {
+  fill: var(--c-leaf);
+}
+.sc-canopy-hi {
+  fill: color-mix(in srgb, var(--c-leaf) 45%, var(--c-leaf-soft));
+}
+.sc-trunk {
+  fill: color-mix(in srgb, var(--c-sun) 30%, var(--c-ink-2));
+}
+.sc-house {
+  fill: var(--c-sun-soft);
+  stroke: color-mix(in srgb, var(--c-sun) 45%, var(--c-ink-2));
+  stroke-width: 1.2;
+}
+.sc-roof {
+  fill: var(--c-coral);
+}
+.sc-awning {
+  fill: none;
+  stroke: var(--c-on-deep);
+  stroke-width: 5;
+  opacity: 0.75;
+}
+.sc-win {
+  fill: var(--c-sky-soft);
+  stroke: color-mix(in srgb, var(--c-sun) 45%, var(--c-ink-2));
+  stroke-width: 1;
+}
+.sc-win--lit {
+  fill: var(--c-sun);
+}
+.sc-door {
+  fill: color-mix(in srgb, var(--c-coral) 45%, var(--c-ink-2));
+}
+.sc-flagpole {
+  stroke: var(--c-ink-2);
+  stroke-width: 1.5;
+}
+.sc-flag {
+  fill: var(--c-danger);
+}
 .sc-road,
 .sc-road-curve {
-  fill: var(--c-deep-ink);
-  opacity: 0.82;
+  fill: color-mix(in srgb, var(--c-deep-ink) 62%, var(--c-ink-3));
 }
-.sc-road-curve {
+.sc-road-curve,
+.sc-road-curve-grain {
   fill: none;
-  stroke: var(--c-deep-ink);
   stroke-width: 44;
 }
+.sc-road-curve {
+  stroke: color-mix(in srgb, var(--c-deep-ink) 62%, var(--c-ink-3));
+}
+.sc-grain-dot {
+  fill: var(--c-on-deep);
+  opacity: 0.16;
+}
+.sc-edge {
+  fill: none;
+  stroke: var(--c-on-deep);
+  stroke-width: 1.5;
+  opacity: 0.7;
+}
 .sc-dash {
+  fill: none;
   stroke: var(--c-sun);
   stroke-width: 3;
   stroke-dasharray: 12 10;
+}
+.sc-dash--curve {
+  stroke-width: 2.5;
+}
+.sc-dash--thin {
+  stroke-width: 2;
+  stroke-dasharray: none;
 }
 .sc-paint,
 .sc-stopline {
@@ -959,24 +1702,72 @@
 .sc-zebra {
   fill: var(--c-on-deep);
 }
-.sc-house {
-  fill: var(--paper-shade);
+/* 第四批：s1.dir.2 的车道（对向与本向之间实线、两条本向车道之间白虚线、路面白漆箭头），s1.park.1 路边的黄色网格 */
+.sc-dash--solid {
+  stroke-dasharray: none;
+  stroke-width: 2.5;
+}
+.sc-lane-line {
+  fill: none;
+  stroke: var(--c-on-deep);
+  stroke-width: 2;
+  stroke-dasharray: 10 8;
+  opacity: 0.85;
+}
+.sc-lane-arrow {
+  fill: none;
+  stroke: var(--c-on-deep);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sc-grid-yellow {
+  fill: none;
+  stroke: var(--c-sun);
+  stroke-width: 1.6;
+}
+.sc-grid-box {
+  fill: none;
+  stroke: var(--c-sun);
+  stroke-width: 2;
 }
 .sc-cabin {
   fill: var(--c-surface-2);
 }
 .sc-window {
-  fill: var(--c-sky-soft);
-  stroke: var(--c-deep-ink);
+  fill: none;
+  stroke: var(--c-ink-2);
   stroke-width: 3;
 }
+.sc-mirror {
+  fill: var(--c-ink-2);
+}
+.sc-mirror-stem {
+  stroke: var(--c-ink-2);
+  stroke-width: 2;
+}
+.sc-dash-panel {
+  fill: color-mix(in srgb, var(--c-surface-2) 70%, var(--c-ink-3));
+}
+/* 方向盘、仪表台原来用 --c-deep-ink，深色下它接近黑，压在深色车厢上看不见；改用次要墨色（深浅都 ≥ 3:1） */
 .sc-wheel {
   fill: none;
-  stroke: var(--c-deep-ink);
+  stroke: var(--c-ink-2);
   stroke-width: 8;
 }
+.sc-wheel-spoke {
+  stroke: var(--c-ink-2);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.sc-wheel-hub {
+  fill: var(--c-ink-2);
+}
 .sc-dash-board {
-  fill: var(--c-deep-ink);
+  fill: var(--c-ink-2);
+}
+.sc-gauge {
+  fill: var(--c-sun);
 }
 .sc-board {
   fill: var(--paper);
@@ -987,16 +1778,27 @@
   stroke: var(--c-ink-3);
   stroke-width: 4;
 }
+.sc-pole {
+  fill: var(--c-ink-3);
+}
+.sc-pole-base {
+  fill: color-mix(in srgb, var(--c-ink-3) 50%, var(--c-leaf-soft));
+}
 .sc-sign-red {
   fill: var(--c-danger);
+  stroke: var(--c-on-deep);
+  stroke-width: 2;
 }
 .sc-sign-blue {
   fill: var(--c-sea);
+  stroke: var(--c-on-deep);
+  stroke-width: 2;
 }
 .sc-sign-warn {
   fill: var(--c-sun);
   stroke: var(--c-deep-ink);
   stroke-width: 2;
+  stroke-linejoin: round;
 }
 .sc-sign-ring {
   fill: var(--c-on-deep);
@@ -1028,17 +1830,28 @@
 .sc-sign-text--ink {
   fill: var(--c-deep-ink);
 }
+/* 学校牌子上的“小学”：墙面跟主题走，字也跟主题走（原来固定纸墨，深色墙上看不见） */
 .sc-label {
-  fill: var(--paper-ink);
+  fill: var(--c-ink);
   font-size: 14px;
   font-weight: 700;
   text-anchor: middle;
 }
-.sc-label--small {
-  font-size: 11px;
+/* “哈——欠”压在草地和路面交界处：浅字加深色描边（原来深字压深色路面，两套主题都看不清） */
+.sc-yawn {
+  fill: var(--c-on-deep);
+  stroke: var(--c-deep-ink);
+  stroke-width: 3px;
+  paint-order: stroke;
+  stroke-linejoin: round;
+  font-size: 14px;
+  font-weight: 800;
+  text-anchor: middle;
 }
 .sc-light-box {
   fill: var(--c-deep-ink);
+  stroke: color-mix(in srgb, var(--c-ink-3) 60%, var(--c-deep-ink));
+  stroke-width: 1.5;
 }
 .sc-lamp {
   fill: var(--c-ink-3);
@@ -1056,6 +1869,24 @@
   fill: var(--c-leaf);
   opacity: 1;
 }
+.sc-glow {
+  opacity: 0.3;
+}
+.sc-glow--red {
+  fill: var(--c-danger);
+}
+.sc-glow--yellow {
+  fill: var(--c-sun);
+}
+.sc-glow--green {
+  fill: var(--c-leaf);
+}
+.sc-rays {
+  fill: none;
+  stroke: var(--c-sun);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
 .sc-flash {
   animation: sc-flash 1s steps(2) infinite;
 }
@@ -1064,57 +1895,106 @@
     opacity: 0.2;
   }
 }
-.sc-body {
-  fill: var(--c-on-deep);
-  stroke: var(--c-deep-ink);
-  stroke-width: 2;
-}
-.sc-resident--penguin .sc-body {
-  fill: var(--c-deep-ink);
-}
-.sc-resident--penguin .sc-eye {
-  fill: var(--c-on-deep);
-}
-.sc-resident--puppy .sc-body,
-.sc-resident--deer .sc-body {
-  fill: var(--paper-shade);
-}
-.sc-eye {
-  fill: var(--c-deep-ink);
-}
-.sc-ear {
-  fill: var(--c-on-deep);
-  stroke: var(--c-deep-ink);
-  stroke-width: 1.5;
-}
-.sc-antler {
-  stroke: var(--paper-ink);
-  stroke-width: 2;
-}
 .sc-car {
   fill: var(--c-sky);
-  stroke: var(--c-deep-ink);
-  stroke-width: 2;
+  stroke: color-mix(in srgb, var(--c-sky) 45%, var(--c-deep-ink));
+  stroke-width: 1.5;
+}
+.sc-car-roof {
+  fill: color-mix(in srgb, var(--c-sky) 65%, var(--c-on-deep));
 }
 .sc-car-glass {
-  fill: var(--c-sky-soft);
+  fill: color-mix(in srgb, var(--c-deep-ink) 55%, var(--c-sky));
+}
+.sc-tire {
+  fill: var(--c-deep-ink);
+  stroke: var(--c-ink-3);
+  stroke-width: 1;
+}
+.sc-headlight {
+  fill: var(--c-sun);
 }
 .sc-pet {
   fill: var(--c-sun);
 }
+.sc-body {
+  fill: var(--c-on-deep);
+  stroke: var(--c-deep-ink);
+  stroke-width: 1.6;
+}
+.sc-resident--penguin .sc-body {
+  fill: var(--c-deep-ink);
+  stroke: var(--c-on-deep);
+  stroke-width: 1.2;
+}
+.sc-resident--puppy .sc-body {
+  fill: color-mix(in srgb, var(--c-sun) 45%, var(--c-on-deep));
+}
+.sc-resident--deer .sc-body {
+  fill: color-mix(in srgb, var(--c-sun) 55%, var(--c-coral));
+}
+.sc-belly {
+  fill: var(--c-on-deep);
+}
+.sc-eye {
+  fill: var(--c-deep-ink);
+}
+.sc-beak {
+  fill: var(--c-sun);
+}
+.sc-feet {
+  stroke: var(--c-sun);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.sc-nose {
+  fill: color-mix(in srgb, var(--c-coral) 70%, var(--c-deep-ink));
+}
+.sc-blush {
+  fill: var(--c-coral);
+  opacity: 0.45;
+}
+.sc-ear-in {
+  fill: color-mix(in srgb, var(--c-coral) 45%, var(--c-on-deep));
+}
+.sc-ear-flop {
+  fill: color-mix(in srgb, var(--c-sun) 40%, var(--c-ink-2));
+  stroke: var(--c-deep-ink);
+  stroke-width: 1.2;
+}
+.sc-antler {
+  fill: none;
+  stroke: color-mix(in srgb, var(--c-sun) 30%, var(--c-ink-2));
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.sc-spot {
+  fill: var(--c-on-deep);
+}
 .sc-ambulance {
   fill: var(--c-on-deep);
   stroke: var(--c-danger);
-  stroke-width: 3;
+  stroke-width: 2.5;
+}
+.sc-ambulance-stripe {
+  fill: var(--c-danger);
 }
 .sc-firetruck {
   fill: var(--c-danger);
+}
+.sc-ladder {
+  fill: none;
+  stroke: var(--c-on-deep);
+  stroke-width: 1.5;
+}
+.sc-van-window {
+  fill: color-mix(in srgb, var(--c-deep-ink) 50%, var(--c-sky));
 }
 .sc-cross {
   stroke: var(--c-danger);
   stroke-width: 4;
 }
-.sc-firetruck + .sc-cross {
+.sc-firetruck ~ .sc-cross {
   stroke: var(--c-on-deep);
 }
 .sc-siren {
@@ -1122,9 +2002,24 @@
 }
 .sc-phone {
   fill: var(--c-deep-ink);
+  stroke: var(--c-ink-3);
+  stroke-width: 1.5;
+}
+.sc-phone-speaker {
+  fill: var(--c-ink-3);
 }
 .sc-phone-note {
   fill: var(--c-surface);
+}
+.sc-phone-avatar {
+  fill: var(--c-sky);
+}
+/* 手机上的“邀请”：原来用固定纸墨，深色下压在深色便签上看不见；改用正文墨色（深浅都 ≥ 11:1） */
+.sc-note-text {
+  fill: var(--c-ink);
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: middle;
 }
 .sc-play {
   fill: var(--c-coral);
@@ -1132,19 +2027,33 @@
 .sc-snack {
   fill: var(--c-coral);
 }
+.sc-snack-band {
+  fill: var(--c-sun);
+}
 .sc-frame {
   fill: var(--paper);
   stroke: var(--paper-ink);
   stroke-width: 3;
 }
+.sc-frame-hill {
+  fill: var(--c-leaf);
+}
+.sc-cloud {
+  fill: color-mix(in srgb, var(--c-ink-3) 45%, var(--c-surface));
+}
 .sc-rain {
   stroke: var(--c-sea);
   stroke-width: 2;
-  opacity: 0.7;
+  stroke-linecap: round;
+  opacity: 0.8;
 }
 .sc-fog {
   fill: var(--c-bg);
   opacity: 0.55;
+}
+.sc-fog-band {
+  fill: var(--c-bg);
+  opacity: 0.35;
 }
 
 /* ---------- 成绩单 ---------- */
@@ -1171,11 +2080,12 @@
 .ds-score.is-fail .ds-score__num strong {
   color: var(--c-coral);
 }
+/* 红线 / 超时 / 放弃：浅红底上的字用墨色（--c-danger 压 --c-danger-soft 浅色只有 3.59:1），红色只留给图标（图形 ≥ 3:1） */
 .ds-fatal {
   display: grid;
   gap: 4px;
   background: var(--c-danger-soft);
-  color: var(--c-danger);
+  color: var(--c-ink);
 }
 .ds-pet-says {
   display: flex;
@@ -1256,6 +2166,140 @@
   padding: 0;
   list-style: none;
 }
+.ds-fatal__title {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.ds-fatal__title svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--c-danger);
+}
+.ds-fatal__when {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-2);
+  font-size: var(--fs-sm);
+}
+/* 成绩单的结论卡：先说过没过，再是分数与及格线，TA 的话跟在后面 */
+.ds-conclusion {
+  display: grid;
+  gap: var(--space-2);
+}
+.ds-conclusion.is-pass {
+  background: var(--c-leaf-soft);
+  border-color: transparent;
+}
+.ds-conclusion__title {
+  margin: 0;
+  font-size: var(--fs-2xl);
+  line-height: 1.2;
+}
+.ds-conclusion__score {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 4px;
+  font-size: var(--fs-md);
+}
+.ds-conclusion__score strong {
+  font-size: 40px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.ds-conclusion.is-pass .ds-conclusion__score strong {
+  color: var(--c-leaf);
+}
+.ds-conclusion.is-fail .ds-conclusion__score strong {
+  color: var(--c-coral);
+}
+.ds-conclusion__line {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--c-ink-2);
+}
+.ds-conclusion .ds-pet-says {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--c-surface-stroke);
+}
+/* 扣分项后面的“看讲解 / 看回放”：墨色下划线，点按区 40px */
+.ds-jump {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  margin-left: 4px;
+  padding: 0 var(--space-2);
+  border: 0;
+  background: none;
+  color: var(--c-ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.ds-wrong__list li {
+  align-items: center;
+}
+.ds-wrong__what {
+  min-width: 0;
+}
+.ds-items {
+  margin: var(--space-2) 0 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--c-surface-stroke);
+}
+.ds-next__eyebrow {
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--c-ink-2);
+}
+/* 跳到讲解、回放时让开顶栏 */
+.ds-review,
+.ds-replay-card {
+  scroll-margin-top: calc(var(--safe-top) + 64px);
+}
+/* 碰了红线（或超时、出界、放弃）：分数不算——大号分数灰掉、划掉，旁边写“这次不计分”（不再是醒目的彩色大字） */
+.ds-conclusion.is-fail .ds-conclusion__score.is-void strong {
+  color: var(--c-ink-2);
+  text-decoration: line-through;
+  text-decoration-thickness: 3px;
+}
+.ds-conclusion__void {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--c-surface-stroke);
+  background: var(--c-surface-2);
+  color: var(--c-ink);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+/* 成绩单“下一步”里的龟教练：通过时鼓掌（coach-turtle-cheer），没通过时讲解（coach-turtle-explain），配一句鼓励 */
+.ds-result-coach {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.ds-result-coach img {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+.ds-result-coach p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--c-ink);
+}
 
 /* ---------- 领证仪式 ---------- */
 .ds-ceremony__step {
@@ -1264,13 +2308,23 @@
   animation: ds-rise var(--dur-med) var(--ease-out) both;
 }
 .ds-ceremony__step--2 {
-  animation-delay: 1.4s;
+  animation-delay: 1s;
 }
+/* 驾照：正面底图（UI-ASSET-009 license-card-front-bg）铺底，字一律纸墨色（压在水彩上也 ≥ 4.5，实测见报告）；底图加载失败就是纸色卡 */
 .ds-license {
   position: relative;
+  isolation: isolate;
   display: grid;
   gap: var(--space-3);
   overflow: hidden;
+}
+.ds-license__art {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .ds-license__head {
   display: flex;
@@ -1280,7 +2334,7 @@
 }
 .ds-license__head span {
   font-size: var(--fs-sm);
-  color: var(--paper-secondary-ink);
+  color: var(--paper-ink);
 }
 .ds-license__body {
   display: flex;
@@ -1298,7 +2352,7 @@
   color: var(--paper-ink);
 }
 .ds-license dt {
-  color: var(--paper-secondary-ink);
+  color: var(--paper-ink);
 }
 .ds-license dd {
   margin: 0;
@@ -1341,21 +2395,22 @@
 .ds-photo {
   display: grid;
   gap: var(--space-2);
-  animation: ds-rise var(--dur-med) var(--ease-out) 2s both;
+  animation: ds-rise var(--dur-med) var(--ease-out) 1.4s both;
 }
-.ds-photo img,
-.ds-photo__paper {
+.ds-photo__figure {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+.ds-photo__figure img {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
   border-radius: 12px;
 }
-.ds-photo__paper {
-  display: grid;
-  place-items: center;
-  background: var(--paper-shade);
+.ds-photo__figure figcaption {
+  font-size: var(--fs-xs);
   color: var(--paper-secondary-ink);
-  font-weight: 700;
 }
 .ds-photo__caption {
   display: flex;
@@ -1369,7 +2424,7 @@
   font-size: var(--fs-lg);
   font-weight: 700;
   text-align: center;
-  animation: ds-rise var(--dur-med) var(--ease-out) 2.6s both;
+  animation: ds-rise var(--dur-med) var(--ease-out) 1.8s both;
 }
 .ds-voucher {
   display: flex;
@@ -1377,6 +2432,152 @@
   align-items: center;
   flex-wrap: wrap;
   font-size: var(--fs-sm);
+}
+/* 领证仪式页：顶栏在上、内容从上往下排（不再整页竖直居中） */
+.ds-ceremony-intro {
+  padding-top: var(--space-4);
+}
+.ds-ceremony-intro p {
+  margin: 0;
+}
+/* 领完证的去处：贴在页面底部（仪式再长，首屏也看得到）。底色实底：原来 94% 半透明，滚动时下面的字从按钮之间透出来 */
+.ds-ceremony__actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2);
+  margin: 0 calc(-1 * var(--page-gutter));
+  padding: var(--space-3) var(--page-gutter) calc(var(--safe-bottom) + var(--space-3));
+  background: var(--c-bg);
+  border-top: 1px solid var(--c-surface-stroke);
+}
+/* 没有照片时的纸质纪念卡：与收藏页的领证纪念卡（collection.css 的 .ps-memento）同一设计、同一组数值，两边各写各的；
+   全部用固定的纸墨色，深浅模式一样（--paper-ink 压 --paper 约 11:1，--paper-secondary-ink 约 4.6:1） */
+.ds-memento {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--paper-shade);
+  border-radius: 14px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  box-shadow: 0 1px 0 var(--paper-shade);
+}
+.ds-memento__scene {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 24px;
+  padding: 14px 10px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper-shade) 45%, var(--paper));
+}
+.ds-memento__who {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ds-memento__name {
+  color: var(--paper-ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+/* 头像在纸上：白圈换成纸色；没有照片时的爪印占位也用纸墨 */
+.ds-memento .ps-avatar {
+  border-color: var(--paper);
+}
+.ds-memento .ps-avatar.is-placeholder {
+  background: var(--paper);
+  color: var(--paper-secondary-ink);
+}
+.ds-memento__coach {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper-shade) 70%, var(--paper));
+  color: var(--paper-ink);
+  box-shadow: 0 2px 6px -2px var(--c-shadow);
+}
+.ds-memento__shell {
+  fill: var(--paper);
+}
+.ds-memento__quote {
+  margin: 0;
+  padding: 0 2px;
+  color: var(--paper-ink);
+  font-family: Georgia, "Songti SC", serif;
+  line-height: 1.7;
+}
+.ds-memento__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--paper-secondary-ink);
+  font-size: 12px;
+}
+.ds-memento__day {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 4px;
+  min-width: 0;
+}
+.ds-memento__day > span {
+  white-space: nowrap;
+}
+.ds-memento__stamp {
+  flex: none;
+  color: var(--paper-accent);
+  transform: rotate(-12deg);
+}
+.ds-memento__status {
+  margin: 0;
+  color: var(--paper-secondary-ink);
+  font-size: 12px;
+}
+/* 领到的东西放在哪 */
+.ds-where {
+  display: grid;
+  gap: var(--space-2);
+}
+.ds-where__title {
+  margin: 0;
+  font-size: var(--fs-md);
+}
+.ds-where .ds-link {
+  justify-self: start;
+}
+/* 确认页举着空白卡的龟教练（UI-ASSET-009 ceremony-coach）：320 宽下不超过 96px */
+.ds-ceremony__coach {
+  align-self: flex-start;
+  width: min(112px, 30vw);
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+/* 纪念卡里的教练头像（coach-turtle-portrait），放进原来画线稿的那个圆里；加载失败退回线稿 */
+.ds-memento__coach img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+/* 驾照上宠物的头像在纸上（与纪念卡同一做法）：没有照片时的爪印占位用纸色底、纸墨爪印（纸墨压纸色 4.6:1），深色下不再是深绿圆块；
+   圈用纸影色，和驾照底图分得开 */
+.ds-license .ps-avatar {
+  border-color: var(--paper-shade);
+}
+.ds-license .ps-avatar.is-placeholder {
+  background: var(--paper);
+  color: var(--paper-secondary-ink);
 }
 
 /* 减少动态效果：入场动画直接显示最终状态（不等延迟，也不藏内容） */

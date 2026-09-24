@@ -525,7 +525,7 @@ export interface SettingsView {
   profile_visibility: string;
   bio: string | null;
   intent_layer_mode: string;
-  /** 主人开启后，TA 的私信回复由对话模型按已确认的叮嘱撰写；默认关闭 */
+  /** 开启时，由对话模型按已确认的叮嘱撰写：TA 给你的私信回复与主动来信、明信片上的话、攻略的措辞；家里第一位管理员的这项选择，还决定家庭频道的措辞、到站明信片上的话，以及运营开启自主决策时 TA 的思考用不用模型；运营开启自主决策时，你的叮嘱也会按用途交给模型参考。**默认开启**（2026-09-24 起），主人可随时关掉，关掉即撤回上述全部模型授权 */
   model_replies?: boolean;
   model_replies_available?: boolean;
   /** 对话模型服务商（披露用），未配置为空 */
@@ -774,8 +774,10 @@ export interface AdoptionCandidate {
   residence?: string | null;
   /** 从什么时候开始在星球上公开生活 */
   living_since?: IsoDateTime | null;
+  /** TA 的形象照（公开路由，访客可看）；只在仍可领养时给，没有照片为 null。平台原创居民的形象是生成的原创设计，不是真实照片 */
+  photo_url?: string | null;
 }
-export type AdoptionCandidateInput = WithOptional<AdoptionCandidate, "source_note" | "background_available" | "pet_id" | "residence" | "living_since">;
+export type AdoptionCandidateInput = WithOptional<AdoptionCandidate, "source_note" | "background_available" | "pet_id" | "residence" | "living_since" | "photo_url">;
 
 /** 需 Idempotency-Key；服务端原子占用，两个家庭抢同一候选最多一个成功（409 ADOPTION_TAKEN）。 */
 export interface AdoptRequest {
@@ -2955,8 +2957,10 @@ export interface PublicResident {
   place_name: string | null;
   /** 最近的公开动态（最多 3 条） */
   recent_posts: Post[];
+  /** TA 的照片（公开路由，访客可看）；没有照片为 null。与 `PublicPetView.profile.avatar_url` 同一个地址、同一条规则。平台原创居民的形象是生成的原创设计，不是真实照片 */
+  avatar_url?: string | null;
 }
-export type PublicResidentInput = WithOptional<PublicResident, "source_note" | "place_name" | "recent_posts">;
+export type PublicResidentInput = WithOptional<PublicResident, "source_note" | "place_name" | "recent_posts" | "avatar_url">;
 
 export interface PublicPetView {
   profile: PetPublicProfile;
@@ -3504,6 +3508,7 @@ export const WEB_ENDPOINTS = {
   "follow": { method: "POST", path: "/pets/{pet_id}/follow", auth: "required", csrf: true, idempotency: false },
   "home_welcome": { method: "GET", path: "/pets/{pet_id}/home-welcome", auth: "required", csrf: false, idempotency: false },
   "id_photo_regenerate": { method: "POST", path: "/pets/{pet_id}/id-photo/regenerate", auth: "required", csrf: true, idempotency: true },
+  "add_pet_photo": { method: "PUT", path: "/pets/{pet_id}/photo", auth: "required", csrf: true, idempotency: true },
   "photo_request": { method: "POST", path: "/pets/{pet_id}/photo-request", auth: "required", csrf: true, idempotency: true },
   "photo_requests": { method: "GET", path: "/pets/{pet_id}/photo-requests", auth: "required", csrf: false, idempotency: false },
   "retry_photo_request": { method: "POST", path: "/pets/{pet_id}/photo-requests/{request_id}/retry-image", auth: "required", csrf: true, idempotency: false },
@@ -3533,6 +3538,8 @@ export const WEB_ENDPOINTS = {
   "read_settings": { method: "GET", path: "/settings", auth: "required", csrf: false, idempotency: false },
   "update_settings": { method: "PATCH", path: "/settings", auth: "required", csrf: true, idempotency: false },
   "life_timeline": { method: "GET", path: "/timeline", auth: "required", csrf: false, idempotency: false },
+  "read_plan": { method: "GET", path: "/travel/plans/{plan_id}", auth: "required", csrf: false, idempotency: false },
+  "read_wish": { method: "GET", path: "/travel/wish", auth: "required", csrf: false, idempotency: false },
   "get_visit": { method: "GET", path: "/visits/{visit_id}", auth: "required", csrf: false, idempotency: false },
   "visit_action": { method: "POST", path: "/visits/{visit_id}/actions", auth: "required", csrf: true, idempotency: true },
   "visit_choice": { method: "POST", path: "/visits/{visit_id}/choice", auth: "required", csrf: true, idempotency: true },

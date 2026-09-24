@@ -186,7 +186,10 @@ class DueSelectionTests(WebPlatformTestBase):
         injected: list[int] = []
 
         def bump_then_record(pet_id, decision, now, **kwargs):
-            if not injected:  # 只在第一次写回之前插进去，模拟"算完之后、写回之前"世界变了
+            # 只在**被测这只**第一次写回之前插进去，模拟"算完之后、写回之前"世界变了。
+            # 原先是「整轮第一次写回」：那时轮次里恰好它排第一；2026-09-24 迁移 1800 多了 6 位居民后，
+            # 第一次写回换成了别的宠物，注入落在别人身上，这只读到的已是新版本，用例就红了（顺序依赖，不是回归）。
+            if pet_id == self.pet and not injected:
                 injected.append(1)
                 self.bump_privacy()
             return original(pet_id, decision, now, **kwargs)

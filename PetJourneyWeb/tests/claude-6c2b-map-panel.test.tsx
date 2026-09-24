@@ -26,6 +26,7 @@ import { ServicesProvider } from "@/shared/services/registry";
 import type { DrivingSchoolService, ServiceMap } from "@/shared/services/types";
 import { HouseholdProvider } from "@/shared/session/householdContext";
 import { buildSlotRegistry, Slot, SlotProvider } from "@/shared/slots/Slot";
+import { slot } from "@/shared/modules/types";
 import drivingModule from "@/features/driving_school/module";
 import { useSchoolStatus } from "@/features/driving_school/hooks";
 import { createFixtureDrivingService } from "@/features/driving_school/service";
@@ -381,8 +382,9 @@ describe("地图主状态面板的驾校提醒（演示：驾校模块的演示�
     const { wish_text } = await driving.status();
     const { router } = renderRoutes(demoServices(driving));
     const panel = await panelOf(/此刻$/);
-    const link = await within(panel).findByRole("link", { name: /^TA 说想学开车/ });
-    expect(link.textContent).toBe(`TA 说想学开车：“${wish_text}”`);
+    // 第 1 步追加：愿望那一行用宠物的名字（演示里是团子），拿不到名字才说“TA”。
+    const link = await within(panel).findByRole("link", { name: /^团子说想学开车/ });
+    expect(link.textContent).toBe(`团子说想学开车：“${wish_text}”`);
     expect(link.getAttribute("href")).toBe("/school");
     fireEvent.click(link);
     await waitFor(() => expect(router.state.location.pathname).toBe("/school"));
@@ -508,7 +510,8 @@ const itemsOf = (group: HTMLElement) => within(group).getAllByRole("listitem").m
 
 describe("提醒的先后与收起（方案 3.2：收起时只显示最重要的一条）", () => {
   it("先后：TA 的来信 > 驾校 > 系统提示，与传进来的先后无关；同一种保持原来的先后；只关于别的宠物的、空的都去掉", () => {
-    expect(NOTE_KINDS).toEqual(["mail", "school", "wish", "system"]);
+    // 第 1 步：一起听、这趟旅途插在来信之后、驾校之前（主窗口定的最终顺序）。
+    expect(NOTE_KINDS).toEqual(["mail", "listen", "trip", "school", "wish", "system"]);
     expect(arrangeNotes(NOTES, DEMO_PET_ID).map((n) => n.id)).toEqual(["mail", "school", "catching-up"]);
     expect(arrangeNotes([...NOTES].reverse(), DEMO_PET_ID).map((n) => n.id)).toEqual(["mail", "school", "catching-up"]);
     expect(arrangeNotes(NOTES, "someone-else").map((n) => n.id)).toEqual(["mail", "catching-up"]);
@@ -921,6 +924,11 @@ describe("从小窝回地图并对准 TA：?focus=<宠物 id>", () => {
 /* ---------------- 4. 朋友圈不再挂驾校入口 ---------------- */
 
 describe("朋友圈顶部不再渲染 circle.places（原“星球上的地方 · 爪爪驾校”）", () => {
+  // 驾校模块已不再登记 circle.places（死入口，主窗口 2026-09-24 第四批让驾校·页面分身删掉）。
+  // 对照改成这里自己登记一个假的 circle.places 入口：插槽里确实有东西，页面一渲染它就会出现链接；朋友圈那条断言照旧。
+  function ProbeSchoolEntry() {
+    return <Link to="/school">爪爪驾校（对照用的假入口）</Link>;
+  }
   function renderWithSchoolSlot(children: ReactNode) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const services = strictServices({
@@ -931,7 +939,7 @@ describe("朋友圈顶部不再渲染 circle.places（原“星球上的地方 �
     render(
       <QueryClientProvider client={client}>
         <ServicesProvider services={services}>
-          <SlotProvider registry={buildSlotRegistry(drivingModule.slots ?? [])}>
+          <SlotProvider registry={buildSlotRegistry([...(drivingModule.slots ?? []), slot("circle.places", "probe.school-entry", ProbeSchoolEntry)])}>
             <MemoryRouter>
               <HouseholdProvider userId={null}>{children}</HouseholdProvider>
             </MemoryRouter>

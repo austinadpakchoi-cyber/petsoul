@@ -54,7 +54,7 @@ export function createFixtureReceptionService(): ReceptionService {
     async addTurn(id, body) {
       const session = ensure(id);
       if (body.expected_revision !== session.draft_revision) {
-        throw new ApiError({ kind: "http", status: 409, code: "VERSION_CONFLICT", message: "便笺在别处更新过，请刷新。", details: { current: session.draft_revision } });
+        throw new ApiError({ kind: "http", status: 409, code: "VERSION_CONFLICT", message: "叮嘱在别处更新过，请刷新。", details: { current: session.draft_revision } });
       }
       const seq = session.turns.length + 1;
       const ownerTurn = { turn_id: `t-${seq}`, seq, speaker: "owner" as const, text: body.text, created_at: new Date().toISOString() };
@@ -62,7 +62,7 @@ export function createFixtureReceptionService(): ReceptionService {
         turn_id: `t-${seq + 1}`,
         seq: seq + 1,
         speaker: "host" as const,
-        text: "我把这句原样放进待确认的便笺了。现在是引导便笺模式：我不会替你改写或猜测，交给谁由你决定。",
+        text: "好，我先把这句放进待确认的生活叮嘱里。现在是引导记录模式：我不会替你改写或猜测，交给谁由你决定。",
         created_at: new Date().toISOString(),
       };
       const next: ReceptionSession = {
@@ -94,7 +94,7 @@ export function createFixtureReceptionService(): ReceptionService {
         throw new ApiError({ kind: "http", status: 503, code: "UPSTREAM_UNAVAILABLE", message: "服务暂时不可用（演示的保存失败）。", retryable: true });
       }
       if (body.draft_revision !== session.draft_revision) {
-        throw new ApiError({ kind: "http", status: 409, code: "VERSION_CONFLICT", message: "便笺在别处更新过，请刷新后再确认。" });
+        throw new ApiError({ kind: "http", status: 409, code: "VERSION_CONFLICT", message: "叮嘱在别处更新过，请刷新后再确认。" });
       }
       const saved = confirmFixture(body, session);
       const result: IntakeConfirmationResult = {

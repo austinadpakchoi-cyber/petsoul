@@ -260,12 +260,13 @@ LEDGER_SOURCE = {
     "admin.compensation": "后台补偿",
     "admin.compensation.batch": "后台批量补偿",
     "admin.compensation.reversal": "后台冲正",
-    "web.home.move_in": "入住欢迎旅费",
+    # 说法跟玩家看到的账单事由对齐（6c2b 2026-09-24 统一：货币只叫「星币」，「旅费」只当用途讲；集市里分杂货铺收购与居民订单）
+    "web.home.move_in": "入住欢迎星币（每个家一次）",
     "web.journey.depart": "出发付旅费",
-    "web.journey.replan": "改行程",
+    "web.journey.replan": "来不及成行，旅费退回",
     "web.journey.work": "打工工钱",
-    "web.market.sell": "集市卖东西",
-    "web.market.order": "集市订单",
+    "web.market.sell": "集市：卖给杂货铺",
+    "web.market.order": "集市：居民订单",
     "seed.admin_demo": "演示数据（只在演示库里有）",
 }
 LEDGER_STATUS = {"committed": "已入账"}  # 代码里只写这一种；别的状态出现就照原样显示

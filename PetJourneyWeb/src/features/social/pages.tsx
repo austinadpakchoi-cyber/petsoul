@@ -10,6 +10,7 @@ import { useServices } from "@/shared/services/registry";
 import { useSessionState } from "@/shared/session/onboarding";
 import { useActiveHome } from "@/shared/session/householdContext";
 import { Button, Card, Chip, DataOriginBadge, EmptyState, ErrorState, Icon, Page, PetAvatar, QueryView, ToggleChip, TopBar } from "@/shared/ui";
+import { collapseRepeats } from "./feed";
 import "./social.css";
 
 /** 当前查看者的身份：自己的宠物与账号（用于判断“这是我发的吗”）。 */
@@ -84,7 +85,7 @@ function ModerationMenu({ kind, id, mine, onRemoved }: { kind: "post" | "comment
       ) : null}
       {error ? (
         <span role="alert" className="ps-muted" style={{ color: "var(--c-danger)" }}>
-          {toApiError(error).message}
+          {toApiError(error).playerMessage}
         </span>
       ) : null}
     </span>
@@ -160,7 +161,7 @@ function PostCard({ post, linkToThread = true }: { post: Post; linkToThread?: bo
       </div>
       {react.isError ? (
         <span role="alert" className="ps-muted" style={{ color: "var(--c-danger)" }}>
-          {toApiError(react.error).message}
+          {toApiError(react.error).playerMessage}
         </span>
       ) : null}
     </Card>
@@ -179,7 +180,8 @@ export function CirclePage() {
       <QueryView query={query} isEmpty={(p) => p.items.length === 0} empty={<EmptyState icon="planet" title="还没有动态">宠物们出门到访后的真实事件会出现在这里。</EmptyState>}>
         {(page) => (
           <div className="ps-stack">
-            {page.items.map((post) => (
+            {/* 老数据里同一作者一字不差、没带照片的几条只留最新一条（feed.ts；新的重复后端已经挡住） */}
+            {collapseRepeats(page.items).map((post) => (
               <PostCard key={post.post_id} post={post} />
             ))}
           </div>
@@ -239,7 +241,7 @@ function Composer({ postId, replyTo, onDone }: { postId: string; replyTo: Commen
         ) : null}
         {send.isError ? (
           <span role="alert" className="ps-muted" style={{ color: "var(--c-danger)" }}>
-            {toApiError(send.error).message}（内容还在）
+            {toApiError(send.error).playerMessage}（内容还在）
           </span>
         ) : null}
       </div>
@@ -331,7 +333,8 @@ export function PetProfilePage() {
       <QueryView query={posts} isEmpty={(p) => p.items.length === 0} empty={<EmptyState title="还没有公开动态" />}>
         {(page) => (
           <div className="ps-stack">
-            {page.items.map((post) => (
+            {/* 同一作者、一字不差、都没照片的老数据只留最新一条（与朋友圈同一个兜底）。 */}
+            {collapseRepeats(page.items).map((post) => (
               <PostCard key={post.post_id} post={post} />
             ))}
           </div>

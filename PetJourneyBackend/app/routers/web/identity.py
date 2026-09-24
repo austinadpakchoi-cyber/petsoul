@@ -146,6 +146,8 @@ def move_in(body: MoveInRequest, request: Request, principal: WebPrincipal = Dep
     public_posts = body.public_posts if pet_home.activated_at is None else pet_home.public_posts
     if web.homes.move_in(pet_home, public_posts, now):
         web.residents.moved_home(pet_home.pet_id, now)  # 领养的星球居民：从驿站搬进新家（不是居民时什么也不做）
+        # 到站自拍：只登记，认知线的下一轮再发家庭频道消息和到站明信片（同一张自拍；写话可能调模型，不在请求里做）
+        web.arrival.register(pet_home.pet_id, pet_home.household_id, principal.user_id, now)
     web.credentials.ensure_basics(principal.user_id, pet_home.pet_id)  # 入住即签发身份卡、银行卡、照护档案（签发时间＝入住时间；卡包与时间线里可见）
     web.entries.resolve(principal.user_id, now)
     return web.homes.onboarding(principal.user_id)

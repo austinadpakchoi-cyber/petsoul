@@ -77,6 +77,78 @@
   --photo-width: 27.2cqw;
   --photo-height: 32.16cqw;
 }
+/*
+ * 驾照换用 UI-ASSET-009 第 11 项底图（2026-09-24；网址由 faces.tsx 从 SCHOOL_ART.license 取，写进 --cred-art-front / --cred-art-back，
+ * 卡面同时带 data-license-art）。图片加载失败时组件去掉这个属性和网址，退回上面 UI-ASSET-005 的样子。
+ * 新图 856×540，与原来同比例（卡高仍是 63.05cqw，不跳版面）；图上没有照片框、横线和字：
+ * - 照片位置不变（上面的 --photo-*），框由这里画：一圈纸色衬边 + 细绿线，落在原来底图画框的地方；
+ * - 背面四条横线也画在原来的位置（y 14.63 / 26.25 / 37.87 / 49.49cqw）；
+ * - 底图是低对比的浅纸色＋水彩叶子、小路、爪印：字下面垫一层纸色衬底（--license-veil），次要字加深。按底图逐像素实算
+ *   （草稿区 license_contrast.py，衬底 85%、深色遮罩 24%）：浅色正文 ≥ 9.1、次要字 ≥ 6.8；深色正文 ≥ 7.3、次要字 ≥ 5.4。
+ */
+/* 背面“成绩”：每一科（“科X N 分”）一个 span，不在中间折行，放不下就整项换行（新图、退回旧图时都一样） */
+.ps-cred--driver_license .ps-score-item {
+  white-space: nowrap;
+}
+.ps-cred--driver_license[data-license-art] {
+  --cred-ink-2: color-mix(in srgb, var(--paper-secondary-ink) 35%, var(--paper-ink));
+  --license-veil: color-mix(in srgb, var(--paper) 85%, transparent);
+  --license-line: color-mix(in srgb, var(--cred-accent) 45%, transparent);
+}
+.ps-cred--driver_license[data-license-art] .ps-idcard__photo {
+  box-shadow: 0 0 0 0.9cqw var(--license-veil), 0 0 0 calc(0.9cqw + 1.5px) var(--license-line);
+}
+/* 小卡面的照片有 clip-path（窄屏上不压进标题条），外圈阴影会被裁掉：框改用内边框 */
+.ps-cred--driver_license[data-license-art] .ps-mini__photo {
+  border: 0.6cqw solid var(--license-veil);
+}
+.ps-cred--driver_license[data-license-art] .ps-idcard__title,
+.ps-cred--driver_license[data-license-art] .ps-mini__titles {
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+  margin: -0.4cqw -1.4cqw;
+  padding: 0.4cqw 1.4cqw;
+  border-radius: 1.6cqw;
+  background: var(--license-veil);
+}
+.ps-cred--driver_license[data-license-art] .ps-fiction-box,
+.ps-cred--driver_license[data-license-art] .ps-idcard__republic,
+.ps-cred--driver_license[data-license-art] .ps-mini__tag,
+.ps-cred--driver_license[data-license-art] .ps-mini__issued {
+  background: var(--license-veil);
+}
+.ps-cred--driver_license[data-license-art] .ps-idcard__fields {
+  margin: -1.6cqw -2cqw 0;
+  padding: 1.6cqw 2cqw;
+  border-radius: 2cqw;
+  background: var(--license-veil);
+}
+.ps-cred--driver_license[data-license-art] .ps-idcard__foot {
+  justify-self: start;
+  margin: 0 -2cqw;
+  padding: 1cqw 2cqw;
+  border-radius: 2cqw;
+  background: var(--license-veil);
+}
+.ps-cred--driver_license[data-license-art].ps-idcard--ruled::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 14.63cqw;
+  right: 4.5cqw;
+  left: 4.5cqw;
+  height: calc(3 * 11.62cqw + 1.5px);
+  border-radius: 1.5cqw;
+  background: repeating-linear-gradient(to bottom, var(--license-line) 0 1.5px, transparent 1.5px 11.62cqw), var(--license-veil);
+}
+/* 深色：底图比原来那张更亮，遮罩加到 24%（原来 16%），衬底也跟着压一点，不刺眼；字仍是纸墨（深色字压浅纸，不反色） */
+@media (prefers-color-scheme: dark) {
+  .ps-cred--driver_license[data-license-art] {
+    --cred-dim: color-mix(in srgb, var(--c-deep-ink) 24%, transparent);
+    --license-veil: color-mix(in srgb, color-mix(in srgb, var(--paper) 90%, var(--c-deep-ink)) 85%, transparent);
+  }
+}
 /* 深色模式：有底图的卡面仍是浅色纸感、深墨字，只加一层很淡的暗色遮罩压一压亮度，不反色 */
 @media (prefers-color-scheme: dark) {
   .ps-cred--identity_card,
@@ -915,6 +987,38 @@
 .ps-cred-links small {
   font-size: 12px;
   color: var(--c-ink-3);
+}
+/* 驾照详情页的“有了驾照以后”（LicenseUse.tsx）：和“相关经历”同一种卡。链接 --c-leaf 在 --c-surface 上浅色约 4.9、深色约 5.7；点按区 40px。 */
+.ps-license-use {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: var(--r-card);
+  background: var(--c-surface);
+}
+.ps-license-use h2 {
+  margin: 0;
+  font-size: 15px;
+}
+.ps-license-use p {
+  margin: 0;
+  line-height: 1.6;
+}
+.ps-license-use__voucher {
+  display: grid;
+  gap: 2px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--c-surface-stroke);
+}
+.ps-license-use__go {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  min-height: 40px;
+  color: var(--c-leaf);
+  font-weight: 700;
+  text-decoration: none;
 }
 .ps-cred-foot {
   margin: 0;

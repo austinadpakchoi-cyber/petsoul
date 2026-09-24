@@ -3,9 +3,12 @@
  * UI-ASSET-005 v1 已交的底图：星球居民证正反、银行卡正、驾照正反；照片位对准底图自带的照片框，字段排在底图留出的空白处。
  * 其余（银行卡背面、护照、票据、房卡、照护档案）仍是 CSS 画的简版，素材到了只换背景图。
  * 不生成二维码、条码；护照底部机读码风格的代号行只由真实数据拼出（见 Passport.tsx）；不模仿任何真实国家、航空公司、银行的证件样式。
+ * 驾照（2026-09-24 起）改用 UI-ASSET-009 第 11 项的正反底图，见下面的 useLicenseArt。
  */
-import type { CredentialDetail, CredentialKind, CredentialSummary } from "@/shared/contracts";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import type { CredentialDetail, CredentialField, CredentialKind, CredentialSummary } from "@/shared/contracts";
 import { Icon } from "@/shared/ui";
+import { SCHOOL_ART } from "@/features/driving_school/assets";
 import { dayText, deltaText, formOf, kindEn, splitFamilyFields, splitNote, statusText, TICKET_KINDS } from "./copy";
 import type { WalletPet } from "./data";
 import { Glyph, KindMark } from "./glyphs";
@@ -13,6 +16,57 @@ import { PassportBooklet, PassportDataPage } from "./Passport";
 import { ExtrasLine, FictionBox, FieldGrid, IdPhoto } from "./parts";
 
 type FaceProps = { detail: CredentialDetail; pet: WalletPet };
+
+type LicenseArtProps = { "data-license-art"?: "009"; style?: CSSProperties };
+
+/**
+ * 驾照底图：UI-ASSET-009 第 11 项（r7k 2026-09-24 交付，856×540、四角透明、图上没有字；网址只从 SCHOOL_ART.license 取）。
+ * - 先按新图画：卡面带 data-license-art，并把这一面的 --cred-art-front / --cred-art-back 换成新图（样式见 life.css 的驾照那一块）；
+ * - 图片加载失败：去掉这两样，退回 life.css 里原来的样子（UI-ASSET-005 的底图、照片框与横线）；
+ * - 只有驾照这样做：别的证件（星球居民证、银行卡……）不带这个属性，外观不变。
+ * 名字、号码、照片、日期仍由代码按真实数据叠上去。
+ */
+function useLicenseArt(kind: CredentialKind, side: "front" | "back"): LicenseArtProps {
+  const license = kind === "driver_license";
+  const src = SCHOOL_ART.license[side];
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (!license) return;
+    let alive = true;
+    const img = new Image();
+    img.onerror = () => {
+      if (alive) setFailed(true);
+    };
+    img.src = src;
+    return () => {
+      alive = false;
+      img.onerror = null;
+    };
+  }, [license, src]);
+  if (!license || failed) return {};
+  return { "data-license-art": "009", style: { [side === "front" ? "--cred-art-front" : "--cred-art-back"]: `url("${src}")` } as CSSProperties };
+}
+
+/**
+ * 驾照“成绩”一行（服务端给“科一 100 分”“科二 100 分”……四项，科与科之间是全角空格 U+3000）：每一科作为一个整体不在中间折行，
+ * 放不下就整项换到下一行（2026-09-24 390 宽下曾把“科四”拆成“科 / 四 100 分”）。
+ * 做法：每一科包一个不换行的 span（样式见 life.css 驾照那一块的 .ps-score-item），科与科之间的全角空格留在外面、照旧可以折行。
+ * 字是服务端原文，一个字符都不改（textContent 与原文相同）。
+ */
+const SCORE_ITEM = /(科[一二三四]\s*\d+\s*分)/;
+function licenseValue(field: CredentialField): ReactNode {
+  const parts = field.value.split(SCORE_ITEM);
+  if (parts.length === 1) return field.value;
+  return parts.map((part, index) =>
+    index % 2 ? (
+      <span key={index} className="ps-score-item">
+        {part}
+      </span>
+    ) : (
+      part
+    ),
+  );
+}
 
 /* ---------- 正面 ---------- */
 
@@ -25,8 +79,9 @@ function FamilyCard({ detail, pet }: FaceProps) {
   const { summary, fields } = detail;
   const en = kindEn(summary.kind);
   const { front } = splitFamilyFields(fields);
+  const art = useLicenseArt(summary.kind, "front");
   return (
-    <article className={`ps-idcard ps-idcard--family ps-cred ps-cred--${summary.kind}`} data-testid="cred-front">
+    <article className={`ps-idcard ps-idcard--family ps-cred ps-cred--${summary.kind}`} data-testid="cred-front" {...art}>
       <header className="ps-idcard__band ps-idcard__band--family">
         <div className="ps-idcard__bandtop">
           <FictionBox />
@@ -42,7 +97,7 @@ function FamilyCard({ detail, pet }: FaceProps) {
       </header>
       <IdPhoto pet={pet} className="ps-idcard__photo" />
       <div className="ps-idcard__fields">
-        <FieldGrid fields={front} bilingual />
+        <FieldGrid fields={front} bilingual renderValue={summary.kind === "driver_license" ? licenseValue : undefined} />
       </div>
       <footer className="ps-idcard__foot">
         <ExtrasLine summary={summary} fields={fields} />
@@ -257,14 +312,16 @@ function IdentityBack({ detail }: FaceProps) {
 }
 
 /**
- * 驾驶证背面：UI-ASSET-005 的四行横线底图。正面放不下的字段按原顺序写在横线上；没有就写编号与签发日期。
+ * 驾驶证背面：正面放不下的字段按原顺序写在四条横线上；没有就写编号与签发日期。
+ * 横线原来是 UI-ASSET-005 底图自带的；换成 UI-ASSET-009 底图（图上没有线）后由 life.css 在同样的位置画出来。
  * 素材说明里提到的准驾类别图标与“是否持有”要有接口数据才画——现在接口只给“准驾车型”一个字段，不编。
  */
 function LicenseBack({ detail }: FaceProps) {
   const { back } = splitFamilyFields(detail.fields);
+  const art = useLicenseArt("driver_license", "back");
   return (
-    <article className="ps-idcard ps-idcard--back ps-idcard--ruled ps-cred ps-cred--driver_license" data-testid="cred-back">
-      {back.length ? <FieldGrid fields={back} layout="ruled" bilingual /> : <BackInfo summary={detail.summary} />}
+    <article className="ps-idcard ps-idcard--back ps-idcard--ruled ps-cred ps-cred--driver_license" data-testid="cred-back" {...art}>
+      {back.length ? <FieldGrid fields={back} layout="ruled" bilingual renderValue={licenseValue} /> : <BackInfo summary={detail.summary} />}
     </article>
   );
 }
@@ -317,8 +374,10 @@ export function MiniCard({ summary, pet }: { summary: CredentialSummary; pet: Wa
   const issued = dayText(summary.issued_at);
   // 银行卡底图左侧是芯片，没有照片框：小卡面上不放照片。
   const showPhoto = !ticket && form !== "passport" && summary.kind !== "bank_card";
+  // 卡包里的小卡面用驾照正面底图：和详情页同一张，免得卡包里还是旧图
+  const art = useLicenseArt(summary.kind, "front");
   return (
-    <article className={`ps-mini ps-mini--${form} ps-cred ps-cred--${summary.kind}`} data-testid="wallet-card">
+    <article className={`ps-mini ps-mini--${form} ps-cred ps-cred--${summary.kind}`} data-testid="wallet-card" {...art}>
       <header className="ps-mini__band">
         <span className="ps-mini__mark">
           <KindMark summary={summary} size={18} />

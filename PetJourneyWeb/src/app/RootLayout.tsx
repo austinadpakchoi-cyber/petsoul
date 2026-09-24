@@ -1,5 +1,6 @@
 import { Navigate, NavLink, Outlet, ScrollRestoration, useLocation } from "react-router";
 import { useQuery } from "@tanstack/react-query";
+import type { OnboardingState } from "@/shared/contracts";
 import { env } from "@/shared/config/env";
 import { queryKeys } from "@/shared/query/queryClient";
 import { useServices } from "@/shared/services/registry";
@@ -46,8 +47,18 @@ function ModeRibbon() {
 }
 
 /**
+ * 账号里有没有已经住进来的宠物：任何一个已启用的家里有 join_step 为 moved_in 的（与切换栏列出的是同一批）。
+ * 与 features/world_map/WorldGate 的 hasMovedInPet 是同一条规则（app 壳不引 features），tests/claude-6c2b-second-pet.test.tsx 两处一起钉。
+ */
+function hasMovedInPet(onboarding: OnboardingState): boolean {
+  return (onboarding.households ?? []).some((household) => household.home_activated && household.pets.some((pet) => pet.join_step === "moved_in"));
+}
+
+/**
  * live 模式的入口守卫：带底部导航的页面只对“已登录且已入住”的账号开放；
  * 未登录去欢迎页，入住未完成回到对应的入住步骤。fixture 模式不设守卫（演示数据）。
+ * 2026-09-24 巡检 P1：已经有宠物住进来的账号，第二只还在接待 / 入住时不再拦（原来整个账号的页面都被拉回接待页，后退也出不去）；
+ * 只有一只都没住进来（真正的第一次入住）才带去入住步骤。
  */
 function SessionGate() {
   const session = useSessionState();
@@ -68,7 +79,8 @@ function SessionGate() {
     );
   }
   if (!session.data.authenticated) return <Navigate to="/welcome" replace state={{ from: location.pathname }} />;
-  if (session.data.onboarding && session.data.onboarding.step !== "active") return <Navigate to={onboardingRoute(session.data.onboarding)} replace />;
+  const onboarding = session.data.onboarding;
+  if (onboarding && onboarding.step !== "active" && !hasMovedInPet(onboarding)) return <Navigate to={onboardingRoute(onboarding)} replace />;
   return <HouseholdProvider userId={session.data.user?.user_id ?? null}><Outlet /></HouseholdProvider>;
 }
 
@@ -88,7 +100,7 @@ export function RootLayout() {
         <nav className="ps-tabbar" aria-label="主导航">
           {TABS.map((tab) => (
             <NavLink key={tab.to} to={tab.to} className={({ isActive }) => `ps-tab${isActive ? " is-active" : ""}`}>
-              <Icon name={tab.icon} size={22} />
+              <Icon name={tab.icon} size={20} />
               <span>{tab.label}</span>
             </NavLink>
           ))}

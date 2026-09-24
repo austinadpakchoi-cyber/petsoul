@@ -58,7 +58,7 @@ VERIFICATION_REASON = {"unverified": "fact_unverified", "conflicting": "fact_con
 class JournalFact:
     fact_id: str
     visual_feature: str  # 允许画出来的画面特征，如「白色的灯塔和翻卷的浪花」；不含地名、数字
-    verification: str  # verified / unverified / conflicting / stale
+    verdict: str  # 核验**结论**：verified / unverified / conflicting / stale（对外 DTO 另有 verification＝核验**方法**，不是一回事）
     display_allowed: bool
     source_ids: tuple[str, ...]
     valid_until: datetime | None = None
@@ -200,7 +200,7 @@ def _select(inp: JournalBriefInput) -> tuple[tuple[JournalFact, ...], tuple[tupl
         if fact is None:
             excluded.append((fid, "fact_missing"))
             continue
-        reason = (VERIFICATION_REASON.get(fact.verification, "fact_unverified") if fact.verification != "verified"
+        reason = (VERIFICATION_REASON.get(fact.verdict, "fact_unverified") if fact.verdict != "verified"
                   else "fact_display_not_allowed" if not fact.display_allowed
                   else "fact_stale" if fact.valid_until is not None and fact.valid_until <= inp.now
                   else "fact_source_missing" if not fact.source_ids

@@ -78,7 +78,7 @@ class SettingsView(WebModel):
     profile_visibility: str
     bio: str | None = None
     intent_layer_mode: str
-    model_replies: bool = Field(default=False, description="主人开启后，TA 的私信回复由对话模型按已确认的叮嘱撰写；默认关闭", json_schema_extra={"x-additive": True})
+    model_replies: bool = Field(default=True, description="开启时，由对话模型按已确认的叮嘱撰写：TA 给你的私信回复与主动来信、明信片上的话、攻略的措辞；家里第一位管理员的这项选择，还决定家庭频道的措辞、到站明信片上的话，以及运营开启自主决策时 TA 的思考用不用模型；运营开启自主决策时，你的叮嘱也会按用途交给模型参考。**默认开启**（2026-09-24 起），主人可随时关掉，关掉即撤回上述全部模型授权", json_schema_extra={"x-additive": True})
     model_replies_available: bool = Field(default=False, json_schema_extra={"x-additive": True})
     model_provider: str | None = Field(default=None, description="对话模型服务商（披露用），未配置为空", json_schema_extra={"x-additive": True})
     generated_photos: bool = Field(default=False, description="主人开启后，冒险事件会请生图服务画一张插画；默认关闭", json_schema_extra={"x-additive": True})

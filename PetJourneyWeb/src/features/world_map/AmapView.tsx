@@ -8,6 +8,8 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { loadAmap, type AMapCircle, type AMapMap, type AMapMarker, type AMapNamespace, type AMapPath, type AmapLngLat } from "./amapLoader";
+import { ensureCopyright } from "./attribution";
+import { canWatchTiles, watchBasemapTiles } from "./basemapReady";
 import { toAmapLngLat } from "./coords";
 import type { MapConfigState } from "./mapConfig";
 import { homeLayout, type MarkerOffset } from "./homeCluster";
@@ -38,10 +40,14 @@ export interface AmapViewProps {
   recenterToken: number;
   /** 底部面板盖住的高度（px）：镜头把宠物放在“露出来的地图”正中，而不是整屏正中。 */
   bottomInset: number;
+  /** 顶部压住地图的高度（px，演示条的下沿；没有演示条时为 0）：宠物放在它与底部面板之间那块地图的正中。 */
+  topInset?: number;
   /** 上次离开地图时的镜头（只在挂载时读一次）：有它就从这里接着看，不再从全国视图推到 TA 身上。 */
   initialCamera?: SavedCamera | null;
   onUserMove(): void;
   onStatus(status: MapStatus, reason?: string): void;
+  /** 底图第一次画出来：第一块底图图块回来并画上（./basemapReady）。地图对象建好（status = ready）、高德的 complete 都不等于底图出来了。 */
+  onBasemapReady?(): void;
   /** 镜头停下（拖动、缩放、跟随平移结束）以及地图卸载前报告当前镜头。 */
   onCameraChange?(camera: SavedCamera): void;
   renderPet(pet: WorldPet): ReactNode;
@@ -127,26 +133,30 @@ function updateOverlays(o: PetOverlays, pet: WorldPet, nowMs: number, zoom: numb
 }
 
 export function AmapView(props: AmapViewProps) {
-  const { config, pets, nowMs, followPetId, recenterToken, bottomInset, initialCamera = null, onUserMove, onStatus, onCameraChange, renderPet, renderHome, renderPlace } = props;
+  const { config, pets, nowMs, followPetId, recenterToken, bottomInset, topInset = 0, initialCamera = null, onUserMove, onStatus, onBasemapReady, onCameraChange, renderPet, renderHome, renderPlace } = props;
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<{ AMap: AMapNamespace; map: AMapMap; report(): void } | null>(null);
   const overlaysRef = useRef(new Map<string, PetOverlays>());
   const restoreRef = useRef(initialCamera);
   // 接着上次的镜头看时已经“对好过”：不再做第一次的整段推近，跟随时只平移到 TA 现在的位置。
   const cameraRef = useRef<{ framed: boolean; lastPan: number; token: number }>({ framed: Boolean(initialCamera), lastPan: 0, token: recenterToken });
-  const callbacks = useRef({ onUserMove, onStatus, onCameraChange });
-  callbacks.current = { onUserMove, onStatus, onCameraChange };
+  const callbacks = useRef({ onUserMove, onStatus, onBasemapReady, onCameraChange });
+  callbacks.current = { onUserMove, onStatus, onBasemapReady, onCameraChange };
   const [ready, setReady] = useState(false);
   const [, setOverlayVersion] = useState(0);
 
   useEffect(() => {
     let disposed = false;
+    let stopTiles: (() => void) | null = null;
     callbacks.current.onStatus("loading");
     loadAmap(config)
       .then((AMap) => {
         if (disposed || !containerRef.current) return;
         const dark = typeof window.matchMedia === "function" && window.matchMedia("(prefers-color-scheme: dark)").matches;
         const restore = restoreRef.current;
+        // 底图画出来没有：看第一块底图图块回来（./basemapReady；高德的 complete 在图块到之前就发，不能用）。要在建图之前开始看。
+        const watchTiles = canWatchTiles();
+        if (watchTiles) stopTiles = watchBasemapTiles(() => callbacks.current.onBasemapReady?.());
         // 还不知道 TA 在哪时先看全国，不落到任何具体城市（高德默认会按访问者 IP 选城市，容易被误读成 TA 的位置）；知道后再推过去。
         // 从小窝等二级页回来：直接用离开时的中心与缩放。
         const map = new AMap.Map(containerRef.current, {
@@ -162,6 +172,14 @@ export function AmapView(props: AmapViewProps) {
           const center = map.getCenter();
           callbacks.current.onCameraChange?.({ center: [center.lng, center.lat], zoom: map.getZoom() });
         };
+        // 高德在窄于 350px 的地图上不写版权文字：按它的写法补上（./attribution）。地图资源到齐（complete）时再补一次（幂等）。
+        const container = containerRef.current;
+        ensureCopyright(container);
+        map.on("complete", () => {
+          ensureCopyright(container);
+          // 浏览器看不了图块时才退回用 complete 撤“地图加载中…”。
+          if (!watchTiles) callbacks.current.onBasemapReady?.();
+        });
         map.on("dragstart", () => callbacks.current.onUserMove());
         map.on("touchstart", () => callbacks.current.onUserMove());
         map.on("moveend", report);
@@ -176,6 +194,7 @@ export function AmapView(props: AmapViewProps) {
     const overlays = overlaysRef.current;
     return () => {
       disposed = true;
+      stopTiles?.();
       overlays.clear();
       const current = mapRef.current;
       if (current) {
@@ -229,11 +248,11 @@ export function AmapView(props: AmapViewProps) {
     const camera = cameraRef.current;
     if (!followPoint) return;
     const [lng, lat] = toAmapLngLat(followPoint);
-    // 地图中心放在宠物下方 bottomInset/2 像素处，宠物就落在露出来那块地图的正中。
+    // 地图中心放在宠物下方 (bottomInset - topInset)/2 像素处，宠物就落在露出来那块地图（演示条下沿到底部面板上沿）的正中。
     // 比例尺按目标缩放级别算：每放大一级，每像素米数减半。
     const centerBelow = (zoomAt: number): AmapLngLat => {
       const metersPerPx = current.map.getResolution() * 2 ** (current.map.getZoom() - zoomAt);
-      const shift = ((bottomInset / 2) * metersPerPx) / 111_320;
+      const shift = (((bottomInset - topInset) / 2) * metersPerPx) / 111_320;
       return [lng, lat - (Number.isFinite(shift) ? shift : 0)];
     };
     if (!camera.framed || camera.token !== recenterToken) {

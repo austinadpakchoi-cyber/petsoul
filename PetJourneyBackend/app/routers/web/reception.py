@@ -30,9 +30,9 @@ router = web_router("reception")
 
 def capabilities(settings) -> list[Capability]:
     return [
-        cap("reception.session", "reception", CapabilityStatus.available, "引导便笺模式：原话原样进入待确认便笺，规则只给建议"),
+        cap("reception.session", "reception", CapabilityStatus.available, "引导记录模式：原话原样记成待确认的生活叮嘱，规则只给建议"),
         cap("reception.model_conversation", "reception", CapabilityStatus.available if llm_ready(settings) else CapabilityStatus.not_configured,
-            "主人选择后由对话模型回应（便笺仍只摘录原话）" if llm_ready(settings) else "接待模型未配置；不伪装自由对话"),
+            "主人选择后由对话模型回应（叮嘱仍只摘录原话）" if llm_ready(settings) else "接待模型未配置；不伪装自由对话"),
         cap("reception.confirmation", "reception", CapabilityStatus.available),
         cap("reception.home_welcome", "reception", CapabilityStatus.available),
         cap("reception.voice", "reception", CapabilityStatus.disabled, "语音不在首发范围"),

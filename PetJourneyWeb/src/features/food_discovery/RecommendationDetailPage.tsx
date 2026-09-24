@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router";
-import type { FeedbackVerdict, FoodRecommendation } from "@/shared/contracts";
+import type { FeedbackVerdict, FoodDataStatus, FoodRecommendation } from "@/shared/contracts";
 import { newIdempotencyKey } from "@/shared/api/idempotency";
 import { toApiError } from "@/shared/api/errors";
 import { queryKeys } from "@/shared/query/queryClient";
@@ -103,6 +103,39 @@ function OwnerFeedback({ rec }: { rec: FoodRecommendation }) {
   );
 }
 
+/**
+ * 资料来源这张卡：只写人话（资料是演示的还是核实过的、什么时候整理的、覆盖多大范围）。
+ * 资料 / 规则 / 偏好的版本号只用于后台判断推荐是否过期，不给玩家看；状态代码（fixture 等）换成中文，认不出的状态整行不显示。
+ */
+const DATA_STATUS_TEXT: Partial<Record<FoodDataStatus, string>> = {
+  fixture: "演示资料",
+  live_verified: "已核实的资料",
+  live_partial: "只有一部分资料核实过",
+};
+
+/** 看的人所在时区的“几月几日 几点”；没有时间、或认不出来时返回 null（整行不显示，不写“未知”）。 */
+function whenText(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }).format(date);
+}
+
+function SourceCard({ rec }: { rec: FoodRecommendation }) {
+  const status = DATA_STATUS_TEXT[rec.provenance.data_status] ?? null;
+  const generated = whenText(rec.provenance.generated_at);
+  return (
+    <Card flat>
+      <div className="ps-section-title" style={{ marginTop: 0 }}>资料来源</div>
+      <div className="ps-muted">{rec.provenance.coverage_note}</div>
+      {/* 状态和整理时间各占一行：挤在一行时 320 宽会把“23:49”或末尾的“·”单独折下去 */}
+      {status ? <div className="ps-muted">资料状态：{status}</div> : null}
+      {generated ? <div className="ps-muted">整理于 {generated}</div> : null}
+      <div className="ps-muted">平台评分：{rec.branch.ratings.length ? "见上" : rec.provenance.data_status === "fixture" ? "无（演示资料没有平台评分）" : "没有"}</div>
+    </Card>
+  );
+}
+
 /** 寻味详情：出处、日期、覆盖范围、实际样本量与平台总数分开展示。推荐 ID 不等于到访。 */
 export function RecommendationDetailPage() {
   const { recommendationId = "" } = useParams();
@@ -116,7 +149,8 @@ export function RecommendationDetailPage() {
           <div className="ps-stack">
             <Card>
               <h2 className="ps-h2">{rec.branch.name}</h2>
-              <div className="ps-muted">分店 ID {rec.branch.branch_id}（带来源命名空间；总店证据不自动转给分店）</div>
+              {/* 分店编号和内部规则不上页面；资料里有品牌才写品牌 */}
+              {rec.branch.brand ? <div className="ps-muted">品牌：{rec.branch.brand}</div> : null}
               <DataOriginBadge origin={rec.data_origin} label="演示资料，不对应真实商家" />
             </Card>
             <ChooseVenue rec={rec} />
@@ -127,23 +161,20 @@ export function RecommendationDetailPage() {
                 {dish.price ? <Chip>{(dish.price.amount_minor / 100).toFixed(0)} {dish.price.currency}（示例价格，日期未知）</Chip> : <Chip>价格未知</Chip>}
                 <div className="ps-section-title">依据</div>
                 {evidence.length === 0 ? <p className="ps-muted">没有可引用的菜品证据。</p> : null}
-                {evidence.map((ev) => (
-                  <div key={ev.evidence_id} className="ps-evidence">
-                    <Chip>{ev.source_label}</Chip> {ev.aspect}：{ev.observation}
-                    <div className="ps-muted">实际取得样本 {ev.sample_count} 条 · 观察时间 {ev.observed_at ?? "未知"}</div>
-                  </div>
-                ))}
+                {evidence.map((ev) => {
+                  const observed = whenText(ev.observed_at);
+                  return (
+                    <div key={ev.evidence_id} className="ps-evidence">
+                      <Chip>{ev.source_label}</Chip> {ev.aspect}：{ev.observation}
+                      <div className="ps-muted">实际取得样本 {ev.sample_count} 条</div>
+                      {observed ? <div className="ps-muted">观察时间 {observed}</div> : null}
+                    </div>
+                  );
+                })}
               </Card>
             ))}
             <OwnerFeedback rec={rec} />
-            <Card flat>
-              <div className="ps-section-title" style={{ marginTop: 0 }}>来源与版本</div>
-              <div className="ps-muted">{rec.provenance.coverage_note}</div>
-              <div className="ps-muted">
-                资料版本 {rec.provenance.fact_version} · 规则 {rec.provenance.rule_version} · 偏好第 {rec.provenance.preference_version} 版 · 数据状态 {rec.provenance.data_status}
-              </div>
-              <div className="ps-muted">平台评分：{rec.branch.ratings.length ? "见上" : "无（演示资料没有平台评分）"}</div>
-            </Card>
+            <SourceCard rec={rec} />
           </div>
         )}
       </QueryView>

@@ -51,12 +51,12 @@ export function JoinPage() {
     </div>
     {token && preview.isPending ? <LoadingState lines={2} label="正在核对这封邀请…" /> : token && preview.isError ? <ErrorState error={preview.error} onRetry={() => void preview.refetch()} /> : invite ? <>
       <InviteCard invite={invite} />
-      {!valid ? <p className="ps-join-notice">{invite.already_member ? "你已经是这个家的成员，可以回家看看。" : "邀请已不可用或已过期。请联系邀请你的家人获取新链接。"}</p> : !token ? <p className="ps-join-notice">你的邀请选择已找回。出于安全考虑，服务端不会再展示原始邀请链接；请重新打开家人发来的链接，核对后确认加入。</p> : session.isPending ? <LoadingState lines={1} label="正在确认你是否登录…" /> : session.isError ? <ErrorState error={session.error} onRetry={() => void session.refetch()} /> : !session.data?.authenticated ? <div className="ps-join-actions">
+      {!valid ? <p className="ps-join-notice">{invite.already_member ? "你已经是这个家的成员，可以回家看看。" : "邀请已不可用或已过期。请联系邀请你的家人获取新链接。"}</p> : !token ? <p className="ps-join-notice">你的邀请选择已找回。出于安全考虑，这里不会再显示原来的邀请链接；请重新打开家人发来的链接，核对后确认加入。</p> : session.isPending ? <LoadingState lines={1} label="正在确认你是否登录…" /> : session.isError ? <ErrorState error={session.error} onRetry={() => void session.refetch()} /> : !session.data?.authenticated ? <div className="ps-join-actions">
         <Link className="ps-btn ps-btn--primary ps-btn--block" to={`/register?${authQuery}`}>注册后再确认</Link>
         <Link className="ps-join-login" to={`/login?${authQuery}`}>已有账号？登录后继续</Link>
       </div> : confirming ? <div className="ps-join-confirm" role="group" aria-label="确认加入家庭">
         <strong>确定加入这个家吗？</strong>
-        <p>加入后，你能看到的宠物和家庭内容由上面的角色及服务端权限决定。</p>
+        <p>加入后，你能看到的宠物和家庭内容由上面的角色决定。</p>
         <div><Button variant="secondary" disabled={accept.isPending} onClick={() => setConfirming(false)}>再想想</Button><Button variant="primary" loading={accept.isPending} onClick={() => accept.mutate()}>确认加入</Button></div>
       </div> : <Button variant="primary" block onClick={() => setConfirming(true)}>我想加入这个家</Button>}
       {accept.isError ? <ErrorState error={accept.error} onRetry={() => void preview.refetch()} /> : null}

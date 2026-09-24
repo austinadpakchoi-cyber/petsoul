@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from ...schemas.web.common import Capability
 from . import (
+    announcements,
     character,
     collection,
     communicator,
@@ -26,8 +27,10 @@ from . import (
     pets,
     public,
     reception,
+    report_outcomes,
     social,
     transport,
+    travel,
     world,
 )
 
@@ -53,6 +56,12 @@ WEB_ROUTER_MODULES = (
     life,
     map_module,  # 地图底图配置（CR-6C2B-MAP W0）；`map` 是内置名，导入时改名避免遮蔽
     world,       # 统一世界状态（CR-6C2B-MAP W1）：纯读聚合
+    travel,      # 旅行心愿与计划（TRV-00 §23.4，I）：纯读
+    # 运营后台的两个玩家侧入口：原先由 web_admin 直接 include_router，绕开了这里，/meta 的能力表收不到它们声明的能力
+    # （Q 2026-09-24 报：platform.announcements / platform.public_assets / social.report_outcomes 前端查不到）。
+    # 登记在这里之后，web_admin 的 `_mount_once` 按路径判断已挂、自动跳过，不会挂两遍。
+    announcements,
+    report_outcomes,
 )
 WEB_ROUTERS = tuple(module.router for module in WEB_ROUTER_MODULES)
 

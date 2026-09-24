@@ -63,6 +63,9 @@ interface View {
   ty: number;
 }
 
+/** 底图接口能接受的最小宽高（CSS 像素），与服务端 routers/web/journey.py 的 Query(ge=64) 一致。 */
+const MIN_BASEMAP_SIZE = 64;
+
 export function SchematicMapSurface({
   bounds,
   routes,
@@ -105,6 +108,8 @@ export function SchematicMapSurface({
   }, []);
 
   // 真实底图：尺寸按 32 像素取整后再请求，容器细微变化不重复请求；服务端再做一次取整与缓存。
+  // 服务端要求宽高都不小于 64（GET /map/basemap 的 Query(ge=64)）。容器一时量出更小的尺寸就先不请求，等量到正常尺寸再要：
+  // 2026-09-24 实测 390 宽旅途页在整页截图时视口被临时压成 1px 宽，地图量到 32×340，发出宽 32 的请求被 422 拒绝。
   const { platform } = useServices();
   const box = useMemo(() => boundsBox(bounds), [bounds]);
   const reqWidth = Math.round(size.width / 32) * 32;
@@ -112,7 +117,7 @@ export function SchematicMapSurface({
   const basemapQuery = useQuery({
     queryKey: queryKeys.basemap(box ? `${box.south},${box.west},${box.north},${box.east}|${reqWidth}x${reqHeight}` : "none"),
     queryFn: () => platform.basemap({ ...box!, width: reqWidth, height: reqHeight }),
-    enabled: realBasemap && env.dataMode === "live" && measured && box !== null,
+    enabled: realBasemap && env.dataMode === "live" && measured && box !== null && reqWidth >= MIN_BASEMAP_SIZE && reqHeight >= MIN_BASEMAP_SIZE,
     staleTime: 30 * 60_000,
     retry: false,
   });

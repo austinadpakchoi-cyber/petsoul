@@ -401,6 +401,11 @@
 .ps-plan-journal figcaption span.ps-plan-journal__stale {
   color: color-mix(in srgb, var(--c-sun) 55%, var(--c-ink));
 }
+/* 这一页自己的时间（手账每一版写下就不改）：和图说明同一档小字。 */
+.ps-plan-journal figcaption .ps-plan-journal__time {
+  font-size: var(--fs-xs);
+  color: var(--c-ink-2);
+}
 /* 重画：路由还没建，只是一句说明，不做成按钮。 */
 .ps-plan-journal__redraw {
   display: flex;

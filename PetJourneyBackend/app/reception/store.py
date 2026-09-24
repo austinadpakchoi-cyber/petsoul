@@ -143,7 +143,7 @@ class WebReceptionService:
         if session.status not in (ReceptionStatus.active, ReceptionStatus.awaiting_confirmation):
             raise ReceptionError("closed", "这次接待已经结束或过期，可以重新开始。")
         if session.draft_revision != expected_revision:
-            raise ReceptionError("version_conflict", "便笺在别处更新过，请刷新。", session.draft_revision)
+            raise ReceptionError("version_conflict", "叮嘱在别处更新过，请刷新。", session.draft_revision)
         turns = [t.model_dump(mode="json") for t in session.turns]
         candidates = [c.model_dump(mode="json") for c in session.candidates]
         owner_turn_id = f"t{len(turns) + 1}"
@@ -163,7 +163,7 @@ class WebReceptionService:
                 (json.dumps(turns, ensure_ascii=False), json.dumps(candidates, ensure_ascii=False), iso(now), session_id, expected_revision),
             ).rowcount
         if updated != 1:
-            raise ReceptionError("version_conflict", "便笺在别处更新过，请刷新。")
+            raise ReceptionError("version_conflict", "叮嘱在别处更新过，请刷新。")
         return self.get(user_id, session_id, now)
 
     def skip(self, user_id: str, session_id: str, now: datetime | None = None) -> ReceptionSession:
@@ -185,7 +185,7 @@ class WebReceptionService:
         if session.status not in (ReceptionStatus.active, ReceptionStatus.awaiting_confirmation):
             raise ReceptionError("closed", "这次接待已经结束或过期。")
         if session.draft_revision != request.draft_revision:
-            raise ReceptionError("version_conflict", "便笺在别处更新过，请刷新后再确认。", session.draft_revision)
+            raise ReceptionError("version_conflict", "叮嘱在别处更新过，请刷新后再确认。", session.draft_revision)
         by_id = {c.candidate_id: c for c in session.candidates}
         confirmation_id = f"cf-{uuid.uuid4().hex[:12]}"
         with self.storage.connect() as conn:
@@ -195,7 +195,7 @@ class WebReceptionService:
             for decision in request.decisions:
                 candidate = by_id.get(decision.candidate_id)
                 if candidate is None:
-                    raise ReceptionError("unknown_candidate", "便笺里没有这一条。")
+                    raise ReceptionError("unknown_candidate", "这次整理的叮嘱里没有这一条。")
                 if decision.target is SaveTarget.do_not_save:
                     continue
                 if decision.target is SaveTarget.give_to_pet and candidate.kind in PRIVATE_ONLY:

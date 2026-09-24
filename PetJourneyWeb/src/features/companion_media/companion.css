@@ -4,7 +4,8 @@
   top: -22px;
   width: 44px;
   height: 44px;
-  border-radius: 15px 15px 15px 5px;
+  /* 尖角朝交通工具：徽标挂在车的右下方（ActivityBadge.tsx 的 BADGE_OFFSET），尖角在左上 */
+  border-radius: 5px 15px 15px 15px;
   border: 2px solid var(--c-surface);
   background: var(--c-surface);
   color: var(--c-coral);

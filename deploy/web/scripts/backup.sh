@@ -20,7 +20,7 @@ with sqlite3.connect(src) as s, sqlite3.connect(dst) as d:
 print("sqlite backup ok:", dst)
 PY
 
-for sub in uploads web-private-media; do
+for sub in uploads web-private-media admin-assets; do
   if [ -d "$DATA_DIR/$sub" ]; then
     tar -C "$DATA_DIR" -czf "$DEST/$sub.tgz" "$sub"
   fi

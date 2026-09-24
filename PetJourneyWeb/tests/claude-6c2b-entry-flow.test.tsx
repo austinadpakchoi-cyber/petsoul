@@ -171,7 +171,9 @@ describe("move-in: the last step reads as bringing TA home", () => {
     expect(await screen.findByRole("heading", { name: "带 栗子 回家" })).toBeTruthy();
     const choices = await screen.findByRole("group", { name: "选择家的环境" });
     expect(within(choices).getAllByRole("button").map((b) => b.querySelector("strong")?.textContent)).toEqual(["海边", "城市"]);
-    expect(screen.getByText("沙漠还没开放，开放后才会出现在这里。")).toBeTruthy();
+    // 2026-09-24 巡检 P2（主窗口派单）：没开放的类型不再一一列出，只说一句“更多地方以后开放。”
+    expect(screen.getByText("更多地方以后开放。")).toBeTruthy();
+    expect(screen.queryByText(/沙漠/)).toBeNull();
     fireEvent.click(within(choices).getByRole("button", { name: /海边/ }));
     expect(within(choices).getByRole("button", { name: /海边/ }).getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: "入住，一起开始生活" }));
@@ -253,7 +255,7 @@ describe("first arrival at home", () => {
     expect(within(dialog).getByText("“我到家啦，这里闻起来像你。”")).toBeTruthy();
     expect(within(dialog).getByText("窗台上的软垫")).toBeTruthy();
     expect(within(dialog).getByText("新家 · 香港·西贡的海边")).toBeTruthy();
-    expect(within(dialog).getByText("来自你确认过的入住叮嘱")).toBeTruthy();
+    expect(within(dialog).getByText("来自你确认过的生活叮嘱")).toBeTruthy();
     fireEvent.click(within(dialog).getByRole("button", { name: "进家看看" }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "栗子 到家了" })).toBeNull());
   });

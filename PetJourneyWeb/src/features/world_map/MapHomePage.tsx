@@ -5,8 +5,10 @@
  * - fixture：演示剧本（./demoScript 按需加载），页面顶部始终挂“演示剧本”，可调速度、跳到下一段。
  * 首屏只有一张主状态面板；小窝、菜园从左上进入；“我的”在右上头像；底部是新版三栏（地图 · 通讯器 · 回忆）的预览。
  * 同一个家只画一个小窝标记，在家的几只围着它错开（./homeCluster）。
- * 提醒合进面板（先后与收起见 ./panelNotes、./StatusPanel）：信箱（live，面板上这只自己的未读，见 ./homeNotes）> 驾校（TA 想学开车 / 学车进度 / 领证仪式，见 ./schoolNote，
- *   live 与演示都走驾校服务）> 旅行心愿（想去哪里 / 还差什么，见 journey/travelPlan/wishNote）> 系统提示（世界正在更新，live，也按面板上那只：后端按宠物算）。
+ * 提醒合进面板（先后与收起见 ./panelNotes、./StatusPanel）：信箱（live，面板上这只自己的未读，见 ./homeNotes）> 一起听 > 这趟旅途（live，只在行程快照与 W1 对齐时，
+ *   见 ./journeyDetails、./journeyNotes）> 驾校（TA 想学开车 / 学车进度 / 领证仪式，见 ./schoolNote，live 与演示都走驾校服务）
+ *   > 旅行心愿（想去哪里 / 还差什么，见 journey/travelPlan/wishNote）> 系统提示（世界正在更新，live，也按面板上那只：后端按宠物算）。
+ * “这趟旅途”面板与一起听 / 行程卡用 ?sheet=（./mapSheet，第 1 步）：打开用 push、返回键关、刷新还在；只在快照对齐时出现（./TripSheet、journey.sheet 插槽）。
  * 地图上点哪只只是本页看哪只，不改当前宠物；从面板进按宠物区分的页面（信箱提醒、捎句话、进小窝看看、家的标记、左上“进小窝”）时，
  *   先把当前宠物换成面板上这只再走（C84A-MAP-MAIL-SCOPE-01、第 0b 步）。
  * 进小窝再回来接着看：选中的宠物、是否跟着 TA、镜头、演示时钟存在 sessionStorage（./mapSession）；
@@ -14,7 +16,7 @@
  *   从小窝的“‹ 地图”“我出门啦”回来带 ?focus=<宠物 id>，改为选中并对准那只（./mapFocus）。
  * 真实地图取不到配置或加载失败时退回示意底图，状态照常显示——不拿假位置顶替。
  */
-import { startTransition, useEffect, useRef, useState, type RefObject } from "react";
+import { startTransition, useEffect, useRef, useState, type Ref, type RefObject } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { env } from "@/shared/config/env";
@@ -25,7 +27,13 @@ import { useNow } from "@/shared/time/clock";
 import { Icon, LoadingState, Page } from "@/shared/ui";
 import { PetMoodAvatar } from "@/features/pets/PetMoodAvatar";
 import { useWishNote } from "@/features/journey/travelPlan/wishNote";
+import { usePlayer } from "@/features/companion_media/playerStore";
+import { ActivityBadgeFor } from "@/features/companion_media/ActivityBadgeFor";
+import { Slot } from "@/shared/slots/Slot";
 import { AmapView, type MapStatus } from "./AmapView";
+import { useAttributionInset } from "./attribution";
+import { MapLoadingHint } from "./MapLoadingHint";
+import { useStoreVisitId } from "./visitPlace";
 import { focusPetId, sceneFromWorldState } from "./worldState";
 import { fetchMapConfig } from "./mapConfig";
 import { acceptedFocus, FOCUS_PARAM } from "./mapFocus";
@@ -33,8 +41,13 @@ import { mapSessionScope, readMapSession, restoredView, resumeDemoClock, writeMa
 import { HomeMarkerView, PetMarkerView, PlaceMarkerView } from "./markers";
 import { panelCopy } from "./copy";
 import type { WorldPet, WorldScene } from "./model";
-import { useHomeNotes } from "./homeNotes";
+import { useHomeCity, useHomeNotes } from "./homeNotes";
+import { FoodPicksProbe } from "./FoodPicksProbe";
+import { useJourneyDetails } from "./journeyDetails";
+import { journeyNotes } from "./journeyNotes";
+import { useMapSheet } from "./mapSheet";
 import { MapLoadError, MapStatusShell } from "./MapStatusShell";
+import { TripSheet } from "./TripSheet";
 import { arrangeNotes } from "./panelNotes";
 import { useSchoolNote } from "./schoolNote";
 import { StatusPanel } from "./StatusPanel";
@@ -196,9 +209,9 @@ function DemoMapHome() {
   return <MapHomeView scene={scene} nowMs={clock.now} demo={clock} />;
 }
 
-function DemoBar({ clock }: { clock: DemoClock }) {
+function DemoBar({ clock, ref }: { clock: DemoClock; ref?: Ref<HTMLDivElement> }) {
   return (
-    <div className="ps-wmap-demo" role="group" aria-label="演示剧本控制">
+    <div className="ps-wmap-demo" role="group" aria-label="演示剧本控制" ref={ref}>
       <span className="ps-wmap-demo__tag">演示剧本 · 不是真实数据</span>
       <div className="ps-wmap-demo__controls">
         <button type="button" onClick={clock.togglePause} aria-label={clock.paused ? "继续" : "暂停"}>
@@ -268,6 +281,27 @@ function useBottomInset(rootRef: RefObject<HTMLDivElement | null>, bottomRef: Re
   return inset;
 }
 
+/**
+ * 顶部压在地图上的一块（演示条、底图加载提示）下沿到地图顶部的距离（px；这一块不在时为 0）：
+ * 镜头把宠物放在它与底部面板之间那块地图的正中。演示条的控件放大到 40px 后在窄屏（320 宽）上折成两行；
+ * 加载提示在 320×568 这种面板很高的窄屏上也会碰到靠上的标记——不算进去就会压住 TA。
+ */
+function useTopInset(rootRef: RefObject<HTMLDivElement | null>, topRef: RefObject<HTMLDivElement | null>, active: boolean): number {
+  const [inset, setInset] = useState(0);
+  useEffect(() => {
+    const root = rootRef.current;
+    const top = topRef.current;
+    if (!active || !root || !top) return;
+    const apply = () => setInset(Math.max(0, Math.round(top.getBoundingClientRect().bottom - root.getBoundingClientRect().top)));
+    apply();
+    if (typeof ResizeObserver !== "function") return;
+    const observer = new ResizeObserver(apply);
+    observer.observe(top);
+    return () => observer.disconnect();
+  }, [rootRef, topRef, active]);
+  return active ? inset : 0;
+}
+
 function MapFallback({ pet, status }: { pet: WorldPet | null; status: MapStatus }) {
   const reason = status === "loading" ? "正在打开地图…" : "地图暂时没连上，TA 的状态照常更新。";
   return (
@@ -299,6 +333,9 @@ function MapHomeView({ scene, nowMs, demo, focusId = null }: { scene: WorldScene
   // 带着认得的 ?focus= 回来：选中并跟随那只，不接上次存下的镜头（方案第 5 节“回到地图并对准 TA”）。
   const [restored] = useState(() => (focusRequest ? { selectedId: focusRequest, following: true, camera: null } : restoredView(readMapSession(scope), focusId)));
   const [status, setStatus] = useState<MapStatus>("loading");
+  // 底图画出来没有（高德 complete）；重试时换一次 key 重建地图、重新计时（./MapLoadingHint）。
+  const [basemapReady, setBasemapReady] = useState(false);
+  const [mapAttempt, setMapAttempt] = useState(0);
   const [following, setFollowing] = useState(restored.following);
   const [recenterToken, setRecenterToken] = useState(0);
   const [openPlace, setOpenPlace] = useState<string | null>(null);
@@ -335,9 +372,22 @@ function MapHomeView({ scene, nowMs, demo, focusId = null }: { scene: WorldScene
   // 提醒按来源先后排（信箱 > 驾校 > 旅行心愿 > 系统提示）；只关于某只宠物的（信箱、驾校、心愿、世界正在更新）在面板显示别的宠物时不出现。
   // 信箱和“世界正在更新”读面板上这只自己的家园快照（./homeNotes）：换看另一只就读那只的，读到之前不出这两行，不拿当前宠物的顶替。
   const homeNotes = useHomeNotes(selected?.petId ?? null);
+  // 面板上这只此刻这一趟（只做 live；在家、不是自家的都不读）：只有和 W1 对齐时才拿来用（./journeyDetails）。
+  const journey = useJourneyDetails(env.dataMode === "live" ? selected ?? null : null);
+  const aligned = journey.status === "aligned" ? journey.snapshot : null;
+  // 在店里才有“进店看看”：按这次到访的场景模板判断是不是店（./visitPlace），不按名字猜。
+  const storeVisitId = useStoreVisitId(env.dataMode === "live" ? selected ?? null : null);
+  const player = usePlayer();
+  // 寻味那一行：推荐能用才出（FoodPicksProbe 问 food_discovery，只在有到达上下文时挂）；标题按家所在的城市说（家园快照 place.city）。
+  const [foodPicks, setFoodPicks] = useState(false);
+  const homeCity = useHomeCity(selected?.petId ?? null);
   const wish = useWishNote();
-  const school = useSchoolNote();
-  const panelNotes = arrangeNotes([...homeNotes, wish, school], selected?.petId ?? null);
+  const school = useSchoolNote(selected?.name ?? null);
+  const panelNotes = arrangeNotes([...homeNotes, ...journeyNotes(journey, selected?.petId ?? null, player, { available: foodPicks, homeCity }), wish, school], selected?.petId ?? null);
+  // 底部面板（?sheet=trip / leg:<id> / media:<id>，./mapSheet）；给它们的时间一律是校准过的真实时间，不是演示加速时钟。
+  const { sheet, open: openSheetValue, close: closeSheet } = useMapSheet();
+  const openSheet = (kind: "leg" | "media", id: string) => openSheetValue(`${kind}:${id}`);
+  const realNow = useNow(1000);
   // 点标记只换本页看哪只，不调 selectPet（它会清掉世界状态缓存，地图要闪一下重读）。
   // 从面板进按宠物区分的页面时，才把当前宠物换成面板上这只：目标页可能是另一个家庭上下文实例，靠 sessionStorage 接上，所以在跳转之前换；已经是当前宠物就不换。
   // selectPet 当场写 sessionStorage、清缓存；它的界面更新标成过渡，和随后的跳转（路由也按过渡提交）一起落地——
@@ -361,20 +411,32 @@ function MapHomeView({ scene, nowMs, demo, focusId = null }: { scene: WorldScene
   const rootRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const bottomInset = useBottomInset(rootRef, bottomRef);
+  const demoRef = useRef<HTMLDivElement>(null);
+  const demoInset = useTopInset(rootRef, demoRef, Boolean(demo));
+  // 底图加载提示也压在顶部：它在的时候镜头同样让开它（提示本身放在演示条下面）。
+  const hintRef = useRef<HTMLDivElement>(null);
+  const hintShown = Boolean(config && showMap && !basemapReady);
+  const hintInset = useTopInset(rootRef, hintRef, hintShown);
+  const topInset = Math.max(demoInset, hintInset);
+  // 高德 Logo 与版权抬到底部一叠和打开着的底部面板两者更高的那个之上（./attribution）。
+  useAttributionInset(rootRef, bottomInset);
 
   return (
     <div className={`ps-wmap${demo ? " is-demo" : ""}`} ref={rootRef}>
       {config && showMap ? (
         <AmapView
+          key={`map-${mapAttempt}`}
           config={config}
           pets={scene.pets}
           nowMs={nowMs}
           followPetId={following ? selected?.petId ?? null : null}
           recenterToken={recenterToken}
           bottomInset={bottomInset}
+          topInset={topInset}
           initialCamera={restored.camera}
           onUserMove={() => setFollowing(false)}
           onStatus={(s) => setStatus(s)}
+          onBasemapReady={() => setBasemapReady(true)}
           onCameraChange={(camera) => writeMapSession(scope, { camera: { focusId: sessionFocusRef.current, ...camera } })}
           renderPet={(pet) => (
             <PetMarkerView
@@ -386,6 +448,8 @@ function MapHomeView({ scene, nowMs, demo, focusId = null }: { scene: WorldScene
                 setSelectedId(pet.petId);
                 locate();
               }}
+              // 一起听 / 一起看徽标（第 2 步）：只给面板上那只、而且快照对齐时（别的宠物不读快照）；显示哪条、什么状态由 companion_media 自己定。
+              badge={aligned && pet.petId === selected?.petId ? <ActivityBadgeFor snapshot={aligned} nowMs={realNow} openSheet={openSheet} /> : null}
             />
           )}
           renderHome={(owner, residents) => {
@@ -430,11 +494,24 @@ function MapHomeView({ scene, nowMs, demo, focusId = null }: { scene: WorldScene
             <Icon name="sprout" size={20} />
           </Link>
         </div>
-        {demo ? <DemoBar clock={demo} /> : null}
+        {demo ? <DemoBar clock={demo} ref={demoRef} /> : null}
         <Link className="ps-wmap-me" to="/me" aria-label="我的">
           <Icon name="user" size={20} />
         </Link>
       </header>
+
+      {/* 底图还没画出来：顶部一句安静的提示（有演示条时放在它下面）；超过 15 秒换成“还没加载出来 · 重试”（重建地图、重新计时）。 */}
+      {hintShown ? (
+        <MapLoadingHint
+          ref={hintRef}
+          attempt={mapAttempt}
+          top={demoInset ? demoInset + 8 : undefined}
+          onRetry={() => {
+            setBasemapReady(false);
+            setMapAttempt((n) => n + 1);
+          }}
+        />
+      ) : null}
 
       <div className="ps-wmap-side">
         <button type="button" className={`ps-wmap-fab${following ? " is-on" : ""}`} aria-label="定位 TA" aria-pressed={following} onClick={locate}>
@@ -444,10 +521,32 @@ function MapHomeView({ scene, nowMs, demo, focusId = null }: { scene: WorldScene
         {SCOPES.filter((s) => s.open).length > 1 ? <ScopeControl /> : null}
       </div>
 
+      {aligned?.arrival_context ? <FoodPicksProbe onChange={setFoodPicks} /> : null}
+
       <div className="ps-wmap-bottom" ref={bottomRef}>
-        {selected ? <StatusPanel pet={selected} nowMs={nowMs} notes={panelNotes} onLocate={locate} onEnter={enterPet} /> : null}
+        {/* 一起听 / 一起看的播放条：排在底部这一叠里、面板上方（不再按旧底栏 fixed 定位，不压面板）；只在对齐时给快照。 */}
+        {aligned ? <Slot name="journey.dock" props={{ snapshot: aligned, nowMs: realNow, openSheet }} /> : null}
+        {selected ? (
+          <StatusPanel
+            pet={selected}
+            nowMs={nowMs}
+            notes={panelNotes}
+            onLocate={locate}
+            onEnter={enterPet}
+            trip={aligned ? { subtitle: aligned.destination_title, onOpen: () => openSheetValue("trip") } : null}
+            storeVisitId={storeVisitId}
+          />
+        ) : null}
         <PreviewTabBar />
       </div>
+
+      {/* 底部面板：都只在快照对齐时出现（没对齐时地址里的 sheet 留着，对齐后自己出来——刷新后面板还在）。 */}
+      {aligned && sheet?.kind === "trip" ? (
+        <TripSheet snapshot={aligned} nowMs={realNow} openSheet={openSheet} close={closeSheet} onEnter={() => (selected ? enterPet(selected.petId) : undefined)} />
+      ) : null}
+      {aligned && sheet && sheet.kind !== "trip" ? (
+        <Slot name="journey.sheet" props={{ snapshot: aligned, nowMs: realNow, kind: sheet.kind, targetId: sheet.id, close: closeSheet }} />
+      ) : null}
     </div>
   );
 }

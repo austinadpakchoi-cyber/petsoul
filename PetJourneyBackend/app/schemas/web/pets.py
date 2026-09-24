@@ -101,6 +101,8 @@ class AdoptionCandidate(WebModel):
     residence: str | None = Field(default=None, description="领养前住在哪（星球居民驿站·片区；世界规则提供食宿，不编造人类主人）",
                                   json_schema_extra={"x-additive": True})
     living_since: datetime | None = Field(default=None, description="从什么时候开始在星球上公开生活", json_schema_extra={"x-additive": True})
+    photo_url: str | None = Field(default=None, description="TA 的形象照（公开路由，访客可看）；只在仍可领养时给，没有照片为 null。"
+                                  "平台原创居民的形象是生成的原创设计，不是真实照片", json_schema_extra={"x-additive": True})
 
 
 class AdoptRequest(WebModel):

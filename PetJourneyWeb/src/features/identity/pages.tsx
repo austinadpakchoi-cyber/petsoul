@@ -17,6 +17,7 @@ import entryPoster from "./assets/entry-film-poster.jpg";
 import invitationLetter from "@/features/pets/assets/entry-invitation-letter-v1.webp";
 import courtyard from "@/features/home/assets/living/courtyard-base.webp";
 import { PawMark, petPortraitUrl } from "@/features/pets/PetPortrait";
+import { petToReturnTo } from "@/features/world_map/WorldGate";
 
 export function WelcomePage() {
   const session = useSessionState();
@@ -61,7 +62,7 @@ export function WelcomePage() {
         </button> : null}
       </div>
       <div className="ps-welcome-bottom">
-        <span className="ps-welcome-eyebrow">WELCOME TO THE LIVING WORLD</span>
+        <span className="ps-welcome-eyebrow">欢迎来到 PetSoul 星球</span>
         <h1>和 TA 一起，<br />走进另一个世界。</h1>
         <p>每只宠物，都有一段属于自己的故事。</p>
         <div className="ps-welcome-actions">
@@ -264,6 +265,16 @@ const HABITAT_ART: Partial<Record<HabitatKind, string>> = {
 };
 const HABITAT_MARK: Partial<Record<HabitatKind, "wave" | "home" | "sprout" | "compass">> = { seaside: "wave", lakeside: "wave", city: "home", countryside: "sprout", grassland: "sprout", forest: "sprout" };
 
+/**
+ * 选这一类会安家在哪：照接口给的城市写（examples 是这一类里新家现在能分到的城市，2026-09-24 巡检 P2：原来写“可能落在 香港”）。
+ * 卡上的图只是这一类地方的样子，这句只说城市，不说“图里就是那儿”；接口没给城市时由星球安排。
+ */
+export function habitatWhere(option: HabitatOption): string {
+  const cities = option.examples.map((city) => city.trim()).filter(Boolean);
+  if (!cities.length) return "由星球安排片区";
+  return cities.length === 1 ? `安家在${cities[0]}` : `安家在${cities.slice(0, -1).join("、")}或${cities[cities.length - 1]}`;
+}
+
 function HabitatPostcard({ option, selected, onSelect }: { option: HabitatOption; selected: boolean; onSelect: () => void }) {
   const art = HABITAT_ART[option.habitat];
   const [artFailed, setArtFailed] = useState(false);
@@ -275,7 +286,7 @@ function HabitatPostcard({ option, selected, onSelect }: { option: HabitatOption
         <span className="ps-habitat-card__check"><Icon name="check" size={15} strokeWidth={2.6} /></span>
       </span>
       <strong>{option.label}</strong>
-      <small>{option.examples.length ? `可能落在 ${option.examples.join("、")}` : "由星球安排片区"}</small>
+      <small>{habitatWhere(option)}</small>
     </button>
   );
 }
@@ -349,8 +360,11 @@ export function MoveInPage() {
   const away = problem?.reason === "pet_away";
   const view = place.data;
   const openOptions = view?.options.filter((option) => option.open) ?? [];
-  const closedLabels = view?.options.filter((option) => option.open === false).map((option) => option.label) ?? [];
+  // 还没开放的类型不一一列出（2026-09-24 巡检 P2：原来一口气列出六个“还没开放”），只在有的时候说一句“更多地方以后开放”。
+  const moreLater = view?.options.some((option) => option.open === false) ?? false;
   const canChoose = Boolean(view && !view.place.chosen && view.can_change && openOptions.length);
+  // 账号里已经有住进来的宠物、这一只是后加的：给一个“先不加了”的出口回地图，当前宠物还是原来那只（第一次入住没有这个出口）。
+  const returnTo = petToReturnTo(state.data.onboarding, state.data.user?.user_id);
   return (
     <Page bare className="ps-entry-page ps-movein-page">
       <TopBar title="入住" subtitle="最后一步，带 TA 回家" />
@@ -384,7 +398,7 @@ export function MoveInPage() {
                 </div>
               ) : null}
               {!view.can_change ? <p className="ps-movein-note">TA 在外面的时候不能定家的位置，回来后再选。</p> : null}
-              {closedLabels.length ? <p className="ps-movein-closed">{closedLabels.join("、")}还没开放，开放后才会出现在这里。</p> : null}
+              {moreLater ? <p className="ps-movein-closed">更多地方以后开放。</p> : null}
             </>
           )
         ) : null}
@@ -394,7 +408,7 @@ export function MoveInPage() {
         <label className="ps-switch-row">
           <span>
             <strong>让 TA 的旅途见闻出现在朋友圈</strong>
-            <small>默认关闭。只在 TA 真实到访之后才会发；你们的私密通讯和入住叮嘱永远不会公开。之后可以在设置里改。</small>
+            <small>默认关闭。只在 TA 真实到访之后才会发；你们的私密通讯和生活叮嘱永远不会公开。之后可以在设置里改。</small>
           </span>
           <input type="checkbox" role="switch" className="ps-switch" checked={publicPosts} onChange={(e) => setPublicPosts(e.target.checked)} />
         </label>
@@ -412,6 +426,11 @@ export function MoveInPage() {
         <Button variant="primary" block icon="home" loading={moveIn.isPending} disabled={place.isPending || place.isError} onClick={() => moveIn.mutate()}>
           {away ? "再看看 TA 回来没有" : "入住，一起开始生活"}
         </Button>
+        {returnTo ? (
+          <Button variant="ghost" block icon="back" onClick={() => navigate("/map")}>
+            先不加了，回到 {returnTo.name}
+          </Button>
+        ) : null}
       </div>
     </Page>
   );

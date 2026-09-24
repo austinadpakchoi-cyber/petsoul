@@ -78,30 +78,37 @@ class ProviderIntegrationTests(WebPlatformTestBase):
                                   "slot": c["suggested_slot"], "slot_value": c["suggested_slot_value"]})
         owner.post("/reception/confirmations", {"session_id": session["session_id"], "draft_revision": session["draft_revision"], "decisions": decisions})
 
-    def test_model_replies_are_opt_in_grounded_and_labelled(self) -> None:
+    def test_model_replies_are_on_by_default_grounded_and_labelled(self) -> None:
+        """2026-09-24 起模型回信默认开启（用户：聊天都是固定的、ds 没参与）。原先这条钉的是「默认关闭、需主人开启」。
+
+        先读一次会话：真实页面一打开就会读，它会替没改过设置的人建出偏好行——第一版修复正是栽在这里
+        （建行落到列默认值 0，这条的「默认关闭」照样绿）。叮嘱的取舍、关掉即停这两条保护不变。
+        """
         chat = FakeChat(["妈妈，我在阳台晒太阳，毯子暖暖的。"])
         self.install(chat=chat)
         owner = self.user("chat-model")
         owner.pet_id = owner.upload_pet("年糕", "cat").json()["pet_id"]
         self.confirm(owner, "叫我妈妈就好。它最喜欢那条蓝色的毯子。", "它小时候走丢过一次，别告诉它。")
         owner.move_in()
+        self.assertTrue(owner.get("/session").json()["authenticated"])
         settings = owner.get("/settings").json()
-        self.assertFalse(settings["model_replies"], "默认关闭")
+        self.assertTrue(settings["model_replies"], "默认开启，读过会话之后也还是开启")
         self.assertTrue(settings["model_replies_available"])
         self.assertEqual(settings["model_provider"], "测试模型")
-        owner.post(f"/communicator/{owner.pet_id}/messages", {"client_message_id": "cm-template-1", "text": "在干嘛"})
-        self.assertEqual(chat.calls, [], "未开启时不调用模型")
-        self.assertTrue(owner.patch("/settings", {"model_replies": True}).json()["model_replies"])
         owner.post(f"/communicator/{owner.pet_id}/messages", {"client_message_id": "cm-model-0001", "text": "想你啦"})
+        self.assertEqual(len(chat.calls), 1, "没选过的主人，第一条就由模型写")
         prompt = json.dumps(chat.calls[-1], ensure_ascii=False)
         self.assertIn("妈妈", prompt, "使用确认过的称呼")
         self.assertIn("蓝色的毯子", prompt, "使用允许私密通讯的叮嘱")
         self.assertNotIn("走丢", prompt, "只留在这里的私密内容不进入模型")
+        self.assertFalse(owner.patch("/settings", {"model_replies": False}).json()["model_replies"])
+        owner.post(f"/communicator/{owner.pet_id}/messages", {"client_message_id": "cm-template-1", "text": "在干嘛"})
+        self.assertEqual(len(chat.calls), 1, "关掉之后不再调用模型")
         self.clock.advance(seconds=25)
         items = owner.get(f"/communicator/{owner.pet_id}/messages").json()["items"]
         pet_replies = [m for m in items if m["sender"] == "pet"]
-        self.assertEqual([m["composed_by"] for m in pet_replies], ["template", "model"])
-        self.assertEqual(pet_replies[-1]["text"], "妈妈，我在阳台晒太阳，毯子暖暖的。")
+        self.assertEqual([m["composed_by"] for m in pet_replies], ["model", "template"])
+        self.assertEqual(pet_replies[0]["text"], "妈妈，我在阳台晒太阳，毯子暖暖的。")
 
     def test_model_failure_or_bad_output_falls_back_to_template(self) -> None:
         owner = self.user("chat-fallback")
@@ -180,8 +187,8 @@ class ProviderIntegrationTests(WebPlatformTestBase):
         message = self.adventure_message(owner)
         self.assertEqual(message["photo_status"], "ready")
         self.assertTrue(message["photo_url"].startswith("/api/v1/web/media/illustrations/"))
-        self.assertIn("No text", illustrator.prompts[-1])
-        self.assertIn("小岚", illustrator.prompts[-1])
+        self.assertIn("Any signs or screens are blank", illustrator.prompts[-1])
+        self.assertNotIn("小岚", illustrator.prompts[-1])
         self.assertEqual(owner.get(message["photo_url"].removeprefix("/api/v1/web")).status_code, 200)
         stranger = self.user("hero-stranger")
         self.assertEqual(stranger.client.get(message["photo_url"]).status_code in (401, 404, 409), True, "插画只给主人")

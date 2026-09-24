@@ -8,15 +8,15 @@
   width: 100%;
   min-height: 244px;
   overflow: hidden;
-  border: 1px solid #ddd7c8;
+  border: 1px solid var(--c-surface-stroke);
   border-radius: 25px;
-  background: #e9eee8;
+  background: color-mix(in srgb, var(--c-leaf-soft) 60%, var(--c-surface));
   cursor: pointer;
-  box-shadow: 0 18px 30px -27px rgba(26, 54, 41, .5);
+  box-shadow: 0 18px 30px -27px color-mix(in srgb, var(--c-deep-ink) 50%, transparent);
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 .ps-pet-photo__stage:active { transform: scale(.99); }
-.ps-pet-photo__stage:focus-within { outline: 3px solid #d79b62; outline-offset: 3px; }
+.ps-pet-photo__stage:focus-within { outline: 3px solid var(--c-sun); outline-offset: 3px; }
 .ps-pet-photo__stage > img,
 .ps-pet-photo__empty {
   position: absolute;
@@ -26,7 +26,7 @@
   height: 100%;
   object-fit: cover;
 }
-.ps-pet-photo__empty { background: #d8e3d8 url("./assets/companion-photo-room-v2.webp") center / cover no-repeat; }
+.ps-pet-photo__empty { background: var(--c-leaf-soft) url("./assets/companion-photo-room-v2.webp") center / cover no-repeat; }
 .ps-pet-photo__camera {
   position: absolute;
   left: 50%;
@@ -35,11 +35,11 @@
   place-items: center;
   width: 70px;
   height: 70px;
-  border: 1px solid rgba(39, 75, 57, .18);
+  border: 1px solid color-mix(in srgb, var(--c-leaf) 18%, transparent);
   border-radius: 24px;
-  background: rgba(255, 252, 244, .89);
-  color: #315f48;
-  box-shadow: 0 13px 28px -16px rgba(32, 60, 48, .48);
+  background: color-mix(in srgb, var(--c-surface) 89%, transparent);
+  color: var(--c-leaf);
+  box-shadow: 0 13px 28px -16px color-mix(in srgb, var(--c-deep-ink) 48%, transparent);
   transform: translate(-50%, -50%);
 }
 .ps-pet-photo__action {
@@ -54,18 +54,18 @@
   min-height: 45px;
   padding: 0 18px;
   border-radius: 99px;
-  background: rgba(255, 251, 243, .95);
-  color: #234b37;
+  background: color-mix(in srgb, var(--c-surface) 95%, transparent);
+  color: var(--c-leaf);
   font-size: 13px;
   font-weight: 800;
   white-space: nowrap;
-  box-shadow: 0 10px 23px -15px rgba(18, 46, 34, .66);
+  box-shadow: 0 10px 23px -15px color-mix(in srgb, var(--c-deep-ink) 66%, transparent);
   transform: translateX(-50%);
 }
-.ps-pet-photo__stage.has-photo .ps-pet-photo__action { background: rgba(255, 251, 243, .96); }
-.ps-pet-photo__note { display: block; color: #686d63; font-size: 12px; line-height: 1.55; text-align: center; }
-.ps-own-pet-page { background: #fffbf5; }
-.ps-own-pet-page .ps-entry-heading { position: relative; isolation: isolate; overflow: hidden; margin: 5px 0 20px; padding: 17px 17px 19px; border: 1px solid #ece1d2; border-radius: 25px; background: linear-gradient(90deg,rgba(255,251,243,.95) 0%,rgba(255,251,243,.86) 40%,rgba(255,251,243,.3) 62%,transparent 78%), url("./assets/companion-world-door-v2.webp") right center / cover no-repeat; }
+.ps-pet-photo__stage.has-photo .ps-pet-photo__action { background: color-mix(in srgb, var(--c-surface) 96%, transparent); }
+.ps-pet-photo__note { display: block; color: var(--c-ink-2); font-size: 12px; line-height: 1.55; text-align: center; }
+.ps-own-pet-page { background: var(--c-surface); }
+.ps-own-pet-page .ps-entry-heading { position: relative; isolation: isolate; overflow: hidden; margin: 5px 0 20px; padding: 17px 17px 19px; border: 1px solid var(--c-surface-stroke); border-radius: 25px; background: linear-gradient(90deg,color-mix(in srgb, var(--c-surface) 95%, transparent) 0%,color-mix(in srgb, var(--c-surface) 86%, transparent) 40%,color-mix(in srgb, var(--c-surface) 30%, transparent) 62%,transparent 78%), url("./assets/companion-world-door-v2.webp") right center / cover no-repeat; }
 /* 文字全部留在画面左侧的安静墙面上：kicker 不再右对齐压到门洞里（390 被裁、320 被插画吞掉）。 */
 .ps-own-pet-page .ps-entry-heading__top { flex-direction: column; align-items: flex-start; gap: 7px; margin-bottom: 12px; }
 .ps-own-pet-page .ps-entry-heading__kicker { margin-left: 0; text-align: left; }
@@ -77,38 +77,40 @@
 .ps-own-pet-form__lead span,
 .ps-own-pet-name label,
 .ps-pet-species legend,
-.ps-own-pet-alternative > span { color: #9d714a; font-size: 11px; font-weight: 800; letter-spacing: .08em; }
-.ps-own-pet-form__lead h2 { margin: 5px 0 3px; color: #24372c; font-size: 21px; line-height: 1.25; }
-.ps-own-pet-form__lead p { margin: 0; color: #686d63; font-size: 13px; line-height: 1.5; }
-.ps-own-pet-form__details { display: grid; gap: 20px; padding: 19px 18px 21px; border: 1px solid #e6e0d2; border-radius: 22px; background: #fffdf9; }
+.ps-own-pet-alternative > span { color: color-mix(in srgb, var(--c-sun) 50%, var(--c-ink)); font-size: 11px; font-weight: 800; letter-spacing: .08em; }
+.ps-own-pet-form__lead h2 { margin: 5px 0 3px; color: var(--c-ink); font-size: 21px; line-height: 1.25; }
+.ps-own-pet-form__lead p { margin: 0; color: var(--c-ink-2); font-size: 13px; line-height: 1.5; }
+.ps-own-pet-form__details { display: grid; gap: 20px; padding: 19px 18px 21px; border: 1px solid var(--c-surface-stroke); border-radius: 22px; background: var(--c-surface-2); }
 .ps-own-pet-name { gap: 8px; }
-.ps-own-pet-name .ps-input { min-height: 51px; border-color: #e4dacb; border-radius: 13px; background: #fffbf5; font-size: 16px; }
-.ps-own-pet-name .ps-input:focus-visible { outline: 3px solid #d79b62; outline-offset: 2px; }
+.ps-own-pet-name .ps-input { min-height: 51px; border-color: color-mix(in srgb, var(--c-ink) 18%, transparent); border-radius: 13px; background: var(--c-surface); font-size: 16px; }
+.ps-own-pet-name .ps-input:focus-visible { outline: 3px solid var(--c-sun); outline-offset: 2px; }
 .ps-pet-species { min-width: 0; margin: 0; padding: 0; border: 0; }
 .ps-pet-species legend { margin-bottom: 10px; }
 .ps-pet-species__choices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .ps-pet-species__choice { position: relative; cursor: pointer; }
 .ps-pet-species__choice input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-.ps-pet-species__choice span { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; min-height: 78px; padding: 5px 2px 7px; border: 1px solid #e6ddcf; border-radius: 14px; background: #fffaf3; color: #544f47; font-size: 12px; font-weight: 700; transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease; }
+.ps-pet-species__choice span { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; min-height: 78px; padding: 5px 2px 7px; border: 1px solid var(--c-surface-stroke); border-radius: 14px; background: var(--c-surface); color: var(--c-ink-2); font-size: 12px; font-weight: 700; transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease; }
 /* UI-ASSET-002 透明物种小图：画面自带约 10% 透明留白，40px 时主体约 32px */
 .ps-pet-species__choice .ps-species-art { display: block; width: 40px; height: 40px; object-fit: contain; transition: transform 180ms ease; }
 .ps-pet-species__choice input:checked + span .ps-species-art { transform: translateY(-1px) scale(1.06); }
-.ps-pet-species__choice input:checked + span { border-color: #356348; background: #e7eee6; color: #244b37; }
-.ps-pet-species__choice input:focus-visible + span { outline: 3px solid #d79b62; outline-offset: 2px; }
+.ps-pet-species__choice input:checked + span { border-color: var(--c-leaf); background: var(--c-leaf-soft); color: var(--c-ink); }
+.ps-pet-species__choice input:focus-visible + span { outline: 3px solid var(--c-sun); outline-offset: 2px; }
 .ps-pet-species__choice:active span { transform: scale(.97); }
-.ps-own-pet-next { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid #eadfca; border-radius: 18px; background: #f8f1e6; }
-.ps-own-pet-next__icon { display: grid; flex: 0 0 47px; place-items: center; width: 47px; height: 47px; border-radius: 15px; background: #e5ede5; color: #315943; }
+.ps-own-pet-next { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--c-surface-stroke); border-radius: 18px; background: var(--c-surface-2); }
+.ps-own-pet-next__icon { display: grid; flex: 0 0 47px; place-items: center; width: 47px; height: 47px; border-radius: 15px; background: var(--c-leaf-soft); color: var(--c-leaf); }
 .ps-own-pet-next div { display: grid; gap: 2px; }
-.ps-own-pet-next small { color: #a27245; font-size: 10px; font-weight: 800; letter-spacing: .06em; }
-.ps-own-pet-next strong { color: #263f31; font-size: 14px; }
-.ps-own-pet-next p { margin: 0; color: #686d63; font-size: 12px; }
-.ps-own-pet-form > .ps-btn--primary { min-height: 54px; border-color: #315943; border-radius: 15px; background: #315943; color: #fffdf6; font-size: 15px; }
+.ps-own-pet-next small { color: color-mix(in srgb, var(--c-sun) 50%, var(--c-ink)); font-size: 10px; font-weight: 800; letter-spacing: .06em; }
+.ps-own-pet-next strong { color: var(--c-ink); font-size: 14px; }
+.ps-own-pet-next p { margin: 0; color: var(--c-ink-2); font-size: 12px; }
+.ps-own-pet-form > .ps-btn--primary { min-height: 54px; border-radius: 15px; font-size: 15px; }
 .ps-own-pet-form > .ps-btn--primary:disabled { opacity: .45; }
-.ps-own-pet-alternative { padding: 21px 19px; border: 1px solid #e8decd; border-radius: 22px; background: #f7f1e7; }
-.ps-own-pet-alternative h2 { margin: 6px 0 4px; color: #314739; font-size: 17px; }
-.ps-own-pet-alternative p { margin: 0 0 12px; color: #6b675f; font-size: 13px; line-height: 1.55; }
-.ps-own-pet-alternative a { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; color: #315943; font-size: 13px; font-weight: 800; text-decoration: none; }
-.ps-own-pet-alternative a:focus-visible { outline: 3px solid #d79b62; outline-offset: 3px; }
+/* 按钮灰着时就在它上面说清楚还缺什么（名字、是什么动物），不让人对着点不动的按钮猜。 */
+.ps-own-pet-missing { margin: 0 0 -4px; color: var(--c-ink-2); font-size: 13px; font-weight: 700; line-height: 1.5; text-align: center; }
+.ps-own-pet-alternative { padding: 21px 19px; border: 1px solid var(--c-surface-stroke); border-radius: 22px; background: var(--c-surface-2); }
+.ps-own-pet-alternative h2 { margin: 6px 0 4px; color: var(--c-ink); font-size: 17px; }
+.ps-own-pet-alternative p { margin: 0 0 12px; color: var(--c-ink-2); font-size: 13px; line-height: 1.55; }
+.ps-own-pet-alternative a { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; color: var(--c-leaf); font-size: 13px; font-weight: 800; text-decoration: none; }
+.ps-own-pet-alternative a:focus-visible { outline: 3px solid var(--c-sun); outline-offset: 3px; }
 @media (max-width: 350px) {
   .ps-pet-species__choices { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
@@ -151,6 +153,13 @@
   color: var(--c-deep-ink);
 }
 
+/* 深色下确认框标题用正文色：深墨色（#0f1612）压在深绿底（--c-leaf-soft #1f3a2d）上对比度只有约 1.5，看不清；正文色约 11:1。 */
+@media (prefers-color-scheme: dark) {
+  .ps-adopt-confirm strong {
+    color: var(--c-ink);
+  }
+}
+
 .ps-adopt-confirm p {
   margin: 0;
   color: var(--c-ink-2);
@@ -162,6 +171,117 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+/* 领养卡（/adopt）：头像与物种标签和星球居民卡同一套（.ps-resident-portrait / .ps-world-resident__species 在 planet.css）。 */
+.ps-adopt-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ps-adopt-card__who {
+  flex: 1;
+  min-width: 0;
+}
+
+.ps-adopt-card__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.ps-adopt-card__name strong {
+  color: var(--c-ink);
+  font-size: 17px;
+}
+
+.ps-adopt-card__dream {
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* 共用的“迎接 TA”（adoptFlow.tsx）：旁边的动作（“认识 TA”）与迎接按钮并排均分，只有一个就占满；说明文字独占一行。 */
+.ps-adopt-flow__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ps-adopt-flow__actions > .ps-btn {
+  flex: 1 1 0;
+  min-width: 112px;
+  min-height: 44px;
+}
+
+.ps-adopt-flow__note {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--c-ink-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ps-adopt-flow__homes {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ps-adopt-flow__homes legend {
+  margin-bottom: 4px;
+  padding: 0;
+  color: var(--c-ink-2);
+  font-size: 13px;
+}
+
+.ps-adopt-flow__homes label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--c-surface-stroke);
+  border-radius: 14px;
+  background: var(--c-surface);
+  color: var(--c-ink);
+  cursor: pointer;
+}
+
+.ps-adopt-flow__homes input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--c-leaf);
+}
+
+/* 已经有家的居民不堆在待领养列表里，收成一行，去星球上认识 TA 们。 */
+.ps-adopt-homed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px 16px;
+  border: 1px dashed var(--c-surface-stroke);
+  border-radius: 18px;
+  color: var(--c-ink-2);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+.ps-adopt-homed:focus-visible {
+  outline: 3px solid var(--c-sun);
+  outline-offset: 2px;
 }
 
 .ps-public-page {
@@ -587,7 +707,8 @@
 .ps-photo-cafe-note a { padding: 12px 0; color: color-mix(in srgb, var(--c-signal) 70%, var(--c-ink)); font-weight: 800; text-decoration: none; }
 .ps-photo-list { display: grid; gap: 11px; }
 .ps-photo-list__title { display: flex; justify-content: space-between; align-items: end; }
-.ps-photo-list__title span { font: 10px Georgia,serif; color: color-mix(in srgb, var(--c-leaf) 30%, var(--c-ink-3)); letter-spacing: .14em; }
+/* “照片结果”眉标（原英文 ALBUM）：中文 12px，用次要字色（原来掺了 --c-ink-3 的淡色小字对比度不够） */
+.ps-photo-list__title span { font: 12px Georgia,"Noto Serif SC",serif; color: var(--c-ink-2); letter-spacing: .08em; }
 .ps-photo-list__title h2 { margin: 3px 0 0; font-size: 19px; }
 .ps-photo-list__title button { min-height: 40px; padding: 7px 10px; border: 1px solid color-mix(in srgb, var(--c-ink-3) 30%, var(--c-surface)); border-radius: 11px; background: var(--c-surface); color: var(--c-leaf); font-size: 11px; }
 .ps-photo-result { overflow: hidden; border: 1px solid color-mix(in srgb, var(--c-ink-3) 30%, var(--c-surface)); border-radius: 19px; background: var(--c-surface); }

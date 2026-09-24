@@ -337,7 +337,8 @@ describe("第 0b 步 · 1：W1 带上当前宠物（可选 petId）；唯一还�
     const { state } = renderMapApp({ households: TWO_HOUSEHOLDS, worldState: crossHouseholdWorld });
     await screen.findByRole("region", { name: "栗子此刻" });
     const before = state.mock.calls.length;
-    fireEvent.click(screen.getByRole("button", { name: /^查看 豆豆/ }));
+    // 地图上不切宠物，宠物分在两个家时只给一个切家的小控件（2026-09-24）：切到“第二个家”，换成那个家里的豆豆。
+    fireEvent.click(within(screen.getByRole("group", { name: "切换当前的家" })).getByRole("button", { name: /第二个家/ }));
     expect(await screen.findByRole("region", { name: "豆豆此刻" })).toBeTruthy();
     expect(state.mock.calls.slice(before).map((call) => call[0])).toContain("p-9");
     expect(screen.queryByText(/不止一个家/)).toBeNull();

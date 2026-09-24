@@ -102,6 +102,7 @@
 | POST | `/pets/{pet_id}/follow` | FollowRequest | — | 204 | required | 是 | — |
 | GET | `/pets/{pet_id}/home-welcome` | — | HomeWelcome | 200 | required | — | — |
 | POST | `/pets/{pet_id}/id-photo/regenerate` | — | CharacterRegenerateResult | 200 | required | 是 | 必填 |
+| PUT | `/pets/{pet_id}/photo` | Body_add_pet_photo_api_v1_web_pets__pet_id__photo_put | PetPrivateSummary | 200 | required | 是 | 必填 |
 | POST | `/pets/{pet_id}/photo-request` | PhotoRequestCommand | PhotoRequestResult | 200 | required | 是 | 必填 |
 | GET | `/pets/{pet_id}/photo-requests` | — | PhotoRequestView[] | 200 | required | — | — |
 | POST | `/pets/{pet_id}/photo-requests/{request_id}/retry-image` | — | PhotoRequestView[] | 200 | required | 是 | — |
@@ -131,6 +132,8 @@
 | GET | `/settings` | — | SettingsView | 200 | required | — | — |
 | PATCH | `/settings` | SettingsUpdate | SettingsView | 200 | required | 是 | — |
 | GET | `/timeline` | — | TimelineItem[] | 200 | required | — | — |
+| GET | `/travel/plans/{plan_id}` | — | TravelPlan | 200 | required | — | — |
+| GET | `/travel/wish` | — | TravelWish | null | 200 | required | — | — |
 | GET | `/visits/{visit_id}` | — | Visit | 200 | required | — | — |
 | POST | `/visits/{visit_id}/actions` | VisitActionRequest | Visit | 200 | required | 是 | 必填 |
 | POST | `/visits/{visit_id}/choice` | VisitChoiceRequest | JourneyMapSnapshot | 200 | required | 是 | 必填 |

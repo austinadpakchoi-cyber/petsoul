@@ -252,9 +252,10 @@
   border: 1px solid var(--c-surface-stroke);
   border-radius: 18px 18px 6px 18px;
 }
-/* 输入说明留在对话末尾（输入框本身在贴底区里，读屏由 aria-describedby 连上） */
+/* 输入说明在“你和接待员”下面、对话前面（2026-09-24 巡检 P2：原来在对话末尾，首屏正好压在贴底区上沿；
+   输入框本身在贴底区里，读屏由 aria-describedby 连上） */
 .ps-reception-hint {
-  margin: -2px 2px 0;
+  margin: -6px 2px 0;
   color: var(--c-ink-2);
   font-size: 11px;
   line-height: 1.45;
@@ -552,5 +553,17 @@
 @media (max-width: 340px) {
   .ps-note__purposes {
     grid-template-columns: 1fr;
+  }
+}
+/*
+ * 矮屏（320×568 一类）：贴底区是输入框加一到三个按钮（有待整理的叮嘱、又是后加的伙伴时最多），
+ * 首屏要让出“先认识 X”这行标题（2026-09-24 巡检：输入区压住了标题）。头图收矮，头像卡跟着上移；高屏不变。
+ */
+@media (max-height: 640px) {
+  .ps-reception-hero__scene {
+    height: 136px;
+  }
+  .ps-reception-portrait {
+    top: 44px;
   }
 }

@@ -258,7 +258,12 @@ class ReadyPlanDepartureTests(WebPlatformTestBase):
         self.web.life.run(self.clock.now)
 
         trip = self.journey()
-        self.assertTrue(trip is None or trip.destination_key != "hk-repulse-bay", "去不了的地方不该被强推")
+        # **必须断言"它去了别处"，不能只断言"没去成那儿"。**
+        # 只写 `trip is None or trip.destination_key != …` 的话，一个"照推不误、出发在下游失败"的实现
+        # 也会绿——变异实测过：拆掉 `_wish_pick` 里那道可用性判断，原来那句一条都不红。
+        # 两种成因（不强推 ／ 强推了但走不成）产生同一个"没去成"，**只有"有没有正常出门"能把它们分开**。
+        self.assertIsNotNone(trip, "不强推不等于不出门：掷骰钉死为一定想出门，TA 该照常挑个去得了的地方")
+        self.assertNotEqual(trip.destination_key, "hk-repulse-bay", "去不了的地方不该被强推")
         self.assertEqual(self.web.travel.wishes.read(self.pet).status, "ready", "心愿仍然就绪地等着，没有被作废")
 
 

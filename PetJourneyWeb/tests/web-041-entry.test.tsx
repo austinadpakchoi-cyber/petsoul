@@ -54,8 +54,8 @@ describe("0.4.1 first-batch entry UX", () => {
   });
 
   it("renders public entry options only when the public-world contract offers them", async () => {
-    // 2026-09-23 星球页改为全屏地图 + 相遇卡（claude-6c2b）：注册入口沿用用户确认的“寻找我的 TA”，仍只在契约提供 own_pet 时出现。
-    vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} unobserve() {} });
+    // 2026-09-24 星球页重做（claude-6c2b 星球访客页分身）：示意地图与“看全部居民”抽屉已撤，居民直接列在页面上；
+    // 注册入口沿用用户确认的“寻找我的 TA”，仍只在契约提供 own_pet 时出现。
     const world: PublicWorld = {
       server_time: "2026-09-23T00:00:00Z", data_origin: "live", cache_seconds: 30,
       entries: [
@@ -70,11 +70,13 @@ describe("0.4.1 first-batch entry UX", () => {
       pets: { publicWorld: async () => world } as ServiceMap["pets"],
       platform: { basemap: vi.fn() } as unknown as ServiceMap["platform"],
     });
-    expect((await screen.findByRole("link", { name: "寻找我的 TA" })).getAttribute("href")).toBe("/register");
-    expect((screen.getByRole("button", { name: /看全部居民/ }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.queryByText("从家人邀请进入")).toBeNull();
+    // 只在星球页自己的容器里找：本文件的用例之间没有自动清理，上一条用例的欢迎页还留在 document.body 里，
+    // 它也有一个“寻找我的 TA”链接——原来用 screen 找，等于在欢迎页上断言（星球页那条链接从没被真正检查过）。
+    const page = within(view.container);
+    expect(await page.findByRole("heading", { level: 1, name: "今天暂时没有可认识的居民" })).toBeTruthy();
+    expect(page.getByRole("link", { name: "寻找我的 TA" }).getAttribute("href")).toBe("/register");
+    expect(page.queryByText("从家人邀请进入")).toBeNull();
     view.unmount();
-    vi.unstubAllGlobals();
   });
 
   it("keeps the illustrated register and login entry tied to the real account form", () => {
@@ -128,7 +130,8 @@ describe("0.4.1 first-batch entry UX", () => {
       session: { current: async () => guest } as ServiceMap["session"],
       pets: { adoptionCandidates: async () => [resident], adopt } as unknown as ServiceMap["pets"],
     });
-    fireEvent.click(await screen.findByRole("button", { name: /了解并迎接 小岚/ }));
+    // 领养页两个动作分开（2026-09-24）：“认识 TA”去居民主页，“迎接 TA”才弹确认；这里点的是“迎接 TA”。
+    fireEvent.click(await screen.findByRole("button", { name: "迎接 TA：小岚" }));
     expect(adopt).not.toHaveBeenCalled();
     expect(screen.getByRole("group", { name: "确认领养 小岚" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "确认领养" }));

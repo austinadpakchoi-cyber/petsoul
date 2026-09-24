@@ -29,6 +29,32 @@
   color: var(--c-on-deep);
   box-shadow: 0 6px 16px -8px var(--c-shadow);
 }
+/* 深色下主按钮原来没有自己的值：--c-deep-ink 在深色里是近乎纯黑的 #0f1612，和深色页面、卡面只差 1.1～1.3:1，
+   看不出按钮形状（领证完成页底栏“去卡包看驾照”、到店页“拍一张照片”都是这样）。深色下反过来用奶白底深墨字：
+   底对深色页面 / 卡面 11:1 以上，字对底约 16:1；和叶绿按钮、次要按钮的层级也分得开。
+   纸卡昼夜都是浅色纸面，纸卡里的主按钮在深色下仍用深墨底奶白字（对纸面约 15:1）。模块另配了底色的（星球页、登录页等）照旧用它们自己的。
+   深色段须写在上面这条之后；禁用态另有一套。 */
+@media (prefers-color-scheme: dark) {
+  .ps-btn--primary {
+    background: var(--c-on-deep);
+    color: var(--c-deep-ink);
+  }
+  .ps-card--paper .ps-btn--primary {
+    background: var(--c-deep-ink);
+    color: var(--c-on-deep);
+  }
+}
+/* 主按钮禁用（含提交中）：原来整体 45% 透明，深色下深墨底几乎融进页面、看不出是个按钮，浅色下字对底也只有约 2.6:1。
+   改成不透明的浅底（--c-ink-3 掺 25% 到卡面色）配次要字色 --c-ink-2：浅 4.5:1、深 4.8:1（禁用控件要求 3:1），一眼看得出是按钮、也看得出不能点。
+   特异性 (0,3,0)：模块给主按钮另配的底色（如入住页、家庭邀请页）禁用时也换成这一套，不会因为不再半透明而像能点。 */
+.ps-btn.ps-btn--primary:disabled,
+.ps-btn.ps-btn--primary[aria-disabled="true"] {
+  background: color-mix(in srgb, var(--c-ink-3) 25%, var(--c-surface));
+  color: var(--c-ink-2);
+  border-color: var(--c-surface-stroke);
+  box-shadow: none;
+  opacity: 1;
+}
 .ps-btn--leaf {
   background: var(--c-leaf);
   color: var(--c-on-deep);
@@ -48,9 +74,24 @@
   background: transparent;
   color: var(--c-ink-2);
 }
+/* 次要 / 透明按钮禁用（含提交中）：原来整体 45% 半透明，深色下字对底只有 3.6 / 2.5:1。和主按钮一样改成不透明，
+   字用 --c-ink-2 与 --c-ink-3 各半的颜色：比能点时浅、看得出不能点，浅深两套在各种主题底上都在 3:1 以上（禁用控件的要求）。 */
+.ps-btn.ps-btn--secondary:disabled,
+.ps-btn.ps-btn--secondary[aria-disabled="true"],
+.ps-btn.ps-btn--ghost:disabled,
+.ps-btn.ps-btn--ghost[aria-disabled="true"] {
+  color: color-mix(in srgb, var(--c-ink-3) 50%, var(--c-ink-2));
+  opacity: 1;
+}
+/* 危险按钮：浅色下 --c-danger 在浅红底上只有 3.6:1，和警示标签同样掺 25% 的 --c-ink（4.8:1）；深色保持原令牌（5.4:1），深色段须写在这条之后。 */
 .ps-btn--danger {
   background: var(--c-danger-soft);
-  color: var(--c-danger);
+  color: color-mix(in srgb, var(--c-danger) 75%, var(--c-ink));
+}
+@media (prefers-color-scheme: dark) {
+  .ps-btn--danger {
+    color: var(--c-danger);
+  }
 }
 /* 小号按钮：点按区不小于 40px（原 36px）；字号、内边距不变 */
 .ps-btn--sm {
@@ -114,30 +155,49 @@
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
+/* 带色调的标签：浅色下色调字压在同色系浅底上只有 1.8～4.0:1，字色掺 --c-ink 加深到 4.7:1 以上（比例按令牌实算，色调仍认得出）；
+   深色下保持原色调令牌（4.9:1 以上），见紧跟的深色段，须写在这几条之后。 */
 .ps-chip--leaf {
   background: var(--c-leaf-soft);
-  color: var(--c-leaf);
+  color: color-mix(in srgb, var(--c-leaf) 85%, var(--c-ink));
   border-color: transparent;
 }
 .ps-chip--sun {
   background: var(--c-sun-soft);
-  color: var(--c-sun);
+  color: color-mix(in srgb, var(--c-sun) 45%, var(--c-ink));
   border-color: transparent;
 }
 .ps-chip--coral {
   background: var(--c-coral-soft);
-  color: var(--c-coral);
+  color: color-mix(in srgb, var(--c-coral) 55%, var(--c-ink));
   border-color: transparent;
 }
 .ps-chip--sky {
   background: var(--c-sky-soft);
-  color: var(--c-sea);
+  color: color-mix(in srgb, var(--c-sea) 65%, var(--c-ink));
   border-color: transparent;
 }
 .ps-chip--danger {
   background: var(--c-danger-soft);
-  color: var(--c-danger);
+  color: color-mix(in srgb, var(--c-danger) 75%, var(--c-ink));
   border-color: transparent;
+}
+@media (prefers-color-scheme: dark) {
+  .ps-chip--leaf {
+    color: var(--c-leaf);
+  }
+  .ps-chip--sun {
+    color: var(--c-sun);
+  }
+  .ps-chip--coral {
+    color: var(--c-coral);
+  }
+  .ps-chip--sky {
+    color: var(--c-sea);
+  }
+  .ps-chip--danger {
+    color: var(--c-danger);
+  }
 }
 /* 按钮式标签：点按区不小于 40px（原 36px）；字号、内边距不变 */
 button.ps-chip {
@@ -161,6 +221,8 @@ button.ps-chip[aria-pressed="true"] {
 .ps-page--bare {
   padding-bottom: calc(var(--safe-bottom) + var(--space-6));
 }
+/* 顶栏实底：原来 88% 半透明加模糊，往下滚时下面的内容透上来、和标题叠在一起（如驾校成绩单）。
+   改成页面底色的实底，底边用背景图画一条 1px 细线（不占高度、不挪版面；模块把顶栏背景设成透明时，细线跟着一起去掉）。 */
 .ps-topbar {
   position: sticky;
   top: 0;
@@ -171,9 +233,11 @@ button.ps-chip[aria-pressed="true"] {
   min-height: 56px;
   margin: 0 calc(-1 * var(--page-gutter));
   padding: calc(var(--safe-top)) var(--page-gutter) 0;
-  background: color-mix(in srgb, var(--c-bg) 88%, transparent);
-  backdrop-filter: saturate(1.4) blur(10px);
-  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  background-color: var(--c-bg);
+  background-image: linear-gradient(var(--c-surface-stroke), var(--c-surface-stroke));
+  background-size: 100% 1px;
+  background-position: left bottom;
+  background-repeat: no-repeat;
 }
 .ps-topbar__title {
   flex: 1;
@@ -245,9 +309,16 @@ button.ps-chip[aria-pressed="true"] {
   background: var(--c-danger-soft);
   color: var(--c-danger);
 }
+/* 未开放状态的图标：浅色下 --c-sun 压在浅暖底上只有 1.8:1，掺 35% 的 --c-ink 到 3.3:1（图形够 3:1，仍比文字浅，保留“未开放”的样子）；
+   深色保持原令牌（7.2:1），深色段须写在这条之后。 */
 .ps-state--disabled .ps-state__icon {
   background: var(--c-sun-soft);
-  color: var(--c-sun);
+  color: color-mix(in srgb, var(--c-sun) 65%, var(--c-ink));
+}
+@media (prefers-color-scheme: dark) {
+  .ps-state--disabled .ps-state__icon {
+    color: var(--c-sun);
+  }
 }
 .ps-state__title {
   color: var(--c-ink);
@@ -261,18 +332,21 @@ button.ps-chip[aria-pressed="true"] {
 .ps-state > .ps-muted {
   text-wrap: balance;
 }
+/* “技术信息”里的错误码是给人看的：原来的 --c-ink-3 浅色只有 2.4:1、深色 3.1:1，改用次要字色 --c-ink-2（两种模式、各种主题底上 4.7:1 以上）。 */
 .ps-state__meta {
   font-size: var(--fs-xs);
-  color: var(--c-ink-3);
+  color: var(--c-ink-2);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 /* 错误码等默认收起（ErrorState 的 TechDetails）：一行小字入口，展开后才见代码。 */
 .ps-state__tech {
   font-size: var(--fs-xs);
-  color: var(--c-ink-3);
+  color: var(--c-ink-2);
 }
+/* “技术信息”入口：点按区 40px（原 32px），上下各 -4px 外边距抵消多出的 8px，版面不动。 */
 .ps-state__tech summary {
-  min-height: 32px;
+  min-height: 40px;
+  margin: -4px 0;
   display: inline-flex;
   align-items: center;
   cursor: pointer;
@@ -374,13 +448,20 @@ button.ps-chip[aria-pressed="true"] {
   color: var(--c-leaf);
 }
 
+/* “演示数据”标记：浅色下单用 --c-sun 在页面底和卡面上只有 1.7～2.1:1，字色和暖色标签一样掺 45% 的色调（各种浅色底上 4.7:1 以上）；
+   深色下保持 --c-sun（7:1 以上），深色段须写在这条之后。纸卡上另有 .ps-card--paper .ps-origin，优先级更高、不受影响。 */
 .ps-origin {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: var(--fs-xs);
-  color: var(--c-sun);
+  color: color-mix(in srgb, var(--c-sun) 45%, var(--c-ink));
   font-weight: 600;
+}
+@media (prefers-color-scheme: dark) {
+  .ps-origin {
+    color: var(--c-sun);
+  }
 }
 
 .ps-field {
@@ -452,10 +533,16 @@ select.ps-input {
   transition: width 0.9s linear;
 }
 
+/* 出错兜底框的字：浅色下 --c-danger 直接压在页面底上最低 3.9:1，和危险按钮同样掺 25% 的 --c-ink（5.2:1 以上）；深色保持原令牌（4.7:1 以上）。 */
 .ps-error-boundary {
   border: 1px dashed var(--c-danger);
   border-radius: var(--r-control);
   padding: var(--space-3);
-  color: var(--c-danger);
+  color: color-mix(in srgb, var(--c-danger) 75%, var(--c-ink));
   font-size: var(--fs-sm);
+}
+@media (prefers-color-scheme: dark) {
+  .ps-error-boundary {
+    color: var(--c-danger);
+  }
 }

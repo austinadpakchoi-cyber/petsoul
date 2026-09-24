@@ -61,6 +61,17 @@ function Composer({ petId }: { petId: string }) {
   );
 }
 
+/**
+ * 气泡下面那行小字。送达状态（发送中 / 已送达 TA 的世界 / TA 晚点回你 / 没送出去）只说主人发出的消息
+ * （2026-09-24 巡检 P2：TA 发来的消息下面也写着“已送达 TA 的世界”）。TA 发来的消息不写送达状态：
+ * 后端对它的 processing / failed 说的是随信的图，图的情况上面已经单独写了（随信画面正在生成 / 未生成成功，文字已送达）。
+ * 家庭频道的标记两边都留着。
+ */
+function stateLine(m: MessageSummary): string {
+  const state = m.sender === "owner" ? m.status_note || STATE_TEXT[m.state] : "";
+  return [state, m.channel === "family" ? "家庭频道" : ""].filter(Boolean).join(" · ");
+}
+
 function Bubble({ m, reply, hasGuide, hasCollection }: { m: MessageSummary; reply: MessageSummary | null; hasGuide: boolean; hasCollection: boolean }) {
   const journeyId = m.source_event_id?.split(":", 1)[0];
   return (
@@ -69,12 +80,12 @@ function Bubble({ m, reply, hasGuide, hasCollection }: { m: MessageSummary; repl
       <div>{m.text}</div>
       {m.photo_url ? (
         <figure className="ps-msg__photo">
-          <img src={m.photo_url} alt={m.photo_status === "ready" ? "TA 发来的虚构旅行自拍明信片" : "TA 发来的纸质明信片排版"} loading="lazy" />
-          <figcaption>{m.photo_status === "ready" ? "AI 生成的虚构旅行自拍，不是真实到访照片" : "纸质明信片排版；目前没有生成自拍"}</figcaption>
+          <img src={m.photo_url} alt={m.photo_status === "ready" ? "TA 发来的自拍（AI 生成）" : "TA 发来的纸质明信片排版"} loading="lazy" />
+          <figcaption>{m.photo_status === "ready" ? "AI 生成的自拍，不是真实照片" : "纸质明信片排版；目前没有生成自拍"}</figcaption>
         </figure>
-      ) : m.photo_status === "processing" ? <div className="ps-msg__photo-pending">随信画面正在生成</div> : m.photo_status === "failed" ? <div className="ps-msg__photo-pending">随信画面未生成成功，文字已送达</div> : null}
+      ) : m.photo_status === "processing" ? <div className="ps-msg__photo-pending">随信画面正在生成</div> : m.photo_status === "failed" ? <div className="ps-msg__photo-pending">随信画面未生成成功，文字已送达</div> : m.photo_status === "unknown" ? <div className="ps-msg__photo-pending">这张照片还没确认</div> : null}
       {m.source_event_id ? <div className="ps-msg__links"><span>来自这趟旅途</span>{hasGuide && journeyId ? <Link to={`/guides?journey=${encodeURIComponent(journeyId)}`}>这趟旅途的手账</Link> : null}{hasCollection ? <Link to={`/collection?source_event_id=${encodeURIComponent(m.source_event_id)}`}>相关收藏</Link> : null}</div> : null}
-      <span className="ps-msg__state">{m.status_note || STATE_TEXT[m.state]}{m.channel === "family" ? " · 家庭频道" : ""}</span>
+      {stateLine(m) ? <span className="ps-msg__state">{stateLine(m)}</span> : null}
     </li>
   );
 }

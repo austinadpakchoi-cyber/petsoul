@@ -61,7 +61,7 @@ export function PreferenceEditor({ petId, subject, variant }: { petId: string; s
         <div>
           <strong>{who}</strong>
           <div className="ps-muted">
-            {pref.data.label} · 第 {pref.data.version} 版{summary ? ` · ${summary}` : ""}
+            {pref.data.label}{summary ? ` · ${summary}` : ""}
           </div>
         </div>
         {env.dataMode === "live" ? (
@@ -115,7 +115,7 @@ export function PreferenceEditor({ petId, subject, variant }: { petId: string; s
             <Chip>这是 TA 自己的口味，不会改动你的现实用餐偏好</Chip>
           )}
           <Button type="submit" variant="primary" loading={save.isPending}>
-            保存（第 {pref.data.version + 1} 版）
+            保存
           </Button>
           {save.isError ? <ErrorState error={save.error} /> : null}
         </form>

@@ -19,7 +19,7 @@ import { ErrorState, Icon, LoadingState, Page } from "@/shared/ui";
 import { PetPortrait } from "@/features/pets/PetPortrait";
 import { WorldGate } from "@/features/world_map/WorldGate";
 import { useCurrentPet, type CurrentPet } from "./currentPet";
-import { clockText, groupTimeline, timelineHref, timelineKey, timelineLook, type TimelineEntry, type TimelineGroup, type TimelineLook } from "./timeline";
+import { clockText, groupTimeline, timelineDetail, timelineHref, timelineKey, timelineLook, type TimelineEntry, type TimelineGroup, type TimelineLook } from "./timeline";
 import "./timeline.css";
 
 export function TimelinePage() {
@@ -94,7 +94,7 @@ function TimelineRow({ entry }: { entry: TimelineEntry }) {
   const { item, at } = entry;
   const look = timelineLook(item.kind);
   const href = timelineHref(item);
-  const detail = item.detail?.trim() ? item.detail : null;
+  const detail = timelineDetail(item);
   const body = (
     <>
       <KindMark look={look} />

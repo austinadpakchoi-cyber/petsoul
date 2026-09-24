@@ -17,7 +17,7 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import type { CollectionItem, HomeSnapshot, HouseholdBrief, MarketView, SessionBrief, SessionState, SettingsView } from "@/shared/contracts";
@@ -333,8 +333,15 @@ describe("驾校：每条都带当前宠物", () => {
 describe("设置：读、存都带当前宠物", () => {
   it("当前是豆豆：显示豆豆的简介（不是第一只的）；存简介带 pet-b；切到奶茶后表单换成奶茶的", async () => {
     const { api, calls } = twoPetBackend();
-    renderApp("/settings", api);
+    const router = renderApp("/settings", api);
     const bio = (await screen.findByLabelText("TA 的简介")) as HTMLInputElement;
+    // 设置页不显示切换栏（2026-09-24：只在按宠物区分的页面显示）：到集市切，再回设置页看表单跟着换。
+    expect(screen.queryByRole("group", { name: "切换当前宠物" })).toBeNull();
+    const switchVia = async (name: string) => {
+      await act(async () => { await router.navigate("/market"); });
+      switchTo(name);
+      await act(async () => { await router.navigate("/settings"); });
+    };
     expect(bio.value).toBe("豆豆的简介");
     expect(callsTo(calls, "GET", "/settings").map((c) => c.petId)).toEqual(["pet-b"]);
 
@@ -344,7 +351,7 @@ describe("设置：读、存都带当前宠物", () => {
     expect(callsTo(calls, "PATCH", "/settings")[0]).toMatchObject({ petId: "pet-b", body: { bio: "豆豆爱晒太阳" } });
     expect(screen.queryByRole("alert")).toBeNull();
 
-    switchTo("奶茶");
+    await switchVia("奶茶");
     await waitFor(() => expect((screen.getByLabelText("TA 的简介") as HTMLInputElement).value).toBe("奶茶的简介"));
     expect(callsTo(calls, "GET", "/settings").at(-1)?.petId).toBe("pet-a");
     fireEvent.click(screen.getByRole("button", { name: "只有我" }));
@@ -352,7 +359,7 @@ describe("设置：读、存都带当前宠物", () => {
     expect(callsTo(calls, "PATCH", "/settings")[1]).toMatchObject({ petId: "pet-a", body: { profile_visibility: "private" } });
 
     // 再切回豆豆：豆豆那份已经在缓存里（切宠物时“identity”前缀的缓存不清），表单也要换回豆豆的，不能留着奶茶的简介。
-    switchTo("豆豆");
+    await switchVia("豆豆");
     await waitFor(() => expect((screen.getByLabelText("TA 的简介") as HTMLInputElement).value).toBe("豆豆爱晒太阳"));
   });
 

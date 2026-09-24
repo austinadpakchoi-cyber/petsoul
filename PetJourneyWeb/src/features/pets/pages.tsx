@@ -8,9 +8,12 @@ import { env } from "@/shared/config/env";
 import { queryKeys } from "@/shared/query/queryClient";
 import { useServices } from "@/shared/services/registry";
 import { onboardingRoute, useSessionState } from "@/shared/session/onboarding";
-import { useCurrentHousehold } from "@/shared/session/householdContext";
-import { Button, Card, Chip, DataOriginBadge, DisabledState, ErrorState, Icon, Page, PetAvatar, QueryView, TopBar } from "@/shared/ui";
+import { householdLabel, useCurrentHousehold, useHouseholdLabels } from "@/shared/session/householdContext";
+import { Button, Card, Chip, DataOriginBadge, DisabledState, EmptyState, ErrorState, Icon, Page, QueryView, TopBar } from "@/shared/ui";
 import { EntryHeading } from "@/features/identity/EntryHeading";
+import { AdoptFlow } from "./adoptFlow";
+import { ResidentPortrait } from "./ResidentPortrait";
+import { speciesName } from "./residentView";
 import { SpeciesIllustration } from "./SpeciesIllustration";
 import "./pets.css";
 
@@ -75,12 +78,13 @@ function OwnPetForm({ householdId }: { householdId?: string }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [name, setName] = useState("");
-  const [species, setSpecies] = useState<PetSpecies>("cat");
+  // 物种不预选：默认成“猫”的话，养狗的人不注意就登记成了猫，之后到处是猫的图。
+  const [species, setSpecies] = useState<PetSpecies | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const keyRef = useRef(newIdempotencyKey("pet-create"));
   const create = useMutation({
-    mutationFn: () => pets.createOwn({ name: name.trim(), species, photo, householdId }, keyRef.current),
+    mutationFn: () => pets.createOwn({ name: name.trim(), species: species as PetSpecies, photo, householdId }, keyRef.current),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.session }),
@@ -90,6 +94,8 @@ function OwnPetForm({ householdId }: { householdId?: string }) {
     },
   });
   const error = create.error ? toApiError(create.error) : null;
+  // 按钮灰着时就在旁边说清楚还缺什么，不让人对着一个点不动的按钮猜。
+  const missing = !name.trim() && !species ? "先写下 TA 的名字，再选一下 TA 是什么动物" : !name.trim() ? "先写下 TA 的名字" : !species ? "选一下 TA 是什么动物" : null;
   if (env.dataMode === "fixture") {
     return (
       <>
@@ -105,7 +111,7 @@ function OwnPetForm({ householdId }: { householdId?: string }) {
       className="ps-own-pet-form"
       onSubmit={(e) => {
         e.preventDefault();
-        if (name.trim() && !photoError) create.mutate();
+        if (!missing && !photoError) create.mutate();
       }}
     >
       <div className="ps-own-pet-form__lead">
@@ -151,13 +157,14 @@ function OwnPetForm({ householdId }: { householdId?: string }) {
           <p>你可以慢慢说，也可以先跳过。</p>
         </div>
       </div>
-      <Button type="submit" variant="primary" block loading={create.isPending} disabled={!name.trim() || Boolean(photoError)}>
+      {missing ? <p id="own-pet-missing" className="ps-own-pet-missing" role="status">{missing}</p> : null}
+      <Button type="submit" variant="primary" block loading={create.isPending} disabled={Boolean(missing) || Boolean(photoError)} aria-describedby={missing ? "own-pet-missing" : undefined}>
         {householdId ? "把 TA 带进这个家" : "继续，去见接待员"}
       </Button>
       {error ? (
         error.code === "MEDIA_REJECTED" || error.code === "ALREADY_HAS_COMPANION" ? (
           <p role="alert" className="ps-form-error">
-            {error.message}
+            {error.playerMessage}
           </p>
         ) : (
           <ErrorState error={error} />
@@ -189,7 +196,9 @@ export function OnboardingPage() {
 
 /** Existing-home flow uses the same upload and reception, never creates a second household. */
 export function AddCompanionPage() {
-  const { household } = useCurrentHousehold();
+  const { household, userId } = useCurrentHousehold();
+  // 没起名的家与切换栏、“我们的家”同一套说法（“麦芽的家”，撞名带序号），不再是笼统的“当前家庭”。
+  const labels = useHouseholdLabels(userId);
   if (!household || household.role !== "admin") {
     return <Page><TopBar title="添一位伙伴" back="/me" /><DisabledState title="需要家庭管理员">只有家庭管理员可以把新伙伴带进这个家。</DisabledState></Page>;
   }
@@ -197,58 +206,48 @@ export function AddCompanionPage() {
     <TopBar title="添一位伙伴" back="/me" />
     <EntryHeading kicker="同一个家 · 新的伙伴" title="这个家，再认识一位 TA" description="新伙伴会先经过接待与入住，再出现在家里的切换栏。照片和名字都来自你刚提交的资料。" />
     <Card className="ps-stack ps-entry-card ps-companion-card">
-      <Chip tone="leaf" icon="home">{household.name || "当前家庭"}</Chip>
+      <Chip tone="leaf" icon="home">{household.name?.trim() || labels?.get(household.household_id) || householdLabel(household, 0)}</Chip>
       <p className="ps-muted">只加入这个家，不会新建家庭。现有伙伴、家园位置和库存保持原样。</p>
       <OwnPetForm householdId={household.household_id} />
     </Card>
   </Page>;
 }
 
+/**
+ * 一位待领养的居民：谁（照片或同物种插画、名字、物种、性格）、梦想、来处。头像与物种标签和星球居民卡同一套
+ * （ResidentPortrait、speciesName；样式 .ps-resident-portrait / .ps-world-resident__species 在 planet.css，随星球页全局加载）。
+ * 两个动作分开：“认识 TA”去 TA 在星球上的居民主页，只是认识；“迎接 TA”才弹出确认，确认之后才领养，不会自动领养。
+ * 没有 pet_id 的候选（还没在星球上生活）没有居民主页，只有“迎接 TA”。
+ */
 function CandidateCard({ candidate }: { candidate: AdoptionCandidate }) {
-  const { pets } = useServices();
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const [confirming, setConfirming] = useState(false);
-  const keyRef = useRef(newIdempotencyKey("adopt"));
-  const adopt = useMutation({
-    mutationFn: () => pets.adopt(candidate.candidate_id, keyRef.current),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.session });
-      navigate("/onboarding/reception?branch=adopted");
-    },
-    onError: () => void queryClient.invalidateQueries({ queryKey: queryKeys.adoption }),
-  });
   const taken = candidate.availability !== "available";
   return (
-    <Card className="ps-stack ps-entry-card ps-resident-card">
-      <div className="ps-row">
-        <PetAvatar petId={candidate.candidate_id} name={candidate.name} species={candidate.species} size={48} />
-        <div style={{ flex: 1 }}>
-          <strong>{candidate.name}</strong>
+    <Card className="ps-stack ps-entry-card ps-resident-card ps-adopt-card">
+      <div className="ps-adopt-card__head">
+        <ResidentPortrait name={candidate.name} species={candidate.species} photoUrl={candidate.photo_url} origin={candidate.origin} size={56} />
+        <div className="ps-adopt-card__who">
+          <div className="ps-adopt-card__name">
+            <strong>{candidate.name}</strong>
+            <span className="ps-world-resident__species">{speciesName(candidate.species)}</span>
+            {taken ? <Chip>{candidate.availability === "adopted" ? "已有家" : "保留中"}</Chip> : null}
+          </div>
           <div className="ps-muted">{candidate.personality}</div>
         </div>
-        {taken ? <Chip>{candidate.availability === "adopted" ? "已有家" : "保留中"}</Chip> : null}
       </div>
-      <div>
-        <Icon name="sparkle" size={14} /> 梦想：{candidate.dream}
-      </div>
+      <p className="ps-adopt-card__dream">梦想：{candidate.dream}</p>
       <div className="ps-muted">来源：{candidate.source_note ?? "未知"}</div>
       <DataOriginBadge origin={candidate.data_origin} label={candidate.data_origin === "fixture" ? "演示伙伴" : "PetSoul 原创伙伴"} />
-      {confirming && !taken ? (
-        <div className="ps-adopt-confirm" role="group" aria-label={`确认领养 ${candidate.name}`}>
-          <strong>确定迎接 {candidate.name} 吗？</strong>
-          <p>领养后 TA 会加入你的家，下一步可以先和接待员说说想交代的事。</p>
-          <div className="ps-adopt-confirm__actions">
-            <Button variant="secondary" onClick={() => setConfirming(false)} disabled={adopt.isPending}>再看看</Button>
-            <Button variant="primary" loading={adopt.isPending} onClick={() => adopt.mutate()}>确认领养</Button>
-          </div>
-        </div>
-      ) : (
-        <Button variant="primary" disabled={taken} onClick={() => setConfirming(true)}>
-          {taken ? "已经有家了" : `了解并迎接 ${candidate.name}`}
-        </Button>
-      )}
-      {adopt.isError ? <Chip tone="danger">{toApiError(adopt.error).message}</Chip> : null}
+      <AdoptFlow
+        candidateId={candidate.candidate_id}
+        petId={candidate.pet_id}
+        name={candidate.name}
+        adoptable={!taken}
+        beside={candidate.pet_id ? (
+          <Link className="ps-btn ps-btn--secondary" to={`/world/residents/${encodeURIComponent(candidate.pet_id)}`} aria-label={`认识 TA：${candidate.name}`}>
+            认识 TA
+          </Link>
+        ) : null}
+      />
     </Card>
   );
 }
@@ -263,13 +262,22 @@ export function AdoptPage() {
       <TopBar title="专属领养" subtitle="每一位只属于一个家庭" back="/onboarding" />
       <EntryHeading step={2} kicker="入住准备 · 02 / 04" title="认识一位新伙伴" description="这里的居民有自己的来处与此刻的生活。选中之后还会再让你确认，不会自动领养。" />
       <QueryView query={query} isEmpty={(list) => list.length === 0}>
-        {(list) => (
-          <div className="ps-stack">
-            {list.map((c) => (
-              <CandidateCard key={c.candidate_id} candidate={c} />
-            ))}
-          </div>
-        )}
+        {(list) => {
+          // 已经有家的居民不堆在待领养列表里（按钮也点不了），收成一行，去星球上认识 TA 们。
+          const open = list.filter((c) => c.availability !== "adopted");
+          const homed = list.length - open.length;
+          return (
+            <div className="ps-stack">
+              {open.length ? open.map((c) => <CandidateCard key={c.candidate_id} candidate={c} />) : <EmptyState icon="home" title="现在没有在等一个家的居民" />}
+              {homed ? (
+                <Link className="ps-adopt-homed" to="/world">
+                  <span>{open.length ? `还有 ${homed} 位居民已经有家了，` : `${homed} 位居民都已经有家了，`}去星球上认识 TA 们</span>
+                  <Icon name="chevron" size={16} />
+                </Link>
+              ) : null}
+            </div>
+          );
+        }}
       </QueryView>
     </Page>
   );

@@ -22,6 +22,7 @@ from typing import Any
 
 from ..storage import JourneyStorage
 from ..utils import parse_dt, utcnow
+from ..web_identity.service import MODEL_REPLIES_DEFAULT
 from ..web_runtime.heartbeat_policy import HeartbeatPolicy, evaluate
 from ..web_runtime.reasons import SilenceKind, SilenceReason, silence_of
 from . import labels as L
@@ -226,7 +227,8 @@ class AdminDiagnosis:
             "owner_user_id": owner_id,
             "household_generated_photos": (None if row is None or row["generated_photos"] is None else bool(row["generated_photos"])),
             "household_pet_messages": (None if row is None or row["pet_messages"] is None else bool(row["pet_messages"])),
-            "owner_model_replies": bool(prefs["model_replies"]) if prefs else False,
+            # 照顾人没有偏好行＝从没选过，取身份模块的默认值（2026-09-24 起默认开启）；没有照顾人才是「否」
+            "owner_model_replies": bool(prefs["model_replies"]) if prefs else (MODEL_REPLIES_DEFAULT if owner_id else False),
             "owner_generated_photos": bool(prefs["generated_photos"]) if prefs else False,
         }
 

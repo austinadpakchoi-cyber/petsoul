@@ -33,12 +33,17 @@
 .ps-collection-item__head > div {
   min-width: 0;
 }
+/* 没有“演示数据”标记时（live 的收藏都没有），标题块就是这一行的最后一个：右边给星形装饰留出 30px，长标题换行而不是钻到星星底下。
+   有标记时由上面那条标记的 margin-right 让位，这里不重复。2026-09-24 实测：改前 320 / 390 宽下长标题第一行末尾都压在星星上。 */
+.ps-collection-item__head > div:last-child {
+  padding-right: 30px;
+}
 .ps-collection-item__head, .ps-collection-filter { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .ps-collection-item__head { position: relative; z-index: 1; }
 .ps-collection-item__head strong { font-size: 17px; }
 .ps-collection-filter { padding: 4px 3px; color: var(--c-ink-2); font-size: 12px; }
 .ps-collection-filter a { color: var(--c-leaf); font-weight: 700; white-space: nowrap; }
-.ps-collection-item__envelope { min-height: 135px; display: grid; place-content: center; justify-items: center; gap: 8px; border: 1px dashed #c9ae84; border-radius: 14px; color: #8b6c41; background: repeating-linear-gradient(-45deg,#fbf3e5 0 9px,#fff9ef 9px 18px); font-size: 12px; }
+.ps-collection-item__envelope { min-height: 135px; display: grid; place-content: center; justify-items: center; gap: 8px; border: 1px dashed #c9ae84; border-radius: 14px; color: var(--paper-secondary-ink); background: repeating-linear-gradient(-45deg,#fbf3e5 0 9px,#fff9ef 9px 18px); font-size: 12px; }
 .ps-collection-item__image { margin: 0; }
 .ps-collection-item__image img { display: block; width: 100%; max-height: 330px; object-fit: cover; border-radius: 12px; }
 .ps-collection-item__image figcaption { margin-top: 5px; color: var(--c-ink-2); font-size: 11px; }
@@ -77,4 +82,218 @@
 .ps-market-row .ps-btn {
   min-height: 40px;
   border-radius: 12px;
+}
+/* 爪爪驾校：借车券的“怎么用”（服务端 note 原文）。跟着主题走：次要字 --c-ink-2 在 --c-surface 上浅色约 5.7、深色约 6.4。 */
+.ps-voucher-use {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px dashed color-mix(in srgb, var(--c-sun) 45%, var(--c-surface-stroke));
+  border-radius: 12px;
+  background: var(--c-surface);
+}
+.ps-voucher-use__label {
+  color: var(--c-ink-2);
+  font-size: 12px;
+  font-weight: 700;
+}
+.ps-voucher-use p {
+  margin: 0;
+  color: var(--c-ink);
+  line-height: 1.6;
+}
+/* 纸卡（明信片、领证合影）上 TA 的话与照片说明：用固定的纸墨色。原来跟主题走的 --c-ink / --c-ink-2 到了夜里的暖纸上
+   只有约 1.1 / 1.9:1，几乎看不见；纸墨在 --paper 上约 11 / 4.6:1，浅色下在暖白卡面上也 ≥ 4.5（tests/claude-6c2b-ds-touchpoints 实算）。 */
+.ps-card--paper .ps-collection-item__note {
+  color: var(--paper-ink);
+}
+.ps-card--paper .ps-collection-item__image figcaption {
+  color: var(--paper-secondary-ink);
+}
+/* 明信片占位框（上面第 41 行）的字：原来 #8b6c41 在深一格的条纹 #fbf3e5 上只有约 4.4:1，改用纸墨次要色（两种条纹上约 5.0 / 5.2:1）。 */
+/* 领证合影的纸质纪念卡（PaperMemento.tsx）：一张画出内容的实物卡片，纸色底、深墨字、印泥色爪印章，昼夜都用固定的纸墨色：
+   --paper-ink 在 --paper 上约 11:1、在画面带（纸 + 纸影）上约 10:1；--paper-secondary-ink 在 --paper 上约 4.6:1（tests/claude-6c2b-ds-touchpoints 实算）。 */
+.ps-memento {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--paper-shade);
+  border-radius: 14px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  box-shadow: 0 1px 0 var(--paper-shade);
+}
+.ps-memento__scene {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 24px;
+  padding: 14px 10px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper-shade) 45%, var(--paper));
+}
+.ps-memento__who {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ps-memento__name {
+  color: var(--paper-ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+/* 头像在纸上：白圈换成纸色；没有照片时的爪印占位也用纸墨（不随主题变成深绿圆块）。 */
+.ps-memento .ps-avatar {
+  border-color: var(--paper);
+}
+.ps-memento .ps-avatar.is-placeholder {
+  background: var(--paper);
+  color: var(--paper-secondary-ink);
+}
+.ps-memento__coach {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper-shade) 70%, var(--paper));
+  color: var(--paper-ink);
+  box-shadow: 0 2px 6px -2px var(--c-shadow);
+}
+.ps-memento__shell {
+  fill: var(--paper);
+}
+/* 龟教练的头像素材（512×512 透明，头像在中间约 80% 的圆里）：铺满圆框、按圆裁；加载失败时组件换回上面的线稿 */
+.ps-memento__coach-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+}
+.ps-memento__quote {
+  margin: 0;
+  padding: 0 2px;
+  color: var(--paper-ink);
+  font-family: Georgia, "Songti SC", serif;
+  line-height: 1.7;
+}
+.ps-memento__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--paper-secondary-ink);
+  font-size: 12px;
+}
+.ps-memento__day {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 4px;
+  min-width: 0;
+}
+.ps-memento__day > span {
+  white-space: nowrap;
+}
+.ps-memento__stamp {
+  flex: none;
+  color: var(--paper-accent);
+  transform: rotate(-12deg);
+}
+.ps-memento__status {
+  margin: 0;
+  color: var(--paper-secondary-ink);
+  font-size: 12px;
+}
+/* 到站明信片（ArrivalPostcard.tsx）：和纪念卡同一套纸墨（固定色，昼夜一样）。照片装在带白边的相纸里；
+   冲洗中 / 待确认是一张正在显影的相纸（暖色渐变），不是虚线空框；手写部分是纸卡，右上角一枚爪印邮票。
+   字：--paper-ink 在 --paper 上约 11:1，--paper-secondary-ink 约 4.6:1（tests/claude-6c2b-arrival-selfie 实算）。 */
+.ps-arrival-postcard {
+  display: grid;
+  gap: 10px;
+}
+.ps-arrival-postcard__photo {
+  margin: 0;
+  padding: 8px 8px 10px;
+  border: 1px solid var(--paper-shade);
+  border-radius: 10px;
+  background: var(--paper);
+  box-shadow: 0 1px 0 var(--paper-shade);
+}
+.ps-arrival-postcard__photo img {
+  display: block;
+  width: 100%;
+  max-height: 330px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.ps-arrival-postcard__photo figcaption {
+  margin-top: 6px;
+  color: var(--paper-secondary-ink);
+  font-size: 12px;
+}
+.ps-arrival-postcard__developing {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 8px 8px 12px;
+  border: 1px solid var(--paper-shade);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-size: 13px;
+  text-align: center;
+}
+.ps-arrival-postcard__film {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 220px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--paper-shade) 70%, var(--paper-secondary-ink)), var(--paper-shade) 55%, var(--paper));
+  color: var(--paper);
+}
+.ps-arrival-postcard__card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--paper-shade);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--paper-ink);
+}
+.ps-arrival-postcard__text {
+  min-width: 0;
+}
+.ps-arrival-postcard__note {
+  margin: 0;
+  color: var(--paper-ink);
+  font-family: Georgia, "Songti SC", serif;
+  line-height: 1.7;
+}
+.ps-arrival-postcard__from {
+  margin: 6px 0 0;
+  color: var(--paper-secondary-ink);
+  font-size: 12px;
+  /* 寄出地与日期各是一段：窄屏时日期整段换到下一行，不在“9月 / 24日”中间断开 */
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 4px;
+}
+.ps-arrival-postcard__day {
+  white-space: nowrap;
+}
+.ps-arrival-postcard__status {
+  margin: 0;
+  color: var(--paper-secondary-ink);
+  font-size: 12px;
 }

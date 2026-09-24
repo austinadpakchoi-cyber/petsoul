@@ -102,13 +102,13 @@ class JourneyPlanningMixin:
             options.append(DestinationOption(destination_key=key, title=title, city=home.city, summary=summary, fee=fee, total_minutes=minutes,
                                              modes=modes, time_basis=basis, wish_match=None,
                                              affordable=balance >= fee or self.waiver_available(pet_id, key), available=available,
-                                             unavailable_reason=None if available else "地图服务现在不可用：进城和自驾要去现实里的地方，暂时去不了"))
+                                             unavailable_reason=None if available else "现在找不到路线：进城和自驾要去现实里的地方，暂时去不了"))
         if not self.demo_catalog:
             for trip in REAL_TRIPS.values():
                 if home.city != trip.home_city:
                     continue
                 table = load_timetable(trip.timetable)
-                reason = None if mapped else "地图服务现在不可用，没法估算去码头的时间"
+                reason = None if mapped else "现在找不到路线，没法估算去码头的时间"
                 if table.fresh(now.date()) is False:
                     reason = "船期资料已过复核期限，要重新核对官网后才能出发"
                 match = next((w for w in wishes if any(k in w for k in trip.wish_keywords)), None)

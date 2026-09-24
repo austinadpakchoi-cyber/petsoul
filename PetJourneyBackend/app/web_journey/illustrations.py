@@ -350,7 +350,7 @@ class IllustrationService:
             # 没有键的是按旧规则排进来的在途任务，它载荷里那段 story 可能夹着只授权过私聊的叮嘱，
             # 所以**一个字都不读**，只用标题。不借 `privacy_epoch` 判断任何东西：无关设置改动不该挡住合法的照片。
             template = ADVENTURES.get(payload.get("adventure_key") or "")
-            story = render_story(template, name, None) if template is not None else ""
+            story = render_story(template, f"这只{SPECIES_CN.get(species, '小动物')}", None) if template is not None else ""
             prompt = build_prompt(species=species, name=name, personality=personality, title=payload.get("title", ""), story=story,
                                   with_reference=reference is not None)
         try:

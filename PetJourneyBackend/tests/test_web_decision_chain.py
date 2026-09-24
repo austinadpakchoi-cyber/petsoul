@@ -149,19 +149,20 @@ class DecisionChainTests(ChainBase):
         self.assertEqual(owner.post("/reception/confirmations", body).status_code, 200)
         self.assertEqual(owner.post("/onboarding/move-in", {"public_posts": False, "habitat": "seaside"}).status_code, 200)
         reader, request = self.reader(web), self.request(web, pet_id)
-        refused = build_context(reader, request)
-        self.assertEqual(refused.context.memory_refs, (), "本人没开“模型回信”：叮嘱只影响规则生活，不交给模型")
-        self.assertTrue(any(d.endswith(":member_model_consent") for d in refused.dropped))
-        web.identity.set_prefs(owner.user_id, model_replies=True)
+        # 2026-09-24 起“模型回信”默认开启：没选过的本人，叮嘱**按用途**交给模型；原先这里是“默认拒绝”那一侧
         allowed = build_context(reader, request).context
         memory = " ".join(f.text for f in allowed.memory_refs)
         self.assertIn("看海", memory)
         self.assertIn("毯子", memory)
         self.assertTrue(all(f.scope.kind == "private" and f.scope.user_id == owner.user_id for f in allowed.memory_refs))
         prompt = " ".join(m["content"] for m in render(allowed).messages)
-        for secret in ("走丢", "妈妈"):  # 只留在接待处的倾诉、只允许私聊用的称呼
+        for secret in ("走丢", "妈妈"):  # 只留在接待处的倾诉、只允许私聊用的称呼：默认开启也不给
             self.assertNotIn(secret, memory)
             self.assertNotIn(secret, prompt)
+        web.identity.set_prefs(owner.user_id, model_replies=False)  # 本人撤回
+        refused = build_context(reader, request)
+        self.assertEqual(refused.context.memory_refs, (), "本人关掉“模型回信”：叮嘱只影响规则生活，不交给模型")
+        self.assertTrue(any(d.endswith(":member_model_consent") for d in refused.dropped))
 
 
 def pick(keyword: str, intent: str = "就这么定了"):

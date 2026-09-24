@@ -40,12 +40,12 @@ export function GuideBookPage() {
   const past = <QueryView query={guides} isEmpty={(list) => list.length === 0 && !journeyId} empty={<EmptyState icon="bookmark" title="还没有攻略手账">TA 准备好一趟旅程后，手账会出现在这里。</EmptyState>}>
       {(list) => {
         const visible = journeyId ? list.filter((guide) => guide.journey_id === journeyId) : list;
-        return visible.length === 0 ? <EmptyState icon="bookmark" title="这趟旅程还没有手账">目前没有与这趟行程关联的攻略，不代 TA 编一份。<Link to="/guides">查看全部手账</Link></EmptyState> : <div className="ps-guide-list">{visible.map((guide) => <Link key={guide.guide_id} to={`/guides/${encodeURIComponent(guide.guide_id)}`} className="ps-guide-cover"><span className="ps-guide-cover__eyebrow">PETSOUL · TRAVEL NOTES</span><span className="ps-guide-cover__city">{guide.city}</span><strong>{guide.title}</strong><span className="ps-guide-cover__meta">{dateLabel(guide.created_at)} · {STATUS_TEXT[guide.status ?? ""] ?? "状态待确认"}</span><span className="ps-guide-cover__open">翻开手账 <Icon name="chevron" size={15} /></span></Link>)}</div>;
+        return visible.length === 0 ? <EmptyState icon="bookmark" title="这趟旅程还没有手账">目前没有与这趟行程关联的攻略，不代 TA 编一份。<Link to="/guides">查看全部手账</Link></EmptyState> : <div className="ps-guide-list">{visible.map((guide) => <Link key={guide.guide_id} to={`/guides/${encodeURIComponent(guide.guide_id)}`} className="ps-guide-cover"><span className="ps-guide-cover__city">{guide.city}</span><strong>{guide.title}</strong><span className="ps-guide-cover__meta">{dateLabel(guide.created_at)} · {STATUS_TEXT[guide.status ?? ""] ?? "状态待确认"}</span><span className="ps-guide-cover__open">翻开手账 <Icon name="chevron" size={15} /></span></Link>)}</div>;
       }}
     </QueryView>;
   return <Page className="ps-guide-page">
     <TopBar title={`${pet?.name ?? "TA"} 的攻略手账`} subtitle="计划与已经发生的事，分开写" back="/memories" />
-    <div className="ps-guide-intro"><Icon name="bookmark" size={23} /><div><strong>翻开 TA 的旅行笔记</strong><p>真实地址只显示服务端核对过的地点；未核实的叫法只留在故事里。</p></div></div>
+    <div className="ps-guide-intro"><Icon name="bookmark" size={23} /><div><strong>翻开 TA 的旅行笔记</strong><p>真实地址只写核对过的地点；没核实的叫法只留在故事里。</p></div></div>
     {plans ? <PlanShelf views={plans} /> : null}
     {plans ? <section className="ps-plan-shelf" aria-labelledby={pastId} data-shelf="past"><div className="ps-plan-shelf__head"><h2 id={pastId}>去过的</h2></div>{past}</section> : past}
   </Page>;

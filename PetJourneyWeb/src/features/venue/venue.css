@@ -16,7 +16,9 @@
   background: linear-gradient(125deg, rgba(255, 255, 255, 0.26), transparent 36%, transparent 70%, rgba(85, 53, 39, 0.12));
 }
 .ps-cafe__art { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
-.ps-cafe svg { display: none; }
+/* 代码画的店内只在插画加载失败时顶上。原来写成 .ps-cafe svg，连宠物没照片时的爪印、留念卡的相机图标也一起藏了，头像只剩一个空圈 */
+.ps-cafe__drawing { display: none; }
+.ps-cafe.is-art-failed .ps-cafe__drawing { display: block; width: 100%; height: 100%; }
 .ps-cafe__pet {
   position: absolute;
   z-index: 2;
@@ -138,6 +140,84 @@
   color: var(--c-ink-2);
   font-size: 10px;
 }
+/* 户外（小路、公园）：不用店内插画，只用令牌画一小片天和草地，跟着深浅色走 */
+.ps-outdoor {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 360 / 150;
+  margin-top: var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--c-leaf) 24%, var(--c-surface-stroke));
+  border-radius: 27px 27px 18px 18px;
+  background: var(--c-sky-soft);
+  box-shadow: 0 18px 28px -24px var(--c-shadow);
+}
+.ps-outdoor__drawing { display: block; width: 100%; height: 100%; }
+.ps-outdoor__sky { fill: var(--c-sky-soft); }
+.ps-outdoor__sun { fill: var(--c-sun); opacity: 0.6; }
+/* 云用浅色墨（两种主题都是浅色）半透明：原来用 --c-surface，深色下和夜空一样深，成了一块暗斑 */
+.ps-outdoor__cloud { fill: var(--c-on-deep); opacity: 0.6; }
+.ps-outdoor__hill { fill: color-mix(in srgb, var(--c-leaf) 32%, var(--c-leaf-soft)); }
+.ps-outdoor__grass { fill: color-mix(in srgb, var(--c-leaf) 14%, var(--c-leaf-soft)); }
+.ps-outdoor__path { fill: color-mix(in srgb, var(--c-sun) 28%, var(--c-surface)); }
+.ps-outdoor__tree { fill: color-mix(in srgb, var(--c-leaf) 72%, var(--c-leaf-soft)); }
+.ps-outdoor__flower { fill: var(--c-coral); opacity: 0.75; }
+.ps-outdoor__pet {
+  position: absolute;
+  z-index: 2;
+  left: 52%;
+  bottom: 22%;
+  display: grid;
+  justify-items: center;
+  transform: translateX(-50%);
+  transition: left 620ms var(--ease-out), bottom 620ms var(--ease-out);
+}
+.ps-outdoor.is-resting .ps-outdoor__pet {
+  left: 34%;
+  bottom: 18%;
+}
+.ps-outdoor__pet .ps-avatar,
+.ps-outdoor__pet-portrait {
+  position: relative;
+  z-index: 1;
+  border: 3px solid var(--c-surface);
+  box-shadow: 0 8px 14px -8px var(--c-shadow);
+  animation: ps-cafe-breathe 4.2s ease-in-out infinite;
+}
+.ps-outdoor__pet-portrait { display: block; width: 58px; height: 58px; border-radius: 50%; object-fit: cover; }
+.ps-outdoor__pet-shadow {
+  position: absolute;
+  bottom: -3px;
+  width: 50px;
+  height: 10px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--c-deep-ink) 22%, transparent);
+}
+.ps-outdoor__pet-name {
+  position: absolute;
+  top: calc(100% + 2px);
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  background: var(--c-deep-ink);
+  color: var(--c-on-deep);
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+/* 放在右侧山坡上：再高会压住太阳 */
+.ps-outdoor__hello {
+  position: absolute;
+  z-index: 3;
+  right: 14%;
+  top: 44%;
+  padding: 5px 8px;
+  border-radius: 12px 12px 12px 4px;
+  background: var(--c-surface);
+  color: var(--c-ink);
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 6px 12px -8px var(--c-shadow);
+  animation: ps-cafe-appear 400ms var(--ease-out) both;
+}
 .ps-visit-state {
   display: flex;
   align-items: center;
@@ -149,11 +229,14 @@
   font-size: var(--fs-sm);
   font-weight: 700;
 }
+/* 按钮文字不许孤字折行：一格放不下最长的说法（约 11 个字）就整排单列——手机宽度（320～430）都是单列；
+   页面最宽 560 时才并成两列，每格也放得下。万一服务端给了更长的说法，按整句平衡折行，不留一两个字落单 */
 .ps-visit-acts {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15em), 1fr));
   gap: var(--space-2);
 }
+.ps-visit-act__label { text-wrap: balance; }
 .ps-visit-act {
   min-width: 0;
   padding: 7px;
@@ -179,12 +262,12 @@
   50% { transform: translateY(-3px) rotate(1deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ps-cafe__pet { transition: none; }
-  .ps-cafe__pet .ps-avatar, .ps-cafe__pet-portrait { animation: none; }
+  .ps-cafe__pet,
+  .ps-outdoor__pet { transition: none; }
+  .ps-cafe__pet .ps-avatar, .ps-cafe__pet-portrait,
+  .ps-outdoor__pet .ps-avatar, .ps-outdoor__pet-portrait { animation: none; }
   .ps-cafe__drink,
   .ps-cafe__hello,
-  .ps-cafe__photo { animation: none; }
-}
-@media (max-width: 340px) {
-  .ps-visit-acts { grid-template-columns: 1fr; }
+  .ps-cafe__photo,
+  .ps-outdoor__hello { animation: none; }
 }

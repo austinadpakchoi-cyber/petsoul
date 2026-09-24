@@ -3,13 +3,18 @@
  * 只做形状转换，不补、不猜：position 为 null 就不画点；leg 缺出发 / 到达时间或几何不足两点，就不沿线插值（用服务端给的 position）；
  * pose 原样透传（作息接不上时后端给 idle，不是 sleeping）。坐标仍是 WGS-84，画到高德上时由 AmapView 换算。
  */
-import type { WorldPetState, WorldState } from "@/shared/contracts";
+import { TransportModeValues, type TransportMode, type WorldPetState, type WorldState } from "@/shared/contracts";
 import type { TravelMode, MapLeg, WorldPet, WorldScene } from "./model";
 
 function travelMode(mode: string): TravelMode {
   if (mode === "walk" || mode === "taxi" || mode === "drive") return mode;
   if (mode === "transit" || mode === "bus") return "bus";
   return "other";
+}
+
+/** W1 leg.mode 原样对上契约的交通方式；认不出（后端新加了别的）就是 null——不猜成走路或开车。 */
+function transportMode(mode: string | null | undefined): TransportMode | null {
+  return mode && (TransportModeValues as readonly string[]).includes(mode) ? (mode as TransportMode) : null;
 }
 
 function time(iso: string | null | undefined): number | null {
@@ -54,6 +59,7 @@ export function worldPetFromState(pet: WorldPetState, fallbackPhoto: string | nu
       visitId: a.visit_id ?? null,
     },
     leg: legOf(pet),
+    legMode: transportMode(pet.leg?.mode),
     position: pet.position ? { lat: pet.position.lat, lng: pet.position.lng } : null,
     basis: pet.position?.basis ?? "unknown",
     version: pet.version ?? 0,

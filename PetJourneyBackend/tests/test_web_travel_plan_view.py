@@ -94,6 +94,26 @@ class TravelPlanViewTests(TravelJournalTestBase):
         self.assertEqual(page.journals[1].event_ids, ("jr-1:visit_started",))
         self.assertTrue(all(s.visited_event_ids == () for s in page.stops), "计划页的站点永远不盖章，章在回忆页")
 
+    def test_each_page_carries_its_own_times_and_template(self) -> None:
+        """I 挂 /travel/plans 用：手账页的时间、身份说明、模板号都取自己那一行。回忆页建得晚，时间不能拿计划页的顶替。"""
+        self.publish()
+        with self.storage.connect() as conn:
+            plan = self.wishes.ready_plan_in(conn, "pet-1")
+        with unit_of_work(self.storage) as conn:
+            self.wishes.link_journey_in(conn, plan.plan_id, plan.plan_revision, plan.wish_id, plan.wish_revision, "jr-1")
+        self.journals.visit_of = lambda journey_id: SimpleNamespace(starts_at=utcnow())
+        self.journals.on_world_event(SimpleNamespace(kind="returned_home", journey=SimpleNamespace(journey_id="jr-1"), visit=None,
+                                                     occurred_at=utcnow() + timedelta(hours=1)))
+
+        rows = {r["phase"]: r for r in self.journal_rows()}
+        plan_page, memory_page = self.view().revision.journals
+        for journal in (plan_page, memory_page):
+            row = rows[journal.phase]
+            self.assertEqual((journal.created_at, journal.updated_at, journal.identity_note, journal.template_revision),
+                             (row["created_at"], row["updated_at"], row["identity_note"], row["template_revision"]))
+        self.assertNotEqual(memory_page.created_at, plan_page.created_at, "回忆页有自己的时间")
+        self.assertEqual(plan_page.template_revision, "t1")
+
 
 if __name__ == "__main__":
     unittest.main()

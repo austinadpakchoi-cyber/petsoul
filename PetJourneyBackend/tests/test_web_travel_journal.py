@@ -20,6 +20,7 @@ import unittest
 from character_fakes import rgb_png
 from travel_wish_fakes import TravelJournalTestBase
 
+from app.web_photo_director import journal_brief
 from app.web_providers import ImageUnavailable
 from app.web_travel.model import READY
 
@@ -60,6 +61,17 @@ class TravelJournalDrawingTests(TravelJournalTestBase):
         self.assertEqual(image.status, "ready")
         self.assertTrue(image.url)
         self.assertEqual(self.image_units(), [1])
+
+    def test_the_page_follows_the_trv07_t1_template_and_default_paper(self) -> None:
+        """TRV-07（r7k）：基础版式 t1，首批默认 cream 米白旧纸＋watercolor 淡水彩；改之前先回 TRV-07。
+        提示词里的纸笔描述直接取 P 词表里对应的那段文字，不在用例里抄中文。"""
+        self.publish()
+        (journal,) = self.journal_rows()
+        self.assertEqual(journal["template_revision"], "t1")
+        self.ills.run_pending()
+        (call,) = self.painter.calls
+        self.assertIn(journal_brief.PAPER["cream"], call["prompt"])
+        self.assertIn(journal_brief.BRUSH["watercolor"], call["prompt"])
 
     def test_the_journal_itself_does_not_ask_again_for_the_same_picture(self) -> None:
         """手账这一层自己的复用（按 计划×画面摘要×模板 查已有的图）。真插画服务按 `illustration:<source_key>` 唯一去重，

@@ -311,9 +311,16 @@ def wire_agent_world(*, storage: JourneyStorage, settings, providers, identity, 
         return f"今天在{journey.city}的{place}待了一会儿，回来的路上路过邮局，就想给家里寄一张。"
 
     collection.note_writer = postcard_note
+    # **`scene` 里不嵌真店名**：明信片自拍**没有 `scene_key`，一定走 `build_selfie_prompt`**，
+    # 而 `scene` 是那条模板现在唯一会读进提示词的字段（A 2026-09-24 改完，`photo_prompts.py c4d14ec9…`）。
+    # 地名写进提示词，街边招牌最容易被画出那几个字（P 在真图上吃过亏）。
+    #
+    # **`place` 与 `city` 照旧传真名，不要去掉。** 我一度在这儿写过"等 A 去掉那个槽、落地后我也去掉"——
+    # **那句话是错的**：模板不读它们了，但它们还有另外 4／6 个读者，含照片导演的 `SceneFacts`
+    # 与 `routers/web/pets.py` 给界面看的字段。去掉会让照片卡片没有地点、导演也拿不到 `place_label`。
     collection.selfie_request = lambda journey, visit, source_key: illustrations.request_photo(
         journey.user_id, journey.pet_id, source_key, place="街边", city=journey.city,
-        scene=f"刚在{visit.place['name']}玩完，坐在街边一个老式邮筒旁边，准备寄明信片")
+        scene="刚玩完，坐在街边一个老式邮筒旁边，准备寄明信片")
     collection.on_postcard = lambda journey, title: communicator.post_family_note(
         journey.pet_id, f"路过{journey.city}的邮局，给家里寄了一张明信片～在收藏里能看到。", dedupe_key=f"postcard:{journey.journey_id}", now=utcnow())
     collection.has_family = lambda pet_id: households.household_of_pet(pet_id) is not None  # 居民还没有家，不寄明信片
@@ -365,7 +372,7 @@ def wire_agent_world(*, storage: JourneyStorage, settings, providers, identity, 
     proactive.family_allowed = family_news_allowed
 
     def family_model_enabled(pet_id: str) -> bool:
-        """家庭频道的措辞用不用模型：跟随家庭第一位管理员的“模型回信”选择（默认关闭，不产生模型费用）。"""
+        """家庭频道的措辞用不用模型：跟随家庭第一位管理员的“模型回信”选择（2026-09-24 起默认开启；管理员关掉即不用模型、不产生模型费用）。"""
         household_id = households.household_of_pet(pet_id)
         admin = households.primary_admin(household_id) if household_id else None
         return bool(admin) and identity.prefs(admin)["model_replies"]

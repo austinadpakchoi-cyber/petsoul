@@ -276,7 +276,8 @@ describe("地图首页（fixture 演示）", () => {
     expect(avatar?.querySelector("img")?.getAttribute("src")).toMatch(/demo-cat-portrait/);
     expect(avatar?.querySelector(".ps-pet-portrait")?.textContent).toBe("");
     // 驾校（演示服务）：TA 想学开车（wish）→ 面板有这一行，点它去驾校
-    const wish = await screen.findByRole("link", { name: /^TA 说想学开车/ });
+    // 第 1 步追加：愿望那一行用宠物的名字（演示里是团子）。
+    const wish = await screen.findByRole("link", { name: /^团子说想学开车/ });
     expect(wish.getAttribute("href")).toBe("/school");
     cleanup();
     // 还没开始学（none）→ 驾校状态读回来了，也没有这一行

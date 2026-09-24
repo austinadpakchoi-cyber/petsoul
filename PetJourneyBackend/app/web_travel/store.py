@@ -31,10 +31,12 @@ def loads(text: str | None, default: Any = None) -> Any:
 
 
 def _insert(conn: sqlite3.Connection, table: str, row: dict[str, Any], *, ignore: bool = False) -> bool:
+    """`ignore=True` 只跳过**重复**（主键、唯一、部分唯一索引），不跳过 CHECK／NOT NULL 违例——那些照常报错。
+    不用 `INSERT OR IGNORE`：它连 CHECK 违例一起吞，词表一漂移数据就无声丢失（m1702 那次在旧库上实测：冲突事实被悄悄丢掉）。"""
     columns = ", ".join(row)
     marks = ", ".join("?" for _ in row)
-    verb = "INSERT OR IGNORE" if ignore else "INSERT"
-    return conn.execute(f"{verb} INTO {table} ({columns}) VALUES ({marks})", tuple(row.values())).rowcount == 1
+    skip = " ON CONFLICT DO NOTHING" if ignore else ""
+    return conn.execute(f"INSERT INTO {table} ({columns}) VALUES ({marks}){skip}", tuple(row.values())).rowcount == 1
 
 
 # ---- 心愿 ----

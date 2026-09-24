@@ -263,7 +263,7 @@ describe("菜园二级页 /garden：点地里的菜就是操作", () => {
     const act = vi.fn(async () => ok);
     renderWith(<MyGarden snapshot={snapshotWith(ripe)} />, { farm: { act }, economy: {} }, "/garden", "/garden");
     fireEvent.click(screen.getByRole("button", { name: "收获星星番茄" }));
-    expect((await screen.findByRole("status")).textContent).toBe("星星番茄 ×6 进了仓库。旅费未因收获增加。");
+    expect((await screen.findByRole("status")).textContent).toBe("星星番茄 ×6 进了仓库。星币没有变，卖掉或交订单时才会增加。");
     expect(screen.getByTestId("garden-flyer")).toBeTruthy();
     expect(screen.getByTestId("basket-catch")).toBeTruthy();
     expect(act).toHaveBeenCalledWith(expect.objectContaining({ action: "harvest", plot_id: "fx-plot-1" }), expect.any(String));

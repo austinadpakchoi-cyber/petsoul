@@ -150,7 +150,7 @@ describe("“生活与回忆”那排入口不在小窝了", () => {
     const view = renderPage({ petId: "pet-life", home: async () => snapshot({ petId: "pet-life" }) });
     await screen.findByRole("region", { name: "共同的家·庭院" });
     expect(screen.queryByRole("navigation", { name: "生活与回忆" })).toBeNull();
-    for (const text of ["生活与回忆", "我们的家", "工作与证件", "我的收藏", "入住叮嘱", "给这个家添伙伴"]) {
+    for (const text of ["生活与回忆", "我们的家", "工作与证件", "我的收藏", "生活叮嘱", "给这个家添伙伴"]) {
       expect(view.container.textContent, text).not.toContain(text);
     }
     for (const href of ["/households/manage", "/life", "/collection", "/onboarding/reception?mode=supplement", "/pets/new"]) {
@@ -307,8 +307,8 @@ describe("场景里的东西平时不写字，点到才冒出名字和能做的�
     memento.focus();
     fireEvent.click(memento);
     const bubble = screen.getByRole("group", { name: "窗台上的软垫" });
-    expect(bubble.textContent).toContain("你为 TA 留下的叮嘱");
-    const more = within(bubble).getByRole("link", { name: "查看与补充叮嘱" });
+    expect(bubble.textContent).toContain("你为 TA 留下的生活叮嘱");
+    const more = within(bubble).getByRole("link", { name: "补充叮嘱" });
     expect(more.getAttribute("href")).toBe("/onboarding/reception?mode=supplement");
     more.focus();
     fireEvent.keyDown(window, { key: "Escape" });

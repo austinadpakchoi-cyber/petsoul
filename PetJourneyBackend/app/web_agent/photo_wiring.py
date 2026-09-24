@@ -32,6 +32,18 @@ def bind_photo_request(illustrations, households):
         facts = verified_facts(scene_key, visit.place)
         return illustrations.request_photo_in(
             conn, journey.user_id, journey.pet_id, source_key,
+            # **这里必须传真店名。** 我一度改成类目（想挡住"地名进提示词→招牌被画出字"），**那是错的**：
+            # `place` 在载荷里有**四个读者**，只有一个是提示词——
+            #   illustrations.py:339        回落旧模板的提示词（只有这一个希望它不是专名）
+            #   photo_director_bridge.py:155 → SceneFacts.place_label → 导演提示词（P 有意要真名：
+            #                                 BACKGROUND_RULE「仍认得出是哪里」，compiler.py:262 还断言它出现在提示词里）
+            #   routers/web/pets.py:271／:298 → PhotoRequestView／PhotoRequestResult，**给界面看的**
+            # 换成类目会同时弄坏后两者。我当时只 grep 了 `illustrations.py` 一个文件就说"只有一个消费者"——
+            # **范围缩到一个文件，却把结论说成了全仓**。
+            #
+            # 提示词那一侧的修法不在这儿，而且**已经落地**：`build_selfie_prompt` 现在只读 `scene`、
+            # 不读 `place`／`city`（A 2026-09-24，`photo_prompts.py c4d14ec9…`，并有用例钉着
+            # "传真名也进不去"、加回去的变异被杀）。**专名在模板那一层就进不来，不靠每个调用方自觉。**
             place=visit.place["name"], city=journey.city,
             scene="在店里靠窗的位置坐着",  # 旧模板句：scene_key 为 None 时才用得到
             captured_at=captured_at, scene_key=scene_key,

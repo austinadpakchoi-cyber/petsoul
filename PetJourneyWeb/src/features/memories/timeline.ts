@@ -82,6 +82,18 @@ export function timelineLook(kind: string): TimelineLook {
   return LOOKS.get(kind) ?? NEUTRAL_LOOK;
 }
 
+/**
+ * 每条下面那行小字：照原文显示，只有“小字其实是编号”的种类不显示。
+ * 证件（credential）的小字是后端给的证件编号（如 PS-CARE-2026-XXXXXX），对主人是一串代码；
+ * 编号在点进去的证件页上照样有（卡面、背面），这里不重复露出（2026-09-24 全站文字清理）。
+ */
+const CODE_DETAIL_KINDS: ReadonlySet<string> = new Set(["credential"]);
+
+export function timelineDetail(item: Pick<TimelineItem, "kind" | "detail">): string | null {
+  if (CODE_DETAIL_KINDS.has(item.kind)) return null;
+  return item.detail?.trim() ? item.detail : null;
+}
+
 /** 能确定页面才给地址；ref_id 缺失或是空白时不给。 */
 export function timelineHref(item: Pick<TimelineItem, "kind" | "ref_id">): string | null {
   const ref = item.ref_id?.trim();

@@ -13,6 +13,7 @@ import { Button, DataOriginBadge, ErrorState, Icon, LoadingState, Page, TopBar }
 import { EntrySteps, entryStepKicker } from "@/features/identity/EntryHeading";
 import receptionWorld from "./assets/reception-world-v1.webp";
 import { PawMark, petPortraitUrl } from "@/features/pets/PetPortrait";
+import { petToReturnTo } from "@/features/world_map/WorldGate";
 import { hasInAppHistory, leaveSupplement, SUPPLEMENT_PARENT, trailFromReception } from "./trail";
 import "./reception.css";
 
@@ -48,6 +49,12 @@ function ReceptionHero({ name, photoUrl, supplement }: { name: string; photoUrl:
   );
 }
 
+/**
+ * 服务端的接待说明（host.disclosure，后端原文）已经讲过“引导模式”时，前端不再补那一句。
+ * 这是拿来匹配后端文字的，不上页面：后端现在写“引导便笺模式”（后端文案，前端不改写），以后改叫“引导叮嘱 / 记录模式”也认得。
+ */
+const SERVER_EXPLAINS_GUIDED = /引导(?:便笺|叮嘱|记录)模式/;
+
 /** 接待员身份（AI 角色）始终可见；记录方式的说明收进“怎么记”，不在首屏堆满说明文字。 */
 function HostIntro({ session }: { session: ReceptionSession }) {
   return (
@@ -58,7 +65,7 @@ function HostIntro({ session }: { session: ReceptionSession }) {
         <details className="ps-host__about">
           <summary>接待员会怎么记你说的话</summary>
           <p className="ps-host__disclosure">{session.host.disclosure}</p>
-          {session.mode === "guided_notes" && !session.host.disclosure.includes("引导便笺模式") ? <p className="ps-host__mode">你的话会原样进入待确认页，不会被当作 TA 已经说过的话。</p> : null}
+          {session.mode === "guided_notes" && !SERVER_EXPLAINS_GUIDED.test(session.host.disclosure) ? <p className="ps-host__mode">你的话会原样进入待确认页，不会被当作 TA 已经说过的话。</p> : null}
         </details>
       </div>
     </aside>
@@ -69,6 +76,9 @@ function Conversation({ session }: { session: ReceptionSession }) {
   return (
     <div className="ps-reception-chat">
       <div className="ps-reception-section-title"><span>你和接待员</span><small>想到什么说什么 · 可以跳过</small></div>
+      {/* 输入说明放在对话前面（2026-09-24 巡检 P2）：原来在对话末尾，正好落在贴底区的上沿，首屏被压住一半；
+          放在这里，滚到哪儿都不会卡在贴底区底下（输入框的读屏说明仍由 aria-describedby 连上）。 */}
+      <p id="reception-input-hint" className="ps-reception-hint">说一件，就整理成一条待你确认的叮嘱；不说也可以，以后还能补充</p>
       <ol className="ps-turns" aria-label="接待对话">
         {session.turns.map((turn) => (
           <li key={turn.turn_id} className={`ps-turn ps-turn--${turn.speaker}`}>
@@ -76,10 +86,12 @@ function Conversation({ session }: { session: ReceptionSession }) {
           </li>
         ))}
       </ol>
-      <p id="reception-input-hint" className="ps-reception-hint">说一件，就整理成一条待你确认的叮嘱；不说也可以，以后还能补充</p>
     </div>
   );
 }
+
+/** 还没结束、可以接着说的接待（与后端开场时“同一只已有进行中的会话就返回它”认的是同两种状态）。 */
+const OPEN_STATUSES: readonly ReceptionSession["status"][] = ["active", "awaiting_confirmation"];
 
 /** 输入框最多长到这么高（约 5 行），再多就在框里滚动：贴底区不能吃掉整屏。 */
 const COMPOSER_MAX_HEIGHT = 132;
@@ -202,14 +214,28 @@ function ReceptionView({ supplement }: { supplement: boolean }) {
   const home = useQuery({ queryKey: queryKeys.home, queryFn: () => world.home(current?.pet_id ?? null), enabled: !live && branch === "own_pet" });
   const petId = live ? livePetId ?? undefined : branch === "adopted" ? "fx-adopt-pet" : home.data?.pet.pet_id;
   const petProfile = useQuery({ queryKey: queryKeys.petProfile(petId ?? "-"), queryFn: () => pets.publicProfile(petId!), enabled: Boolean(petId), retry: false });
+  // 先接回这只宠物还没结束的接待（2026-09-24 巡检 P1：原来每进一次接待页就新开一次，同一只连开了 6 次，说到一半的话可能接不回来）：
+  // 入住阶段里记着的会话（reception_session_id）是这只的，就先按编号读回来；是这只的、还没结束就接着用。没有、读不到或已经结束才新开。
+  const resumeId = live && petId && onboarding?.pet_id === petId ? onboarding.reception_session_id ?? null : null;
+  const resume = useQuery({
+    queryKey: ["reception", "resume", resumeId],
+    queryFn: () => reception.get(resumeId!),
+    enabled: Boolean(resumeId),
+    staleTime: Infinity,
+    retry: false,
+  });
+  const resumable = resume.data && resume.data.pet_id === petId && OPEN_STATUSES.includes(resume.data.status) ? resume.data : null;
   const start = useQuery({
     queryKey: ["reception", "start", branch, petId],
     queryFn: () => reception.start({ pet_id: petId!, branch }, startKey(petId!)),
-    enabled: Boolean(petId),
+    enabled: Boolean(petId) && (!resumeId || resume.isError || (resume.isSuccess && !resumable)),
     staleTime: Infinity,
   });
-  const sessionId = start.data?.session_id;
-  const session = useQuery({ queryKey: queryKeys.reception(sessionId ?? "-"), queryFn: () => reception.get(sessionId!), enabled: Boolean(sessionId), initialData: start.data });
+  const opened = resumable ?? start.data;
+  const sessionId = opened?.session_id;
+  const session = useQuery({ queryKey: queryKeys.reception(sessionId ?? "-"), queryFn: () => reception.get(sessionId!), enabled: Boolean(sessionId), initialData: opened });
+  // 账号里已经有住进来的宠物、这一只是后加的：给一个“先不加了”的出口回地图，当前宠物还是原来那只（第一次入住没有这个出口）。
+  const returnTo = live && !supplement ? petToReturnTo(onboarding, account.data?.user?.user_id) : null;
   const skip = useMutation({
     mutationFn: () => reception.skip(sessionId!),
     onSuccess: async () => {
@@ -242,7 +268,7 @@ function ReceptionView({ supplement }: { supplement: boolean }) {
           <div className="ps-stack ps-reception-body">
             <HostIntro session={session.data} />
             <Conversation session={session.data} />
-            <DataOriginBadge origin={session.data.data_origin} label={session.data.data_origin === "fixture" ? "演示接待：对话为预置脚本，不是模型理解" : "引导便笺：原话原样记录，规则只给建议"} />
+            <DataOriginBadge origin={session.data.data_origin} label={session.data.data_origin === "fixture" ? "演示接待：对话为预置脚本，不是模型理解" : "引导记录：原话原样记下，规则只给建议"} />
           </div>
           {/* 贴底区：输入框在上（发送键始终露在外面），主行动在下。主行动随状态变化：有待确认的叮嘱才去整理；一句没说时不把人引到空的确认页。 */}
           <div className="ps-entry-dock ps-reception-dock">
@@ -250,7 +276,8 @@ function ReceptionView({ supplement }: { supplement: boolean }) {
             <div className="ps-reception-dock__actions" role="group" aria-label={supplement ? "补充叮嘱的下一步" : "接待的下一步"}>
               {count > 0 ? (
                 <>
-                  <Button variant="primary" block icon="bookmark" onClick={() => navigate(`/onboarding/notes?session=${encodeURIComponent(session.data!.session_id)}`, { state: trailFromReception(location) })}>
+                  {/* 补充时带上 mode=supplement：整理页在接待读到之前先按它显示，读到后以这次接待的宠物为准。 */}
+                  <Button variant="primary" block icon="bookmark" onClick={() => navigate(`/onboarding/notes?session=${encodeURIComponent(session.data!.session_id)}${supplement ? "&mode=supplement" : ""}`, { state: trailFromReception(location) })}>
                     整理这 {count} 条叮嘱
                   </Button>
                   <Button variant="ghost" block loading={skip.isPending} onClick={() => skip.mutate()}>
@@ -262,7 +289,12 @@ function ReceptionView({ supplement }: { supplement: boolean }) {
                   {supplement ? "先回去" : live ? `先带 ${name} 去入住` : "先去地图看看"}
                 </Button>
               )}
-              {skip.isError ? <p role="alert" className="ps-form-error ps-entry-dock__error"><strong>这一步没能完成，可以再点一次。</strong><span>{toApiError(skip.error).message}</span></p> : null}
+              {returnTo ? (
+                <Button variant="ghost" block icon="back" onClick={() => navigate("/map")}>
+                  先不加了，回到 {returnTo.name}
+                </Button>
+              ) : null}
+              {skip.isError ? <p role="alert" className="ps-form-error ps-entry-dock__error"><strong>这一步没能完成，可以再点一次。</strong><span>{toApiError(skip.error).playerMessage}</span></p> : null}
             </div>
           </div>
         </>

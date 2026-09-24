@@ -153,7 +153,8 @@
 .ps-family-content { display: grid; gap: 14px; padding: 8px 16px 96px; }
 .ps-family-hero { position: relative; overflow: hidden; min-height: 142px; padding: 23px 22px; border-radius: 27px; color: #fffaf0; background: linear-gradient(128deg,#3b594c,#253d38 62%,#806349); box-shadow: 0 15px 25px #52625420; }
 .ps-family-hero::after { content: "✦"; position: absolute; right: 24px; top: 12px; color: #e7d2a4; font-size: 71px; opacity: .27; }
-.ps-family-hero span { font: 10px/1.2 Georgia,serif; letter-spacing: .21em; }
+/* 眉标原是英文小字（OUR LITTLE WORLD），2026-09-24 全站文字清理改成中文，字号跟着放到 12px、字距收小 */
+.ps-family-hero span { font: 12px/1.2 Georgia,"Noto Serif SC",serif; letter-spacing: .12em; }
 .ps-family-hero h1 { margin: 20px 0 5px; font: 600 29px/1.1 Georgia,"Noto Serif SC",serif; }
 .ps-family-hero p { margin: 0; font-size: 12px; color: #e8ece2; }
 .ps-family-card { display: grid; gap: 10px; padding: 19px !important; border-radius: 22px !important; }
@@ -180,6 +181,7 @@
 .ps-family-card [role="alert"] { color: #9a3f33; }
 .ps-family-photo-consent { border-color: #d9ddcf !important; background: linear-gradient(145deg,#fffdf8,#f1f4ed) !important; }
 .ps-family-photo-consent__heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.ps-family-photo-consent__heading span { color: #81917f; font: 9px Georgia,serif; letter-spacing: .13em; }
+/* “照片许可”眉标（原英文 PHOTO PERMISSION）：中文 12px；纸卡上用纸墨次要色（约 4.6:1，原 #81917f 只有约 2.8:1） */
+.ps-family-photo-consent__heading span { color: var(--paper-secondary-ink); font: 12px Georgia,"Noto Serif SC",serif; letter-spacing: .08em; }
 .ps-family-photo-consent__heading h2 { margin-top: 5px; }
 .ps-family-photo-consent__heading strong { flex: none; padding: 5px 9px; border-radius: 20px; background: #e5eddf; color: #345b42; font-size: 11px; }

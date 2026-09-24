@@ -209,7 +209,7 @@ class WebJourneyService(JourneyPlanningMixin, JourneySettlementMixin):
             # 退回两段写会留下"券用了、行程没建"或"行程建了、钱没扣"；按原价扣钱又是替家人做了主（CR-C9）
             raise JourneyError("waiver_unavailable", "借车券这会儿用不了，稍后再试。", destination_key=destination_key)
         if balance < dest.fee and not waivable:
-            raise JourneyError("insufficient_funds", "旅费还不够，先去菜园收获一些吧。", balance=balance, fee=dest.fee)
+            raise JourneyError("insufficient_funds", "星币还不够，先去菜园收获一些吧。", balance=balance, fee=dest.fee)
         if plan is not None and self.link_journey_in is None:
             # 计划绑定必须和行程同事务。端口没接上就宁可不出发——否则会留下一趟没有计划归属的行程（同 CR-C9 的形态）
             raise JourneyError("plan_link_unavailable", "这份计划这会儿用不了，稍后再试。", plan_id=plan.plan_id)
@@ -230,7 +230,7 @@ class WebJourneyService(JourneyPlanningMixin, JourneySettlementMixin):
                 if plan is not None:
                     self._link_plan(conn, plan, pet_id, journey_id, destination_key, now)
         except InsufficientFunds as exc:  # 整笔已经回滚：行程没写进去，券没核销，钱也没扣，不需要事后 cancel
-            raise JourneyError("insufficient_funds", "旅费还不够，先去菜园收获一些吧。", balance=exc.balance, fee=dest.fee) from exc
+            raise JourneyError("insufficient_funds", "星币还不够，先去菜园收获一些吧。", balance=exc.balance, fee=dest.fee) from exc
         except sqlite3.IntegrityError as exc:
             raced = self.repo.get(journey_id) if operation_key else None  # 同一次操作被两个进程同时接手：谁先写谁算数
             if raced is not None and raced.pet_id == pet_id and raced.user_id == user_id:

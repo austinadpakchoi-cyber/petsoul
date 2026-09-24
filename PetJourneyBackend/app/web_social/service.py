@@ -9,11 +9,12 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Callable
 
 from ..schemas.web.common import DataOrigin
@@ -22,6 +23,18 @@ from ..storage import JourneyStorage
 from ..utils import iso, parse_dt, utcnow
 
 NPC = ActorRef(actor_kind=ActorKind.npc, actor_id="npc-pigeon", display_name="邮差鸽阿咕（星球居民）", avatar_url=None, is_real_household=False)
+REPEAT_WINDOW = timedelta(days=3)  # 同一位作者在这段时间内不重复发一字不差的动态
+# 到访动态的几种说法：按「哪只宠物、哪次到访」固定地选一种（6c2b 2026-09-24：至少 7 只宠物在发同一句）。
+# **只说真实发生的**：去了哪里、做了什么。原先那句「{城市}的风很舒服」是没核实的天气，一并去掉，不补人多人少、天气这类细节。
+WORK_LINES = ("今天{title}，在{place}忙了一阵{extra}。", "{title}的一天{extra}，收工啦。", "在{place}干完今天的活了{extra}。")
+VISIT_LINES = ("在{place}待了一会儿{extra}。", "去{place}转了转{extra}。", "今天去了{place}{extra}，现在往家走。",
+               "在{place}歇了歇脚{extra}。")
+
+
+def visit_post_text(*, work: bool, title: str, place: str, extra: str, seed: str) -> str:
+    lines = WORK_LINES if work else VISIT_LINES
+    line = lines[int(hashlib.sha1(seed.encode("utf-8")).hexdigest()[:8], 16) % len(lines)]
+    return line.format(title=title, place=place, extra=extra)
 NPC_LINES = ["咕，这封信我记下了，明天送到。", "咕咕，看起来是个好地方。", "咕，下次路过也帮你捎一张明信片。"]
 
 
@@ -63,13 +76,17 @@ class WebSocialService:
         photo = next((a.get("photo_url") for a in event.visit.activities if a.get("kind") == "take_photo" and a.get("photo_url")), None)
         done = [a["label"] for a in event.visit.activities if a.get("state") == "done" and a.get("kind") != "take_photo"]
         extra = f"，{'、'.join(done)}" if done else ""
-        if journey.destination_key.startswith("work:"):
-            text = f"今天{journey.title}，在{event.visit.place['name']}忙了一阵{extra}。"
-        else:
-            text = f"在{event.visit.place['name']}待了一会儿{extra}。{journey.city}的风很舒服。"
+        text = visit_post_text(work=journey.destination_key.startswith("work:"), title=journey.title, place=event.visit.place["name"],
+                               extra=extra, seed=f"{journey.pet_id}:{event.source_event_id}")
         media = [{"media_id": photo.rsplit("/", 1)[-1], "kind": "image", "url": photo, "alt": "纸质卡片（没有照片）", "generated": True}] if photo else []
         post_id = f"post-{uuid.uuid4().hex[:12]}"
         with self.storage.connect() as conn:
+            # 同一位作者 3 天内一字不差地再说一遍、这次又没有照片：不再发（6c2b 2026-09-24 实测秋秋 02:18、05:18 各一条同句）。
+            # 文案按模板拼，同一地点再去一次就会重复；到访本身照常记在行程里，只是动态不重复刷屏。带照片的是新内容，照常发。
+            if not photo and conn.execute(
+                    "SELECT 1 FROM web_posts WHERE author_pet_id = ? AND text = ? AND created_at >= ? LIMIT 1",
+                    (journey.pet_id, text, iso(event.occurred_at - REPEAT_WINDOW))).fetchone() is not None:
+                return
             inserted = conn.execute(
                 "INSERT OR IGNORE INTO web_posts (post_id, author_pet_id, user_id, text, media_json, source_event_id, visit_id, visibility, created_at) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, 'public', ?)",

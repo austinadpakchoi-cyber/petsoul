@@ -93,7 +93,7 @@ function ledger(): LedgerEntry[] {
   return [
     { tx_id: "fx-tx-job-1", type: "web_job_income", delta: 50, reason: "街角咖啡店帮工的工钱", created_at: atMin(-120), ref_kind: "journey", ref_id: "fx-job-journey-1" },
     { tx_id: "fx-tx-fee-hk", type: "web_travel_fee", delta: -30, reason: "「去香港（演示）」的旅费", created_at: t.hkDepart, ref_kind: "journey", ref_id: "fx-trip-hk" },
-    { tx_id: "fx-tx-welcome", type: "web_reward", delta: 100, reason: "入住欢迎旅费（每个家一次，不可交易）", created_at: t.movedIn, ref_kind: "home", ref_id: "fx-home-001" },
+    { tx_id: "fx-tx-welcome", type: "web_reward", delta: 100, reason: "入住欢迎星币（每个家一次，不可交易）", created_at: t.movedIn, ref_kind: "home", ref_id: "fx-home-001" },
   ];
 }
 

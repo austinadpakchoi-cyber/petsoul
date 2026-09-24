@@ -63,6 +63,7 @@ function TechDetails({ items }: { items: Array<string | null | undefined> }) {
  */
 const REASON_TEXT: Record<string, string> = {
   pet_required: "家里有不止一只伙伴，先选一只再看。",
+  household_required: "你在不止一个家里，先选好是哪一个家再看。",
 };
 
 function plainReason(err: ReturnType<typeof toApiError>): { reason: string; text: string } | null {
@@ -76,8 +77,8 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
   if (err.isCapabilityUnavailable) {
     const capability = typeof err.details?.capability === "string" ? err.details.capability : undefined;
     return (
-      <DisabledState title="这里还在搭建中">
-        <p style={{ margin: 0 }}>这项能力尚未接入，接入后会在这里出现。</p>
+      <DisabledState title="这里暂时还没开放">
+        <p style={{ margin: 0 }}>准备好了会出现在这里。</p>
         <TechDetails items={[capability]} />
       </DisabledState>
     );
@@ -103,14 +104,14 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
       <div className="ps-state__icon">
         <Icon name="alert" />
       </div>
-      <div className="ps-state__title">{err.kind === "network" || err.kind === "timeout" || err.code === "UPSTREAM_UNAVAILABLE" ? "信号暂时中断" : "没能完成这一步"}</div>
-      <div>{plain ? plain.text : err.message}</div>
+      <div className="ps-state__title">{(err.kind === "network" && !err.fromException) || err.kind === "timeout" || err.code === "UPSTREAM_UNAVAILABLE" ? "信号暂时中断" : err.isNotFound ? "没有找到" : "没能完成这一步"}</div>
+      <div>{plain ? plain.text : err.playerMessage}</div>
       {onRetry ? (
         <Button variant="primary" icon="refresh" onClick={onRetry}>
           重试
         </Button>
       ) : null}
-      <TechDetails items={[err.code, plain?.reason, plain ? err.message : null, err.requestId ? `request_id ${err.requestId}` : null]} />
+      <TechDetails items={[err.code, plain?.reason, plain || err.playerMessage !== err.message ? err.message : null, err.requestId ? `request_id ${err.requestId}` : null]} />
     </div>
   );
 }

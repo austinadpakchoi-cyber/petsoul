@@ -6,12 +6,24 @@ import { isApiError } from "@/shared/api/errors";
 import { env } from "@/shared/config/env";
 import { queryKeys } from "@/shared/query/queryClient";
 import { useServices } from "@/shared/services/registry";
-import { useCurrentHousehold } from "@/shared/session/householdContext";
+import { householdLabel, useCurrentHousehold, useHouseholdLabels } from "@/shared/session/householdContext";
 import { Card, EmptyState, ErrorState, LoadingState, Page, PetAvatar, TopBar } from "@/shared/ui";
 import { MembersCard } from "./MembersCard";
 import "./household.css";
 
-function failure(error: unknown): string { return error instanceof Error ? error.message : "操作暂时没有完成，请重试。"; }
+/**
+ * 出错原因给玩家看的一句（2026-09-24 巡检 P1 追加）：接口错误用 ApiError.playerMessage（还没开放、后端没有这条路的换成人话，
+ * 其余照用后端写给玩家的原话）；不是接口错误的（前端自己的异常）不显示异常原文。
+ */
+export function failure(error: unknown): string {
+  return isApiError(error) ? error.playerMessage : "操作暂时没有完成，请重试。";
+}
+
+/** 把一句原因接进整句：原因自己以句号、问号、叹号或省略号收尾就不再补句号，免得出现“。。”。 */
+export function withStop(text: string): string {
+  const trimmed = text.trim();
+  return /[。！？!?…]$/.test(trimmed) ? trimmed : `${trimmed}。`;
+}
 
 /** 演示模式里本来就没有这一项（演示服务答“能力未接入”）：明说演示里没有，不当成出错。live 的“能力未接入”照旧走统一错误态。 */
 function demoGap(error: unknown): boolean { return env.dataMode === "fixture" && isApiError(error) && error.isCapabilityUnavailable; }
@@ -24,19 +36,22 @@ export function PhotoConsentSetting({ enabled, canManage, pending, error, uncert
   const next = !enabled;
   const resultUncertain = uncertain || Boolean(error && photoSettingResultUncertain(error));
   return <Card paper className="ps-family-card ps-family-photo-consent">
-    <div className="ps-family-photo-consent__heading"><div><span>PHOTO PERMISSION / 照片许可</span><h2>AI 生活照片</h2></div><strong role="status">{resultUncertain ? "待确认" : enabled ? "已开启" : "未开启"}</strong></div>
+    <div className="ps-family-photo-consent__heading"><div><span>照片许可</span><h2>AI 生活照片</h2></div><strong role="status">{resultUncertain ? "待确认" : enabled ? "已开启" : "未开启"}</strong></div>
     <p>开启后，可以使用 TA 的参考照片制作 AI 生活照片；TA 的真实生活事件也可能触发制作，不限于你主动点“拍一张”。关闭后不再许可新的照片制作。</p>
-    <p className="ps-family-fine">这是家庭照片用途的许可，不是星球旅费或玩家充值；能否实际制作仍取决于照片服务是否开放。</p>
+    <p className="ps-family-fine">这是家庭照片用途的许可，不是星币或玩家充值；能否实际制作仍取决于照片服务是否开放。</p>
     {resultUncertain ? <><p role="alert">保存结果未确认。不要重复开启或关闭；先只读刷新家庭状态，再决定下一步。</p>{onRefresh ? <button type="button" disabled={checking} onClick={onRefresh}>{checking ? "正在核对…" : "刷新当前许可"}</button> : null}{checkError ? <p role="alert">还没读到最新状态，请稍后再刷新。</p> : null}</> : canManage ? <button type="button" disabled={pending} onClick={() => { if (window.confirm(next ? "开启后，TA 的生活事件也可能触发 AI 照片制作。确定为这个家开启吗？" : "关闭后，这个家不再许可新的 AI 照片制作。确定关闭吗？")) onChange(next); }}>{pending ? "正在保存…" : next ? "明确开启照片制作" : "关闭照片制作"}</button> : <p>只有家庭管理员可以修改这项许可。你可以查看当前状态。</p>}
-    {error && !resultUncertain ? <p role="alert">这次没有完成保存：{failure(error)}。请以当前家庭状态为准。</p> : null}
+    {error && !resultUncertain ? <p role="alert">这次没有完成保存：{withStop(failure(error))}请以当前家庭状态为准。</p> : null}
   </Card>;
 }
 
 function FamilyContent({ detail, invites, reload }: { detail: HouseholdDetail; invites: HouseholdInvite[]; reload: () => void }) {
   const { households } = useServices();
   const { userId, pet } = useCurrentHousehold();
+  const labels = useHouseholdLabels(userId);
   const queryClient = useQueryClient();
   const householdId = detail.household.household_id;
+  // 起了名用详情里的名字（改名后最先拿到新值）；没起名与切换栏同一套说法：“{第一只已入住宠物}的家”，撞名带序号，还没有已入住的才叫“家庭 N”。
+  const title = detail.household.name?.trim() || labels?.get(householdId) || householdLabel(detail.household, 0);
   const canManage = detail.your_permissions.includes("manage");
   const [name, setName] = useState(detail.settings.name ?? "");
   const [relationHint, setRelationHint] = useState("");
@@ -68,7 +83,7 @@ function FamilyContent({ detail, invites, reload }: { detail: HouseholdDetail; i
   const createInvite = useMutation({ mutationFn: () => households.createInvite(householdId, relationHint.trim() || null), onSuccess: (created) => { setNewLink(`${window.location.origin}${created.join_path}`); refresh(); } });
   const revoke = useMutation({ mutationFn: (id: string) => households.revokeInvite(householdId, id), onSuccess: refresh });
   return <div className="ps-family-content">
-    <section className="ps-family-hero"><span>OUR LITTLE WORLD · 家庭档案</span><h1>{detail.household.name || "我们的家"}</h1><p>{detail.household.pets.length} 位伙伴 · {detail.members.length} 位家人</p></section>
+    <section className="ps-family-hero"><span>家庭档案</span><h1>{title}</h1><p>{detail.household.pets.length} 位伙伴 · {detail.members.length} 位家人</p></section>
     <Card paper className="ps-family-card"><h2>住在这里</h2><div className="ps-family-pets">{detail.household.pets.map((memberPet) => <div key={memberPet.pet_id}><PetAvatar petId={memberPet.pet_id} name={memberPet.name} species={memberPet.species} photoUrl={memberPet.photo_url} size={42} /><span>{memberPet.name}</span></div>)}</div><Link to="/home">回家看看 →</Link></Card>
     <MembersCard detail={detail} userId={userId} />
     <Card paper className="ps-family-card"><h2>{pet?.name ?? "TA"} 怎么称呼你</h2>{relationship.isPending ? <LoadingState label="正在读取你们的称呼…" /> : relationship.isError ? <ErrorState error={relationship.error} onRetry={() => void relationship.refetch()} /> : <><label>TA 对你的称呼<input value={ownerTitle} onChange={(event) => setOwnerTitle(event.target.value)} maxLength={12} placeholder="例如：妈妈" /></label><label>你们的关系<input value={relationLabel} onChange={(event) => setRelationLabel(event.target.value)} maxLength={12} placeholder="例如：家人" /></label><button type="button" disabled={saveRelationship.isPending} onClick={() => saveRelationship.mutate()}>{saveRelationship.isPending ? "保存中…" : "保存称呼"}</button>{saveRelationship.isSuccess ? <p role="status">称呼已保存，只用于你与 TA 的关系。</p> : null}{saveRelationship.isError ? <p role="alert">{failure(saveRelationship.error)}</p> : null}</>}</Card>

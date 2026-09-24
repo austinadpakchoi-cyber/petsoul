@@ -19,7 +19,7 @@ import { loadFeatureModules } from "@/app/modules";
 import { buildRoutes } from "@/app/router";
 import { buildServices, ServicesProvider } from "@/shared/services/registry";
 import type { ServiceMap } from "@/shared/services/types";
-import { LOOK_INTRO, LOOK_INTRO_WITH_ID_PHOTO, LookPage } from "@/features/me/LookPage";
+import { LOOK_INTRO, LOOK_INTRO_NO_PHOTO, LOOK_INTRO_WITH_ID_PHOTO, LookPage } from "@/features/me/LookPage";
 
 const mode = vi.hoisted(() => ({ dataMode: "live" as "fixture" | "live" }));
 vi.mock("@/shared/config/env", () => ({
@@ -304,5 +304,43 @@ describe("TA 的形象：还在读、读失败", () => {
     expect(screen.getByTestId("id-photo-adjust")).toBeTruthy();
     expect(spies.character).toHaveBeenCalledTimes(2);
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+/* ---------------- 没有照片（2026-09-24 巡检 P1：页面上没有的按钮不许诺） ---------------- */
+
+describe("TA 的形象：没有照片的伙伴", () => {
+  /** 服务端对没有照片的宠物：不能发起（can_regenerate false），原因 no_reference_photo；证件照也没有。 */
+  const NO_PHOTO: CharacterState = { pet_id: "pet-a", status: "absent", active: null, candidate: null, can_regenerate: false, blocked_reason: "no_reference_photo", id_photo: null };
+
+  it("说明句讲照片是形象和证件照的来源；“画不了”由形象、证件照两节各说一次（不说第三遍）；不提“生成证件照”，页面上也确实没有任何按钮", async () => {
+    // 这只宠物本来就没有照片（家庭简介里 photo_url 为空），服务端才会说 no_reference_photo
+    const noPhotoHousehold: HouseholdBrief = { ...HOUSEHOLD, pets: HOUSEHOLD.pets.map((p) => ({ ...p, photo_url: null })) };
+    const services = strictServices({
+      session: { current: async () => SIGNED_IN },
+      households: { list: async () => [noPhotoHousehold] },
+      platform: { meta: async () => ALL_ON },
+      pets: { character: async () => NO_PHOTO, regenerateCharacter: vi.fn(), regenerateIdPhoto: vi.fn() },
+    });
+    renderLook(services);
+    const adjust = await screen.findByTestId("character-adjust");
+    expect(intro()).toBe(LOOK_INTRO_NO_PHOTO);
+    expect(intro()).toContain("照着 TA 的照片");
+    expect(intro()).not.toMatch(/生成证件照|点|上传|补一张/);
+    expect(document.body.textContent).not.toContain("“生成证件照”");
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    // 画不了：形象一节、证件照一节各说一次
+    expect(within(adjust).getByText("还没有 TA 的照片，暂时没法准备形象。")).toBeTruthy();
+    expect(screen.getByTestId("id-photo-blocked").textContent).toBe("还没有 TA 的照片，暂时没法准备证件照。");
+    expect(document.body.textContent!.split("还没有 TA 的照片").length - 1).toBe(2);
+  });
+
+  it("能力开着但服务端这会儿不让发起（不是没照片）：说明句不提“生成证件照”，因为页面上没有这个按钮", async () => {
+    const busy: CharacterState = { ...WITH_CHARACTER, can_regenerate: false, blocked_reason: "provider_unavailable" };
+    const { services } = liveWith(ALL_ON, async () => busy);
+    renderLook(services);
+    await screen.findByTestId("character-adjust");
+    expect(intro()).toBe(LOOK_INTRO);
+    expect(screen.queryByRole("button", { name: /证件照/ })).toBeNull();
   });
 });

@@ -1,4 +1,5 @@
 /** 各种卡面共用的小部件：证件照、服务端字段排版、编号与签发日期、“纪念用”声明框。 */
+import type { ReactNode } from "react";
 import type { CredentialField, CredentialSummary } from "@/shared/contracts";
 import { petPortraitUrl } from "@/features/pets/PetPortrait";
 import { faceExtras, fieldLabelEn, isWideField } from "./copy";
@@ -64,8 +65,19 @@ export function IdPhoto({ pet, className }: { pet: WalletPet; className?: string
 /**
  * 服务端给的卡面字段：标签与内容原样显示，前端只决定排成几栏。
  * bilingual：同一家族证件（护照、星球居民证、驾驶证）在中文标签后加英文小字（只翻译认得的标签）。
+ * renderValue：个别证件要控制值里的断行时传入（驾照“成绩”每一科包一个不换行的 span，见 faces.tsx）；字仍是服务端原文，不传就原样。
  */
-export function FieldGrid({ fields, layout = "grid", bilingual = false }: { fields: CredentialField[]; layout?: "grid" | "stack" | "ticket" | "ruled"; bilingual?: boolean }) {
+export function FieldGrid({
+  fields,
+  layout = "grid",
+  bilingual = false,
+  renderValue,
+}: {
+  fields: CredentialField[];
+  layout?: "grid" | "stack" | "ticket" | "ruled";
+  bilingual?: boolean;
+  renderValue?: (field: CredentialField) => ReactNode;
+}) {
   if (!fields.length) return null;
   // 票面一行三栏、每栏更窄：超过 8 个字宽（中文算 2）就占两栏，日期、地名不折行。横线行（ruled）一行一个字段，不分栏。
   const wideAt = layout === "ticket" ? 8 : layout === "ruled" ? Number.POSITIVE_INFINITY : 13;
@@ -79,7 +91,7 @@ export function FieldGrid({ fields, layout = "grid", bilingual = false }: { fiel
               <span data-testid="field-label">{field.label}</span>
               {en ? <small lang="en">{en}</small> : null}
             </dt>
-            <dd data-testid="field-value">{field.value}</dd>
+            <dd data-testid="field-value">{renderValue ? renderValue(field) : field.value}</dd>
           </div>
         );
       })}

@@ -1,9 +1,15 @@
+import { useState } from "react";
 import type { PetPrivateSummary, Visit, VisitActivityKind } from "@/shared/contracts";
-import { Icon, PetAvatar } from "@/shared/ui";
+import { Icon } from "@/shared/ui";
 import cafeStorybookArt from "./assets/pet-cafe-storybook.webp";
+import { VisitPet } from "./VisitPet";
 
-/** 原创动物世界咖啡馆；角色、饮品和相片只从当前到访动作状态得出。 */
+/**
+ * 原创动物世界咖啡馆（只用于有门店的地方，见 visitKind.ts）；角色、饮品和相片只从当前到访动作状态得出。
+ * 插画加载失败时退回下面代码画的店内（.ps-cafe__drawing，平时不显示）。
+ */
 export function CafeScene({ visit, pet, seated }: { visit: Visit; pet: PetPrivateSummary | null; seated: boolean }) {
+  const [artFailed, setArtFailed] = useState(false);
   const isDone = (kind: VisitActivityKind) => visit.activities.some((activity) => activity.kind === kind && activity.state === "done");
   const drinkReady = isDone("order_drink");
   const photoTaken = isDone("take_photo");
@@ -13,9 +19,9 @@ export function CafeScene({ visit, pet, seated }: { visit: Visit; pet: PetPrivat
     : "动物世界咖啡馆原创场景";
 
   return (
-    <section className={`ps-cafe${seated ? " is-seated" : ""}${drinkReady ? " has-drink" : ""}${photoTaken ? " has-photo" : ""}`} aria-label={sceneLabel}>
-      <img className="ps-cafe__art" src={cafeStorybookArt} alt="" aria-hidden="true" />
-      <svg viewBox="0 0 360 224" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <section className={`ps-cafe${seated ? " is-seated" : ""}${drinkReady ? " has-drink" : ""}${photoTaken ? " has-photo" : ""}${artFailed ? " is-art-failed" : ""}`} aria-label={sceneLabel}>
+      {artFailed ? null : <img className="ps-cafe__art" src={cafeStorybookArt} alt="" aria-hidden="true" onError={() => setArtFailed(true)} />}
+      <svg className="ps-cafe__drawing" viewBox="0 0 360 224" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <defs>
           <linearGradient id="ps-cafe-wall" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0" stopColor="#f9e5bd" />
@@ -61,7 +67,7 @@ export function CafeScene({ visit, pet, seated }: { visit: Visit; pet: PetPrivat
       {pet ? (
         <div className="ps-cafe__pet" aria-label={`${pet.name} ${seated ? "已入座" : "在入口处"}`}>
           <span className="ps-cafe__pet-shadow" aria-hidden="true" />
-          {pet.photo_url ? <img className="ps-cafe__pet-portrait" src={pet.photo_url} alt="" /> : <PetAvatar petId={pet.pet_id} name={pet.name} species={pet.species} photoUrl={null} size={58} />}
+          <VisitPet pet={pet} portraitClass="ps-cafe__pet-portrait" />
           <span className="ps-cafe__pet-name">{pet.name}</span>
         </div>
       ) : null}

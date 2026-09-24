@@ -150,10 +150,31 @@ const COLOR_FIXES: Record<string, ColorFix[]> = {
     { selector: ".ps-public-resident__body em", props: ["color"] },
     { selector: ".ps-public-resident__arrow", props: ["color"] },
   ],
-  "pets/planet.css": [{ selector: ".ps-planet-dock .ps-origin", props: ["color"], paper: true }],
+  // 2026-09-24 星球访客页重做（claude-6c2b 分身）：纸色底栏 .ps-planet-dock 已撤，演示标记改由 ui.css 的主题规则上色；
+  // 新页面跟主题走的表面逐条钉住，品牌字底下那枚纸色小牌反过来必须是纸质固定色（深绿品牌字在夜里的天空上才看得清）。
+  "pets/planet.css": [
+    { selector: ".ps-world-page.ps-page", props: ["background", "color"] },
+    { selector: ".ps-world-hero__back", props: ["border", "background", "color"] },
+    { selector: ".ps-world-hero__bar .ps-brand-logo", props: ["background"], paper: true },
+    { selector: ".ps-world-sheet", props: ["background"] },
+    { selector: ".ps-world-sheet__head h1", props: ["color"] },
+    { selector: ".ps-world-sheet__head p", props: ["color"] },
+    { selector: ".ps-world-now li", props: ["border", "background", "color"] },
+    { selector: ".ps-world-resident", props: ["border", "background", "box-shadow"] },
+    { selector: ".ps-world-resident__who p", props: ["color"] },
+    { selector: ".ps-world-resident__facts dt", props: ["color"] },
+    { selector: ".ps-world-resident__facts dd", props: ["color"] },
+    { selector: ".ps-world-resident__post", props: ["border-left", "background"] },
+    { selector: ".ps-world-resident__post footer", props: ["color"] },
+    { selector: ".ps-world-resident__more", props: ["background", "color"] },
+    { selector: ".ps-resident-portrait > small", props: ["background", "color"] },
+    { selector: ".ps-world-cta", props: ["border-top", "background"] },
+    { selector: ".ps-world-cta__login", props: ["color"] },
+  ],
   "venue/venue.css": [{ selector: ".ps-visit-memento-link", props: ["border", "background", "color"] }],
   "driving_school/school.css": [
-    { selector: ".ds-coach ~ .ps-card--paper .ds-quote", props: ["color"], paper: true },
+    // 驾校页面分身第三批：报名卡挪到教练卡前面（首屏加了横幅），原选择器“教练卡后面的纸卡”不再成立，改按报名卡自己的类名；要求不变（纸质令牌）
+    { selector: ".ds-enroll .ds-quote", props: ["color"], paper: true },
     // 第三轮：纸卡里 .ps-muted 的两处规则已删，交给 ui.css 的 .ps-card--paper .ps-muted
   ],
 };
@@ -188,9 +209,8 @@ describe("巡检修过的颜色规则：不再写死颜色，确实用主题令�
     });
   }
 
-  it("星球页底栏的演示标记在纸色底栏上：两种模式都不用单独的 --c-sun", () => {
-    const [rule] = findRules("pets/planet.css", ".ps-planet-dock .ps-origin");
-    expect(declarations(rule.body).get("color")).toMatch(/color-mix\(in srgb, var\(--c-sun\) \d+%, var\(--paper-ink\)\)/);
+  it("星球页的演示标记跟随主题：planet.css 不再单独给 .ps-origin 上色（纸色底栏已撤，交给 ui.css 的主题规则）", () => {
+    expect(parseRules("pets/planet.css").filter((rule) => /\.ps-origin\b/.test(rule.selector))).toEqual([]);
   });
 });
 
@@ -211,9 +231,11 @@ const SIZE_FIXES: SizeFix[] = [
   { file: "pets/pets.css", selector: ".ps-photo-list__title button", expect: { "min-height": /^40px$/ } },
   { file: "pets/pets.css", selector: ".ps-photo-result__body button", expect: { "min-height": /^40px$/ } },
   { file: "pets/pets.css", selector: ".ps-photo-content", context: NARROW, expect: { "padding-left": /^0$/, "padding-right": /^0$/ } },
-  // 40px 点按区，但版面高度不变（地图高度按底栏 164px 计算）：上下各 -4px 抵消多出的 8px
-  { file: "pets/planet.css", selector: ".ps-planet-dock__login", expect: { "min-height": /^40px$/, display: /^inline-flex$/, margin: /^-4px 0$/ } },
-  { file: "pets/planet.css", selector: ".ps-planet-dock__actions", context: NARROW, expect: { "grid-template-columns": /^minmax\(0, 1fr\) minmax\(0, 1fr\)$/ } },
+  // 星球访客页重做后（示意地图与按地图高度算的底栏已撤）：登录链接 40px，主按钮 48px，“认识 TA”与返回 44px
+  { file: "pets/planet.css", selector: ".ps-world-cta__login", expect: { "min-height": /^40px$/, display: /^inline-flex$/ } },
+  { file: "pets/planet.css", selector: ".ps-world-cta .ps-btn", expect: { "min-height": /^48px$/ } },
+  { file: "pets/planet.css", selector: ".ps-world-resident__more", expect: { "min-height": /^44px$/ } },
+  { file: "pets/planet.css", selector: ".ps-world-hero__back", expect: { width: /^44px$/, height: /^44px$/ } },
   { file: "food_discovery/food.css", selector: ".ps-rec .ps-btn--sm", expect: { "min-height": /^40px$/ } },
   { file: "food_discovery/food.css", selector: ".ps-food-ctx > svg", expect: { "box-sizing": /^content-box$/ } },
   { file: "social/social.css", selector: ".ps-post .ps-btn--sm", expect: { "min-height": /^40px$/ } },
@@ -470,5 +492,191 @@ describe("第三轮：收藏页、驾校不再另写纸卡里次要字、来源�
       }
     }
     expect(offenders).toEqual([]);
+  });
+});
+
+/* ---------------- 第四轮（2026-09-24）：浅色下带色调标签与“演示数据”的字色 ----------------
+ * 浅色下色调字压在同色系浅底（标签）或页面 / 卡面底（演示标记）上只有 1.7～4.0:1：基础规则里字色掺 --c-ink 加深，
+ * 深色段恢复原色调令牌（深色本来就在 4.9:1 以上，保持现状）。用上面的令牌实算器断言浅深两套都 ≥ 4.5:1；
+ * 深色段与基础规则特异性相同，要写在后面才生效。
+ */
+const TONED_CHIPS: Record<string, string> = {
+  ".ps-chip--leaf": "var(--c-leaf)",
+  ".ps-chip--sun": "var(--c-sun)",
+  ".ps-chip--coral": "var(--c-coral)",
+  ".ps-chip--sky": "var(--c-sea)",
+  ".ps-chip--danger": "var(--c-danger)",
+};
+const THEME_SURFACES = ["var(--c-bg)", "var(--c-bg-soft)", "var(--c-surface)", "var(--c-surface-2)"];
+
+describe("第四轮：带色调标签与“演示数据”，浅深两套都不低于 4.5:1", () => {
+  for (const selector of Object.keys(TONED_CHIPS)) {
+    it(`${selector}：浅色（基础规则）与深色（深色段）的字，在标签自己的底上`, () => {
+      const bg = valueOf(UI_CSS, selector, "background");
+      expect(ratioOf(valueOf(UI_CSS, selector, "color"), bg, "light"), "浅色").toBeGreaterThanOrEqual(4.5);
+      expect(ratioOf(valueOf(UI_CSS, selector, "color", DARK), bg, "dark"), "深色").toBeGreaterThanOrEqual(4.5);
+    });
+  }
+
+  it(".ps-origin：浅色与深色的字，在页面底、次底、卡面、次卡面四种主题底色上", () => {
+    for (const bg of THEME_SURFACES) {
+      expect(ratioOf(valueOf(UI_CSS, ".ps-origin", "color"), bg, "light"), `浅色 ${bg}`).toBeGreaterThanOrEqual(4.5);
+      expect(ratioOf(valueOf(UI_CSS, ".ps-origin", "color", DARK), bg, "dark"), `深色 ${bg}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("深色保持现状：深色段里标签是各自的色调令牌、演示标记是 --c-sun，并且写在基础规则之后", () => {
+    const rules = parseRules(UI_CSS);
+    for (const [selector, token] of Object.entries({ ...TONED_CHIPS, ".ps-origin": "var(--c-sun)" })) {
+      expect(valueOf(UI_CSS, selector, "color", DARK), selector).toBe(token);
+      const base = rules.findIndex((r) => r.selector === selector && r.context === "");
+      const dark = rules.findIndex((r) => r.selector === selector && r.context === DARK);
+      expect(dark, `${selector} 深色段要在基础规则之后`).toBeGreaterThan(base);
+    }
+  });
+});
+
+/* ---------------- 第五轮（2026-09-24）：危险按钮、技术信息小字、出错兜底框、未开放状态图标 ----------------
+ * 危险按钮与出错兜底框的字、未开放图标：浅色下掺 --c-ink 加深，深色段恢复原令牌（深色本来达标，保持现状）。
+ * 技术信息小字（.ps-state__meta / .ps-state__tech）两种模式都改用 --c-ink-2，没有深色段。
+ * 文字要求 4.5:1；未开放图标是图形，要求 3:1（仍比文字浅，保留“未开放”的样子）。
+ */
+function colorIn(selector: string, scheme: Scheme): string {
+  if (scheme === "dark" && findRules(UI_CSS, selector, DARK).length) return valueOf(UI_CSS, selector, "color", DARK);
+  return valueOf(UI_CSS, selector, "color");
+}
+const SCHEMES: Scheme[] = ["light", "dark"];
+
+describe("第五轮：危险按钮、技术信息小字、出错兜底框（文字 4.5:1）与未开放图标（图形 3:1），浅深两套", () => {
+  it(".ps-btn--danger：字在自己的浅红底上", () => {
+    for (const scheme of SCHEMES) expect(ratioOf(colorIn(".ps-btn--danger", scheme), valueOf(UI_CSS, ".ps-btn--danger", "background"), scheme), scheme).toBeGreaterThanOrEqual(4.5);
+  });
+
+  for (const selector of [".ps-state__meta", ".ps-state__tech", ".ps-error-boundary"]) {
+    it(`${selector}：字在页面底、次底、卡面、次卡面四种主题底色上`, () => {
+      for (const scheme of SCHEMES) {
+        for (const bg of THEME_SURFACES) expect(ratioOf(colorIn(selector, scheme), bg, scheme), `${scheme} ${bg}`).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+  }
+
+  it(".ps-state--disabled .ps-state__icon：图标在自己的浅暖底上不低于 3:1", () => {
+    const selector = ".ps-state--disabled .ps-state__icon";
+    for (const scheme of SCHEMES) expect(ratioOf(colorIn(selector, scheme), valueOf(UI_CSS, selector, "background"), scheme), scheme).toBeGreaterThanOrEqual(3);
+  });
+
+  it("第六轮：禁用的主按钮（含 aria-disabled）是不透明的浅底配次要字色，浅深两套字对底不低于 3:1（禁用控件的要求）", () => {
+    const selector = '.ps-btn.ps-btn--primary:disabled, .ps-btn.ps-btn--primary[aria-disabled="true"]';
+    const bg = valueOf(UI_CSS, selector, "background");
+    for (const scheme of SCHEMES) expect(ratioOf(valueOf(UI_CSS, selector, "color"), bg, scheme), scheme).toBeGreaterThanOrEqual(3);
+    // 不再靠整体半透明表达禁用：opacity 必须回到 1，否则上面的实算不代表实际显示（.ps-btn:disabled 的 0.45 会把字和底一起压淡）
+    expect(valueOf(UI_CSS, selector, "opacity")).toBe("1");
+  });
+
+  it("第六轮追加：共享顶栏底色至少 96% 不透明（浅深两套都能按令牌算出颜色），底边留一条细线或阴影", () => {
+    const d = declarations(uiRule(".ps-topbar").body);
+    const fill = (d.get("background-color") ?? d.get("background") ?? "").trim();
+    const mix = /^color-mix\(\s*in srgb\s*,\s*(.+?)\s+(\d+(?:\.\d+)?)%\s*,\s*transparent\s*\)$/.exec(fill);
+    expect(mix ? Number(mix[2]) / 100 : 1, `顶栏底色 ${fill} 的不透明度`).toBeGreaterThanOrEqual(0.96);
+    // 能算出颜色 = 只用了令牌 / 十六进制 / 不带透明的 color-mix；rgba()、transparent 这类写法会直接报错
+    for (const scheme of SCHEMES) expect(() => resolveColor(mix ? mix[1] : fill, tokenTable(scheme)), scheme).not.toThrow();
+    const line = [d.get("background-image"), d.get("box-shadow"), d.get("border-bottom")].filter((v) => v && v !== "none");
+    expect(line.length, "底边细线或阴影").toBeGreaterThan(0);
+  });
+
+  it("第七轮：禁用的次要 / 透明按钮不透明，字对底不低于 3:1（次要按钮在自己的卡面底上，透明按钮在四种主题底色上），浅深两套", () => {
+    const selector = '.ps-btn.ps-btn--secondary:disabled, .ps-btn.ps-btn--secondary[aria-disabled="true"], .ps-btn.ps-btn--ghost:disabled, .ps-btn.ps-btn--ghost[aria-disabled="true"]';
+    const fg = valueOf(UI_CSS, selector, "color");
+    for (const scheme of SCHEMES) {
+      expect(ratioOf(fg, valueOf(UI_CSS, ".ps-btn--secondary", "background"), scheme), `${scheme} 次要按钮`).toBeGreaterThanOrEqual(3);
+      for (const bg of THEME_SURFACES) expect(ratioOf(fg, bg, scheme), `${scheme} 透明按钮 ${bg}`).toBeGreaterThanOrEqual(3);
+    }
+    expect(valueOf(UI_CSS, selector, "opacity"), "不再靠整体半透明").toBe("1");
+  });
+
+  it("第七轮：“技术信息”入口点按区不小于 40px，上下负外边距抵消多出的高度（版面不动）", () => {
+    const d = declarations(uiRule(".ps-state__tech summary").body);
+    const h = parseInt(d.get("min-height") ?? "0", 10);
+    expect(h, "min-height").toBeGreaterThanOrEqual(40);
+    const m = /^(-?\d+)px 0$/.exec(d.get("margin") ?? "");
+    expect(m, "margin 写成“-Npx 0”").not.toBeNull();
+    expect(h + 2 * Number(m![1]), "占位高度仍是原来的 32px").toBe(32);
+  });
+
+  it("深色保持现状：危险按钮、兜底框用 --c-danger，未开放图标用 --c-sun，深色段写在基础规则之后", () => {
+    const rules = parseRules(UI_CSS);
+    const expected: Record<string, string> = { ".ps-btn--danger": "var(--c-danger)", ".ps-error-boundary": "var(--c-danger)", ".ps-state--disabled .ps-state__icon": "var(--c-sun)" };
+    for (const [selector, token] of Object.entries(expected)) {
+      expect(valueOf(UI_CSS, selector, "color", DARK), selector).toBe(token);
+      const base = rules.findIndex((r) => r.selector === selector && r.context === "");
+      const dark = rules.findIndex((r) => r.selector === selector && r.context === DARK);
+      expect(dark, `${selector} 深色段要在基础规则之后`).toBeGreaterThan(base);
+    }
+  });
+});
+
+/* ---------------- 驾校终检（2026-09-24 晚）：深色主按钮、红线说明、科目行焦点框、出错红字、领证完成页底栏 ----------------
+ * 深色主按钮（ui.css 源头）：原来深色下仍是近乎纯黑的深墨底，和深色页面 / 卡面只差 1.1～1.3:1；深色下改成奶白底深墨字，
+ *   按钮底对四种深色主题底色都要 ≥ 3:1（图形要求）、字对按钮底 ≥ 4.5:1。纸卡昼夜都是浅色纸面，纸卡里的主按钮深色下仍用深墨底。
+ * 红线说明（school.css“通用”段）：浅色掺 --c-ink 到 4.5:1 以上，深色保持 --c-danger。
+ * 科目行（“总览 / 科目”段）：卡片 overflow:hidden，焦点框必须画在行内（负的 outline-offset）才不被裁。
+ * 出错红字（“通用”段）：浅色掺 --c-ink，深色保持 --c-danger；纸卡里的出错字不论明暗都用纸面的深红。
+ * 领证完成页底栏（“领证仪式”段）：贴底的操作栏必须是实底，滚动时下面的字不能从按钮之间透出来。
+ */
+const SCHOOL_CSS = "driving_school/school.css";
+/** 某条规则在浅 / 深色下实际生效的字色：深色有深色段就用深色段，否则用基础规则。 */
+function colorInFile(file: string, selector: string, scheme: Scheme): string {
+  if (scheme === "dark" && findRules(file, selector, DARK).length) return valueOf(file, selector, "color", DARK);
+  return valueOf(file, selector, "color");
+}
+
+describe("驾校终检：深色主按钮、红线说明、科目行焦点框、出错红字、领证完成页底栏", () => {
+  it("深色主按钮（源头 .ps-btn--primary）：按钮底对四种深色主题底色不低于 3:1、字对按钮底不低于 4.5:1，深色段写在基础规则之后", () => {
+    const fill = valueOf(UI_CSS, ".ps-btn--primary", "background", DARK);
+    for (const bg of THEME_SURFACES) expect(ratioOf(fill, bg, "dark"), `按钮形状 对 ${bg}`).toBeGreaterThanOrEqual(3);
+    expect(ratioOf(valueOf(UI_CSS, ".ps-btn--primary", "color", DARK), fill, "dark"), "字对按钮底").toBeGreaterThanOrEqual(4.5);
+    const rules = parseRules(UI_CSS);
+    const base = rules.findIndex((r) => r.selector === ".ps-btn--primary" && r.context === "");
+    const dark = rules.findIndex((r) => r.selector === ".ps-btn--primary" && r.context === DARK);
+    expect(dark, "深色段要在基础规则之后").toBeGreaterThan(base);
+  });
+
+  it("纸卡里的主按钮：深色下纸面仍是浅色，按钮底对纸面不低于 3:1、字对按钮底不低于 4.5:1", () => {
+    const fill = valueOf(UI_CSS, ".ps-card--paper .ps-btn--primary", "background", DARK);
+    const paper = valueOf(UI_CSS, ".ps-card--paper", "background");
+    expect(ratioOf(fill, paper, "dark"), "按钮形状 对纸面").toBeGreaterThanOrEqual(3);
+    expect(ratioOf(valueOf(UI_CSS, ".ps-card--paper .ps-btn--primary", "color", DARK), fill, "dark"), "字对按钮底").toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("红线说明 .ds-redlines：浅深两套字在自己的浅红 / 深红底上都不低于 4.5:1，深色段写在基础规则之后", () => {
+    const bg = valueOf(SCHOOL_CSS, ".ds-redlines", "background");
+    expect(ratioOf(valueOf(SCHOOL_CSS, ".ds-redlines", "color"), bg, "light"), "浅色").toBeGreaterThanOrEqual(4.5);
+    expect(ratioOf(valueOf(SCHOOL_CSS, ".ds-redlines", "color", DARK), bg, "dark"), "深色").toBeGreaterThanOrEqual(4.5);
+    const rules = parseRules(SCHOOL_CSS);
+    const base = rules.findIndex((r) => r.selector === ".ds-redlines" && r.context === "");
+    const dark = rules.findIndex((r) => r.selector === ".ds-redlines" && r.context === DARK);
+    expect(dark, "深色段要在基础规则之后").toBeGreaterThan(base);
+  });
+
+  it("科目行 .ds-subject-row：键盘焦点框画在行内（outline-offset 为负），不被 overflow:hidden 的卡片裁掉", () => {
+    const offset = parseFloat(valueOf(SCHOOL_CSS, ".ds-subject-row:focus-visible", "outline-offset"));
+    expect(offset, "outline-offset").toBeLessThan(0);
+  });
+
+  it("出错红字 .ds-error：浅深两套在四种主题底色上、纸卡里的出错字在纸面上（明暗都一样），都不低于 4.5:1", () => {
+    for (const scheme of SCHEMES) {
+      for (const bg of THEME_SURFACES) expect(ratioOf(colorInFile(SCHOOL_CSS, ".ds-error", scheme), bg, scheme), `${scheme} ${bg}`).toBeGreaterThanOrEqual(4.5);
+      expect(ratioOf(valueOf(SCHOOL_CSS, ".ps-card--paper .ds-error", "color"), valueOf(UI_CSS, ".ps-card--paper", "background"), scheme), `${scheme} 纸卡`).toBeGreaterThanOrEqual(4.5);
+    }
+    const rules = parseRules(SCHOOL_CSS);
+    const base = rules.findIndex((r) => r.selector === ".ds-error" && r.context === "");
+    const dark = rules.findIndex((r) => r.selector === ".ds-error" && r.context === DARK);
+    expect(dark, "深色段要在基础规则之后").toBeGreaterThan(base);
+  });
+
+  it("领证完成页底栏 .ds-ceremony__actions：实底（浅深两套都能按令牌算出颜色，不掺 transparent）", () => {
+    const fill = valueOf(SCHOOL_CSS, ".ds-ceremony__actions", "background");
+    expect(fill).not.toMatch(/transparent/);
+    for (const scheme of SCHEMES) expect(() => resolveColor(fill, tokenTable(scheme)), scheme).not.toThrow();
   });
 });

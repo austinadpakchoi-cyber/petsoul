@@ -117,7 +117,7 @@ describe("ErrorState：错误码默认收起", () => {
 
   it("能力未接入：能力名只在收起的“技术信息”里", () => {
     const { container } = renderError(ApiError.capability("social.friends", "这项能力尚未接入。"));
-    expect(container.textContent).toContain("这里还在搭建中");
+    expect(container.textContent).toContain("这里暂时还没开放");
     expectFoldedTech(container, "social.friends");
   });
 

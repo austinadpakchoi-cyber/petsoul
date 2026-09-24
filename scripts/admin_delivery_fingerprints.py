@@ -59,6 +59,7 @@ FILES = (
     "PetJourneyBackend/tests/test_admin_world8.py",
     "PetJourneyBackend/tests/test_admin_runtime9.py",
     "PetJourneyBackend/tests/test_admin_review10.py",
+    "PetJourneyBackend/tests/test_admin_after10.py",
     "PetJourneyBackend/app/web_platform/migrations/m1500_admin.py",
     "PetJourneyBackend/app/web_platform/migrations/m1510_admin_content.py",
     "PetJourneyBackend/app/web_journey/adventures.py",

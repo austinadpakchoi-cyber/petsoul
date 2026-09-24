@@ -9,6 +9,7 @@ import { Button, DataOriginBadge, EmptyState, ErrorState, LoadingState, Page, To
 import { dayText, formOf, linkKindText, linkRoute, statusText } from "./copy";
 import { useCredentialDetail, useCredentialList, useFlip, useWalletPet, type WalletPet } from "./data";
 import { CredentialBack, CredentialFront, flipHint } from "./faces";
+import { LicenseUse } from "./LicenseUse";
 import "./life.css";
 
 export function CredentialPage() {
@@ -67,6 +68,7 @@ function CredentialView({ detail, pet }: { detail: CredentialDetail; pet: Wallet
         </Button>
         {face === "front" && hint ? <span className="ps-cred-actions__hint">{hint}</span> : null}
       </div>
+      {summary.kind === "driver_license" ? <LicenseUse petName={pet.name} /> : null}
       {summary.links.length ? <LinksSection links={summary.links} /> : null}
       <p className="ps-cred-foot">这是 PetSoul 星球里的纪念证件，不是现实中的证件或票据。</p>
     </>

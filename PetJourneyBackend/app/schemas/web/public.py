@@ -48,6 +48,8 @@ class PublicResident(WebModel):
     doing: str = Field(description="此刻在做什么，例如“在驿站休息”“在去码头的路上”")
     place_name: str | None = Field(default=None, description="正在到访的真实地点名（来自地图供应商的公开地点）；在驿站或路上时为空")
     recent_posts: list[Post] = Field(default_factory=list, description="最近的公开动态（最多 3 条）")
+    avatar_url: str | None = Field(default=None, description="TA 的照片（公开路由，访客可看）；没有照片为 null。与 `PublicPetView.profile.avatar_url` 同一个地址、同一条规则。"
+                                   "平台原创居民的形象是生成的原创设计，不是真实照片", json_schema_extra={"x-additive": True})
 
 
 class PublicPetView(WebModel):

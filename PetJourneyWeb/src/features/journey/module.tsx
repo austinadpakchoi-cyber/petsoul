@@ -5,6 +5,7 @@
  */
 import type { JourneyMapSnapshot, Visit } from "@/shared/contracts";
 import type { TravelWish } from "@/shared/contracts";
+import type { TravelPlan } from "@/shared/contracts";
 import { ApiError } from "@/shared/api/errors";
 import { defineModule, slot } from "@/shared/modules/types";
 import { fixtureVisit, fixtureVisitAct } from "@/fixtures/venue";
@@ -33,6 +34,13 @@ export default defineModule({
         },
         // TRV-06：演示的当前活动心愿（按需加载演示数据，主包里没有它）。
         travelWish: async () => delay((await import("./travelPlan/fixture")).DEMO_CURRENT_WISH),
+        // TRV-06 第③期：演示计划（按需加载）；演示里没有这一份，就像后端一样答 404 plan_not_found。
+        // 演示的计划页不走这里（每份演示计划各带自己的心愿，见 ./travelPlan/data 的 useDemoPlans）。
+        travelPlan: async (planId) => {
+          const found = (await import("./travelPlan/fixture")).DEMO_PLANS.find((bundle) => bundle.plan.plan_id === planId);
+          if (!found) throw new ApiError({ kind: "http", status: 404, code: "NOT_FOUND", message: "没有这份计划。", details: { reason: "plan_not_found" } });
+          return delay(found.plan);
+        },
       }),
       live: ({ api }) => ({
         visit: (id) => api.request<Visit>(`/visits/${encodeURIComponent(id)}`),
@@ -40,6 +48,8 @@ export default defineModule({
         choose: (id, body, key) => api.request<JourneyMapSnapshot>(`/visits/${encodeURIComponent(id)}/choice`, { method: "POST", body, idempotencyKey: key }),
         // TRV-06：GET /travel/wish（合同 §23.4），按当前宠物读；没有活动心愿时返回 200 + null（I 已定）；petId 为 null 的含义 I 未定，./travelPlan/data 在 live 下只在有当前宠物时才读、不传 null。
         travelWish: (petId, signal) => api.request<TravelWish | null>("/travel/wish", { query: { pet_id: petId }, signal }),
+        // TRV-06 第③期：GET /travel/plans/{plan_id}（合同 §23.4），与心愿同一口径显式带当前宠物；找不到一律 404 plan_not_found。
+        travelPlan: (planId, petId, signal) => api.request<TravelPlan>(`/travel/plans/${encodeURIComponent(planId)}`, { query: { pet_id: petId }, signal }),
       }),
     },
   },

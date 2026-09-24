@@ -21,7 +21,7 @@ from ...schemas.web.pets import (AdoptionCandidate, AdoptRequest, AdoptResult, P
                                  PhotoRequestResult, PhotoRequestView, PhotoScene)
 from ...web_agent.profile import FIELD_LABELS
 from ...web_household import Action, HouseholdError
-from ...web_pets import AdoptionTaken, AlreadyHasCompanion, CandidateNotFound, MediaRejected
+from ...web_pets import AdoptionTaken, AlreadyHasCompanion, CandidateNotFound, MediaRejected, PhotoNotAddable
 from ...web_pets.dna import DNAConflict
 from ...utils import parse_dt, utcnow
 from ...web_journey.photo_command import (SCENE_ACTIONS, active_leg, is_train_leg, registration_of, registrations,
@@ -85,6 +85,38 @@ async def create_own_pet(
         return _summary(request, record.pet_id)
 
     return idempotent(request, principal, "pets.create", idempotency_key, payload, PetPrivateSummary, handler)
+
+
+PHOTO_NOT_ADDABLE = {"photo_exists": "TA 已经有照片了，现在只能补、不能换。", "not_own_pet": "领养的伙伴有自己的样子，不用补照片。"}
+
+
+@router.put("/pets/{pet_id}/photo", response_model=PetPrivateSummary, dependencies=[Depends(require_csrf)])
+async def add_pet_photo(
+    pet_id: str,
+    request: Request,
+    photo: UploadFile = File(...),
+    principal: WebPrincipal = Depends(require_principal),
+    idempotency_key: str = Depends(require_idempotency_key),
+) -> PetPrivateSummary:
+    """入住时没带照片、之后补一张（**只补不换**）。只有这只宠物的照顾者能补；照片私有存储、剥离元数据。
+    已有照片（含生成的形象照）回 409 `photo_exists`，details.generated 说明已有的那张是不是生成的；
+    领养的伙伴回 409 `not_own_pet`。**上传本身不触发任何生图**（补照片要不要自动生成证件照，等用户拍板）。"""
+    require_pet(request, principal, pet_id, action=Action.care)
+    data = await photo.read()
+    payload = {"pet_id": pet_id, "photo": hashlib.sha256(data).hexdigest() if data else None}
+
+    def handler() -> PetPrivateSummary:
+        try:
+            web_of(request).pets.add_photo(pet_id, data)
+        except PhotoNotAddable as exc:
+            raise WebAPIError(WebErrorCode.conflict, PHOTO_NOT_ADDABLE[exc.reason], 409,
+                              details={"reason": exc.reason, "generated": exc.generated}) from exc
+        except MediaRejected as exc:
+            raise WebAPIError(WebErrorCode.media_rejected, MEDIA_REASONS.get(exc.reason, "图片无法使用。"), 422, details={"reason": exc.reason}) from exc
+        invalidate_public(request.app)  # 公开主页的缓存里可能还是“没有照片”
+        return _summary(request, pet_id)
+
+    return idempotent(request, principal, "pets.photo", idempotency_key, payload, PetPrivateSummary, handler)
 
 
 @router.get("/adoption/candidates", response_model=list[AdoptionCandidate])
