@@ -43,6 +43,13 @@ class RelayImportRequest(AdminRequest):
     file_name: str | None = Field(default=None, max_length=200)
 
 
+class ResidentListingRequest(ReasonRequest):
+    """撤下（listed=false）/ 放回（listed=true）一位待领养居民；按后台记录的版本做并发检查（还没记录过是 0）。"""
+
+    listed: bool
+    expected_version: int | None = Field(default=None, ge=0)
+
+
 class PetPauseRequest(ReasonRequest):
     """暂停 / 恢复一只宠物的自主运行（写运行表的维护列）；按后台记录的版本做并发检查。"""
 

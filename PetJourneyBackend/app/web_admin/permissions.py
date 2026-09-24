@@ -35,6 +35,7 @@ class Permission(str, Enum):
     PET_MAINTAIN = "pet.maintain"          # 暂停 / 恢复一只宠物的自主运行（写运行表的维护列）；默认给运维
     CONTENT_EDIT = "content.edit"          # 草稿与校验
     CONTENT_PUBLISH = "content.publish"    # 发布 / 撤下 / 回退
+    RESIDENT_MANAGE = "resident.manage"    # 撤下 / 放回待领养居民（不删除、不暂停）；默认给内容发布
     ASSET_MANAGE = "asset.manage"          # 上传 / 下架素材（玩家参考照永远进不来）
     ECONOMY_GRANT = "economy.grant"        # 单笔游戏补偿（只动游戏账本）
     ECONOMY_GRANT_BATCH = "economy.grant_batch"  # 提交与执行批量补偿（与单笔分开发）
@@ -68,7 +69,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
     Role.moderator: frozenset({P.USER_READ, P.REPORT_READ, P.AUDIT_READ, P.REPORT_ACTION}),
     Role.content_editor: frozenset({P.OPS_READ, P.CONTENT_READ, P.CONTENT_EDIT, P.ASSET_READ, P.ASSET_MANAGE}),
     Role.content_publisher: frozenset({P.OPS_READ, P.CONTENT_READ, P.CONTENT_EDIT, P.CONTENT_PUBLISH,
-                                       P.ASSET_READ, P.ASSET_MANAGE}),
+                                       P.ASSET_READ, P.ASSET_MANAGE, P.RESIDENT_MANAGE}),
     # 经济运营：能发单笔、能提交批量，但**批不了**自己提的批次（没有 approve 权限）。
     Role.economy_ops: frozenset({P.OPS_READ, P.USER_READ, P.PET_READ, P.ECONOMY_READ, P.ECONOMY_GRANT,
                                  P.ECONOMY_GRANT_BATCH, P.AUDIT_READ}),
@@ -88,7 +89,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
 WRITE_PERMISSIONS = frozenset(
     {P.ACCOUNT_FREEZE, P.ACCOUNT_REVOKE_SESSION, P.REPORT_ACTION, P.PROVIDER_PAUSE, P.TASK_RECOVER, P.PET_MAINTAIN,
      P.CONTENT_EDIT, P.CONTENT_PUBLISH, P.ASSET_MANAGE, P.ECONOMY_GRANT, P.ECONOMY_GRANT_BATCH,
-     P.ECONOMY_APPROVE, P.ECONOMY_REVERSE, P.COST_MANAGE, P.STAFF_MANAGE}
+     P.ECONOMY_APPROVE, P.ECONOMY_REVERSE, P.COST_MANAGE, P.STAFF_MANAGE, P.RESIDENT_MANAGE}
 )
 
 

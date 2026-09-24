@@ -239,6 +239,8 @@ PHOTO_SURFACE = {
     "guide": "攻略手账的配图",
     # 明信片以外的藏品（比如领证合影）：具体是哪种藏品另给 item_kind，按藏品种类的说法显示
     "keepsake": "藏品里的照片",
+    # 旅行心愿的手账（A 的 web_travel，表 web_travel_journals）：同一张图可能被计划页、回忆页和不同修订共用，照列不去重
+    "travel_journal": "旅行手账的配图",
 }
 
 # ---- 游戏账本 ----
@@ -380,6 +382,8 @@ POST_VISIBILITY = {"public": "公开", "followers": "仅关注者可见", "remov
 # ---- 第八批：待领养居民（web_residents 的 CHECK 与 schemas/web/pets）----
 # kind 是「类型」不是「现在的状态」：已经被领养的居民类型仍是 adoptable，所以不说「可以领养」
 RESIDENT_KIND = {"adoptable": "可领养类", "public_npc": "公共居民（不参加领养）"}
+# 旅行手账是哪一页（web_travel_journals.phase 的 CHECK，用例现场解析核对）
+JOURNAL_PHASE = {"plan": "计划页", "memory": "回忆页"}
 RESIDENT_STATUS = {"resident": "住在驿站", "adopted": "已经被领养"}
 ADOPTION_AVAILABILITY = {"available": "可以领养", "reserved": "有人正在领养", "adopted": "已经被领养"}
 # 来源（m0240：原创伙伴与已核验真实原型分开标注）；对还没被领养的居民也成立，所以不写「领养的」
@@ -433,6 +437,8 @@ AUDIT_ACTION = {
     "task.recover": "受控恢复一次照片任务",
     "pet.pause": "暂停宠物的自主运行",
     "pet.resume": "恢复宠物的自主运行",
+    "resident.delist": "撤下待领养居民",
+    "resident.relist": "放回待领养居民",
     # 游戏经济
     "economy.grant": "补偿星币",
     "economy.reverse": "冲正一笔补偿",
@@ -466,6 +472,7 @@ TARGET_KIND = {
     "user": "用户", "pet": "宠物", "home": "家", "illustration": "照片", "post": "动态", "comment": "评论",
     "switch": "开关", "query": "搜索词", "queue": "举报队列", "staff": "员工", "grant_batch": "批量补偿",
     "asset": "素材", "content": "内容", "price": "价格", "residents": "待领养居民名单", "pets": "宠物运行总览", "relay_import": "中转回执导入",
+    "candidate": "待领养居民（领养卡）",
 }
 AUDIT_STATUS = {"allowed": "查看", "succeeded": "成功", "replayed": "重放（同一操作号，没有重复生效）",
                 "denied": "被拒绝", "failed": "失败"}
@@ -498,6 +505,7 @@ PERMISSION = {
     "provider.pause": "暂停 / 恢复新增 AI 调用",
     "task.recover": "受控恢复失败的任务",
     "pet.maintain": "暂停 / 恢复宠物的自主运行",
+    "resident.manage": "撤下 / 放回待领养居民",
     "content.edit": "编辑内容草稿",
     "content.publish": "发布 / 撤下 / 回退内容",
     "asset.manage": "上传 / 下架素材",
@@ -568,6 +576,7 @@ FAMILIES: dict[str, dict[str, Any]] = {
     "task_error": TASK_ERROR,
     "director_hold": DIRECTOR_HOLD,
     "photo_surface": PHOTO_SURFACE,
+    "journal_phase": JOURNAL_PHASE,
     "ledger_type": LEDGER_TYPE,
     "ledger_source": LEDGER_SOURCE,
     "ledger_status": LEDGER_STATUS,

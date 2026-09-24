@@ -13,6 +13,7 @@ from typing import Any
 
 from ..storage import JourneyStorage
 from ..utils import parse_dt
+from .resident_listing import DELIST_EFFECTS, RELIST_EFFECTS
 from .social import people
 
 
@@ -29,7 +30,7 @@ class AdminResidents:
             try:
                 rows = conn.execute(
                     "SELECT r.pet_id, r.candidate_id, r.kind, r.status, r.public_since, r.adopted_at, r.adopted_household_id, r.adopted_by, "
-                    "c.name, c.species, c.personality, c.dream, c.origin, c.source_note, c.availability, "
+                    "c.name, c.species, c.personality, c.dream, c.origin, c.source_note, c.availability, c.listed, "
                     "s.city, s.label AS residence_label "
                     "FROM web_residents r LEFT JOIN web_adoption_candidates c ON c.candidate_id = r.candidate_id "
                     "LEFT JOIN web_residences s ON s.residence_id = r.residence_id ORDER BY r.status, s.city, c.name").fetchall()
@@ -43,6 +44,11 @@ class AdminResidents:
             except sqlite3.OperationalError:
                 content = {}
             homes = {r["household_id"]: r["home_id"] for r in conn.execute("SELECT household_id, home_id FROM web_homes WHERE household_id IS NOT NULL")}
+            # 最近一次撤下 / 放回的后台依据（谁、什么时候、为什么、第几版）；表还不在就当没有记录
+            try:
+                listing = {r["candidate_id"]: r for r in conn.execute("SELECT * FROM admin_resident_listing")}
+            except sqlite3.OperationalError:
+                listing = {}
         counts: dict[str, int] = {}
         for row in rows:
             counts[row["status"]] = counts.get(row["status"], 0) + 1
@@ -60,6 +66,12 @@ class AdminResidents:
                                   "live_revision": content[r["candidate_id"]]["live_revision"],
                                   "draft_revision": content[r["candidate_id"]]["draft_revision"]}
                                  if r["candidate_id"] in content else None),
+                # 是否在领养名单上（领养卡表的上架列，迁移 0260）；撤下只对还可以领养的居民生效
+                "listed": bool(r["listed"]) if r["listed"] is not None else None,
+                "listing": ({"reason": listing[r["candidate_id"]]["reason"], "changed_by": listing[r["candidate_id"]]["changed_by"],
+                             "changed_at": _dt(listing[r["candidate_id"]]["changed_at"]), "version": int(listing[r["candidate_id"]]["version"])}
+                            if r["candidate_id"] in listing else None),
             } for r in rows],
+            "listing_effects": {"delist": list(DELIST_EFFECTS), "relist": list(RELIST_EFFECTS)},
             "note": "居民的档案（性格、梦想、来源说明）是玩家在领养页也看得到的公开内容；要改它走「内容发布」里的居民类型。",
         }

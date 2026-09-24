@@ -8,10 +8,12 @@ from __future__ import annotations
 
 from fastapi import Depends, Request
 
+from ...schemas.admin import ResidentListingRequest
 from ...web_admin.errors import AdminAPIError
 from ...web_admin.identity import AdminPrincipal
 from ...web_admin.permissions import Permission
-from ._shared import admin_of, admin_router, needs, needs_any, trace_read
+from ..web.public import invalidate as invalidate_public
+from ._shared import admin_of, admin_router, context, needs, needs_any, trace_read
 
 router = admin_router("world")
 
@@ -64,6 +66,16 @@ def residents(request: Request, principal: AdminPrincipal = Depends(needs_any(Pe
         for row in result["residents"]:
             row.update(adopted_by=None, adopted_by_name=None, adopted_household_id=None, adopted_home_id=None)
         result["adopters_note"] = "被哪位玩家领养属于玩家信息，要「查用户与家庭」权限才能看。"
+    return result
+
+
+@router.post("/residents/{candidate_id}/listing")
+def set_resident_listing(candidate_id: str, body: ResidentListingRequest, request: Request,
+                         principal: AdminPrincipal = Depends(needs(Permission.RESIDENT_MANAGE, write=True))) -> dict:
+    """撤下 / 放回一位待领养居民（不删除、不暂停）。成功后当场清掉访客页缓存，玩家那一侧不等 30 秒。"""
+    result = admin_of(request).listing.set_listed(context(request, principal), candidate_id, listed=body.listed,
+                                                  reason=body.reason, expected_version=body.expected_version)
+    invalidate_public(request.app)
     return result
 
 

@@ -36,6 +36,7 @@ from .overview import AdminOverview
 from .pet_runtime import AdminPetRuntime
 from .relay_receipts import AdminRelayReceipts
 from .pricing import AdminPricing
+from .resident_listing import AdminResidentListing
 from .residents import AdminResidents
 from .reversals import AdminReversals
 from .social import AdminSocial
@@ -69,15 +70,17 @@ class AdminServices:
     system: AdminSystem          # 系统运行：投递、执行者、任务线、迁移、供应商、开关、备份
     social: AdminSocial          # 社交与举报关联（只给公开范围里的摘要与关系事实）
     residents: AdminResidents    # 待领养居民名单
+    listing: AdminResidentListing  # 撤下 / 放回待领养居民（领养卡表的上架列 + 后台依据）
     pet_runtime: AdminPetRuntime  # 宠物运行总览（心跳 / 大脑 / 钱袋子）与暂停
     relay: AdminRelayReceipts     # 经中转站的逐次调用回执：幂等导入与按日汇总（ADM-COST-01）
-    tables_ready: bool         # 1500–1580 迁移是否已应用
+    tables_ready: bool         # 1500–1590 迁移是否已应用
 
 
 def _tables_ready(storage: JourneyStorage) -> bool:
     names = ("admin_staff", "admin_sessions", "admin_audit", "admin_account_flags", "admin_switches",
              "admin_content_items", "admin_content_revisions", "admin_content_publications",
-             "admin_grant_batches", "admin_grant_batch_items", "admin_assets", "admin_provider_prices", "admin_report_claims", "admin_pet_maintenance", "admin_relay_receipts")
+             "admin_grant_batches", "admin_grant_batch_items", "admin_assets", "admin_provider_prices", "admin_report_claims", "admin_pet_maintenance", "admin_relay_receipts",
+             "admin_resident_listing")
     with storage.connect() as conn:
         found = conn.execute(
             f"SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ({','.join('?' for _ in names)})", names
@@ -133,6 +136,7 @@ def install_admin_platform(app: FastAPI, *, storage: JourneyStorage, settings) -
         system=AdminSystem(storage, switches=switches, environment=overview.environment),
         social=AdminSocial(storage),
         residents=AdminResidents(storage),
+        listing=AdminResidentListing(storage, commands, audit, web.pets),
         pet_runtime=AdminPetRuntime(storage, settings, commands, audit),
         relay=AdminRelayReceipts(storage, commands, audit),
         frozen=frozen,
@@ -167,7 +171,7 @@ def install_admin_platform(app: FastAPI, *, storage: JourneyStorage, settings) -
     _mount_once(app, report_outcomes_router)
 
     if not services.tables_ready:
-        logger.warning("admin tables missing: 迁移 1500–1580 尚未全部应用，后台接口会如实回 NOT_CONFIGURED")
+        logger.warning("admin tables missing: 迁移 1500–1590 尚未全部应用，后台接口会如实回 NOT_CONFIGURED")
     return services
 
 

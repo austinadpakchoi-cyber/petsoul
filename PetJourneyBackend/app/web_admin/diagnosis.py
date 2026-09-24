@@ -347,6 +347,15 @@ def _surfaces(conn: sqlite3.Connection, task_id: str) -> list[dict] | None:
             found.append({"kind": "guide", "ref": row["guide_id"], "city": row["city"], "at": parse_dt(row["created_at"])})
     except sqlite3.OperationalError:
         return None  # 这个库里还没有这些表：查不了，不等于"没用在任何地方"
+    # 旅行心愿的手账（A 的 web_travel；列已定型）：同一张图会被计划页、回忆页与不同修订共用，照列不去重；
+    # 图的状态以照片记录为准，旧库里那两列 image_status / image_url 是遗留，不读。表还不在（没迁移到 1700）就少这一处，不影响前面几处
+    try:
+        for row in conn.execute("SELECT journal_id, journal_revision, phase, created_at FROM web_travel_journals WHERE image_task_id = ? "
+                                "ORDER BY created_at, journal_id, journal_revision", (task_id,)):
+            found.append({"kind": "travel_journal", "phase": row["phase"], "ref": f"{row['journal_id']}#{row['journal_revision']}",
+                          "city": None, "at": parse_dt(row["created_at"]) if row["created_at"] else None})
+    except sqlite3.OperationalError:
+        pass
     return found
 
 

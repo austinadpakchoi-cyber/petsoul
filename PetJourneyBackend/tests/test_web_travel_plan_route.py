@@ -76,6 +76,13 @@ class TravelPlanRouteTests(WebPlatformTestBase):
             conn.execute("UPDATE web_travel_plans SET journey_id = ? WHERE plan_id = ?", (journey["journey_id"], self.plan_id))  # 模拟 C 的关联
         summary = self.read().json()["revisions"][0]["journey"]
         self.assertEqual(summary, {"journey_id": journey["journey_id"], "fare": journey["fee"], "fare_waived": bool(journey["fare_waived"])})
+        # 上面那句对「用没用券」不敏感：期望值和路由读的是同一张表，而这趟本来就没用券（C 变异实测）。
+        # 再造一趟用了券的——`_settle_fare` 用券成功时写的就是 1，不是编一个产生不出来的组合——期望值用字面量。
+        with self.app.state.storage.connect() as conn:
+            conn.execute("UPDATE web_journeys SET fare_waived = 1 WHERE journey_id = ?", (journey["journey_id"],))
+        waived = self.read().json()["revisions"][0]["journey"]
+        self.assertTrue(waived["fare_waived"], "用券那趟必须在页面上看得见——这正是 m1701 的全部意义")
+        self.assertEqual(waived["fare"], journey["fee"], "标价不变：省下多少＝fare，不是把 fare 改成实付 0")
 
     def test_someone_elses_plan_and_a_missing_plan_are_the_same_404(self) -> None:
         stranger = self.user("plan-stranger")
